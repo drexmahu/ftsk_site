@@ -31,10 +31,12 @@ $color-anchor-dark: #ffebb5;
 $color-header: #000;
 $color-header-light: #fffbf3;
 $color-header-dark: #fff7e1;
-$color-text: #282828;
-$color-deactive: #ababab;
-$color-text-dark: #dddddd;
-$color-text-light: #4d4d4d;
+// Themeable text tones: safe to bind to CSS custom properties (no dual bg/fg usage elsewhere)
+$color-text: var(--text-body);
+$color-deactive: var(--text-muted);
+$color-text-dark: var(--input-border);
+$color-text-light: var(--text-muted);
+$color-cyan: var(--text-muted);
 
 // Spacer Variables
 $base-padding: 1rem;

@@ -1,6 +1,17 @@
 $(document).ready(function () {
    'use strict';
 
+   // Light / dark theme toggle (dark is the default, persisted in localStorage)
+   var themeToggleBtn = document.getElementById('themeToggle');
+   if (themeToggleBtn) {
+      themeToggleBtn.addEventListener('click', function () {
+         var isLight = document.documentElement.getAttribute('data-theme') === 'light';
+         var next = isLight ? 'dark' : 'light';
+         document.documentElement.setAttribute('data-theme', next);
+         localStorage.setItem('ftsk-theme', next);
+      });
+   }
+
    $(window).on('scroll', function () {
       var windscroll = $(window).scrollTop();
       if (windscroll >= 70) {
