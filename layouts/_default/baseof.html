@@ -1,13 +1,6 @@
 <!DOCTYPE html>
 <html lang="hu">
   <head>
-    <script>
-      // Apply the saved theme before first paint to avoid a flash of the wrong theme.
-      (function () {
-        var saved = localStorage.getItem('ftsk-theme');
-        document.documentElement.setAttribute('data-theme', saved === 'light' ? 'light' : 'dark');
-      })();
-    </script>
     {{ partial "meta.html" . }}
     
     <link href="/vendor/bootstrap/bootstrap.min.css" rel="stylesheet" />

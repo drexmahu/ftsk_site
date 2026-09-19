@@ -1,7 +1,7 @@
 /**********
  FTSK custom content-block styles: cta, richtext, linklist, members, gallery
- These use CSS custom properties directly so they are dark/light theme aware
- without needing separate overrides in _theme-switch.scss.
+ These use CSS custom properties directly so they follow the site's palette
+ without needing separate overrides in _theme.scss.
 **********/
 
 .ftsk-cta {
@@ -15,7 +15,7 @@
   padding: $base-padding * 4.5 $base-padding * 3;
   border-radius: 28px;
   border: 1px solid var(--border-subtle);
-  background: linear-gradient(135deg, rgba(229, 59, 42, 0.16), var(--bg-surface) 60%);
+  background: linear-gradient(135deg, rgba(190, 160, 112, 0.18), var(--bg-surface) 60%);
   box-shadow: 0 30px 60px var(--shadow-ambient);
 }
 .ftsk-cta-eyebrow {
@@ -23,7 +23,7 @@
   margin-bottom: $base-margin;
   padding: 6px 18px;
   border-radius: 999px;
-  background: rgba(229, 59, 42, 0.15);
+  background: rgba(190, 160, 112, 0.16);
   color: $color-primary;
   font-weight: 700;
   font-size: 0.9rem;
@@ -122,8 +122,8 @@
   height: 28px;
   padding: 0 8px;
   border-radius: 999px;
-  background: rgba(229, 59, 42, 0.15);
-  color: $color-primary;
+  background: rgba(20, 177, 184, 0.16);
+  color: $color-anchor;
   font-size: 0.85rem;
   font-weight: 700;
 }

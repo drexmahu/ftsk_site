@@ -1,0 +1,284 @@
+/**********
+ 24. Theme Styles - earthy / underground palette
+ Single theme (no light variant). Loaded last so it wins the cascade without !important.
+**********/
+
+:root {
+  --bg-page: #0a1116;
+  --bg-surface: #11202b;
+  --bg-surface-2: #16303f;
+  --bg-surface-hover: #1b3a4a;
+  --text-heading: #f2ede1;
+  --text-body: #b9c7c9;
+  --text-muted: #7c9098;
+  --border-subtle: #1d323d;
+  --border-strong: #2c4652;
+  --shadow-ambient: rgba(0, 0, 0, 0.6);
+  --input-bg: #11202b;
+  --input-border: #2c4652;
+  --nav-scroll-bg: rgba(10, 17, 22, 0.92);
+  --scrollbar-track: #11202b;
+  --scrollbar-thumb: #2c4652;
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--bg-page);
+  color: var(--text-body);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-heading);
+}
+
+::selection {
+  background: $color-primary;
+  color: #0a1116;
+}
+
+html {
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 8px;
+}
+
+// Sections that were light-toned by default now follow the page background, with a
+// subtle cave-silhouette motif (stalactites/stalagmites + a warm headlamp glow)
+.hero,
+.hero-two,
+.about-hero-one,
+.about-hero-two,
+.contact-hero,
+.faq,
+.faq-two,
+.pricing-inner,
+.pricing-inner-two,
+.privacy-hero,
+.blog-hero,
+.blog-related,
+.cta,
+.cta-two,
+.feature-bg,
+.error,
+.works {
+  background-color: var(--bg-page);
+  background-image: url("/images/motifs/cave-silhouette.svg");
+  background-repeat: no-repeat;
+  background-position: bottom center;
+  background-size: cover;
+}
+
+.footer {
+  background-color: var(--bg-surface);
+  background-image: url("/images/motifs/cave-silhouette.svg");
+  background-repeat: no-repeat;
+  background-position: top center;
+  background-size: cover;
+}
+
+// Card / panel surfaces
+.accordion-item,
+.accordion-button,
+.accordion-button:not(.collapsed),
+.about .card,
+.pricing .card,
+.pricing-two-range,
+.team-member,
+.testimonial-item,
+.blog-post,
+.feature-item-banner .card-image,
+.works-banner,
+.contact-form form,
+.navbar-nav .dropdown .dropdown-menu,
+.privacy-wrapper,
+.privacy .navbar {
+  background: var(--bg-surface);
+  border-color: var(--border-subtle);
+}
+
+// Counter-up stat sections
+.counter-up-two {
+  background: var(--bg-page);
+}
+.counter-up-wrapper .counter,
+.counter-up-wrapper .percent,
+.counter-up-content-item p {
+  color: var(--text-heading);
+}
+.counter-up-content-item {
+  border-top-color: var(--border-subtle);
+  border-right-color: var(--border-subtle);
+}
+
+.about .card:hover {
+  background: var(--bg-surface-hover);
+}
+
+.accordion-item span,
+.contact-form-Information .address .item {
+  background: var(--bg-surface-2);
+  border-color: var(--border-strong);
+}
+
+.testimonial {
+  background: var(--bg-page);
+}
+
+// Forms
+.contact-form form .form-control {
+  background: var(--input-bg);
+  border-color: var(--input-border);
+  color: var(--text-heading);
+}
+.contact-form form .form-control:focus {
+  background: var(--bg-surface-2);
+  border-color: $color-anchor;
+}
+.contact-form form ::placeholder {
+  color: var(--text-muted);
+}
+.contact-form form .label {
+  color: var(--text-body);
+}
+
+// A few headings/labels use $color-header directly, which also serves as a
+// background elsewhere so it can't be re-themed globally - override explicitly.
+.team-member-details h3,
+.contact-form-Information .address .item a,
+.pricing .price,
+.cta-two .section-header h2 {
+  color: var(--text-heading);
+}
+
+// Navbar
+.bg-nav,
+.bg-nav.sticky-nav,
+.sticky-nav {
+  background: var(--nav-scroll-bg);
+  box-shadow: 0px 4px 30px var(--shadow-ambient);
+}
+@include media-breakpoint-down-lg {
+  .navbar {
+    background: var(--bg-page);
+  }
+}
+#mainnavigationBar .navbar-toggler line,
+#mainnavigationBar .navbar-toggler path {
+  stroke: var(--text-heading);
+}
+
+// FAQ accordion caret icon, redrawn to match the palette (gold "lamp" plus/minus)
+.accordion-button::after {
+  background-image: url('data:image/svg+xml,%3csvg width="80" height="80" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"%3e%3ccircle cx="20" cy="20" r="20" fill="%2316303f"/%3e%3cpath d="M13.125 20H26.875" stroke="%23BEA070" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/%3e%3c/svg%3e');
+}
+.accordion-button:not(.collapsed)::after {
+  background-image: url('data:image/svg+xml,%3csvg width="80" height="80" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"%3e%3ccircle cx="20" cy="20" r="20" fill="%2316303f"/%3e%3cpath d="M13.125 20H26.875" stroke="%23BEA070" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/%3e%3cpath d="M20 13.125V26.875" stroke="%23BEA070" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/%3e%3c/svg%3e');
+}
+
+// Category tag badges - each túra category gets its own palette accent
+.blog-post-tag a {
+  background: rgba(190, 160, 112, 0.16);
+  border: 1px solid rgba(190, 160, 112, 0.4);
+  color: var(--text-heading);
+}
+.blog-post-tag a.tag-tura {
+  background: rgba(20, 177, 184, 0.16);
+  border-color: rgba(20, 177, 184, 0.45);
+}
+.blog-post-tag a.tag-kutatas {
+  background: rgba(190, 160, 112, 0.18);
+  border-color: rgba(190, 160, 112, 0.45);
+}
+.blog-post-tag a.tag-expedicio {
+  background: rgba(29, 135, 153, 0.22);
+  border-color: rgba(29, 135, 153, 0.5);
+}
+.blog-post-tag a.tag-kanyoning {
+  background: rgba(91, 107, 94, 0.3);
+  border-color: rgba(91, 107, 94, 0.6);
+}
+.blog-post-tag a.tag-szemetszedes {
+  background: rgba(24, 65, 117, 0.35);
+  border-color: rgba(24, 65, 117, 0.65);
+}
+
+// Buttons - the accent colors are mid-brightness, so solid fills need dark text
+// (not white) to keep proper contrast; the base _buttons.scss rules are overridden here.
+.btn-primary {
+  color: var(--bg-page);
+  background: $color-primary;
+  border-color: $color-primary;
+}
+.btn-primary:hover {
+  color: $color-primary;
+  background: var(--bg-surface-hover);
+  border-color: $color-primary;
+}
+.btn-check:focus + .btn-primary,
+.btn-primary:focus,
+.btn-primary:active,
+.btn-primary:active:focus,
+.btn-primary:hover:focus {
+  color: var(--bg-page) !important;
+  background: $color-primary !important;
+  border: $base-border-width solid transparent;
+}
+
+.btn-secondary,
+.btn-white {
+  color: $color-primary;
+  background: var(--bg-surface);
+  border-color: $color-primary;
+}
+.btn-secondary svg path,
+.btn-white svg path {
+  fill: $color-primary;
+}
+.btn-secondary:hover,
+.btn-white:hover {
+  background: $color-primary;
+  color: var(--bg-page);
+  border-color: $color-primary;
+}
+.btn-secondary:hover svg path,
+.btn-white:hover svg path {
+  fill: var(--bg-page);
+}
+.btn-check:focus + .btn-secondary,
+.btn-secondary:focus,
+.btn-secondary:active,
+.btn-secondary:active:focus,
+.btn-secondary:hover:focus,
+.btn-check:focus + .btn-white,
+.btn-white:focus,
+.btn-white:active,
+.btn-white:active:focus,
+.btn-white:hover:focus {
+  color: var(--bg-page) !important;
+  background: $color-primary !important;
+  border: $base-border-width solid $color-primary;
+}
+
+.btn-links {
+  color: $color-primary;
+  border-color: rgba(190, 160, 112, 0.35);
+}
+.btn-check:focus + .btn-links,
+.btn-links:focus,
+.btn-links:active,
+.btn-links:active:focus,
+.btn-links:hover:focus,
+.btn-links:hover {
+  color: var(--bg-page);
+  background: $color-primary;
+  border: $base-border-width solid rgba(190, 160, 112, 0.35);
+}

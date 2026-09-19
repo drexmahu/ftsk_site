@@ -19,14 +19,22 @@ $color-cyan-dark: #f3f3f3;
 $color-cyan-light: #5f5f5f;
 $color-gray-light: #fdfdfd;
 $color-gray-dark: #fff4f2;
-$color-primary: #e53b2a;
+// Earthy / underground palette (cave silhouette theme)
+// "Glow Stem" - warm headlamp glow, main accent used for buttons/links/CTAs
+$color-primary: #bea070;
 $color-primary-light: #e6ebf4;
 $color-primary-dark: #e8e8e8;
 $color-secondary: #fffbf3;
 $color-secondary-dark: #f7f8fa;
 $color-secondary-light: #ffe1dd;
-$color-anchor: #ffba08;
+// "Astral River" - cool secondary accent, used for hover/active/highlight states
+$color-anchor: #14b1b8;
 $color-anchor-dark: #ffebb5;
+// "Mystic Woods" and "Foliage Shadow" - additional palette accents for variety (badges, tags)
+$color-tertiary: #1d8799;
+$color-quaternary: #5b6b5e;
+// "Abyssal Depth" - deep base tone the dark surfaces are derived from
+$color-abyss: #184175;
 
 $color-header: #000;
 $color-header-light: #fffbf3;

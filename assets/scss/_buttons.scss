@@ -115,7 +115,7 @@
   &-links {
     background: transparent;
     color: $color-primary;
-    border: 1px solid rgba(229, 59, 42, 0.3);
+    border: 1px solid rgba(190, 160, 112, 0.35);
     position: relative;
     transition: all 0.3s ease-in-out;
 
@@ -127,7 +127,7 @@
     &:hover {
       color: $color-white;
       background: $color-primary;
-      border: $base-border-width solid rgba(229, 59, 42, 0.3);
+      border: $base-border-width solid rgba(190, 160, 112, 0.35);
     }
   }
   &-white {
