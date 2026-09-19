@@ -14,7 +14,7 @@ collections_config:
       - visual
   articles:
     icon: article
-    path: content/blog
+    path: content/turak
     disable_add_folder: true
     preview:
       subtext:

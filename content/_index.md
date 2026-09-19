@@ -1,5 +1,5 @@
 ---
-title: Home
+title: Főoldal
 seo:
   page_description: 
   canonical_url: 
@@ -10,113 +10,71 @@ seo:
 content_blocks:
    -
       _bookshop_name: home/hero
-      title: Beautiful email campaigns
+      title: Barlangászat, kutatás, közösség
       description: >-
-         With Sendit, you can quickly create beautiful rich emails that capture
-         a reader's attention, engage them, and convert them into customers.
-      image_path: /images/hero/hero-image-2.png
+         Az FTSK Barlangkutató Szakosztály 1954 óta fedez fel, kutat és jár
+         barlangokat itthon és külföldön. Csatlakozz hozzánk barlangtúrákon,
+         kutatásokon vagy a legújabb alapfokú tanfolyamunkon!
+      image_path: /images/hero/ftsk-cave-hero.jpg
       link:
-         text: Try This Free
-         url: /# 
+         text: Ismerd meg az egyesületet
+         url: /egyesuletunk/
    -
-      _bookshop_name: global/counter
-      title: Scale your
-      title_suffix: Business
+      _bookshop_name: global/cta
+      eyebrow: Új tanfolyam
+      title: "Jelentkezz a "
+      title_suffix: "2027-es alapfokú barlangász tanfolyamunkra!"
       description: >-
-         We have an extensive library of pre-written sales emails, proven
-         marketing templates, and more to get you started on your next project.
-      alternateStyle: false
-      numbers:
-         -
-            number: 200
-            suffix: m
-            prefix: $
-            text: Venture capital raised
-         -
-            number: 2016
-            text: Established in
-         -
-            number: 40
-            suffix: +
-            text: Amazing team members
-         -
-            number: 4322
-            suffix: +
-            text: Active users and growing
-   -
-      _bookshop_name: home/video
-      image_path: /images/video/video-thum.jpg
-      videoUrl: https://vimeo.com/45830194
+         A tanfolyam részletes leírása hamarosan érkezik. Addig is jelezd
+         nálunk az érdeklődésed elérhetőségeinken, és elmondjuk a részleteket.
+      link:
+         text: Érdeklődöm
+         url: /kapcsolat/
+      note: A pontos jelentkezési határidőt és a tanfolyam díját később tesszük közzé.
    -
       _bookshop_name: global/header
-      title: 'Sendit '
-      title_suffix: Features
-      no_top_pad: true
+      title: "Mivel "
+      title_suffix: foglalkozunk?
       description: >-
-         Our platform offers the most advanced features including automated
-         email content creation, dynamic personalization, and customer
-         segmentation.
+         Szakosztályunk fő tevékenysége a barlangkutatás és a barlangi
+         túrázás, emellett alapfokú tanfolyamokkal segítjük az új barlangászok
+         bevonzását és képzését, alkalmanként pedig kanyoning túrákon is részt
+         veszünk.
    -
       _bookshop_name: global/feature
-      image_path: /images/feature/feature-card-one.png
-      title: Email Campaign in one minute
+      image_path: /images/gallery/ftsk-gallery-2.png
+      title: Barlangkutatás
       description: >-
-         Send an email campaign with one click, in just minutes. Automate
-         your emails and content, while keeping the human touch.
+         1954 óta kutatjuk a hazai barlangokat - a Szabadság-barlangban 1991-ben
+         feltárt 500 méteres új szakasz is a nevünkhöz fűződik, de a
+         Danca-barlang, a Solymári-ördöglyuk és a Háromlyukú-zsomboly
+         feltárásában is részt vettünk.
       btn:
-         link: /#
-         text: Try This Free
+         link: /egyesuletunk/
+         text: Történetünk
       reversed: false
    -
       _bookshop_name: global/feature
-      image_path: /images/feature/feature-card-two.png
-      title: See every Lead in one Place
+      image_path: /images/gallery/ftsk-gallery-1.jpg
+      title: Barlangtúrázás
       description: >-
-         Sales analytics and automation made simple: see every sales lead
-         in one place, regardless of where it came from.
+         Rendszeresen szervezünk barlangtúrákat itthon és külföldön - Szlovéniában,
+         Olaszországban, Ausztriában és a Pireneusokban is jártunk már. Túráinkról
+         részletes beszámolókat is olvashatsz.
       btn:
-         link: /#
-         text: Try This Free
+         link: /turak/
+         text: Túrabeszámolók
       reversed: true
    -
       _bookshop_name: global/feature
-      image_path: /images/feature/feature-card-three.png
-      title: 100% free uploads
+      image_path: /images/hero/ftsk-cave-hero.jpg
+      title: Oktatás és kanyoning
       description: >-
-         SendIt is used by everyone from small businesses to fortune 500
-         companies. Browse our collection of email marketing templates and
-         start sending beautiful emails in minutes.
+         Alapfokú barlangász tanfolyamainkkal új tagokat képzünk, alkalmanként
+         pedig kanyoning túrákon is részt veszünk - ebből nőtte ki magát a
+         mai Magyar Kanyoning Sportegyesület is.
       btn:
-         link: /#
-         text: Try This Free
+         link: /#tanfolyam-2027
+         text: Tanfolyam 2027
       reversed: false
-   -
-      _bookshop_name: global/testimonial
-      title: Build relationships that
-      title_suffix: last
-      description: >-
-         Customers from around the world are building game changing email
-         marketing campaigns.
-      slider:
-         -
-            image_path: /images/testimonial/logo-2.jpg
-            author: Pete Fish
-            designation: CMO at Clear Appeal
-            message: >-
-               Sendit has taken Clear Appeal to the next level with it's
-               beautiful targetted email campaigns.
-         -
-            image_path: /images/testimonial/logo-3.jpg
-            author: Dolly Watson
-            designation: Digital Marketer at Time Cop
-            message: >-
-               Wow, what a difference Sendit has made. My customers are more
-               engaged than ever.
-         -
-            image_path: /images/testimonial/logo-4.jpg
-            author: Simon Moriarty
-            designation: Head of Marketing at Pinnacle Mines
-            message: >-
-               I can't imagine life without Sendit now, I have no idea how we
-               were surviving before.
 ---

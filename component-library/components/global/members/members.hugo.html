@@ -1,0 +1,22 @@
+<section class="ftsk-members">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 mx-auto">
+        <div class="section-header">
+          <h2>{{ .title }}<span>{{ .title_suffix }}</span></h2>
+          {{ with .description }}<p>{{ . | markdownify }}</p>{{ end }}
+        </div>
+      </div>
+    </div>
+    {{ range .groups }}
+    <div class="ftsk-members-group">
+      <h3>{{ .label }} <span class="ftsk-members-count">{{ len .members }}</span></h3>
+      <div class="ftsk-members-grid">
+        {{ range .members }}
+        <span class="ftsk-members-chip">{{ .name }}</span>
+        {{ end }}
+      </div>
+    </div>
+    {{ end }}
+  </div>
+</section>

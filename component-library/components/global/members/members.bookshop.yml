@@ -1,0 +1,22 @@
+spec:
+  structures:
+    - content_blocks
+  label: Tagnévsor
+  description: Members grouped by membership category
+  icon: groups
+  tags: ["members"]
+
+blueprint:
+  title: Tagjaink
+  title_suffix:
+  description:
+  groups:
+    - label: Elnökség
+      members:
+        - name: Példa Névsor
+
+preview:
+
+_inputs:
+  description:
+    type: markdown

@@ -9,8 +9,8 @@ spec:
 
 # Defines the structure of this component, as well as the default values
 blueprint:
-  title: Beautiful email campaigns
-  description: With Sendit, you can quickly create beautiful rich emails that capture a reader’s attention, engage them, and convert them into customers.
+  title: FTSK Barlangkutató Szakosztály
+  description: Rövid bemutatkozó szöveg az egyesület főoldalához.
   image_path: /images/hero/hero-image-2.png
   link:
     text: "Try Free"

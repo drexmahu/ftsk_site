@@ -36,6 +36,13 @@ $(document).ready(function () {
       fixedContentPos: false,
    });
 
+   $('.ftsk-gallery-grid').magnificPopup({
+      delegate: 'a',
+      type: 'image',
+      gallery: { enabled: true },
+      mainClass: 'mfp-fade',
+   });
+
    const counterUp = window.counterUp.default
 
 const callback = entries => {

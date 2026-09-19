@@ -10,7 +10,7 @@ spec:
 # Defines the structure of this component, as well as the default values
 blueprint:
   title: Run the best campaigns
-  description: Sendit will change the way you think about email and marketing automation..
+  description: Rövid leírás erről a tevékenységről vagy oldalról.
   btn:
     link: /#
     text: Try This Free

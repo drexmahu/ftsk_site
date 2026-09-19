@@ -1,6 +1,7 @@
-baseURL = ''
-locale = 'en-us'
-title = 'Sendit'
+baseURL = 'https://www.ftsk.hu'
+locale = 'hu-HU'
+title = 'FTSK Barlangkutató Szakosztály'
+removePathAccents = true
 
 
 [module]

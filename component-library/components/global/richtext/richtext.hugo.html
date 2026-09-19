@@ -1,0 +1,16 @@
+<section class="ftsk-richtext">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-10 mx-auto">
+        {{ if .title }}
+        <div class="section-header text-start">
+          <h2>{{ .title }}<span>{{ .title_suffix }}</span></h2>
+        </div>
+        {{ end }}
+        <div class="ftsk-prose">
+          {{ .content | markdownify }}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

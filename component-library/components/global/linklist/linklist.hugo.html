@@ -1,0 +1,26 @@
+<section class="ftsk-linklist">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 mx-auto">
+        <div class="section-header">
+          <h2>{{ .title }}<span>{{ .title_suffix }}</span></h2>
+          {{ with .description }}<p>{{ . | markdownify }}</p>{{ end }}
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-lg-10 mx-auto">
+        <ul class="ftsk-linklist-items">
+          {{ range .items }}
+          <li class="ftsk-linklist-item">
+            <a href="{{ .url }}" target="_blank" rel="noopener">
+              <i class="{{ if strings.HasSuffix .url ".pdf" }}ph-file-pdf{{ else }}ph-arrow-square-out{{ end }}"></i>
+              <span>{{ .text }}</span>
+            </a>
+          </li>
+          {{ end }}
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>

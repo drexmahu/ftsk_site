@@ -1,0 +1,15 @@
+<section class="cta-two ftsk-cta" id="tanfolyam-2027">
+  <div class="container">
+    <div class="ftsk-cta-card">
+      {{ with .eyebrow }}<span class="ftsk-cta-eyebrow">{{ . }}</span>{{ end }}
+      <div class="section-header">
+        <h2>{{ .title }}<span>{{ .title_suffix }}</span></h2>
+        <p>{{ .description | markdownify }}</p>
+      </div>
+      {{ with .link }}
+      <a href="{{ .url }}" class="btn btn-primary btn-lg">{{ .text }}</a>
+      {{ end }}
+      {{ with .note }}<p class="ftsk-cta-note">{{ . }}</p>{{ end }}
+    </div>
+  </div>
+</section>

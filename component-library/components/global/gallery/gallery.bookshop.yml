@@ -1,0 +1,23 @@
+spec:
+  structures:
+    - content_blocks
+  label: Galéria
+  description: Lightbox image gallery grid
+  icon: photo_library
+  tags: ["gallery", "images"]
+
+blueprint:
+  title: Galéria
+  title_suffix:
+  description:
+  images:
+    - image_path: /images/gallery/ftsk-gallery-1.jpg
+      caption:
+
+preview:
+
+_inputs:
+  description:
+    type: markdown
+  images[*].image:
+    type: image

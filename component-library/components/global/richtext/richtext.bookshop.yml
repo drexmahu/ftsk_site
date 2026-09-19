@@ -1,0 +1,19 @@
+spec:
+  structures:
+    - content_blocks
+  label: Szöveges blokk
+  description: Free-form markdown text section (e.g. club history)
+  icon: article
+  tags: ["text"]
+
+blueprint:
+  title: Történetünk
+  title_suffix:
+  content: >-
+    Ide kerül a hosszabb, szabad szöveges tartalom.
+
+preview:
+
+_inputs:
+  content:
+    type: markdown

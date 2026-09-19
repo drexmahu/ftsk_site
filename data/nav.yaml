@@ -1,36 +1,44 @@
-logo: /images/logo.svg
+logo: /images/ftsk-logo.png
 items:
   - link: /
-    text: Home
+    text: Főoldal
     enable_dropdown: false
     dropdown:
-  - link: /feature/
-    text: Feature
+  - link: /egyesuletunk/
+    text: Egyesületünk
     enable_dropdown: false
     dropdown:
-  - link: /pricing/
-    text: Pricing
+  - link: /tagok/
+    text: Tagjaink
     enable_dropdown: false
     dropdown:
-  - link: /about/
-    text: About
-    enable_dropdown: false
-    dropdown:
-  - link: /blog/
-    text: Blog
+  - link: /turak/
+    text: Túrabeszámolók
     enable_dropdown: true
     dropdown:
-      - dropdown_text: All Articles
-        dropdown_link: /blog
-      - dropdown_text: Marketing
-        dropdown_link: /categories/marketing
-      - dropdown_text: Technology
-        dropdown_link: /categories/technology
-  - link: /contact/
-    text: Contact
+      - dropdown_text: Összes beszámoló
+        dropdown_link: /turak
+      - dropdown_text: Kutatás
+        dropdown_link: /categories/kutatas
+      - dropdown_text: Expedíció
+        dropdown_link: /categories/expedicio
+  - link: /galeria/
+    text: Galéria
     enable_dropdown: false
     dropdown:
-enable_nav_btn: false
+  - link: /tevekenysegeink/
+    text: Tevékenységeink
+    enable_dropdown: false
+    dropdown:
+  - link: /linkek/
+    text: Linkek
+    enable_dropdown: false
+    dropdown:
+  - link: /kapcsolat/
+    text: Kapcsolat
+    enable_dropdown: false
+    dropdown:
+enable_nav_btn: true
 nav_btn:
-  link: /contact/
-  text: Get Started
+  link: /#tanfolyam-2027
+  text: Tanfolyam 2027

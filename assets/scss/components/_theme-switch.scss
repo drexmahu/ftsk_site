@@ -165,7 +165,8 @@ html {
 // background elsewhere so it can't be re-themed globally - override explicitly.
 .team-member-details h3,
 .contact-form-Information .address .item a,
-.pricing .price {
+.pricing .price,
+.cta-two .section-header h2 {
   color: var(--text-heading);
 }
 

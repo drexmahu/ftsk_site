@@ -1,0 +1,23 @@
+spec:
+  structures:
+    - content_blocks
+  label: Linklista
+  description: A titled list of external/PDF links (e.g. yearly reports, useful links)
+  icon: link
+  tags: ["links"]
+
+blueprint:
+  title: Linkek
+  title_suffix:
+  description:
+  items:
+    - text: Példa link
+      url: /#
+
+preview:
+
+_inputs:
+  description:
+    type: markdown
+  items[*].url:
+    type: url

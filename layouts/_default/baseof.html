@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zxx">
+<html lang="hu">
   <head>
     <script>
       // Apply the saved theme before first paint to avoid a flash of the wrong theme.
@@ -16,10 +16,10 @@
     
     {{ $sassOpts := dict "outputStyle" (cond hugo.IsProduction "compressed" "expanded") }}
     {{ with resources.Get "/scss/theme.scss" | css.Sass $sassOpts | resources.Minify | resources.Fingerprint }}
-    <link rel="stylesheet" href="{{ .Permalink }}" />
+    <link rel="stylesheet" href="{{ .RelPermalink }}" />
     {{ end }}
-    <link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon" />
-    <link rel="icon" href="/images/favicon.png" type="image/x-icon" />
+    <link rel="shortcut icon" href="{{ hugo.Data.meta.favicon_image }}" type="image/png" />
+    <link rel="icon" href="{{ hugo.Data.meta.favicon_image }}" type="image/png" />
     <script src="/vendor/jQuery/jquery.min.js" defer></script>
     <script src="/vendor/bootstrap/bootstrap.bundle.min.js" defer></script>
     <script src="/vendor/counter-up/countup.js" defer></script>
