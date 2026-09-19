@@ -1,0 +1,13 @@
+baseURL = ''
+locale = 'en-us'
+title = 'Sendit'
+
+
+[module]
+replacements = "local/component-library -> ../component-library"
+
+[[module.imports]]
+path = 'local/component-library'
+
+[[module.imports]]
+path = 'github.com/cloudcannon/bookshop/hugo/v3'
