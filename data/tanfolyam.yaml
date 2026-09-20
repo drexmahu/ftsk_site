@@ -1,0 +1,7 @@
+# Controls the "join now" CTA for the currently open course (homepage banner +
+# nav button). Set active: false once the course starts (or between courses)
+# to hide the CTA everywhere without touching content - the archive of all
+# courses stays available at /tanfolyamok/ regardless of this flag.
+active: true
+url: /tanfolyamok/tanfolyam-2027/
+nav_text: "Tanfolyam 2027"

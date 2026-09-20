@@ -63,7 +63,7 @@ content_blocks:
          barlangos világ felé, alkalmanként pedig kanyoning túrákon is részt
          veszünk - ebből nőtte ki magát a mai Magyar Kanyoning Sportegyesület is.
       btn:
-         link: /#tanfolyam-2027
-         text: Tanfolyam 2027
+         link: /tanfolyamok/
+         text: Tanfolyamaink
       reversed: false
 ---

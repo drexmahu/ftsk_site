@@ -1,4 +1,10 @@
-<section class="cta-two ftsk-cta" id="tanfolyam-2027">
+{{ $show := true }}
+{{ with .data_gated }}
+  {{ $entry := index hugo.Data . }}
+  {{ $show = $entry.active }}
+{{ end }}
+{{ if $show }}
+<section class="cta-two ftsk-cta"{{ with .anchor_id }} id="{{ . }}"{{ end }}>
   <div class="container">
     <div class="ftsk-cta-card">
       {{ with .eyebrow }}<span class="ftsk-cta-eyebrow">{{ . }}</span>{{ end }}
@@ -13,3 +19,4 @@
     </div>
   </div>
 </section>
+{{ end }}

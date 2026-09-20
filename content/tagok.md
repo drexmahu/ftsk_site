@@ -107,8 +107,8 @@ content_blocks:
     title: "Te is a "
     title_suffix: "csapatunk tagja lennél?"
     description: >-
-      Vedd fel velünk a kapcsolatot, vagy jelentkezz a 2027-es alapfokú
-      barlangász tanfolyamunkra!
+      Vedd fel velünk a kapcsolatot, vagy jelentkezz alapfokú barlangász
+      tanfolyamunkra!
     link:
       text: Kapcsolatfelvétel
       url: /kapcsolat/

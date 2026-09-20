@@ -16,9 +16,12 @@ blueprint:
     A tanfolyam részletes leírása hamarosan érkezik. Addig is jelezd nálunk az
     érdeklődésed elérhetőségeinken, és elmondjuk a részleteket.
   link:
-    text: Érdeklődöm
-    url: /kapcsolat/
+    text: Bővebben
+    url: /tanfolyamok/tanfolyam-2027/
   note: A pontos jelentkezési határidőt és a tanfolyam díját később tesszük közzé.
+  # Optional: name of a /data/*.yaml file with an `active: true/false` field.
+  # When set, this whole section is hidden while that flag is false.
+  data_gated:
 
 preview:
 

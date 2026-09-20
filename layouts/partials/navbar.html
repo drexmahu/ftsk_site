@@ -103,22 +103,26 @@
                         </li>
                     {{ end }}
                     {{ if .enable_nav_btn }}
-                        <li class="nav-item d-xl-none">
-                        {{ with .nav_btn }}
-                            <a href="{{.link}}" class="btn btn-sm btn-links">{{.text}}</a>
+                        {{ with hugo.Data.tanfolyam }}
+                            {{ if .active }}
+                                <li class="nav-item d-xl-none">
+                                    <a href="{{ .url }}" class="btn btn-sm btn-links">{{ .nav_text }}</a>
+                                </li>
+                            {{ end }}
                         {{ end }}
-                        </li>
                     {{ end }}
                 </ul>
             </div> 
             {{ if .enable_nav_btn }}
-                <div class="d-none d-xl-block">
-                    <div class="nav-item">
-                    {{ with .nav_btn }}
-                    <a href="{{.link}}" class="btn btn-sm btn-links">{{.text}}</a>
+                {{ with hugo.Data.tanfolyam }}
+                    {{ if .active }}
+                        <div class="d-none d-xl-block">
+                            <div class="nav-item">
+                                <a href="{{ .url }}" class="btn btn-sm btn-links">{{ .nav_text }}</a>
+                            </div>
+                        </div>
                     {{ end }}
-                    </div>
-                </div> 
+                {{ end }}
             {{ end }}
         </div>
     </nav>

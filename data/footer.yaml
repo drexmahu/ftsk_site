@@ -22,6 +22,8 @@ sections:
     links:
       - link: "/turak"
         text: "Túrabeszámolók"
+      - link: "/tanfolyamok"
+        text: "Tanfolyamaink"
       - link: "/galeria"
         text: "Galéria"
       - link: "/linkek"

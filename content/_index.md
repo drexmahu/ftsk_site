@@ -21,6 +21,7 @@ content_blocks:
          url: /egyesuletunk/
    -
       _bookshop_name: global/cta
+      data_gated: tanfolyam
       eyebrow: Új tanfolyam
       title: "Jelentkezz a "
       title_suffix: "2027-es alapfokú barlangász tanfolyamunkra!"
@@ -28,8 +29,8 @@ content_blocks:
          A tanfolyam részletes leírása hamarosan érkezik. Addig is jelezd
          nálunk az érdeklődésed elérhetőségeinken, és elmondjuk a részleteket.
       link:
-         text: Érdeklődöm
-         url: /kapcsolat/
+         text: Bővebben
+         url: /tanfolyamok/tanfolyam-2027/
       note: A pontos jelentkezési határidőt és a tanfolyam díját később tesszük közzé.
    -
       _bookshop_name: global/header
@@ -74,7 +75,7 @@ content_blocks:
          pedig kanyoning túrákon is részt veszünk - ebből nőtte ki magát a
          mai Magyar Kanyoning Sportegyesület is.
       btn:
-         link: /#tanfolyam-2027
-         text: Tanfolyam 2027
+         link: /tanfolyamok/
+         text: Tanfolyamaink
       reversed: false
 ---

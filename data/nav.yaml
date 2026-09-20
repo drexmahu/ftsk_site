@@ -39,6 +39,3 @@ items:
     enable_dropdown: false
     dropdown:
 enable_nav_btn: true
-nav_btn:
-  link: /#tanfolyam-2027
-  text: Tanfolyam 2027
