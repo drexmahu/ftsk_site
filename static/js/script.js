@@ -32,6 +32,39 @@ $(document).ready(function () {
       mainClass: 'mfp-fade',
    });
 
+   // Member tile popup
+   $('.ftsk-members-grid').on('click', '.ftsk-members-tile', function () {
+      var $tile = $(this);
+      var name = $tile.data('name');
+      var $modal = $('#ftsk-member-modal');
+
+      $modal.find('.ftsk-member-modal-name').text(name);
+      $modal.find('.ftsk-member-modal-group').text($tile.data('group'));
+
+      var bio = $tile.data('bio');
+      $modal.find('.ftsk-member-modal-bio').text(bio || '').toggleClass('d-none', !bio);
+
+      var $avatar = $modal.find('.ftsk-member-modal-avatar').empty();
+      var image = $tile.data('image');
+      if (image) {
+         $avatar.attr('class', 'ftsk-member-modal-avatar');
+         $('<img>').attr({ src: image, alt: name, loading: 'lazy' }).appendTo($avatar);
+      } else {
+         $avatar.attr(
+            'class',
+            'ftsk-member-modal-avatar ftsk-member-modal-avatar--initials ftsk-avatar-' + $tile.data('avatar-color')
+         );
+         $('<span>').addClass('ftsk-member-modal-initials').text($tile.data('initials')).appendTo($avatar);
+      }
+
+      $.magnificPopup.open({
+         items: { src: '#ftsk-member-modal' },
+         type: 'inline',
+         mainClass: 'mfp-fade ftsk-member-mfp',
+         closeOnBgClick: true,
+      });
+   });
+
    const counterUp = window.counterUp.default
 
 const callback = entries => {

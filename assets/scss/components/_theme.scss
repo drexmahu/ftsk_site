@@ -107,6 +107,18 @@ html {
   border-color: var(--border-subtle);
 }
 
+// Túra card ("blog-post") - border/shadow tint + hover surface, layout lives in _blog.scss
+.blog-post {
+  border: 1px solid var(--border-subtle);
+}
+.blog-post:hover {
+  border-color: var(--border-strong);
+  background: var(--bg-surface-hover);
+}
+.blog-post-date {
+  color: var(--text-muted);
+}
+
 // Counter-up stat sections
 .counter-up-two {
   background: var(--bg-page);

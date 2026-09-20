@@ -47,20 +47,42 @@
    // start block section
    &-post {
       position: relative;
-      margin-bottom: $base-margin * 3.2;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 14px 30px -14px rgba(0, 0, 0, 0.35);
+      transition: transform 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
+      &:hover {
+         transform: translateY(-6px);
+         box-shadow: 0 26px 45px -16px rgba(0, 0, 0, 0.45);
+         .blog-post-thumb img {
+            transform: scale(1.06);
+         }
+         .blog-post-title a {
+            color: $color-primary;
+         }
+      }
       &-thumb {
-         border-radius: 20px;
-         margin-bottom: $base-margin * 1.9;
+         margin-bottom: 0;
          overflow: hidden;
+         a {
+            display: block;
+         }
          img {
             transform: scale(1) rotate(0deg);
-            border-radius: 20px;
             width: 100%;
-            transition: 0.5s ease-in-out;
+            height: 230px;
+            object-fit: cover;
+            transition: transform 0.5s ease-in-out;
          }
-         :hover {
-            transform: scale(1.02);
-         }
+      }
+      &-content {
+         flex-grow: 1;
+         display: flex;
+         flex-direction: column;
+         padding: $base-padding * 1.6 $base-padding * 1.6 $base-padding * 1.8;
       }
       &-tag {
          a {
@@ -76,26 +98,34 @@
          }
       }
       &-title {
+         margin-top: auto;
          a {
             color: $color-text;
-            font-size: 26px;
+            font-size: 22px;
             font-family: $font-primary;
             font-weight: 600;
-            line-height: 32.5px;
+            line-height: 30px;
             text-decoration: none;
-            margin-bottom: $base-margin * 1.1;
+            margin-bottom: 0;
             display: block;
-            transition: all 0.3s ease-in-out;
+            transition: color 0.3s ease-in-out;
             @include media-breakpoint-down-xl {
-               font-size: 22px;
+               font-size: 20px;
             }
             @include media-breakpoint-down-md {
-               font-size: 26px;
+               font-size: 22px;
             }
             &:hover {
                color: $color-primary;
             }
          }
+      }
+      &-date {
+         margin-top: $base-margin * 0.9;
+         font-size: 13px;
+         font-weight: 300;
+         font-family: $font-primary;
+         color: $color-text-light;
       }
       &-meta {
          ul {

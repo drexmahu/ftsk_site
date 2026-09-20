@@ -128,23 +128,149 @@
   font-weight: 700;
 }
 .ftsk-members-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 140px));
+  justify-content: center;
+  gap: 16px;
 }
-.ftsk-members-chip {
-  padding: 8px 18px;
-  border-radius: 999px;
+.ftsk-members-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 20px 10px 16px;
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  color: inherit;
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.25s ease, border-color 0.25s ease, background 0.25s ease,
+    box-shadow 0.25s ease;
+  &:hover,
+  &:focus-visible {
+    transform: translateY(-4px);
+    border-color: $color-primary;
+    background: var(--bg-surface-hover);
+    box-shadow: 0 14px 26px -14px rgba(0, 0, 0, 0.5);
+    outline: none;
+  }
+}
+.ftsk-members-avatar {
+  width: 60px;
+  height: 60px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  overflow: hidden;
+  font-family: $font-secondary;
+  font-weight: 700;
+  font-size: 1.05rem;
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+.ftsk-members-name {
+  font-size: 0.85rem;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--text-body);
+}
+
+// Deterministic decorative palette for initials avatars that have no photo yet
+.ftsk-avatar-0 {
+  background: $color-primary;
+  color: var(--bg-page);
+}
+.ftsk-avatar-1 {
+  background: $color-anchor;
+  color: var(--bg-page);
+}
+.ftsk-avatar-2 {
+  background: $color-tertiary;
+  color: $color-secondary;
+}
+.ftsk-avatar-3 {
+  background: $color-quaternary;
+  color: $color-secondary;
+}
+.ftsk-avatar-4 {
+  background: $color-abyss;
+  color: $color-secondary;
+}
+
+// Member detail popup (Magnific Popup inline content)
+.ftsk-member-modal {
+  position: relative;
+  width: 100%;
+  max-width: 380px;
+  margin: 40px auto;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 20px;
+  overflow: hidden;
+  text-align: center;
+  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.6);
+}
+// Real photo: rectangular, full-bleed across the top, height follows the photo's own
+// aspect ratio (no forced crop) but is capped so an oversized/very tall photo can't
+// blow up the whole modal - object-fit only kicks in once that cap clips the height.
+.ftsk-member-modal-avatar {
+  width: 100%;
+  img {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: unquote('min(45vh, 340px)');
+    object-fit: cover;
+  }
+  // No photo: fall back to a fixed-ratio rectangle filled with the initials color
+  &--initials {
+    aspect-ratio: 16 / 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: $font-secondary;
+    font-weight: 700;
+    font-size: 2.4rem;
+  }
+}
+.ftsk-member-modal-body {
+  padding: 24px 32px 34px;
+}
+.ftsk-member-modal-name {
+  margin-bottom: 8px;
+  font-size: 1.3rem;
+}
+.ftsk-member-modal-group {
+  display: inline-block;
+  padding: 4px 14px;
+  margin-bottom: 14px;
+  border-radius: 999px;
+  background: rgba(190, 160, 112, 0.16);
+  border: 1px solid rgba(190, 160, 112, 0.4);
+  color: $color-primary;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.ftsk-member-modal-bio {
+  margin: 0;
   color: var(--text-body);
   font-size: 0.95rem;
-  font-weight: 500;
-  transition: all 0.2s ease-in-out;
+  line-height: 1.6;
 }
-.ftsk-members-chip:hover {
-  border-color: $color-primary;
-  color: $color-primary;
+.ftsk-member-mfp .mfp-close {
+  color: $color-secondary;
+  opacity: 0.8;
+  &:hover {
+    opacity: 1;
+  }
 }
 
 .ftsk-gallery {

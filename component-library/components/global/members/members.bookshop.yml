@@ -14,9 +14,16 @@ blueprint:
     - label: Elnökség
       members:
         - name: Példa Névsor
+          image:
+          bio:
 
 preview:
 
 _inputs:
   description:
     type: markdown
+  groups[*].members[*].image:
+    type: image
+  groups[*].members[*].bio:
+    type: text
+    comment: Rövid, opcionális leírás - csak akkor jelenik meg, ha ki van töltve.
