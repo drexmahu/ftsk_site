@@ -4,7 +4,7 @@
 {{ with hugo.Data.nav }}
 
 <header>
-    <nav class="navbar navbar-expand-lg position-fixed w-100 zindex-dropdown" id="mainnavigationBar">
+    <nav class="navbar navbar-expand-xl position-fixed w-100 zindex-dropdown" id="mainnavigationBar">
         <div class="container-fluid">
             <a class="navbar-brand" href="/">
                 <img src="{{ .logo }}" alt="Nav-Logo" />
@@ -84,7 +84,7 @@
             </span>
          </button>
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                <ul class="navbar-nav mx-auto mb-20 mb-lg-0">
+                <ul class="navbar-nav mx-auto mb-20 mb-xl-0">
                     {{ range .items }}
                         {{ $url := .link }}
                         <li class="nav-item dropdown">
@@ -102,10 +102,17 @@
                             {{ end }}
                         </li>
                     {{ end }}
+                    {{ if .enable_nav_btn }}
+                        <li class="nav-item d-xl-none">
+                        {{ with .nav_btn }}
+                            <a href="{{.link}}" class="btn btn-sm btn-links">{{.text}}</a>
+                        {{ end }}
+                        </li>
+                    {{ end }}
                 </ul>
             </div> 
             {{ if .enable_nav_btn }}
-                <div class="d-none d-lg-block">
+                <div class="d-none d-xl-block">
                     <div class="nav-item">
                     {{ with .nav_btn }}
                     <a href="{{.link}}" class="btn btn-sm btn-links">{{.text}}</a>

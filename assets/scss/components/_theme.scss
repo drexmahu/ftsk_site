@@ -58,6 +58,8 @@ html {
 .about-hero-one,
 .about-hero-two,
 .contact-hero,
+.feature-hero,
+.feature-hero-two,
 .faq,
 .faq-two,
 .pricing-inner,
@@ -155,7 +157,8 @@ html {
 .team-member-details h3,
 .contact-form-Information .address .item a,
 .pricing .price,
-.cta-two .section-header h2 {
+.cta-two .section-header h2,
+.error-content h3 {
   color: var(--text-heading);
 }
 
@@ -166,7 +169,7 @@ html {
   background: var(--nav-scroll-bg);
   box-shadow: 0px 4px 30px var(--shadow-ambient);
 }
-@include media-breakpoint-down-lg {
+@include media-breakpoint-down-xl {
   .navbar {
     background: var(--bg-page);
   }

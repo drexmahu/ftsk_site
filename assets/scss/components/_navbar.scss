@@ -8,31 +8,37 @@
   align-items: center;
   justify-content: space-between; // space out brand from logo
   padding-top: 1.5rem;
-  padding-right: 5.4rem; // default: null
+  padding-right: 3.5rem; // default: null
   padding-bottom: 1.5rem;
-  padding-left: 5.4rem; // default: null
+  padding-left: 3.5rem; // default: null
   background-color: none;
   z-index: 1000;
   transition: all 0.3s cubic-bezier(0.36, 0.03, 0, 0.91);
 
+  // Below xxl the nav links + CTA need every spare pixel to stay on one
+  // line down to the xl collapse breakpoint, so padding shrinks here too.
   @include media-breakpoint-down-xxl {
-     padding-left: 2.4rem;
-     padding-right: 2.4rem;
-  }
-  @include media-breakpoint-only-lg {
-     padding-left: 1.5rem;
-     padding-right: 1.5rem;
-     .btn-links {
-        padding: 0.75rem 1rem;
-     }
+     padding-left: 1.25rem;
+     padding-right: 1.25rem;
   }
 
   // Navbar button position fixing
   .nav-item {
      list-style: none;
   }
+
+  // The shared .btn-sm padding (0.9rem 1.9rem) is too wide for the CTA to
+  // share a row with 8 nav links between the xl and xxl breakpoints.
+  .btn-links {
+     padding: 0.6rem 1rem;
+  }
+  @include media-breakpoint-only-xl {
+     .btn-links {
+        padding: 0.5rem 0.75rem;
+     }
+  }
 }
-@include media-breakpoint-down-lg {
+@include media-breakpoint-down-xl {
   .navbar {
      margin: $base-margin * 0;
      padding: 1.5rem;
@@ -77,15 +83,15 @@
   list-style: none;
   justify-content: center;
   align-items: center;
-  @include media-breakpoint-down-lg {
+  @include media-breakpoint-down-xl {
      margin-top: $base-margin * 4.5 !important;
      justify-content: start;
      align-items: start;
      // height: calc(100vh - 76px);
   }
   .nav-link {
-     padding-right: $base-padding !important;
-     padding-left: $base-padding !important;
+     padding-right: 0.5rem !important;
+     padding-left: 0.5rem !important;
      display: flex;
      align-items: center;
      font-weight: $regular-font-weight;
@@ -98,9 +104,15 @@
      &:hover {
         color: $color-primary;
      }
-     @include media-breakpoint-only-lg {
-        padding-right: 0.75rem !important;
-        padding-left: 0.75rem !important;
+  }
+
+  // 1200-1399px is the tightest single-row zone (right at the xl collapse
+  // breakpoint), so nav-links get a touch less padding/font-size here only.
+  @include media-breakpoint-only-xl {
+     .nav-link {
+        padding-right: 0.2rem !important;
+        padding-left: 0.2rem !important;
+        font-size: $base-font-size;
      }
   }
 
@@ -185,7 +197,7 @@
   }
 
   /* Dropdown Menu for large screen */
-  @include media-breakpoint-up-lg {
+  @include media-breakpoint-up-xl {
      .dropdown {
         .dropdown-menu {
            display: block;
@@ -210,7 +222,7 @@
 
   /* Dropdown Menu for Small screen */
 
-  @include media-breakpoint-down-lg {
+  @include media-breakpoint-down-xl {
      .nav-link {
         margin-bottom: 1.9rem;
         padding: 0;
@@ -289,7 +301,7 @@
   z-index: 1000;
 }
 
-@include media-breakpoint-down-lg {
+@include media-breakpoint-down-xl {
   .sticky-nav {
      padding: $base-padding * 1.5 !important;
   }
@@ -329,26 +341,6 @@
 }
 .navbar-toggler[aria-expanded='true'] .navbar-toggler-toggled {
   display: flex;
-  position: absolute;
-  bottom: 0;
-  left: 50px;
-  background: $color-header;
-  color: $color-white;
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
   align-items: center;
-  line-height: 60px;
   justify-content: center;
-  margin-bottom: 50px;
-  @include media-breakpoint-down-sm {
-     .sticky-nav {
-        left: 25px;
-     }
-  }
-  svg {
-     path {
-        stroke: $color-white;
-     }
-  }
 }
