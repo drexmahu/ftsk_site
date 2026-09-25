@@ -1,0 +1,60 @@
+name: Build Hugo site
+description: Sets up Go + Hugo and builds this Hugo/Bookshop site. Assumes the repo is already checked out.
+
+inputs:
+  base-url:
+    description: baseURL to build the site with (overrides config.toml)
+    required: true
+  destination:
+    description: Output directory for the built site
+    required: false
+    default: public
+  build-drafts:
+    description: Include draft content (-D)
+    required: false
+    default: "false"
+  build-future:
+    description: Include future-dated content (--buildFuture)
+    required: false
+    default: "false"
+  minify:
+    description: Minify output and garbage-collect the resource cache
+    required: false
+    default: "true"
+  hugo-version:
+    description: Hugo version to install (defaults to the version pinned in .hugo-version, the single source of truth also used by scripts/setup-dev-env.ps1)
+    required: false
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Go (needed to resolve Hugo modules)
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: go.mod
+        cache: true
+
+    - name: Resolve Hugo version
+      shell: bash
+      run: |
+        version="${{ inputs.hugo-version }}"
+        if [ -z "$version" ]; then version="$(cat .hugo-version)"; fi
+        echo "resolved=$version" >> "$GITHUB_OUTPUT"
+      id: hugo-version
+
+    - name: Set up Hugo
+      uses: peaceiris/actions-hugo@v3
+      with:
+        hugo-version: ${{ steps.hugo-version.outputs.resolved }}
+        extended: true
+
+    - name: Build
+      shell: bash
+      run: |
+        set -euo pipefail
+        args=(--destination "${{ inputs.destination }}" --baseURL "${{ inputs.base-url }}")
+        if [ "${{ inputs.minify }}" = "true" ]; then args+=(--minify --gc); fi
+        if [ "${{ inputs.build-drafts }}" = "true" ]; then args+=(-D); fi
+        if [ "${{ inputs.build-future }}" = "true" ]; then args+=(--buildFuture); fi
+        hugo "${args[@]}"

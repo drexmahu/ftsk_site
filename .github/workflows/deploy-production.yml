@@ -1,0 +1,52 @@
+name: Deploy to Production (FTP)
+
+# Manually-triggered only. Publishes the current `main` branch to the live
+# production server over FTP. Requires an environment named "production"
+# (Settings > Environments) holding the FTP_* secrets below - add required
+# reviewers there to get a manual approval gate on top of this trigger.
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "deploy" to publish main to the live production server'
+        required: true
+        type: string
+      dry_run:
+        description: Dry run (simulate the upload, do not change anything on the server)
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false # never cancel a deploy that may be mid-upload
+
+jobs:
+  deploy:
+    if: github.event.inputs.confirm == 'deploy'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Hugo site
+        uses: ./.github/actions/build-site
+        with:
+          base-url: ${{ vars.PRODUCTION_BASE_URL || 'https://www.ftsk.hu/' }}
+          hugo-version: ${{ vars.HUGO_VERSION }}
+
+      - name: Deploy over FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: ${{ secrets.FTP_SERVER_DIR || './' }}
+          port: ${{ vars.FTP_PORT || 21 }}
+          protocol: ${{ vars.FTP_PROTOCOL || 'ftps' }}
+          local-dir: ./public/
+          dry-run: ${{ github.event.inputs.dry_run }}

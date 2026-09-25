@@ -1,0 +1,36 @@
+name: Staging Deploy
+
+# Publishes a shareable, always-up-to-date preview of `main` to GitHub Pages.
+# This is NOT the production site - production is only published manually via
+# the "Deploy to Production (FTP)" workflow.
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: staging-deploy
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Hugo site
+        uses: ./.github/actions/build-site
+        with:
+          base-url: ${{ vars.STAGING_BASE_URL || format('https://{0}.github.io/{1}/', github.repository_owner, github.event.repository.name) }}
+          hugo-version: ${{ vars.HUGO_VERSION }}
+
+      - name: Deploy to gh-pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: public
+          branch: gh-pages
+          clean-exclude: pr-preview # don't delete active PR previews living alongside this deployment
+          force: false # rebase instead of force-pushing so PR previews aren't clobbered

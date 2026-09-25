@@ -1,0 +1,46 @@
+name: CI
+
+# Required status check: validates that every PR still builds with Hugo.
+# A failed build here must block merging (enable this as a required check
+# in Settings > Branches > Branch protection rules for `main`).
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build site
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Hugo site
+        uses: ./.github/actions/build-site
+        with:
+          base-url: ${{ vars.STAGING_BASE_URL || format('https://{0}.github.io/{1}/', github.repository_owner, github.event.repository.name) }}
+          hugo-version: ${{ vars.HUGO_VERSION }}
+          build-drafts: "true"
+          build-future: "true"
+
+      - name: Upload build output
+        uses: actions/upload-artifact@v4
+        with:
+          name: hugo-build-pr-${{ github.event.pull_request.number }}
+          path: public
+          retention-days: 7
+
+      - name: Check for broken internal links
+        uses: lycheeverse/lychee-action@v2
+        continue-on-error: true # advisory only, must not block the merge
+        with:
+          args: --no-progress --exclude-external ./public
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

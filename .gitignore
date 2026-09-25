@@ -12,5 +12,7 @@ hugo.linux
 # Temporary lock file while building
 /.hugo_build.lock
 
+# Pinned tool binaries downloaded by scripts/setup-dev-env.ps1
+/.tools/
 
 /node_modules

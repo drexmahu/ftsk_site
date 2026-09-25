@@ -1,0 +1,42 @@
+name: PR Preview
+
+# Best-effort sandbox deploy of the PR to GitHub Pages, not a required check.
+# Uses https://github.com/rossjrw/pr-preview-action - requires repo Settings >
+# Pages source = "Deploy from a branch" -> gh-pages, and Settings > Actions >
+# General > Workflow permissions = "Read and write permissions".
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, reopened, synchronize, closed]
+
+concurrency:
+  group: pr-preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Hugo site for preview
+        if: github.event.action != 'closed' # no build needed when just tearing the preview down
+        uses: ./.github/actions/build-site
+        with:
+          base-url: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/pr-preview/pr-${{ github.event.pull_request.number }}/
+          hugo-version: ${{ vars.HUGO_VERSION }}
+          build-drafts: "true"
+          build-future: "true"
+
+      - name: Deploy / remove PR preview
+        uses: rossjrw/pr-preview-action@v1
+        with:
+          source-dir: ./public/
+          preview-branch: gh-pages
+          umbrella-dir: pr-preview
+          action: auto
