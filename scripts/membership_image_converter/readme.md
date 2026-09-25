@@ -11,7 +11,10 @@ face-cropped thumbnail and a resized full image.
 ## Use
 
 1. Double-click `run_gui.bat`.
-2. Pick your **input folder** (original photos) and **output folder**.
+2. Pick your **input folder** (original photos). The **output folder**
+   defaults to this site's `static/images/members/` folder (created
+   automatically if it doesn't exist yet) - change it if you want to review
+   the results somewhere else first.
 3. Adjust settings if needed (defaults are fine for most photos).
 4. Click **Start** and watch the log.
 
@@ -41,5 +44,9 @@ Copy the generated files into `static/images/members/` in the repo.
 
 - **"python is not recognized"** - reinstall Python with "Add Python to PATH", or try `py` instead of `python`.
 - **Missing module errors** - rerun `install_dependencies.bat`.
+- **"module 'cv2' has no attribute 'CascadeClassifier'"** - a conflicting
+  OpenCV package (e.g. `opencv-python-headless`) is installed alongside
+  `opencv-python`. Rerun `install_dependencies.bat` - it now removes
+  conflicting OpenCV packages before reinstalling a clean copy.
 
 

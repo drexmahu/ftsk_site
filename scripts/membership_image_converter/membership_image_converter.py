@@ -6,10 +6,31 @@ import numpy as np
 
 SUPPORTED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
 
+# scripts/membership_image_converter/ -> repo root -> static/images/members
+DEFAULT_OUTPUT_FOLDER = Path(__file__).resolve().parents[2] / "static" / "images" / "members"
+
 
 def ask(prompt, default):
     value = input(f"{prompt} [{default}]: ").strip()
     return value if value else default
+
+
+def check_opencv():
+    """
+    Raises a clear, actionable error if OpenCV is installed but broken - the
+    most common cause is having multiple opencv-*-python packages installed
+    at once (e.g. opencv-python + opencv-python-headless), which silently
+    corrupts the shared cv2 namespace and drops attributes like
+    CascadeClassifier without raising an ImportError.
+    """
+
+    if not hasattr(cv2, "CascadeClassifier"):
+        raise RuntimeError(
+            "OpenCV is installed but broken (cv2.CascadeClassifier is missing).\n"
+            "This usually happens when more than one opencv-*-python package is\n"
+            "installed at the same time. Re-run install_dependencies.bat (it now\n"
+            "removes conflicting OpenCV packages before reinstalling a clean copy)."
+        )
 
 
 def detect_largest_face(image):
@@ -211,6 +232,8 @@ def process_folder(
     images is the sorted list of source files that were attempted.
     """
 
+    check_opencv()
+
     input_folder = Path(input_folder).expanduser()
     output_folder = Path(output_folder).expanduser()
 
@@ -266,7 +289,7 @@ def main():
     print()
 
     input_folder = ask("Input folder", "./members-source")
-    output_folder = ask("Output folder", "./members-output")
+    output_folder = ask("Output folder", str(DEFAULT_OUTPUT_FOLDER))
     thumb_size = int(ask("Thumbnail size in pixels", "400"))
     full_width = int(ask("Maximum full-image width", "1400"))
     full_height = int(ask("Maximum full-image height", "1400"))
@@ -284,7 +307,7 @@ def main():
             quality,
             face_fraction,
         )
-    except FileNotFoundError as exc:
+    except (FileNotFoundError, RuntimeError) as exc:
         print(exc)
         return
 

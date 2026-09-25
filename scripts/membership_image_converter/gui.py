@@ -8,7 +8,7 @@ import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox, scrolledtext, ttk
 
-from membership_image_converter import process_folder
+from membership_image_converter import DEFAULT_OUTPUT_FOLDER, process_folder
 
 
 class App(tk.Tk):
@@ -19,7 +19,7 @@ class App(tk.Tk):
         self.running = False
 
         self.input_var = tk.StringVar(value="./members-source")
-        self.output_var = tk.StringVar(value="./members-output")
+        self.output_var = tk.StringVar(value=str(DEFAULT_OUTPUT_FOLDER))
         self.thumb_size_var = tk.IntVar(value=400)
         self.full_width_var = tk.IntVar(value=1400)
         self.full_height_var = tk.IntVar(value=1400)
@@ -152,8 +152,11 @@ class App(tk.Tk):
                 log=log,
                 on_progress=progress,
             )
-        except FileNotFoundError as exc:
+        except (FileNotFoundError, RuntimeError) as exc:
             self.after(0, self._finish, str(exc))
+            return
+        except Exception as exc:
+            self.after(0, self._finish, f"Unexpected error: {exc}")
             return
 
         if not images:

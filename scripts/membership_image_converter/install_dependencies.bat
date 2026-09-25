@@ -48,8 +48,12 @@ echo Installing Pillow...
 if errorlevel 1 goto :install_failed
 
 echo.
+echo Removing any conflicting OpenCV packages (having more than one installed
+echo at once corrupts cv2, causing errors like "no attribute CascadeClassifier")...
+%PYTHON_CMD% -m pip uninstall -y opencv-python opencv-python-headless opencv-contrib-python opencv-contrib-python-headless >nul 2>nul
+
 echo Installing OpenCV...
-%PYTHON_CMD% -m pip install opencv-python
+%PYTHON_CMD% -m pip install --no-cache-dir opencv-python
 if errorlevel 1 goto :install_failed
 
 echo.
