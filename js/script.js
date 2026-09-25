@@ -65,6 +65,34 @@ $(document).ready(function () {
       });
    });
 
+   // Hero banner slideshow: slow Ken Burns crossfade, looping circularly.
+   // The pan animation itself is pure CSS (see .ftsk-hero-slide in
+   // _hero.scss) - this just swaps which slide has the "is-active" class.
+   $('.ftsk-hero-slideshow').each(function () {
+      var $slides = $(this).find('.ftsk-hero-slide');
+      if ($slides.length < 2) {
+         return;
+      }
+
+      var current = $slides.filter('.is-active').first().index();
+      if (current < 0) {
+         current = 0;
+      }
+
+      var reduceMotion =
+         window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      setInterval(
+         function () {
+            var next = (current + 1) % $slides.length;
+            $slides.eq(current).removeClass('is-active');
+            $slides.eq(next).addClass('is-active');
+            current = next;
+         },
+         reduceMotion ? 7000 : 6000
+      );
+   });
+
    const counterUp = window.counterUp.default
 
 const callback = entries => {
