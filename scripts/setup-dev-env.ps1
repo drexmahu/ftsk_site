@@ -87,7 +87,7 @@ try {
             Write-Host "Node OK: $installedNode" -ForegroundColor Green
         }
     } else {
-        Write-Warning "Node.js was not found on PATH. It's only needed for the CloudCannon/Bookshop live component preview, not for plain Hugo builds. Install it from https://nodejs.org/ (or 'winget install OpenJS.NodeJS.LTS') if you want that, then re-run this script."
+        Write-Warning "Node.js was not found on PATH. It's only needed for the Bookshop live component preview, not for plain Hugo builds. Install it from https://nodejs.org/ (or 'winget install OpenJS.NodeJS.LTS') if you want that, then re-run this script."
     }
 
     # ---- Ensure pinned Hugo (extended) is available locally ----
