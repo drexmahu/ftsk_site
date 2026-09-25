@@ -1,0 +1,2 @@
+{{/* PDF links (e.g. tour report attachments) open in a new tab; everything else renders as a plain link. */}}
+<a href="{{ .Destination | safeURL }}"{{ with .Title }} title="{{ . }}"{{ end }}{{ if strings.HasSuffix .Destination ".pdf" }} target="_blank" rel="noopener noreferrer"{{ end }}>{{ .Text }}</a>

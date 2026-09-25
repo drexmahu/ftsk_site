@@ -15,95 +15,89 @@ content_blocks:
       Büszkék vagyunk aktív és lelkes tagságunkra. Az alábbiakban tagjainkat
       tagsági kategóriák szerint csoportosítva mutatjuk be.
     groups:
-      - label: Elnökség
+      - label: Vezetőség
         members:
           - name: Gyovai Tamás (elnök)
             image: /images/members/gyovai_tamas_thumb.webp
             modal_image: /images/members/gyovai_tamas_full.webp
-          - name: Kovács Krisztina (elnökhelyettes)
-          - name: Kalotai Zsófia (elnökségi tag)
-      - label: Örökös tagok
-        members:
-          - name: Horváth János (Jancsi bácsi)
-          - name: Vidics Zoltánné (Eri mama)
-          - name: Zsólyomi Zsolt (Frédi)
-      - label: Tiszteletbeli tagok
-        members:
-          - name: Czirják Ferenc (Fefe)
+          - name: Kalotai Zsófia (elnökségi tag, pénztáros)
+          - name: Rehány Nikolett (elnökségi tag)
+          - name: Fialowski Melinda (raktáros)
       - label: Rendes tagok
         members:
+          - name: Ábrahám Gábor
           - name: Bacsó Gábor
-          - name: Barabás Judit
-          - name: Barati Judit (Kuckó)
-          - name: Bartus Katalin
-          - name: Bodó Adrienn
-          - name: Brunner András (Bendő)
-          - name: Cziráky Anna
-          - name: Csiky Gergely
-          - name: Dombi Marianna
-          - name: Énekes Klaudia
-          - name: Fialowski Melinda
-          - name: Gólya Barbara
-          - name: Gólya Bernadett (Detti)
+          - name: Balázs Zoltán
+          - name: Borsos-Szabó Bálint (Zeusz)
+          - name: Czumbel Péter
+          - name: dr. Zádor Zsófia Erzsébet (Zudi)
+          - name: Drexler Máté (Drex)
           - name: Gyarmathy Ákos
-          - name: Hamar Éva
-          - name: Huszár Péter
-          - name: Juhász Anna
-          - name: Katona József (Josi)
-          - name: Karsay Dávid
+          - name: György Bence
+          - name: Huszár Péter (Yeti)
+          - name: Kadlec Gergely
+          - name: Kámvás Linda
           - name: Kántor Zsolt (Zsé)
+          - name: Kapodisztria Lena
           - name: Kertész Dániel
-          - name: Kiszely Tamás
-          - name: Kneipp Dávid
           - name: Konkoly Péter
-          - name: Kosziba Andrea
+          - name: Kovács Dániel (Damó)
           - name: Kovács Ferenc
+          - name: Kovács Imre
+          - name: Kovács Krisztina
+          - name: Kováts Gábor
+          - name: Kralovánszki Ádám (Kralo)
+          - name: Kukoda Orsolya
+          - name: Kun Imre (Bástya)
+          - name: Laták Rudolf
+          - name: Lőrincz Győző
+          - name: Lőrincz Vajk
+          - name: Magyar Péter
+          - name: Mezei Eszter
+          - name: Mihályi Tibor (Gebe)
+          - name: Miklós Barnabás
+          - name: Nagy Eszter
+          - name: Prakfalvi András (Praki)
+          - name: Sándor Ágnes
+          - name: Sas Dorottya
+          - name: Soltész Árpád
+          - name: Szieberth Dénes
+          - name: Tóth Ábris
+          - name: Tóth Csilla
+          - name: Turi László
+          - name: Varga Gábor
+      - label: Pártoló tagok
+        members:
+          - name: Brunner András
+          - name: Ekés Bálint
+          - name: Énekes Klaudia
+          - name: Gólya Bernadett (Detti)
+          - name: Hamar Éva
+          - name: Juhász Anna
+          - name: Kosziba Andrea
           - name: Kováts Boglárka
           - name: Kozek András
           - name: Köblös Csaba
-          - name: Köblös Gabriella
-          - name: Kukoda Orsolya
-          - name: Kun Imre (Bástya)
           - name: Lempochner Lili
-          - name: Lőricz Győző
-          - name: Magyar Péter
-          - name: Magyar Zsuzsanna
-          - name: Molnár Béla Péter
-          - name: Mihályi Tibor
-          - name: Nagy Eszter
-          - name: Német Tamás
+          - name: Péterfia Klári
           - name: Pintér Gábor (Pinti)
           - name: Rádi Károly
-          - name: Rehány Nikolett
-          - name: Soltész Árpád
+          - name: Sajtos Péter
+          - name: Seiben Gabriella
+          - name: Sojnóczki Annamária (Pötyi)
+          - name: Soltész Abigél
           - name: Szaniszló Anita
-          - name: Tóth Csilla
-          - name: Tóth Janka
-          - name: Turi László
-          - name: Urbán Ádám
           - name: Vajda Gábor
-          - name: Varga Gábor
-          - name: Vértes Gábor
-          - name: Viczián Zsolt
           - name: Zsólyomi Andrea
           - name: Zsólyomi Zsófia
-      - label: Pártoló tagok
+      - label: Tiszteletbeli tagok
         members:
-          - name: Ekés Bálint
-          - name: Fercsik Gábor
-          - name: Kovács Dániel
-          - name: Kovács Imre
-          - name: Kralovánszki Ádám
-          - name: Lempochner Dávid
-          - name: Péterfia Klára
-          - name: Sajtos Péter
-          - name: Sándor Ágnes
-          - name: Sáfár Eszter
-          - name: Seiben Gabriella
-          - name: Soltész Abigél
-          - name: Szomyú Zsolt
-          - name: Varga Bogi
-          - name: Varga Viktória
+          - name: Czirják Ferenc
+      - label: Örökös tagok
+        members:
+          - name: Horváth János (Jancsi bácsi)
+          - name: Vidics Zoltánni (Erimama)
+          - name: Zsólyomi Zsolt (Frédi)
   - _bookshop_name: global/cta
     eyebrow: Csatlakoznál?
     title: "Te is a "

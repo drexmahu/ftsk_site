@@ -18,10 +18,16 @@ items:
     dropdown:
       - dropdown_text: Összes beszámoló
         dropdown_link: /turak
+      - dropdown_text: Túra
+        dropdown_link: /categories/tura
       - dropdown_text: Kutatás
         dropdown_link: /categories/kutatas
       - dropdown_text: Expedíció
         dropdown_link: /categories/expedicio
+      - dropdown_text: Kanyoning
+        dropdown_link: /categories/kanyoning
+      - dropdown_text: Szemétszedés
+        dropdown_link: /categories/szemetszedes
   - link: /galeria/
     text: Galéria
     enable_dropdown: false
