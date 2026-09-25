@@ -209,7 +209,7 @@
 .ftsk-member-modal {
   position: relative;
   width: 100%;
-  max-width: 380px;
+  max-width: 460px;
   margin: 40px auto;
   background: var(--bg-surface);
   border: 1px solid var(--border-strong);
@@ -221,13 +221,15 @@
 // Real photo: rectangular, full-bleed across the top, height follows the photo's own
 // aspect ratio (no forced crop) but is capped so an oversized/very tall photo can't
 // blow up the whole modal - object-fit only kicks in once that cap clips the height.
+// Uses modal_image when set (lets an off-center-face tile photo have a better-composed
+// large counterpart), falling back to the tile's image otherwise.
 .ftsk-member-modal-avatar {
   width: 100%;
   img {
     display: block;
     width: 100%;
     height: auto;
-    max-height: unquote('min(45vh, 340px)');
+    max-height: unquote('min(55vh, 420px)');
     object-fit: cover;
   }
   // No photo: fall back to a fixed-ratio rectangle filled with the initials color

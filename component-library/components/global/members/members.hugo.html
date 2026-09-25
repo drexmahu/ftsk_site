@@ -27,6 +27,7 @@
           data-initials="{{ $initials | upper }}"
           data-avatar-color="{{ $colorIdx }}"
           {{ with .image }}data-image="{{ . }}"{{ end }}
+          {{ with .modal_image }}data-modal-image="{{ . }}"{{ end }}
           {{ with .bio }}data-bio="{{ . }}"{{ end }}
         >
           <span class="ftsk-members-avatar ftsk-avatar-{{ $colorIdx }}">

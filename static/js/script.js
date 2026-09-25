@@ -45,7 +45,7 @@ $(document).ready(function () {
       $modal.find('.ftsk-member-modal-bio').text(bio || '').toggleClass('d-none', !bio);
 
       var $avatar = $modal.find('.ftsk-member-modal-avatar').empty();
-      var image = $tile.data('image');
+      var image = $tile.data('modal-image') || $tile.data('image');
       if (image) {
          $avatar.attr('class', 'ftsk-member-modal-avatar');
          $('<img>').attr({ src: image, alt: name, loading: 'lazy' }).appendTo($avatar);

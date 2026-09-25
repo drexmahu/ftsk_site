@@ -15,6 +15,7 @@ blueprint:
       members:
         - name: Példa Névsor
           image:
+          modal_image:
           bio:
 
 preview:
@@ -24,6 +25,13 @@ _inputs:
     type: markdown
   groups[*].members[*].image:
     type: image
+    comment: Kis kör alakú előnézeti kép a névsor csempén. Ha üres, monogram jelenik meg helyette.
+  groups[*].members[*].modal_image:
+    type: image
+    comment: >-
+      Nagyobb kép a névre kattintva megnyíló ablakban. Ha üres, az előnézeti kép
+      (image) jelenik meg helyette. Külön kép megadása hasznos, ha az előnézeti
+      kép szoros körvágása miatt az arc nincs középen.
   groups[*].members[*].bio:
     type: text
     comment: Rövid, opcionális leírás - csak akkor jelenik meg, ha ki van töltve.
