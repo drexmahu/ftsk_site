@@ -15,4 +15,7 @@ hugo.linux
 # Pinned tool binaries downloaded by scripts/setup-dev-env.ps1
 /.tools/
 
+# Python bytecode cache (scripts/membership_image_converter/)
+__pycache__/
+
 /node_modules
