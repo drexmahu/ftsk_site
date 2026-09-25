@@ -6,38 +6,58 @@
   <div class="hero-two-media">
     <div class="ftsk-hero-slideshow">
       {{ range $index, $slide := .images }}
-      {{ $zoomFrom := $slide.zoom | default 1.35 }}
-      {{ $zoomTo := $slide.zoom_to | default $zoomFrom }}
-      {{ $panAmount := 6.0 }}
-      {{ if isset $slide "pan_amount" }}{{ $panAmount = $slide.pan_amount }}{{ end }}
-      {{ $duration := $slide.duration | default 12 }}
-      {{ $focus := $slide.focus | default "50% 50%" }}
-      {{ $isPortrait := eq $slide.orientation "portrait" }}
-      {{ $panX := 0.0 }}{{ $panY := 0.0 }}
-      {{ if $isPortrait }}{{ $panY = $panAmount }}{{ else }}{{ $panX = $panAmount }}{{ end }}
+      {{/* "start" = the zoomed-in/moved starting point (static crop) - "animation" =
+           what happens from that point on (type/direction/amount/duration). See
+           data/hero_images.yaml's header comment for the full field docs. */}}
+      {{ $startZoom := 1.35 }}
+      {{ $startFocus := "50% 50%" }}
+      {{ with $slide.start }}
+        {{ $startZoom = .zoom | default 1.35 }}
+        {{ $startFocus = .focus | default "50% 50%" }}
+      {{ end }}
+      {{ $animType := "pan" }}
+      {{ $animDirection := "right" }}
+      {{ $animAmount := 6.0 }}
+      {{ $duration := 12.0 }}
+      {{ with $slide.animation }}
+        {{ $animType = .type | default "pan" }}
+        {{ $animDirection = .direction | default "right" }}
+        {{ if isset . "amount" }}{{ $animAmount = .amount }}{{ end }}
+        {{ $duration = .duration | default 12 }}
+      {{ end }}
       {{ $hideBelow := $slide.hide_below }}
+      {{ $anim := partial "hero-animation.html" (dict "zoom" $startZoom "type" $animType "direction" $animDirection "amount" $animAmount) }}
 
       {{/* Per-breakpoint overrides (data/hero_images.yaml's `mobile`/`tablet` maps) are
            emitted as extra "-mobile"/"-tablet" suffixed custom properties alongside the
            base ones above - _hero.scss's static media queries pick whichever applies at
-           the current viewport, so no per-slide dynamic CSS is needed here. */}}
-      {{ $style := printf "--ftsk-hero-zoom: %v; --ftsk-hero-zoom-to: %v; --ftsk-hero-pan-x: %v; --ftsk-hero-pan-y: %v; --ftsk-hero-duration: %vs; --ftsk-hero-focus: %s;" $zoomFrom $zoomTo $panX $panY $duration $focus }}
+           the current viewport, so no per-slide dynamic CSS is needed here. Since
+           changing `type` alone changes which channels move at all, each tier that has
+           ANY override gets its FULL animation recomputed and re-emitted (not just the
+           one field that changed), or a mobile `type: zoom-in` override would still
+           show the base tier's leftover pan/rotate on top of the new zoom. */}}
+      {{ $style := printf "--ftsk-hero-zoom-from: %v; --ftsk-hero-zoom-to: %v; --ftsk-hero-pan-x-from: %v; --ftsk-hero-pan-x-to: %v; --ftsk-hero-pan-y-from: %v; --ftsk-hero-pan-y-to: %v; --ftsk-hero-rotate-from: %vdeg; --ftsk-hero-rotate-to: %vdeg; --ftsk-hero-duration: %vs; --ftsk-hero-focus: %s;" $anim.zoomFrom $anim.zoomTo $anim.panXFrom $anim.panXTo $anim.panYFrom $anim.panYTo $anim.rotFrom $anim.rotTo $duration $startFocus }}
       {{ range $tier, $override := (dict "tablet" $slide.tablet "mobile" $slide.mobile) }}
       {{ with $override }}
-      {{ with .zoom }}{{ $style = printf "%s --ftsk-hero-zoom-%s: %v;" $style $tier . }}{{ end }}
-      {{ with .zoom_to }}{{ $style = printf "%s --ftsk-hero-zoom-to-%s: %v;" $style $tier . }}{{ end }}
-      {{ if isset . "pan_amount" }}
-        {{ if $isPortrait }}{{ $style = printf "%s --ftsk-hero-pan-y-%s: %v;" $style $tier .pan_amount }}
-        {{ else }}{{ $style = printf "%s --ftsk-hero-pan-x-%s: %v;" $style $tier .pan_amount }}{{ end }}
-      {{ end }}
-      {{ with .duration }}{{ $style = printf "%s --ftsk-hero-duration-%s: %vs;" $style $tier . }}{{ end }}
-      {{ with .focus }}{{ $style = printf "%s --ftsk-hero-focus-%s: %s;" $style $tier . }}{{ end }}
+        {{ $tierZoom := $startZoom }}
+        {{ with .zoom }}{{ $tierZoom = . }}{{ end }}
+        {{ $tierFocus := $startFocus }}
+        {{ with .focus }}{{ $tierFocus = . }}{{ end }}
+        {{ $tierType := $animType }}
+        {{ with .type }}{{ $tierType = . }}{{ end }}
+        {{ $tierDirection := $animDirection }}
+        {{ with .direction }}{{ $tierDirection = . }}{{ end }}
+        {{ $tierAmount := $animAmount }}
+        {{ if isset . "amount" }}{{ $tierAmount = .amount }}{{ end }}
+        {{ $tierDuration := $duration }}
+        {{ with .duration }}{{ $tierDuration = . }}{{ end }}
+        {{ $tierAnim := partial "hero-animation.html" (dict "zoom" $tierZoom "type" $tierType "direction" $tierDirection "amount" $tierAmount) }}
+        {{ $style = printf "%s --ftsk-hero-zoom-from-%s: %v; --ftsk-hero-zoom-to-%s: %v; --ftsk-hero-pan-x-from-%s: %v; --ftsk-hero-pan-x-to-%s: %v; --ftsk-hero-pan-y-from-%s: %v; --ftsk-hero-pan-y-to-%s: %v; --ftsk-hero-rotate-from-%s: %vdeg; --ftsk-hero-rotate-to-%s: %vdeg; --ftsk-hero-duration-%s: %vs; --ftsk-hero-focus-%s: %s;" $style $tier $tierAnim.zoomFrom $tier $tierAnim.zoomTo $tier $tierAnim.panXFrom $tier $tierAnim.panXTo $tier $tierAnim.panYFrom $tier $tierAnim.panYTo $tier $tierAnim.rotFrom $tier $tierAnim.rotTo $tier $tierDuration $tier $tierFocus }}
       {{ end }}
       {{ end }}
 
       <div
         class="ftsk-hero-slide{{ if eq $index 0 }} is-active{{ end }}"
-        data-orientation="{{ $slide.orientation }}"
         {{ with $hideBelow }}data-hide-below="{{ . }}"{{ end }}
         style="{{ $style | safeCSS }}"
       >
@@ -53,6 +73,7 @@
     <div class="hero-two-media-motif"></div>
   </div>
   {{ end }}
+
 
 
   <div class="container-fluid">

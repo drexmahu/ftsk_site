@@ -201,7 +201,7 @@
   transition: opacity 1.8s ease;
   // Static fallback zoom (used verbatim under prefers-reduced-motion, and as the
   // resting value before the animation's first frame kicks in).
-  --ftsk-hero-zoom: 1.35;
+  --ftsk-hero-zoom-from: 1.35;
   &.is-active {
     opacity: 1;
   }
@@ -225,32 +225,44 @@
     }
   }
 
-  // Resolves the base --ftsk-hero-zoom/-zoom-to/-pan-x/-pan-y/-duration/-focus (set
-  // inline per slide by hero.hugo.html from data/hero_images.yaml) down to a single
-  // "-active" custom property per breakpoint tier, preferring a "-tablet"/"-mobile"
-  // suffixed override (also set inline, from the YAML's `tablet`/`mobile` maps) only
-  // where a photo actually needs different framing/motion at that size. Static media
-  // queries here (rather than per-slide generated ones) since Go's html/template CSS
-  // sanitizer can't safely handle a per-slide dynamic CSS selector/rule.
-  --ftsk-hero-zoom-active: var(--ftsk-hero-zoom);
+  // Resolves the base --ftsk-hero-*-from/-to/-duration/-focus (set inline per slide by
+  // hero.hugo.html, computed from data/hero_images.yaml's start/animation fields) down
+  // to a single "-active" custom property per breakpoint tier, preferring a "-tablet"/
+  // "-mobile" suffixed override (also set inline, a FULLY recomputed animation - see
+  // hero.hugo.html) only where a photo actually needs different framing/motion at that
+  // size. Static media queries here (rather than per-slide generated ones) since Go's
+  // html/template CSS sanitizer can't safely handle a per-slide dynamic CSS selector.
+  --ftsk-hero-zoom-from-active: var(--ftsk-hero-zoom-from);
   --ftsk-hero-zoom-to-active: var(--ftsk-hero-zoom-to);
-  --ftsk-hero-pan-x-active: var(--ftsk-hero-pan-x, 0);
-  --ftsk-hero-pan-y-active: var(--ftsk-hero-pan-y, 0);
+  --ftsk-hero-pan-x-from-active: var(--ftsk-hero-pan-x-from, 0);
+  --ftsk-hero-pan-x-to-active: var(--ftsk-hero-pan-x-to, 0);
+  --ftsk-hero-pan-y-from-active: var(--ftsk-hero-pan-y-from, 0);
+  --ftsk-hero-pan-y-to-active: var(--ftsk-hero-pan-y-to, 0);
+  --ftsk-hero-rotate-from-active: var(--ftsk-hero-rotate-from, 0deg);
+  --ftsk-hero-rotate-to-active: var(--ftsk-hero-rotate-to, 0deg);
   --ftsk-hero-duration-active: var(--ftsk-hero-duration, 12s);
   --ftsk-hero-focus-active: var(--ftsk-hero-focus, 50% 50%);
   @media (min-width: 768px) and (max-width: 991.98px) {
-    --ftsk-hero-zoom-active: var(--ftsk-hero-zoom-tablet, var(--ftsk-hero-zoom));
+    --ftsk-hero-zoom-from-active: var(--ftsk-hero-zoom-from-tablet, var(--ftsk-hero-zoom-from));
     --ftsk-hero-zoom-to-active: var(--ftsk-hero-zoom-to-tablet, var(--ftsk-hero-zoom-to));
-    --ftsk-hero-pan-x-active: var(--ftsk-hero-pan-x-tablet, var(--ftsk-hero-pan-x, 0));
-    --ftsk-hero-pan-y-active: var(--ftsk-hero-pan-y-tablet, var(--ftsk-hero-pan-y, 0));
+    --ftsk-hero-pan-x-from-active: var(--ftsk-hero-pan-x-from-tablet, var(--ftsk-hero-pan-x-from, 0));
+    --ftsk-hero-pan-x-to-active: var(--ftsk-hero-pan-x-to-tablet, var(--ftsk-hero-pan-x-to, 0));
+    --ftsk-hero-pan-y-from-active: var(--ftsk-hero-pan-y-from-tablet, var(--ftsk-hero-pan-y-from, 0));
+    --ftsk-hero-pan-y-to-active: var(--ftsk-hero-pan-y-to-tablet, var(--ftsk-hero-pan-y-to, 0));
+    --ftsk-hero-rotate-from-active: var(--ftsk-hero-rotate-from-tablet, var(--ftsk-hero-rotate-from, 0deg));
+    --ftsk-hero-rotate-to-active: var(--ftsk-hero-rotate-to-tablet, var(--ftsk-hero-rotate-to, 0deg));
     --ftsk-hero-duration-active: var(--ftsk-hero-duration-tablet, var(--ftsk-hero-duration, 12s));
     --ftsk-hero-focus-active: var(--ftsk-hero-focus-tablet, var(--ftsk-hero-focus, 50% 50%));
   }
   @media (max-width: 767.98px) {
-    --ftsk-hero-zoom-active: var(--ftsk-hero-zoom-mobile, var(--ftsk-hero-zoom));
+    --ftsk-hero-zoom-from-active: var(--ftsk-hero-zoom-from-mobile, var(--ftsk-hero-zoom-from));
     --ftsk-hero-zoom-to-active: var(--ftsk-hero-zoom-to-mobile, var(--ftsk-hero-zoom-to));
-    --ftsk-hero-pan-x-active: var(--ftsk-hero-pan-x-mobile, var(--ftsk-hero-pan-x, 0));
-    --ftsk-hero-pan-y-active: var(--ftsk-hero-pan-y-mobile, var(--ftsk-hero-pan-y, 0));
+    --ftsk-hero-pan-x-from-active: var(--ftsk-hero-pan-x-from-mobile, var(--ftsk-hero-pan-x-from, 0));
+    --ftsk-hero-pan-x-to-active: var(--ftsk-hero-pan-x-to-mobile, var(--ftsk-hero-pan-x-to, 0));
+    --ftsk-hero-pan-y-from-active: var(--ftsk-hero-pan-y-from-mobile, var(--ftsk-hero-pan-y-from, 0));
+    --ftsk-hero-pan-y-to-active: var(--ftsk-hero-pan-y-to-mobile, var(--ftsk-hero-pan-y-to, 0));
+    --ftsk-hero-rotate-from-active: var(--ftsk-hero-rotate-from-mobile, var(--ftsk-hero-rotate-from, 0deg));
+    --ftsk-hero-rotate-to-active: var(--ftsk-hero-rotate-to-mobile, var(--ftsk-hero-rotate-to, 0deg));
     --ftsk-hero-duration-active: var(--ftsk-hero-duration-mobile, var(--ftsk-hero-duration, 12s));
     --ftsk-hero-focus-active: var(--ftsk-hero-focus-mobile, var(--ftsk-hero-focus, 50% 50%));
   }
@@ -261,7 +273,7 @@
     height: 100%;
     object-fit: cover;
     object-position: var(--ftsk-hero-focus-active, 50% 50%);
-    transform: scale(var(--ftsk-hero-zoom-active));
+    transform: scale(var(--ftsk-hero-zoom-from-active));
     animation-name: ftsk-hero-kb;
     animation-duration: var(--ftsk-hero-duration-active, 12s);
     animation-timing-function: ease-in-out;
@@ -273,24 +285,28 @@
     animation-play-state: running;
   }
 }
-// Shared Ken Burns pan/zoom for every slide, driven entirely by the "-active" custom
-// properties resolved above (in turn from hero.hugo.html's per-slide --ftsk-hero-zoom/
-// -zoom-to/-pan-x/-pan-y, from data/hero_images.yaml's zoom/zoom_to/pan_amount) - one
-// shared keyframe covers every photo and every breakpoint override.
+// Shared Ken Burns animation for every slide, driven entirely by the "-active" custom
+// properties resolved above - covers all 4 animation types (data/hero_images.yaml's
+// `animation.type`: zoom-in/zoom-out only move zoomFrom->zoomTo, pan only moves pan-x/
+// pan-y, tilt only moves rotate - hero.hugo.html's hero-animation.html partial always
+// resolves the OTHER channels to a no-op (identical from/to), so one keyframe covers
+// every combination without needing a type-specific @keyframes block.
 @keyframes ftsk-hero-kb {
   from {
-    transform: scale(var(--ftsk-hero-zoom-active))
-      translate(calc(var(--ftsk-hero-pan-x-active, 0) * -1%), calc(var(--ftsk-hero-pan-y-active, 0) * -1%));
+    transform: scale(var(--ftsk-hero-zoom-from-active))
+      translate(calc(var(--ftsk-hero-pan-x-from-active, 0) * 1%), calc(var(--ftsk-hero-pan-y-from-active, 0) * 1%))
+      rotate(var(--ftsk-hero-rotate-from-active, 0deg));
   }
   to {
-    transform: scale(var(--ftsk-hero-zoom-to-active, var(--ftsk-hero-zoom-active)))
-      translate(calc(var(--ftsk-hero-pan-x-active, 0) * 1%), calc(var(--ftsk-hero-pan-y-active, 0) * 1%));
+    transform: scale(var(--ftsk-hero-zoom-to-active, var(--ftsk-hero-zoom-from-active)))
+      translate(calc(var(--ftsk-hero-pan-x-to-active, 0) * 1%), calc(var(--ftsk-hero-pan-y-to-active, 0) * 1%))
+      rotate(var(--ftsk-hero-rotate-to-active, 0deg));
   }
 }
 @media (prefers-reduced-motion: reduce) {
   .ftsk-hero-slide img {
     animation: none !important;
-    transform: scale(var(--ftsk-hero-zoom-active, 1));
+    transform: scale(var(--ftsk-hero-zoom-from-active, 1));
   }
 }
 

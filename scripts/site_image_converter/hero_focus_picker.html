@@ -106,6 +106,7 @@
   .controls label { display: flex; flex-direction: column; gap: 4px; }
   .controls .row-value { display: flex; justify-content: space-between; gap: 6px; }
   input[type="range"] { width: 100%; }
+  .controls select { width: 100%; }
   .filename { color: var(--text-heading); font-weight: 600; word-break: break-all; }
   .meta { color: var(--text-muted); font-size: 0.78rem; }
   hr.sep { border: none; border-top: 1px solid var(--border); margin: 2px 0; width: 100%; }
@@ -141,9 +142,10 @@
   <h1>Hero Focus Picker</h1>
   <p class="lead">
     Load the converted <code>.webp</code> files from <code>static/images/hero/</code> to preview exactly how each
-    one gets cropped and Ken-Burns-panned/zoomed on the homepage. Click on a photo to set its focus point, tune
-    zoom/pan/duration below, then copy the generated lines into <code>data/hero_images.yaml</code>. Nothing here
-    is uploaded anywhere - images are only read locally in your browser.
+    one gets cropped and animated on the homepage. Click on a photo to set its starting focus point, tune the
+    start zoom and animation type/direction/amount/duration below, then copy the generated lines into
+    <code>data/hero_images.yaml</code>. Nothing here is uploaded anywhere - images are only read locally in your
+    browser.
   </p>
 
   <div class="toolbar">
@@ -275,10 +277,30 @@
     var sep = document.createElement('hr');
     sep.className = 'sep';
 
-    var zoomFrom = rangeRow('Zoom start (zoom)', '1', '2.5', '0.05', '1.35');
-    var zoomTo = rangeRow('Zoom end (zoom_to)', '1', '2.5', '0.05', '1.35');
-    var panAmount = rangeRow('Pan amount % (pan_amount)', '0', '20', '1', '6');
-    var duration = rangeRow('Duration, seconds (duration)', '4', '30', '1', '12');
+    var startZoom = rangeRow('Start zoom (start.zoom)', '1', '2.5', '0.05', '1.35');
+
+    var typeLabel = document.createElement('label');
+    var typeSpan = document.createElement('span');
+    typeSpan.textContent = 'Animation type (animation.type)';
+    var typeSelect = document.createElement('select');
+    ['pan', 'zoom-in', 'zoom-out', 'tilt', 'none'].forEach(function (value) {
+      var opt = document.createElement('option');
+      opt.value = value;
+      opt.textContent = value;
+      typeSelect.appendChild(opt);
+    });
+    typeLabel.appendChild(typeSpan);
+    typeLabel.appendChild(typeSelect);
+
+    var directionLabel = document.createElement('label');
+    var directionSpan = document.createElement('span');
+    directionSpan.textContent = 'Direction (animation.direction)';
+    var directionSelect = document.createElement('select');
+    directionLabel.appendChild(directionSpan);
+    directionLabel.appendChild(directionSelect);
+
+    var amount = rangeRow('Amount (animation.amount)', '0', '20', '1', '6');
+    var duration = rangeRow('Duration, seconds (animation.duration)', '4', '30', '1', '12');
 
     var resetBtn = document.createElement('button');
     resetBtn.className = 'secondary';
@@ -293,9 +315,10 @@
     controls.appendChild(metaEl);
     controls.appendChild(playBtn);
     controls.appendChild(sep);
-    controls.appendChild(zoomFrom.label);
-    controls.appendChild(zoomTo.label);
-    controls.appendChild(panAmount.label);
+    controls.appendChild(startZoom.label);
+    controls.appendChild(typeLabel);
+    controls.appendChild(directionLabel);
+    controls.appendChild(amount.label);
     controls.appendChild(duration.label);
     controls.appendChild(resetBtn);
     controls.appendChild(yamlOutput);
@@ -308,20 +331,99 @@
     var state = {
       focusX: 50,
       focusY: 50,
-      zoomFrom: 1.35,
-      zoomTo: 1.35,
-      panAmount: 6,
+      zoom: 1.35,
+      type: 'pan',
+      direction: 'right',
+      amount: 6,
       duration: 12,
-      orientation: 'landscape',
       playing: true,
     };
+
+    // Direction options depend on the animation type - mirrors
+    // layouts/partials/hero-animation.html's own type/direction handling.
+    var directionsByType = {
+      pan: ['right', 'left', 'up', 'down'],
+      tilt: ['right', 'left'],
+      'zoom-in': [],
+      'zoom-out': [],
+      none: [],
+    };
+    // Default amount range/step/value per type, since "amount" means % pan distance,
+    // zoom delta, or degrees depending on type - keep in sync with the same defaults
+    // documented in data/hero_images.yaml.
+    var amountDefaultsByType = {
+      pan: { min: 0, max: 20, step: 1, value: 6, unit: '%' },
+      'zoom-in': { min: 0, max: 0.6, step: 0.01, value: 0.15, unit: 'zoom' },
+      'zoom-out': { min: 0, max: 0.6, step: 0.01, value: 0.15, unit: 'zoom' },
+      tilt: { min: 0, max: 15, step: 0.5, value: 2, unit: 'deg' },
+      none: { min: 0, max: 0, step: 1, value: 0, unit: '' },
+    };
+
+    function refreshDirectionOptions() {
+      var options = directionsByType[state.type] || [];
+      directionSelect.innerHTML = '';
+      directionLabel.style.display = options.length ? '' : 'none';
+      options.forEach(function (value) {
+        var opt = document.createElement('option');
+        opt.value = value;
+        opt.textContent = value;
+        directionSelect.appendChild(opt);
+      });
+      if (options.length && options.indexOf(state.direction) === -1) {
+        state.direction = options[0];
+      }
+      directionSelect.value = state.direction;
+    }
+
+    function refreshAmountRange() {
+      var defaults = amountDefaultsByType[state.type] || amountDefaultsByType.pan;
+      amount.range.min = defaults.min;
+      amount.range.max = defaults.max;
+      amount.range.step = defaults.step;
+      amount.label.style.display = defaults.max > 0 ? '' : 'none';
+    }
 
     function setFrameRatio() {
       frame.style.aspectRatio = frameSelect.value;
     }
 
-    function axis() {
-      return state.orientation === 'portrait' ? 'Y' : 'X';
+    // Mirrors layouts/partials/hero-animation.html exactly, so the preview here
+    // matches the real site's math/timing.
+    function computeAnim() {
+      var zoomFrom = state.zoom;
+      var zoomTo = state.zoom;
+      var panXFrom = 0, panXTo = 0;
+      var panYFrom = 0, panYTo = 0;
+      var rotFrom = 0, rotTo = 0;
+
+      if (state.type === 'pan') {
+        if (state.direction === 'left') {
+          panXFrom = state.amount; panXTo = -state.amount;
+        } else if (state.direction === 'up') {
+          panYFrom = state.amount; panYTo = -state.amount;
+        } else if (state.direction === 'down') {
+          panYFrom = -state.amount; panYTo = state.amount;
+        } else {
+          panXFrom = -state.amount; panXTo = state.amount;
+        }
+      } else if (state.type === 'zoom-in') {
+        zoomTo = state.zoom + state.amount;
+      } else if (state.type === 'zoom-out') {
+        zoomTo = Math.max(1, state.zoom - state.amount);
+      } else if (state.type === 'tilt') {
+        if (state.direction === 'left') {
+          rotFrom = state.amount; rotTo = -state.amount;
+        } else {
+          rotFrom = -state.amount; rotTo = state.amount;
+        }
+      }
+
+      return {
+        zoomFrom: zoomFrom, zoomTo: zoomTo,
+        panXFrom: panXFrom, panXTo: panXTo,
+        panYFrom: panYFrom, panYTo: panYTo,
+        rotFrom: rotFrom, rotTo: rotTo,
+      };
     }
 
     function applyState() {
@@ -329,10 +431,11 @@
       marker.style.left = state.focusX + '%';
       marker.style.top = state.focusY + '%';
 
+      var anim = computeAnim();
       styleEl.textContent =
         '@keyframes ' + animName + ' {' +
-        'from { transform: scale(' + state.zoomFrom + ') translate' + axis() + '(' + -state.panAmount + '%); }' +
-        'to { transform: scale(' + state.zoomTo + ') translate' + axis() + '(' + state.panAmount + '%); }' +
+        'from { transform: scale(' + anim.zoomFrom + ') translate(' + anim.panXFrom + '%,' + anim.panYFrom + '%) rotate(' + anim.rotFrom + 'deg); }' +
+        'to { transform: scale(' + anim.zoomTo + ') translate(' + anim.panXTo + '%,' + anim.panYTo + '%) rotate(' + anim.rotTo + 'deg); }' +
         '}';
       img.style.animationName = animName;
       img.style.animationDuration = state.duration + 's';
@@ -348,28 +451,36 @@
     function renderYaml() {
       var lines = [
         '- path: /images/hero/' + file.name.replace(/\.[^.]+$/, '.webp'),
-        '  orientation: ' + state.orientation,
-        '  focus: "' + state.focusX + '% ' + state.focusY + '%"',
+        '  start:',
+        '    focus: "' + state.focusX + '% ' + state.focusY + '%"',
       ];
-      if (Math.abs(state.zoomFrom - 1.35) > 0.001) {
-        lines.push('  zoom: ' + state.zoomFrom.toFixed(2));
+      if (Math.abs(state.zoom - 1.35) > 0.001) {
+        lines.push('    zoom: ' + state.zoom.toFixed(2));
       }
-      if (Math.abs(state.zoomTo - state.zoomFrom) > 0.001) {
-        lines.push('  zoom_to: ' + state.zoomTo.toFixed(2));
+      lines.push('  animation:');
+      lines.push('    type: ' + state.type);
+      if (directionsByType[state.type].length) {
+        lines.push('    direction: ' + state.direction);
       }
-      if (state.panAmount !== 6) {
-        lines.push('  pan_amount: ' + state.panAmount);
+      var defaults = amountDefaultsByType[state.type];
+      if (defaults.max > 0 && Math.abs(state.amount - defaults.value) > 0.001) {
+        lines.push('    amount: ' + state.amount);
       }
       if (state.duration !== 12) {
-        lines.push('  duration: ' + state.duration);
+        lines.push('    duration: ' + state.duration);
       }
       lines.push('  alt: TODO');
       yamlOutput.textContent = lines.join('\n');
     }
 
     img.addEventListener('load', function () {
-      state.orientation = img.naturalHeight > img.naturalWidth ? 'portrait' : 'landscape';
-      metaEl.textContent = img.naturalWidth + 'x' + img.naturalHeight + ', ' + state.orientation;
+      var orientation = img.naturalHeight > img.naturalWidth ? 'portrait' : 'landscape';
+      // Just a friendlier starting suggestion - portrait photos usually read better
+      // panning up/down than sideways; either can be changed via the direction select.
+      state.direction = orientation === 'portrait' ? 'down' : 'right';
+      metaEl.textContent = img.naturalWidth + 'x' + img.naturalHeight + ', ' + orientation;
+      refreshDirectionOptions();
+      refreshAmountRange();
       applyState();
       renderYaml();
     });
@@ -386,10 +497,33 @@
       setPlaying(!state.playing);
     });
 
+    startZoom.range.addEventListener('input', function () {
+      state.zoom = parseFloat(startZoom.range.value);
+      startZoom.valueSpan.textContent = startZoom.range.value;
+      applyState();
+      renderYaml();
+    });
+
+    typeSelect.addEventListener('change', function () {
+      state.type = typeSelect.value;
+      var defaults = amountDefaultsByType[state.type];
+      state.amount = defaults.value;
+      refreshDirectionOptions();
+      refreshAmountRange();
+      amount.range.value = state.amount;
+      amount.valueSpan.textContent = state.amount;
+      applyState();
+      renderYaml();
+    });
+
+    directionSelect.addEventListener('change', function () {
+      state.direction = directionSelect.value;
+      applyState();
+      renderYaml();
+    });
+
     [
-      [zoomFrom, 'zoomFrom'],
-      [zoomTo, 'zoomTo'],
-      [panAmount, 'panAmount'],
+      [amount, 'amount'],
       [duration, 'duration'],
     ].forEach(function (pair) {
       var control = pair[0];
@@ -405,16 +539,18 @@
     resetBtn.addEventListener('click', function () {
       state.focusX = 50;
       state.focusY = 50;
-      state.zoomFrom = 1.35;
-      state.zoomTo = 1.35;
-      state.panAmount = 6;
+      state.zoom = 1.35;
+      state.type = 'pan';
+      state.direction = 'right';
+      state.amount = 6;
       state.duration = 12;
-      zoomFrom.range.value = 1.35;
-      zoomFrom.valueSpan.textContent = '1.35';
-      zoomTo.range.value = 1.35;
-      zoomTo.valueSpan.textContent = '1.35';
-      panAmount.range.value = 6;
-      panAmount.valueSpan.textContent = '6';
+      startZoom.range.value = 1.35;
+      startZoom.valueSpan.textContent = '1.35';
+      typeSelect.value = 'pan';
+      refreshDirectionOptions();
+      refreshAmountRange();
+      amount.range.value = 6;
+      amount.valueSpan.textContent = '6';
       duration.range.value = 12;
       duration.valueSpan.textContent = '12';
       applyState();

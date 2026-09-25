@@ -1,30 +1,37 @@
 # Homepage hero banner slideshow images (component-library/components/home/hero).
-# Rendered by hero.hugo.html via hugo.Data.hero_images, animated by the
-# ".ftsk-hero-slideshow" JS/CSS in static/js/script.js + assets/scss/components/_hero.scss.
+# Rendered by hero.hugo.html via hugo.Data.hero_images (using the
+# layouts/partials/hero-animation.html partial to turn `start`/`animation` below into
+# actual CSS transform keyframes), animated by the ".ftsk-hero-slideshow" JS in
+# static/js/script.js + assets/scss/components/_hero.scss.
 #
-# orientation controls the slow Ken Burns pan direction: landscape photos pan
-# sideways, portrait photos pan up/down (matches which edges get cropped by
-# the slideshow's cover-fit background layer). Generate new images with
-# scripts/site_image_converter/ - its log output prints each file's
-# orientation for you.
+# Each slide has two parts:
 #
-# zoom (optional, default 1.35): starting Ken Burns scale (--ftsk-hero-zoom). Also
-# used as the reduced-motion/static fallback framing.
+# `start` (optional) - the static "zoomed-in starting point", before any animation:
+#   zoom (default 1.35): how zoomed in the resting frame is. Also used verbatim as the
+#     static/reduced-motion fallback framing.
+#   focus (default "50% 50%"): CSS object-position - which part of the photo is
+#     centered/kept visible ("move" the image left/right/up/down within the frame).
+#     "X% Y%", e.g. "70% 30%" keeps the right-and-upper area anchored. For
+#     center-composed photos that don't suit the hero's off-center text overlay,
+#     nudge this toward whichever side reads best (e.g. "65% 50%" shifts right).
 #
-# zoom_to (optional, default = zoom): ending scale - set this different from `zoom`
-# to animate an actual zoom in/out ("breathing") effect instead of a constant zoom
-# level. E.g. `zoom: 1.2` + `zoom_to: 1.5` slowly zooms in and back out on a loop.
-#
-# pan_amount (optional, default 6): how far (in %) the photo drifts from center along
-# the orientation axis - landscape pans sideways, portrait pans up/down. Set to 0 for
-# a pure zoom effect with no side-to-side/up-down movement at all.
-#
-# duration (optional, default 12): seconds for one from->to sweep (it then reverses
-# back, looping forever) - higher is slower/more subtle.
-#
-# focus (optional, default "50% 50%"): CSS object-position - which part of the
-# photo to keep visible/centered when the cover-fit crop and pan trim the rest.
-# "X% Y%", e.g. "70% 30%" keeps the right-and-upper area anchored.
+# `animation` (optional) - what happens FROM that starting point, on a slow endless
+# back-and-forth loop:
+#   type (default "pan"): one of
+#     pan       - drifts sideways/up-down from the start point (see `direction`)
+#     zoom-in   - slowly zooms in further from the start zoom
+#     zoom-out  - slowly zooms back out from the start zoom (never below 1.0)
+#     tilt      - a very subtle slow rotation sway, no pan/zoom
+#     none      - fully static, no animation at all
+#   direction (default "right"): for `pan` - one of "up", "down", "left", "right".
+#     For `tilt` - "left" or "right" (which way the sway leans first). Ignored by
+#     zoom-in/zoom-out/none.
+#   amount (default 6): magnitude of the effect - for `pan`, % of the frame drifted;
+#     for `zoom-in`/`zoom-out`, how much zoom is added/removed (e.g. 0.2); for `tilt`,
+#     degrees of rotation. Set to 0 to effectively disable pan and just hold+zoom (or
+#     tilt with 0 is just static, same as `type: none`).
+#   duration (default 12): seconds for one from->to sweep (it then reverses back,
+#     looping forever) - higher is slower/more subtle.
 #
 # hide_below (optional): fully excludes this slide below a breakpoint, for photos
 # that only work cropped wide (desktop/tablet) but not on a narrow phone screen, or
@@ -35,41 +42,62 @@
 # The slideshow skips hidden slides automatically instead of crossfading to a blank
 # frame. Leave unset to show a slide at every size.
 #
-# mobile / tablet (optional): override any of zoom / zoom_to / pan_amount / duration /
-# focus just for phones (<768px) or tablets (768-991px) - the same animation doesn't
-# always suit every screen size even when the photo itself is fine there. Any field
-# left out of these maps just keeps falling back to the top-level value. E.g.:
+# mobile / tablet (optional): override any of `start`'s zoom/focus or `animation`'s
+# type/direction/amount/duration just for phones (<768px) or tablets (768-991px) -
+# fields are flattened here (no nested start/animation), e.g.:
 #   mobile:
-#     pan_amount: 2   # a wide side-to-side pan can feel too aggressive on a phone
+#     type: zoom-in   # a sideways pan can feel cramped on a narrow phone screen
+#     amount: 0.15
 #     duration: 9
+# Any field left out of these maps just keeps falling back to the top-level value -
+# but note that changing `type` changes ALL of the motion, so when overriding `type`
+# also re-specify `direction`/`amount` if the new type needs different ones.
 #
 # Use scripts/site_image_converter/hero_focus_picker.html to preview crops/zoom/pan
 # live and generate all of the above values interactively instead of guessing (note:
-# the picker currently only generates the top-level/desktop fields - hide_below and
-# mobile/tablet overrides need to be added by hand).
+# the picker currently only generates the top-level/desktop `start`/`animation` -
+# hide_below and mobile/tablet overrides need to be added by hand).
 images:
   - path: /images/hero/ftsk-hero-cave-1.webp
-    orientation: landscape
-    focus: "42% 42%"
     alt: Kötélen ereszkedő barlangász egy világos aknában
+    start:
+      focus: "42% 42%"
+    animation:
+      type: pan
+      direction: right
   - path: /images/hero/ftsk-hero-cave-2.webp
-    orientation: landscape
-    focus: "40% 38%"
     alt: Barlangász ereszkedés közben, fénysugarak között
+    start:
+      focus: "40% 38%"
+    animation:
+      type: pan
+      direction: right
   - path: /images/hero/ftsk-hero-cave-3.webp
-    orientation: landscape
-    focus: "35% 68%"
     alt: Tágas barlangterem barlangászokkal
+    start:
+      focus: "35% 68%"
+    animation:
+      type: pan
+      direction: right
   - path: /images/hero/ftsk-hero-cave-4.webp
-    orientation: landscape
-    focus: "55% 55%"
     alt: Barlangászok egy szűk sziklakapun át nézve
+    start:
+      focus: "55% 55%"
+    animation:
+      type: pan
+      direction: right
   - path: /images/hero/ftsk-hero-cave-5.webp
-    orientation: landscape
-    focus: "65% 35%"
     alt: Fiatal barlangász közelről, sisakkal és kötelekkel
+    start:
+      focus: "65% 35%"
+    animation:
+      type: pan
+      direction: right
   - path: /images/hero/ftsk-hero-cave-6.webp
-    orientation: portrait
-    focus: "50% 58%"
     alt: Barlangász egy mohás sziklahasadékban, fejlámpával megvilágítva
+    start:
+      focus: "50% 58%"
+    animation:
+      type: pan
+      direction: down
 

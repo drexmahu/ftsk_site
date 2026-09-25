@@ -1,0 +1,59 @@
+{{/* Turns a slide's "start zoom" + "animation type/direction/amount" (see
+     data/hero_images.yaml) into an explicit from->to pair for every transform channel
+     (zoom, pan-x, pan-y, rotate) - hero.hugo.html calls this once per breakpoint tier
+     (base/tablet/mobile) so each tier can have a completely different animation, not
+     just tweaked numbers. Returns a dict: zoomFrom/zoomTo, panXFrom/panXTo,
+     panYFrom/panYTo, rotFrom/rotTo. */}}
+{{ $zoom := .zoom }}
+{{ $type := .type }}
+{{ $direction := .direction }}
+{{ $amount := .amount }}
+
+{{ $zoomFrom := $zoom }}
+{{ $zoomTo := $zoom }}
+{{ $panXFrom := 0.0 }}
+{{ $panXTo := 0.0 }}
+{{ $panYFrom := 0.0 }}
+{{ $panYTo := 0.0 }}
+{{ $rotFrom := 0.0 }}
+{{ $rotTo := 0.0 }}
+
+{{ if eq $type "pan" }}
+  {{ if eq $direction "left" }}
+    {{ $panXFrom = $amount }}
+    {{ $panXTo = mul $amount -1.0 }}
+  {{ else if eq $direction "up" }}
+    {{ $panYFrom = $amount }}
+    {{ $panYTo = mul $amount -1.0 }}
+  {{ else if eq $direction "down" }}
+    {{ $panYFrom = mul $amount -1.0 }}
+    {{ $panYTo = $amount }}
+  {{ else }}
+    {{/* "right" is the default direction */}}
+    {{ $panXFrom = mul $amount -1.0 }}
+    {{ $panXTo = $amount }}
+  {{ end }}
+{{ else if eq $type "zoom-in" }}
+  {{ $zoomTo = add $zoom $amount }}
+{{ else if eq $type "zoom-out" }}
+  {{ $zoomTo = sub $zoom $amount }}
+  {{ if lt $zoomTo 1.0 }}{{ $zoomTo = 1.0 }}{{ end }}
+{{ else if eq $type "tilt" }}
+  {{ if eq $direction "left" }}
+    {{ $rotFrom = $amount }}
+    {{ $rotTo = mul $amount -1.0 }}
+  {{ else }}
+    {{/* "right" is the default direction */}}
+    {{ $rotFrom = mul $amount -1.0 }}
+    {{ $rotTo = $amount }}
+  {{ end }}
+{{ end }}
+{{/* type "none" (or anything unrecognised) just keeps the defaults above: a fully
+     static frame at the defined start zoom, no pan/rotate. */}}
+
+{{ return dict
+  "zoomFrom" $zoomFrom "zoomTo" $zoomTo
+  "panXFrom" $panXFrom "panXTo" $panXTo
+  "panYFrom" $panYFrom "panYTo" $panYTo
+  "rotFrom" $rotFrom "rotTo" $rotTo
+}}
