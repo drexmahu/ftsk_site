@@ -31,7 +31,7 @@ jobs:
           build-future: "true"
 
       - name: Upload build output
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: hugo-build-pr-${{ github.event.pull_request.number }}
           path: public
