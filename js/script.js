@@ -79,12 +79,37 @@ $(document).ready(function () {
          current = 0;
       }
 
+      // The initially "is-active" slide is always index 0, but it may be hidden on
+      // this viewport (data-hide-below in data/hero_images.yaml) - jump to the first
+      // visible slide instead of starting the show on a blank frame.
+      if (!$slides.eq(current).is(':visible')) {
+         for (var i = 0; i < $slides.length; i++) {
+            if ($slides.eq(i).is(':visible')) {
+               $slides.eq(current).removeClass('is-active');
+               $slides.eq(i).addClass('is-active');
+               current = i;
+               break;
+            }
+         }
+      }
+
       var reduceMotion =
          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
       setInterval(
          function () {
-            var next = (current + 1) % $slides.length;
+            // Skip past any slides hidden on this viewport rather than crossfading
+            // to an invisible one, which would look like the show froze.
+            var next = current;
+            for (var i = 0; i < $slides.length; i++) {
+               next = (next + 1) % $slides.length;
+               if ($slides.eq(next).is(':visible')) {
+                  break;
+               }
+            }
+            if (next === current) {
+               return;
+            }
             $slides.eq(current).removeClass('is-active');
             $slides.eq(next).addClass('is-active');
             current = next;
