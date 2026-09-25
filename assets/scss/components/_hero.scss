@@ -273,6 +273,14 @@
     height: 100%;
     object-fit: cover;
     object-position: var(--ftsk-hero-focus-active, 50% 50%);
+    // Pivoting scale/rotate around the SAME point as object-position (instead of the
+    // default box center) is what makes the focus point actually "stick" and matter -
+    // without this, zooming always re-centers back toward the middle regardless of
+    // focus, drowning out off-center horizontal/vertical choices; with it, a higher
+    // start zoom increasingly frames tighter around the chosen point (exactly the
+    // "zoom reveals more room to push the focus point" behaviour panning already had
+    // via its translate %, see the keyframes below).
+    transform-origin: var(--ftsk-hero-focus-active, 50% 50%);
     transform: scale(var(--ftsk-hero-zoom-from-active));
     animation-name: ftsk-hero-kb;
     animation-duration: var(--ftsk-hero-duration-active, 12s);
