@@ -17,19 +17,20 @@ def ask(prompt, default):
 
 def check_opencv():
     """
-    Raises a clear, actionable error if OpenCV is installed but broken - the
-    most common cause is having multiple opencv-*-python packages installed
-    at once (e.g. opencv-python + opencv-python-headless), which silently
-    corrupts the shared cv2 namespace and drops attributes like
-    CascadeClassifier without raising an ImportError.
+    Raises a clear, actionable error if cv2.CascadeClassifier is unavailable.
+    This can happen either because multiple opencv-*-python packages were
+    installed at once (corrupting the shared cv2 namespace), or because
+    OpenCV 5.0+ removed CascadeClassifier and the bundled haarcascade_*.xml
+    files in favor of the DNN-based FaceDetectorYN.
     """
 
     if not hasattr(cv2, "CascadeClassifier"):
         raise RuntimeError(
             "OpenCV is installed but broken (cv2.CascadeClassifier is missing).\n"
-            "This usually happens when more than one opencv-*-python package is\n"
-            "installed at the same time. Re-run install_dependencies.bat (it now\n"
-            "removes conflicting OpenCV packages before reinstalling a clean copy)."
+            f"Detected opencv-python version: {cv2.__version__}\n"
+            "OpenCV 5.0 removed CascadeClassifier and no longer ships the\n"
+            "haarcascade_*.xml files this tool relies on. Re-run\n"
+            "install_dependencies.bat (it now installs a pinned opencv-python<5)."
         )
 
 
@@ -232,13 +233,13 @@ def process_folder(
     images is the sorted list of source files that were attempted.
     """
 
-    check_opencv()
-
     input_folder = Path(input_folder).expanduser()
     output_folder = Path(output_folder).expanduser()
 
     if not input_folder.exists():
         raise FileNotFoundError(f"Input folder does not exist: {input_folder}")
+
+    check_opencv()
 
     output_folder.mkdir(parents=True, exist_ok=True)
 

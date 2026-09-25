@@ -18,8 +18,8 @@ content_blocks:
       - label: Elnökség
         members:
           - name: Gyovai Tamás (elnök)
-            image: /images/members/Gyovai_Tamas_thumb.webp
-            modal_image: /images/members/Gyovai_Tamas_full.webp
+            image: /images/members/gyovai_tamas_thumb.webp
+            modal_image: /images/members/gyovai_tamas_full.webp
           - name: Kovács Krisztina (elnökhelyettes)
           - name: Kalotai Zsófia (elnökségi tag)
       - label: Örökös tagok

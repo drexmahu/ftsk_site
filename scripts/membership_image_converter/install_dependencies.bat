@@ -52,8 +52,9 @@ echo Removing any conflicting OpenCV packages (having more than one installed
 echo at once corrupts cv2, causing errors like "no attribute CascadeClassifier")...
 %PYTHON_CMD% -m pip uninstall -y opencv-python opencv-python-headless opencv-contrib-python opencv-contrib-python-headless >nul 2>nul
 
-echo Installing OpenCV...
-%PYTHON_CMD% -m pip install --no-cache-dir opencv-python
+echo Installing OpenCV (pinned to 4.x - OpenCV 5.0 removed cv2.CascadeClassifier
+echo and no longer ships the haarcascade_*.xml files this tool relies on)...
+%PYTHON_CMD% -m pip install --no-cache-dir "opencv-python<5"
 if errorlevel 1 goto :install_failed
 
 echo.
