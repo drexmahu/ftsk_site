@@ -6,16 +6,29 @@
   <div class="hero-two-media">
     <div class="ftsk-hero-slideshow">
       {{ range $index, $slide := .images }}
+      {{ $zoomFrom := $slide.zoom | default 1.35 }}
+      {{ $zoomTo := $slide.zoom_to | default $zoomFrom }}
+      {{ $panAmount := 6.0 }}
+      {{ if isset $slide "pan_amount" }}{{ $panAmount = $slide.pan_amount }}{{ end }}
+      {{ $duration := $slide.duration | default 12 }}
+      {{ $axis := "X" }}{{ if eq $slide.orientation "portrait" }}{{ $axis = "Y" }}{{ end }}
+      {{ $animName := printf "ftsk-hero-kb-%d" $index }}
+      <style>
+        @keyframes {{ $animName }} {
+          from { transform: scale({{ $zoomFrom }}) translate{{ $axis }}({{ mul $panAmount -1 }}%); }
+          to { transform: scale({{ $zoomTo }}) translate{{ $axis }}({{ $panAmount }}%); }
+        }
+      </style>
       <div
         class="ftsk-hero-slide{{ if eq $index 0 }} is-active{{ end }}"
         data-orientation="{{ $slide.orientation }}"
-        {{ with $slide.zoom }}style="--ftsk-hero-zoom: {{ . }};"{{ end }}
+        style="--ftsk-hero-zoom: {{ $zoomFrom }};"
       >
         <img
           src="{{ $slide.path }}"
           alt="{{ $slide.alt | default "Barlangászat közben készült fénykép" }}"
           loading="{{ if eq $index 0 }}eager{{ else }}lazy{{ end }}"
-          {{ with $slide.focus }}style="object-position: {{ . }};"{{ end }}
+          style="animation-name: {{ $animName }}; animation-duration: {{ $duration }}s;{{ with $slide.focus }} object-position: {{ . }};{{ end }}"
         />
       </div>
       {{ end }}

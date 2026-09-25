@@ -46,7 +46,7 @@
     border-radius: 6px;
     padding: 6px 8px;
   }
-  .checkbox-row { flex-direction: row !important; align-items: center; gap: 6px !important; }
+  .btn-row { display: flex; gap: 8px; }
 
   .drop-zone {
     border: 2px dashed var(--border);
@@ -66,7 +66,7 @@
     border-radius: 14px;
     padding: 16px;
     display: grid;
-    grid-template-columns: minmax(280px, 1fr) 300px;
+    grid-template-columns: minmax(280px, 1fr) 320px;
     gap: 20px;
   }
   @media (max-width: 760px) {
@@ -87,6 +87,9 @@
     height: 100%;
     object-fit: cover;
     display: block;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
   }
   .focus-marker {
     position: absolute;
@@ -101,9 +104,11 @@
 
   .controls { display: flex; flex-direction: column; gap: 10px; font-size: 0.85rem; }
   .controls label { display: flex; flex-direction: column; gap: 4px; }
+  .controls .row-value { display: flex; justify-content: space-between; gap: 6px; }
   input[type="range"] { width: 100%; }
   .filename { color: var(--text-heading); font-weight: 600; word-break: break-all; }
   .meta { color: var(--text-muted); font-size: 0.78rem; }
+  hr.sep { border: none; border-top: 1px solid var(--border); margin: 2px 0; width: 100%; }
 
   .yaml-output {
     background: var(--bg-page);
@@ -123,18 +128,12 @@
     border-radius: 6px;
     cursor: pointer;
     font-weight: 600;
-    align-self: flex-start;
   }
   button:hover { filter: brightness(1.1); }
-
-  /* Mirrors .ftsk-hero-slide in assets/scss/components/_hero.scss */
-  @keyframes panX {
-    from { transform: scale(var(--zoom)) translateX(-6%); }
-    to { transform: scale(var(--zoom)) translateX(6%); }
-  }
-  @keyframes panY {
-    from { transform: scale(var(--zoom)) translateY(-6%); }
-    to { transform: scale(var(--zoom)) translateY(6%); }
+  button.secondary {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
   }
 </style>
 </head>
@@ -142,10 +141,9 @@
   <h1>Hero Focus Picker</h1>
   <p class="lead">
     Load the converted <code>.webp</code> files from <code>static/images/hero/</code> to preview exactly how each
-    one gets cropped and panned on the homepage. Click anywhere on a photo to set its focus point, adjust zoom if
-    needed, then copy the generated <code>focus</code>/<code>zoom</code> lines into
-    <code>data/hero_images.yaml</code>. Nothing here is uploaded anywhere - images are only read locally in your
-    browser.
+    one gets cropped and Ken-Burns-panned/zoomed on the homepage. Click on a photo to set its focus point, tune
+    zoom/pan/duration below, then copy the generated lines into <code>data/hero_images.yaml</code>. Nothing here
+    is uploaded anywhere - images are only read locally in your browser.
   </p>
 
   <div class="toolbar">
@@ -156,10 +154,10 @@
         <option value="1.6">Tablet / narrow desktop (~1.6:1)</option>
       </select>
     </label>
-    <label class="checkbox-row">
-      <input type="checkbox" id="animateToggle" checked />
-      Animate pan preview
-    </label>
+    <div class="btn-row">
+      <button id="playAllBtn">▶ Play all</button>
+      <button id="pauseAllBtn" class="secondary">⏸ Pause all</button>
+    </div>
   </div>
 
   <div class="drop-zone" id="dropZone">
@@ -177,8 +175,10 @@
   var fileInput = document.getElementById('fileInput');
   var cards = document.getElementById('cards');
   var frameSelect = document.getElementById('frameSelect');
-  var animateToggle = document.getElementById('animateToggle');
+  var playAllBtn = document.getElementById('playAllBtn');
+  var pauseAllBtn = document.getElementById('pauseAllBtn');
   var cardControllers = [];
+  var nextAnimId = 0;
 
   dropZone.addEventListener('click', function () {
     fileInput.click();
@@ -205,9 +205,14 @@
       c.setFrameRatio();
     });
   });
-  animateToggle.addEventListener('change', function () {
+  playAllBtn.addEventListener('click', function () {
     cardControllers.forEach(function (c) {
-      c.applyState();
+      c.setPlaying(true);
+    });
+  });
+  pauseAllBtn.addEventListener('click', function () {
+    cardControllers.forEach(function (c) {
+      c.setPlaying(false);
     });
   });
 
@@ -215,8 +220,32 @@
     Array.prototype.forEach.call(fileList, addCard);
   }
 
+  function rangeRow(labelText, min, max, step, value) {
+    var label = document.createElement('label');
+    var top = document.createElement('div');
+    top.className = 'row-value';
+    var span = document.createElement('span');
+    span.textContent = labelText;
+    var valueSpan = document.createElement('span');
+    valueSpan.textContent = value;
+    top.appendChild(span);
+    top.appendChild(valueSpan);
+    var range = document.createElement('input');
+    range.type = 'range';
+    range.min = min;
+    range.max = max;
+    range.step = step;
+    range.value = value;
+    label.appendChild(top);
+    label.appendChild(range);
+    return { label: label, range: range, valueSpan: valueSpan };
+  }
+
   function addCard(file) {
     var url = URL.createObjectURL(file);
+    var animName = 'ftsk-focus-picker-anim-' + nextAnimId++;
+    var styleEl = document.createElement('style');
+    document.head.appendChild(styleEl);
 
     var card = document.createElement('div');
     card.className = 'card';
@@ -240,16 +269,21 @@
     var metaEl = document.createElement('div');
     metaEl.className = 'meta';
 
-    var zoomLabel = document.createElement('label');
-    zoomLabel.textContent = 'Zoom (--ftsk-hero-zoom)';
-    var zoomRange = document.createElement('input');
-    zoomRange.type = 'range';
-    zoomRange.min = '1';
-    zoomRange.max = '2';
-    zoomRange.step = '0.05';
-    var zoomValue = document.createElement('span');
+    var playBtn = document.createElement('button');
+    playBtn.textContent = '⏸ Pause';
+
+    var sep = document.createElement('hr');
+    sep.className = 'sep';
+
+    var zoomFrom = rangeRow('Zoom start (zoom)', '1', '2.5', '0.05', '1.35');
+    var zoomTo = rangeRow('Zoom end (zoom_to)', '1', '2.5', '0.05', '1.35');
+    var panAmount = rangeRow('Pan amount % (pan_amount)', '0', '20', '1', '6');
+    var duration = rangeRow('Duration, seconds (duration)', '4', '30', '1', '12');
+
     var resetBtn = document.createElement('button');
-    resetBtn.textContent = 'Reset focus to center';
+    resetBtn.className = 'secondary';
+    resetBtn.textContent = 'Reset all to defaults';
+
     var yamlOutput = document.createElement('pre');
     yamlOutput.className = 'yaml-output';
     var copyBtn = document.createElement('button');
@@ -257,9 +291,12 @@
 
     controls.appendChild(filenameEl);
     controls.appendChild(metaEl);
-    zoomLabel.appendChild(zoomRange);
-    zoomLabel.appendChild(zoomValue);
-    controls.appendChild(zoomLabel);
+    controls.appendChild(playBtn);
+    controls.appendChild(sep);
+    controls.appendChild(zoomFrom.label);
+    controls.appendChild(zoomTo.label);
+    controls.appendChild(panAmount.label);
+    controls.appendChild(duration.label);
     controls.appendChild(resetBtn);
     controls.appendChild(yamlOutput);
     controls.appendChild(copyBtn);
@@ -268,26 +305,44 @@
     card.appendChild(controls);
     cards.appendChild(card);
 
-    var state = { focusX: 50, focusY: 50, zoom: 1.35, orientation: 'landscape' };
-    zoomRange.value = state.zoom;
-    zoomValue.textContent = state.zoom.toFixed(2);
+    var state = {
+      focusX: 50,
+      focusY: 50,
+      zoomFrom: 1.35,
+      zoomTo: 1.35,
+      panAmount: 6,
+      duration: 12,
+      orientation: 'landscape',
+      playing: true,
+    };
 
     function setFrameRatio() {
       frame.style.aspectRatio = frameSelect.value;
     }
 
+    function axis() {
+      return state.orientation === 'portrait' ? 'Y' : 'X';
+    }
+
     function applyState() {
       img.style.objectPosition = state.focusX + '% ' + state.focusY + '%';
-      img.style.setProperty('--zoom', state.zoom);
       marker.style.left = state.focusX + '%';
       marker.style.top = state.focusY + '%';
-      if (animateToggle.checked) {
-        img.style.animation =
-          (state.orientation === 'portrait' ? 'panY' : 'panX') + ' 6s ease-in-out infinite alternate';
-      } else {
-        img.style.animation = 'none';
-        img.style.transform = 'scale(' + state.zoom + ')';
-      }
+
+      styleEl.textContent =
+        '@keyframes ' + animName + ' {' +
+        'from { transform: scale(' + state.zoomFrom + ') translate' + axis() + '(' + -state.panAmount + '%); }' +
+        'to { transform: scale(' + state.zoomTo + ') translate' + axis() + '(' + state.panAmount + '%); }' +
+        '}';
+      img.style.animationName = animName;
+      img.style.animationDuration = state.duration + 's';
+      img.style.animationPlayState = state.playing ? 'running' : 'paused';
+      playBtn.textContent = state.playing ? '⏸ Pause' : '▶ Play';
+    }
+
+    function setPlaying(playing) {
+      state.playing = playing;
+      applyState();
     }
 
     function renderYaml() {
@@ -296,8 +351,17 @@
         '  orientation: ' + state.orientation,
         '  focus: "' + state.focusX + '% ' + state.focusY + '%"',
       ];
-      if (Math.abs(state.zoom - 1.35) > 0.001) {
-        lines.push('  zoom: ' + state.zoom.toFixed(2));
+      if (Math.abs(state.zoomFrom - 1.35) > 0.001) {
+        lines.push('  zoom: ' + state.zoomFrom.toFixed(2));
+      }
+      if (Math.abs(state.zoomTo - state.zoomFrom) > 0.001) {
+        lines.push('  zoom_to: ' + state.zoomTo.toFixed(2));
+      }
+      if (state.panAmount !== 6) {
+        lines.push('  pan_amount: ' + state.panAmount);
+      }
+      if (state.duration !== 12) {
+        lines.push('  duration: ' + state.duration);
       }
       lines.push('  alt: TODO');
       yamlOutput.textContent = lines.join('\n');
@@ -318,16 +382,41 @@
       renderYaml();
     });
 
-    zoomRange.addEventListener('input', function () {
-      state.zoom = parseFloat(zoomRange.value);
-      zoomValue.textContent = state.zoom.toFixed(2);
-      applyState();
-      renderYaml();
+    playBtn.addEventListener('click', function () {
+      setPlaying(!state.playing);
+    });
+
+    [
+      [zoomFrom, 'zoomFrom'],
+      [zoomTo, 'zoomTo'],
+      [panAmount, 'panAmount'],
+      [duration, 'duration'],
+    ].forEach(function (pair) {
+      var control = pair[0];
+      var key = pair[1];
+      control.range.addEventListener('input', function () {
+        state[key] = parseFloat(control.range.value);
+        control.valueSpan.textContent = control.range.value;
+        applyState();
+        renderYaml();
+      });
     });
 
     resetBtn.addEventListener('click', function () {
       state.focusX = 50;
       state.focusY = 50;
+      state.zoomFrom = 1.35;
+      state.zoomTo = 1.35;
+      state.panAmount = 6;
+      state.duration = 12;
+      zoomFrom.range.value = 1.35;
+      zoomFrom.valueSpan.textContent = '1.35';
+      zoomTo.range.value = 1.35;
+      zoomTo.valueSpan.textContent = '1.35';
+      panAmount.range.value = 6;
+      panAmount.valueSpan.textContent = '6';
+      duration.range.value = 12;
+      duration.valueSpan.textContent = '12';
       applyState();
       renderYaml();
     });
@@ -344,7 +433,7 @@
 
     setFrameRatio();
     applyState();
-    cardControllers.push({ setFrameRatio: setFrameRatio, applyState: applyState });
+    cardControllers.push({ setFrameRatio: setFrameRatio, setPlaying: setPlaying });
   }
 })();
 </script>

@@ -8,15 +8,26 @@
 # scripts/site_image_converter/ - its log output prints each file's
 # orientation for you.
 #
-# zoom (optional): overrides the default Ken Burns zoom level (--ftsk-hero-zoom,
-# 1.35 in _hero.scss) for just this photo, e.g. `zoom: 1.5` for a tighter shot
-# that needs more "room" to pan without showing empty edges.
+# zoom (optional, default 1.35): starting Ken Burns scale (--ftsk-hero-zoom). Also
+# used as the reduced-motion/static fallback framing.
+#
+# zoom_to (optional, default = zoom): ending scale - set this different from `zoom`
+# to animate an actual zoom in/out ("breathing") effect instead of a constant zoom
+# level. E.g. `zoom: 1.2` + `zoom_to: 1.5` slowly zooms in and back out on a loop.
+#
+# pan_amount (optional, default 6): how far (in %) the photo drifts from center along
+# the orientation axis - landscape pans sideways, portrait pans up/down. Set to 0 for
+# a pure zoom effect with no side-to-side/up-down movement at all.
+#
+# duration (optional, default 12): seconds for one from->to sweep (it then reverses
+# back, looping forever) - higher is slower/more subtle.
 #
 # focus (optional, default "50% 50%"): CSS object-position - which part of the
 # photo to keep visible/centered when the cover-fit crop and pan trim the rest.
-# "X% Y%", e.g. "70% 30%" keeps the right-and-upper area anchored. Use
-# scripts/site_image_converter/hero_focus_picker.html to preview crops and
-# generate these values interactively instead of guessing.
+# "X% Y%", e.g. "70% 30%" keeps the right-and-upper area anchored.
+#
+# Use scripts/site_image_converter/hero_focus_picker.html to preview crops/zoom/pan
+# live and generate all of the above values interactively instead of guessing.
 images:
   - path: /images/hero/ftsk-hero-cave-1.webp
     orientation: landscape

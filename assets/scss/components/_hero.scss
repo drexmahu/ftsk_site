@@ -201,8 +201,11 @@
   inset: 0;
   opacity: 0;
   transition: opacity 1.8s ease;
-  // Default "sense of space" zoom - override per-photo via an inline
-  // `--ftsk-hero-zoom` (see the optional `zoom:` field in data/hero_images.yaml).
+  // Static fallback zoom (used verbatim under prefers-reduced-motion, and as the
+  // resting value before an animation is assigned) - the actual per-photo Ken Burns
+  // pan/zoom keyframes + timing are generated per-slide by hero.hugo.html from
+  // data/hero_images.yaml (zoom/zoom_to/pan_amount/duration), since each photo can
+  // need different endpoints - a single shared keyframe can't express that.
   --ftsk-hero-zoom: 1.35;
   &.is-active {
     opacity: 1;
@@ -213,7 +216,6 @@
     height: 100%;
     object-fit: cover;
     transform: scale(var(--ftsk-hero-zoom));
-    animation-duration: 12s;
     animation-timing-function: ease-in-out;
     animation-iteration-count: infinite;
     animation-direction: alternate;
@@ -222,34 +224,11 @@
   &.is-active img {
     animation-play-state: running;
   }
-  // Tall photos drift top-to-bottom, wide photos drift left-to-right.
-  &[data-orientation='portrait'] img {
-    animation-name: ftsk-hero-pan-y;
-  }
-  &:not([data-orientation='portrait']) img {
-    animation-name: ftsk-hero-pan-x;
-  }
-}
-@keyframes ftsk-hero-pan-x {
-  from {
-    transform: scale(var(--ftsk-hero-zoom)) translateX(-6%);
-  }
-  to {
-    transform: scale(var(--ftsk-hero-zoom)) translateX(6%);
-  }
-}
-@keyframes ftsk-hero-pan-y {
-  from {
-    transform: scale(var(--ftsk-hero-zoom)) translateY(-6%);
-  }
-  to {
-    transform: scale(var(--ftsk-hero-zoom)) translateY(6%);
-  }
 }
 @media (prefers-reduced-motion: reduce) {
   .ftsk-hero-slide img {
     animation: none !important;
-    transform: scale(1);
+    transform: scale(var(--ftsk-hero-zoom, 1));
   }
 }
 

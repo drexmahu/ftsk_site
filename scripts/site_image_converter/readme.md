@@ -37,14 +37,16 @@ py site_image_converter.py --input ./photos --output ./out --max-width 1600 --ma
 For `cave-photo.jpg` you get `cave-photo.webp` - resized, original aspect
 ratio kept, no crop.
 
-## Picking the homepage hero crop/focus point
+## Picking the homepage hero crop/zoom/pan
 
 The homepage hero (`data/hero_images.yaml`) crops each photo with CSS
-`object-fit: cover` and pans it slightly - for some photos the interesting
-part isn't centered, so double-click `hero_focus_picker.html` (opens
-directly in your browser, no server needed) to preview the real crop/pan for
-each converted `.webp`, click on the photo to set its focus point, adjust
-zoom, and copy the generated `focus`/`zoom` lines straight into
+`object-fit: cover` and Ken-Burns-pans/zooms it slowly - for some photos the
+interesting part isn't centered, or the default motion isn't quite right, so
+double-click `hero_focus_picker.html` (opens directly in your browser, no
+server needed) to preview the real crop/animation for each converted
+`.webp`: click on the photo to set its focus point, use the play/pause
+button and the zoom start/end, pan amount and duration sliders to fine-tune
+the motion, then copy the generated lines straight into
 `data/hero_images.yaml`.
 
 ## Troubleshooting
