@@ -2,6 +2,28 @@
   <div class="hero-two-shape">
     <img src="/images/hero/hero-two-shape.png" alt="shape" />
   </div>
+  {{ with hugo.Data.hero_images }}
+  <div class="hero-two-media">
+    <div class="ftsk-hero-slideshow">
+      {{ range $index, $slide := .images }}
+      <div
+        class="ftsk-hero-slide{{ if eq $index 0 }} is-active{{ end }}"
+        data-orientation="{{ $slide.orientation }}"
+        {{ with $slide.zoom }}style="--ftsk-hero-zoom: {{ . }};"{{ end }}
+      >
+        <img
+          src="{{ $slide.path }}"
+          alt="{{ $slide.alt | default "Barlangászat közben készült fénykép" }}"
+          loading="{{ if eq $index 0 }}eager{{ else }}lazy{{ end }}"
+          {{ with $slide.focus }}style="object-position: {{ . }};"{{ end }}
+        />
+      </div>
+      {{ end }}
+    </div>
+    <div class="hero-two-media-fade"></div>
+    <div class="hero-two-media-motif"></div>
+  </div>
+  {{ end }}
   <div class="container-fluid">
     <div class="row align-items-center">
       <div class="col-lg-6">
@@ -17,7 +39,6 @@
       </div>
       <div class="col-lg-6">
         <div class="hero-two-banner">
-          <img src="{{.image_path}}" alt="hero-two-images" />
           <div class="hero-two-banner-shape">
             <img src="/images/hero/hero-three-shape.png" alt="shape" />
           </div>

@@ -15,7 +15,6 @@ content_blocks:
          Az FTSK Barlangkutató Szakosztály 1954 óta fedez fel, kutat és jár
          barlangokat itthon és külföldön. Csatlakozz hozzánk barlangtúrákon,
          kutatásokon vagy a legújabb alapfokú tanfolyamunkon!
-      image_path: /images/hero/ftsk-cave-hero.jpg
       link:
          text: Ismerd meg az egyesületet
          url: /egyesuletunk/

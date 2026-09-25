@@ -88,13 +88,19 @@
     position: relative;
     background: $color-gray-dark;
     padding: $base-padding * 11.3 0 $base-padding * 5;
+    min-height: 640px;
     z-index: 1;
     overflow: hidden;
     @include media-breakpoint-down-xl {
       padding: $base-padding * 8 0 $base-padding * 2;
+      min-height: 560px;
     }
     @include media-breakpoint-down-lg {
       padding: $base-padding * 6 0 $base-padding * 5;
+      // Columns stack below this breakpoint, so the "text on the left, photos
+      // weighted to the right" composition no longer applies - let height follow
+      // content instead of forcing the (now much less visible) media layer taller.
+      min-height: 0;
     }
     @include media-breakpoint-down-md {
       padding: $base-padding * 6 0 $base-padding * 5;
@@ -152,9 +158,6 @@
       max-width: 100%;
       margin-right: -13px;
       z-index: 1;
-      img {
-        border-radius: 0px;
-      }
       &-shape {
         position: absolute;
         top: -26%;
@@ -167,4 +170,112 @@
       }
     }
   }
+}
+
+// Homepage hero: photos fill the whole section as a background layer (weighted to
+// the right, since the left holds the text), slowly Ken-Burns-panning and crossfading
+// on a loop. Toggled by static/js/script.js (swaps "is-active" between slides on a
+// timer) - all fade/pan motion itself lives here in CSS.
+//
+// Stacking (back to front, all within .hero-two's own stacking context):
+// .hero-two's own bg -> .hero-two-shape (legacy decorative blob) -> .hero-two-media
+// (photos, then the left-to-right readability fade, then the cave-silhouette motif
+// redrawn on top so it reads as being in front of the photos) -> the real text/content.
+.hero-two-media {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  @include media-breakpoint-down-lg {
+    // Columns stack here - the full-width text would otherwise compete with a
+    // prominent right-weighted photo, so fall back to a faint ambient backdrop.
+    opacity: 0.3;
+  }
+}
+.ftsk-hero-slideshow {
+  position: absolute;
+  inset: 0;
+}
+.ftsk-hero-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1.8s ease;
+  // Default "sense of space" zoom - override per-photo via an inline
+  // `--ftsk-hero-zoom` (see the optional `zoom:` field in data/hero_images.yaml).
+  --ftsk-hero-zoom: 1.35;
+  &.is-active {
+    opacity: 1;
+  }
+  img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scale(var(--ftsk-hero-zoom));
+    animation-duration: 12s;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+    animation-play-state: paused;
+  }
+  &.is-active img {
+    animation-play-state: running;
+  }
+  // Tall photos drift top-to-bottom, wide photos drift left-to-right.
+  &[data-orientation='portrait'] img {
+    animation-name: ftsk-hero-pan-y;
+  }
+  &:not([data-orientation='portrait']) img {
+    animation-name: ftsk-hero-pan-x;
+  }
+}
+@keyframes ftsk-hero-pan-x {
+  from {
+    transform: scale(var(--ftsk-hero-zoom)) translateX(-6%);
+  }
+  to {
+    transform: scale(var(--ftsk-hero-zoom)) translateX(6%);
+  }
+}
+@keyframes ftsk-hero-pan-y {
+  from {
+    transform: scale(var(--ftsk-hero-zoom)) translateY(-6%);
+  }
+  to {
+    transform: scale(var(--ftsk-hero-zoom)) translateY(6%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ftsk-hero-slide img {
+    animation: none !important;
+    transform: scale(1);
+  }
+}
+
+// Left side stays fully opaque behind the text, fading away by the right edge so the
+// photos show through clearly there.
+.hero-two-media-fade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to right,
+    var(--bg-page) 0%,
+    var(--bg-page) 32%,
+    rgba(10, 17, 22, 0.82) 48%,
+    rgba(10, 17, 22, 0.25) 68%,
+    rgba(10, 17, 22, 0) 85%
+  );
+}
+
+// Redraws the same cave-silhouette drip motif used as .hero-two's own background, as a
+// foreground layer over the photos - the "dropstone" shapes read as being in front.
+.hero-two-media-motif {
+  position: absolute;
+  inset: 0;
+  background-image: url('/images/motifs/cave-silhouette.svg');
+  background-repeat: no-repeat;
+  background-position: bottom center;
+  background-size: cover;
+  opacity: 0.9;
 }

@@ -1,0 +1,45 @@
+# Homepage hero banner slideshow images (component-library/components/home/hero).
+# Rendered by hero.hugo.html via hugo.Data.hero_images, animated by the
+# ".ftsk-hero-slideshow" JS/CSS in static/js/script.js + assets/scss/components/_hero.scss.
+#
+# orientation controls the slow Ken Burns pan direction: landscape photos pan
+# sideways, portrait photos pan up/down (matches which edges get cropped by
+# the slideshow's cover-fit background layer). Generate new images with
+# scripts/site_image_converter/ - its log output prints each file's
+# orientation for you.
+#
+# zoom (optional): overrides the default Ken Burns zoom level (--ftsk-hero-zoom,
+# 1.35 in _hero.scss) for just this photo, e.g. `zoom: 1.5` for a tighter shot
+# that needs more "room" to pan without showing empty edges.
+#
+# focus (optional, default "50% 50%"): CSS object-position - which part of the
+# photo to keep visible/centered when the cover-fit crop and pan trim the rest.
+# "X% Y%", e.g. "70% 30%" keeps the right-and-upper area anchored. Use
+# scripts/site_image_converter/hero_focus_picker.html to preview crops and
+# generate these values interactively instead of guessing.
+images:
+  - path: /images/hero/ftsk-hero-cave-1.webp
+    orientation: landscape
+    focus: "42% 42%"
+    alt: Kötélen ereszkedő barlangász egy világos aknában
+  - path: /images/hero/ftsk-hero-cave-2.webp
+    orientation: landscape
+    focus: "40% 38%"
+    alt: Barlangász ereszkedés közben, fénysugarak között
+  - path: /images/hero/ftsk-hero-cave-3.webp
+    orientation: landscape
+    focus: "35% 68%"
+    alt: Tágas barlangterem barlangászokkal
+  - path: /images/hero/ftsk-hero-cave-4.webp
+    orientation: landscape
+    focus: "55% 55%"
+    alt: Barlangászok egy szűk sziklakapun át nézve
+  - path: /images/hero/ftsk-hero-cave-5.webp
+    orientation: landscape
+    focus: "65% 35%"
+    alt: Fiatal barlangász közelről, sisakkal és kötelekkel
+  - path: /images/hero/ftsk-hero-cave-6.webp
+    orientation: portrait
+    focus: "50% 58%"
+    alt: Barlangász egy mohás sziklahasadékban, fejlámpával megvilágítva
+
