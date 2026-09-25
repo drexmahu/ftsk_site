@@ -186,15 +186,13 @@
   inset: 0;
   z-index: -1;
   overflow: hidden;
-  @include media-breakpoint-down-lg {
-    // Columns stack here - the full-width text would otherwise compete with a
-    // prominent right-weighted photo, so fall back to a faint ambient backdrop.
-    opacity: 0.3;
-  }
 }
 .ftsk-hero-slideshow {
   position: absolute;
   inset: 0;
+  // No opacity dimming here below `lg` anymore - the photo stays at full exposure and
+  // .hero-two-media-fade applies a flat ND-filter-style dim on top instead (see below),
+  // which reads much cleaner than fading the photo itself toward the section's bg color.
 }
 .ftsk-hero-slide {
   position: absolute;
@@ -202,20 +200,70 @@
   opacity: 0;
   transition: opacity 1.8s ease;
   // Static fallback zoom (used verbatim under prefers-reduced-motion, and as the
-  // resting value before an animation is assigned) - the actual per-photo Ken Burns
-  // pan/zoom keyframes + timing are generated per-slide by hero.hugo.html from
-  // data/hero_images.yaml (zoom/zoom_to/pan_amount/duration), since each photo can
-  // need different endpoints - a single shared keyframe can't express that.
+  // resting value before the animation's first frame kicks in).
   --ftsk-hero-zoom: 1.35;
   &.is-active {
     opacity: 1;
   }
+  // Excludes this slide entirely below a given breakpoint - for photos that don't
+  // read well cropped down to a narrow phone viewport but are fine on tablet/desktop.
+  // Set via data/hero_images.yaml's `hide_below: sm|md|lg` (the JS cycler skips
+  // hidden slides instead of crossfading to them, see static/js/script.js).
+  &[data-hide-below='sm'] {
+    @include media-breakpoint-down-sm {
+      display: none;
+    }
+  }
+  &[data-hide-below='md'] {
+    @include media-breakpoint-down-md {
+      display: none;
+    }
+  }
+  &[data-hide-below='lg'] {
+    @include media-breakpoint-down-lg {
+      display: none;
+    }
+  }
+
+  // Resolves the base --ftsk-hero-zoom/-zoom-to/-pan-x/-pan-y/-duration/-focus (set
+  // inline per slide by hero.hugo.html from data/hero_images.yaml) down to a single
+  // "-active" custom property per breakpoint tier, preferring a "-tablet"/"-mobile"
+  // suffixed override (also set inline, from the YAML's `tablet`/`mobile` maps) only
+  // where a photo actually needs different framing/motion at that size. Static media
+  // queries here (rather than per-slide generated ones) since Go's html/template CSS
+  // sanitizer can't safely handle a per-slide dynamic CSS selector/rule.
+  --ftsk-hero-zoom-active: var(--ftsk-hero-zoom);
+  --ftsk-hero-zoom-to-active: var(--ftsk-hero-zoom-to);
+  --ftsk-hero-pan-x-active: var(--ftsk-hero-pan-x, 0);
+  --ftsk-hero-pan-y-active: var(--ftsk-hero-pan-y, 0);
+  --ftsk-hero-duration-active: var(--ftsk-hero-duration, 12s);
+  --ftsk-hero-focus-active: var(--ftsk-hero-focus, 50% 50%);
+  @media (min-width: 768px) and (max-width: 991.98px) {
+    --ftsk-hero-zoom-active: var(--ftsk-hero-zoom-tablet, var(--ftsk-hero-zoom));
+    --ftsk-hero-zoom-to-active: var(--ftsk-hero-zoom-to-tablet, var(--ftsk-hero-zoom-to));
+    --ftsk-hero-pan-x-active: var(--ftsk-hero-pan-x-tablet, var(--ftsk-hero-pan-x, 0));
+    --ftsk-hero-pan-y-active: var(--ftsk-hero-pan-y-tablet, var(--ftsk-hero-pan-y, 0));
+    --ftsk-hero-duration-active: var(--ftsk-hero-duration-tablet, var(--ftsk-hero-duration, 12s));
+    --ftsk-hero-focus-active: var(--ftsk-hero-focus-tablet, var(--ftsk-hero-focus, 50% 50%));
+  }
+  @media (max-width: 767.98px) {
+    --ftsk-hero-zoom-active: var(--ftsk-hero-zoom-mobile, var(--ftsk-hero-zoom));
+    --ftsk-hero-zoom-to-active: var(--ftsk-hero-zoom-to-mobile, var(--ftsk-hero-zoom-to));
+    --ftsk-hero-pan-x-active: var(--ftsk-hero-pan-x-mobile, var(--ftsk-hero-pan-x, 0));
+    --ftsk-hero-pan-y-active: var(--ftsk-hero-pan-y-mobile, var(--ftsk-hero-pan-y, 0));
+    --ftsk-hero-duration-active: var(--ftsk-hero-duration-mobile, var(--ftsk-hero-duration, 12s));
+    --ftsk-hero-focus-active: var(--ftsk-hero-focus-mobile, var(--ftsk-hero-focus, 50% 50%));
+  }
+
   img {
     display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transform: scale(var(--ftsk-hero-zoom));
+    object-position: var(--ftsk-hero-focus-active, 50% 50%);
+    transform: scale(var(--ftsk-hero-zoom-active));
+    animation-name: ftsk-hero-kb;
+    animation-duration: var(--ftsk-hero-duration-active, 12s);
     animation-timing-function: ease-in-out;
     animation-iteration-count: infinite;
     animation-direction: alternate;
@@ -225,26 +273,57 @@
     animation-play-state: running;
   }
 }
+// Shared Ken Burns pan/zoom for every slide, driven entirely by the "-active" custom
+// properties resolved above (in turn from hero.hugo.html's per-slide --ftsk-hero-zoom/
+// -zoom-to/-pan-x/-pan-y, from data/hero_images.yaml's zoom/zoom_to/pan_amount) - one
+// shared keyframe covers every photo and every breakpoint override.
+@keyframes ftsk-hero-kb {
+  from {
+    transform: scale(var(--ftsk-hero-zoom-active))
+      translate(calc(var(--ftsk-hero-pan-x-active, 0) * -1%), calc(var(--ftsk-hero-pan-y-active, 0) * -1%));
+  }
+  to {
+    transform: scale(var(--ftsk-hero-zoom-to-active, var(--ftsk-hero-zoom-active)))
+      translate(calc(var(--ftsk-hero-pan-x-active, 0) * 1%), calc(var(--ftsk-hero-pan-y-active, 0) * 1%));
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .ftsk-hero-slide img {
     animation: none !important;
-    transform: scale(var(--ftsk-hero-zoom, 1));
+    transform: scale(var(--ftsk-hero-zoom-active, 1));
   }
 }
 
+
 // Left side stays fully opaque behind the text, fading away by the right edge so the
-// photos show through clearly there.
+// photos show through clearly there. The dark stops are custom properties (rather than
+// literal rgba() in the gradient) purely so they can be re-tuned without touching the
+// gradient shape/stops themselves.
 .hero-two-media-fade {
   position: absolute;
   inset: 0;
+  --ftsk-hero-fade-strong: rgba(10, 17, 22, 0.82);
+  --ftsk-hero-fade-mid: rgba(10, 17, 22, 0.25);
   background: linear-gradient(
     to right,
     var(--bg-page) 0%,
     var(--bg-page) 32%,
-    rgba(10, 17, 22, 0.82) 48%,
-    rgba(10, 17, 22, 0.25) 68%,
+    var(--ftsk-hero-fade-strong) 48%,
+    var(--ftsk-hero-fade-mid) 68%,
     rgba(10, 17, 22, 0) 85%
   );
+
+  // Below `lg` the text is centered full-width over the whole photo (not just anchored
+  // to the left half), so the left-to-right gradient shape no longer makes sense - a
+  // flat, uniform dim (like an ND filter on a camera lens) over the whole photo reads
+  // much cleaner and keeps the text legible everywhere instead of just on one side.
+  // `--ftsk-hero-mobile-dim` is the single global knob for this (0 = no dim/full
+  // exposure, 1 = fully black) - it applies to every hero photo on every mobile/tablet
+  // screen, tune it here in one place rather than per-image.
+  @include media-breakpoint-down-lg {
+    --ftsk-hero-mobile-dim: 0.55;
+    background: rgba(10, 17, 22, var(--ftsk-hero-mobile-dim));
+  }
 }
 
 // Redraws the same cave-silhouette drip motif used as .hero-two's own background, as a

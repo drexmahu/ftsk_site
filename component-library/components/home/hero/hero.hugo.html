@@ -11,24 +11,40 @@
       {{ $panAmount := 6.0 }}
       {{ if isset $slide "pan_amount" }}{{ $panAmount = $slide.pan_amount }}{{ end }}
       {{ $duration := $slide.duration | default 12 }}
-      {{ $axis := "X" }}{{ if eq $slide.orientation "portrait" }}{{ $axis = "Y" }}{{ end }}
-      {{ $animName := printf "ftsk-hero-kb-%d" $index }}
-      <style>
-        @keyframes {{ $animName }} {
-          from { transform: scale({{ $zoomFrom }}) translate{{ $axis }}({{ mul $panAmount -1 }}%); }
-          to { transform: scale({{ $zoomTo }}) translate{{ $axis }}({{ $panAmount }}%); }
-        }
-      </style>
+      {{ $focus := $slide.focus | default "50% 50%" }}
+      {{ $isPortrait := eq $slide.orientation "portrait" }}
+      {{ $panX := 0.0 }}{{ $panY := 0.0 }}
+      {{ if $isPortrait }}{{ $panY = $panAmount }}{{ else }}{{ $panX = $panAmount }}{{ end }}
+      {{ $hideBelow := $slide.hide_below }}
+
+      {{/* Per-breakpoint overrides (data/hero_images.yaml's `mobile`/`tablet` maps) are
+           emitted as extra "-mobile"/"-tablet" suffixed custom properties alongside the
+           base ones above - _hero.scss's static media queries pick whichever applies at
+           the current viewport, so no per-slide dynamic CSS is needed here. */}}
+      {{ $style := printf "--ftsk-hero-zoom: %v; --ftsk-hero-zoom-to: %v; --ftsk-hero-pan-x: %v; --ftsk-hero-pan-y: %v; --ftsk-hero-duration: %vs; --ftsk-hero-focus: %s;" $zoomFrom $zoomTo $panX $panY $duration $focus }}
+      {{ range $tier, $override := (dict "tablet" $slide.tablet "mobile" $slide.mobile) }}
+      {{ with $override }}
+      {{ with .zoom }}{{ $style = printf "%s --ftsk-hero-zoom-%s: %v;" $style $tier . }}{{ end }}
+      {{ with .zoom_to }}{{ $style = printf "%s --ftsk-hero-zoom-to-%s: %v;" $style $tier . }}{{ end }}
+      {{ if isset . "pan_amount" }}
+        {{ if $isPortrait }}{{ $style = printf "%s --ftsk-hero-pan-y-%s: %v;" $style $tier .pan_amount }}
+        {{ else }}{{ $style = printf "%s --ftsk-hero-pan-x-%s: %v;" $style $tier .pan_amount }}{{ end }}
+      {{ end }}
+      {{ with .duration }}{{ $style = printf "%s --ftsk-hero-duration-%s: %vs;" $style $tier . }}{{ end }}
+      {{ with .focus }}{{ $style = printf "%s --ftsk-hero-focus-%s: %s;" $style $tier . }}{{ end }}
+      {{ end }}
+      {{ end }}
+
       <div
         class="ftsk-hero-slide{{ if eq $index 0 }} is-active{{ end }}"
         data-orientation="{{ $slide.orientation }}"
-        style="--ftsk-hero-zoom: {{ $zoomFrom }};"
+        {{ with $hideBelow }}data-hide-below="{{ . }}"{{ end }}
+        style="{{ $style | safeCSS }}"
       >
         <img
           src="{{ partial `url.html` $slide.path }}"
           alt="{{ $slide.alt | default "Barlangászat közben készült fénykép" }}"
           loading="{{ if eq $index 0 }}eager{{ else }}lazy{{ end }}"
-          style="animation-name: {{ $animName }}; animation-duration: {{ $duration }}s;{{ with $slide.focus }} object-position: {{ . }};{{ end }}"
         />
       </div>
       {{ end }}
@@ -37,6 +53,8 @@
     <div class="hero-two-media-motif"></div>
   </div>
   {{ end }}
+
+
   <div class="container-fluid">
     <div class="row align-items-center">
       <div class="col-lg-6">

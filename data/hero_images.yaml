@@ -26,8 +26,27 @@
 # photo to keep visible/centered when the cover-fit crop and pan trim the rest.
 # "X% Y%", e.g. "70% 30%" keeps the right-and-upper area anchored.
 #
+# hide_below (optional): fully excludes this slide below a breakpoint, for photos
+# that only work cropped wide (desktop/tablet) but not on a narrow phone screen, or
+# vice versa. One of:
+#   sm  - hidden below 576px (excludes only the smallest phones)
+#   md  - hidden below 768px (excludes all phones, still shows on tablet/desktop)
+#   lg  - hidden below 992px (excludes phones + tablets, desktop only)
+# The slideshow skips hidden slides automatically instead of crossfading to a blank
+# frame. Leave unset to show a slide at every size.
+#
+# mobile / tablet (optional): override any of zoom / zoom_to / pan_amount / duration /
+# focus just for phones (<768px) or tablets (768-991px) - the same animation doesn't
+# always suit every screen size even when the photo itself is fine there. Any field
+# left out of these maps just keeps falling back to the top-level value. E.g.:
+#   mobile:
+#     pan_amount: 2   # a wide side-to-side pan can feel too aggressive on a phone
+#     duration: 9
+#
 # Use scripts/site_image_converter/hero_focus_picker.html to preview crops/zoom/pan
-# live and generate all of the above values interactively instead of guessing.
+# live and generate all of the above values interactively instead of guessing (note:
+# the picker currently only generates the top-level/desktop fields - hide_below and
+# mobile/tablet overrides need to be added by hand).
 images:
   - path: /images/hero/ftsk-hero-cave-1.webp
     orientation: landscape
