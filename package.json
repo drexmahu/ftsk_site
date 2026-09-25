@@ -24,7 +24,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@bookshop/browser": "^3.1.2",
+    "@bookshop/browser": "^3.20.0",
     "@bookshop/generate": "^3.1.2",
     "@bookshop/hugo-engine": "^3.1.2"
   },
