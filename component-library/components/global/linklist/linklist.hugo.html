@@ -13,7 +13,7 @@
         <ul class="ftsk-linklist-items">
           {{ range .items }}
           <li class="ftsk-linklist-item">
-            <a href="{{ .url }}" target="_blank" rel="noopener">
+            <a href="{{ partial `url.html` .url }}" target="_blank" rel="noopener">
               <i class="{{ if strings.HasSuffix .url ".pdf" }}ph-file-pdf{{ else }}ph-arrow-square-out{{ end }}"></i>
               <span>{{ .text }}</span>
             </a>

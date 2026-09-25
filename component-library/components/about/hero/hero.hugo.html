@@ -7,7 +7,7 @@
           <p class="mb-20 w-xxl-80">{{.description | markdownify}}</p>
           <div class="">
             {{with .link}}
-            <a href="{{.url}}" class="btn btn-primary btn-lg"> {{.text}} </a>
+            <a href="{{ partial `url.html` .url }}" class="btn btn-primary btn-lg"> {{.text}} </a>
             {{end}}
           </div>
         </div>
@@ -23,11 +23,11 @@
               {{ else if eq .placer "back_top_left" }}
                 image-three
               {{ end }}">
-              <img src="{{.image_path}}" alt="aboutfeature" loading="lazy"/>
+              <img src="{{ partial `url.html` .image_path }}" alt="aboutfeature" loading="lazy"/>
             </div>
           {{ end }}
           <div class="pattern">
-            <img src="/images/about/patterns-two.png" alt="patterns" loading="lazy"/>
+            <img src="{{ relURL `images/about/patterns-two.png` }}" alt="patterns" loading="lazy"/>
           </div>
         </div>
       </div>

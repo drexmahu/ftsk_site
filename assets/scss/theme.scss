@@ -17,6 +17,11 @@
 
 ===================== */
 
+// Resolved here (not in the imported partials) because only this entry file is run
+// through resources.ExecuteAsTemplate in baseof.html before Sass compiles it - lets
+// the motif keep working under a subpath baseURL (GH Pages project/staging/PR previews).
+$cave-silhouette-url: "{{ "images/motifs/cave-silhouette.svg" | relURL }}";
+
 @import "variables";
 @import "mixins";
 @import "root";

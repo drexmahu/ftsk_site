@@ -5,11 +5,11 @@
       <div class="col-lg-6">
         <div class="feature-item-banner mb-sm-8 mb-lg-10 mb-xxl-15 mb-7">
           <div class="card-image">
-            <img src="{{.image_path}}" alt="card-images" loading="lazy" />
+            <img src="{{ partial `url.html` .image_path }}" alt="card-images" loading="lazy" />
           </div>
           <div class="effect-one">
             <img
-              src="/images/feature/effect-1.png"
+              src="{{ relURL `images/feature/effect-1.png` }}"
               alt="effect-image"
               loading="lazy"
             />
@@ -22,7 +22,7 @@
           <p>{{.description | markdownify}}</p>
           <div class="Learn-more">
             {{ with .btn}}
-            <a href="{{.link}}" class="">
+            <a href="{{ partial `url.html` .link }}" class="">
               {{.text}}
               <i class="ph-arrow-right"></i>
             </a>
@@ -39,7 +39,7 @@
           <p>{{.description | markdownify}}</p>
           <div class="Learn-more">
             {{ with .btn }}
-            <a href="{{.link}}" class="">
+            <a href="{{ partial `url.html` .link }}" class="">
               {{.text}}
               <i class="ph-arrow-right"></i>
             </a>
@@ -50,11 +50,11 @@
       <div class="col-lg-6 order-1 order-lg-2">
         <div class="feature-item-banner mb-sm-8 mb-lg-10 mb-xxl-15 mb-7">
           <div class="card-image">
-            <img src="{{.image_path}}" alt="card-images" loading="lazy" />
+            <img src="{{ partial `url.html` .image_path }}" alt="card-images" loading="lazy" />
           </div>
           <div class="effect-two">
             <img
-              src="/images/feature/effect-2.png"
+              src="{{ relURL `images/feature/effect-2.png` }}"
               alt="effect-image"
               loading="lazy"
             />

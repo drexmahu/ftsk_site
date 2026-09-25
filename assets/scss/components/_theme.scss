@@ -71,7 +71,7 @@ html {
 .error,
 .works {
   background-color: var(--bg-page);
-  background-image: url("/images/motifs/cave-silhouette.svg");
+  background-image: url($cave-silhouette-url);
   background-repeat: no-repeat;
   background-position: bottom center;
   background-size: cover;
@@ -79,7 +79,7 @@ html {
 
 .footer {
   background-color: var(--bg-surface);
-  background-image: url("/images/motifs/cave-silhouette.svg");
+  background-image: url($cave-silhouette-url);
   background-repeat: no-repeat;
   background-position: top center;
   background-size: cover;

@@ -3,21 +3,21 @@
   <head>
     {{ partial "meta.html" . }}
     
-    <link href="/vendor/bootstrap/bootstrap.min.css" rel="stylesheet" />
-    <link href="/vendor/phosphor-icons/css/phosphor.css" rel="stylesheet" />
-    <link href="/vendor/magnific-popup/magnific-popup.css" rel="stylesheet" />
+    <link href="{{ relURL `vendor/bootstrap/bootstrap.min.css` }}" rel="stylesheet" />
+    <link href="{{ relURL `vendor/phosphor-icons/css/phosphor.css` }}" rel="stylesheet" />
+    <link href="{{ relURL `vendor/magnific-popup/magnific-popup.css` }}" rel="stylesheet" />
     
     {{ $sassOpts := dict "outputStyle" (cond hugo.IsProduction "compressed" "expanded") }}
-    {{ with resources.Get "/scss/theme.scss" | css.Sass $sassOpts | resources.Minify | resources.Fingerprint }}
+    {{ with resources.Get "/scss/theme.scss" | resources.ExecuteAsTemplate "scss/theme.scss" . | css.Sass $sassOpts | resources.Minify | resources.Fingerprint }}
     <link rel="stylesheet" href="{{ .RelPermalink }}" />
     {{ end }}
-    <link rel="shortcut icon" href="{{ hugo.Data.meta.favicon_image }}" type="image/png" />
-    <link rel="icon" href="{{ hugo.Data.meta.favicon_image }}" type="image/png" />
-    <script src="/vendor/jQuery/jquery.min.js" defer></script>
-    <script src="/vendor/bootstrap/bootstrap.bundle.min.js" defer></script>
-    <script src="/vendor/counter-up/countup.js" defer></script>
-    <script src="/vendor/magnific-popup/magnific-popup.min.js" defer></script>
-    <script src="/js/script.js" defer></script>
+    <link rel="shortcut icon" href="{{ partial `url.html` hugo.Data.meta.favicon_image }}" type="image/png" />
+    <link rel="icon" href="{{ partial `url.html` hugo.Data.meta.favicon_image }}" type="image/png" />
+    <script src="{{ relURL `vendor/jQuery/jquery.min.js` }}" defer></script>
+    <script src="{{ relURL `vendor/bootstrap/bootstrap.bundle.min.js` }}" defer></script>
+    <script src="{{ relURL `vendor/counter-up/countup.js` }}" defer></script>
+    <script src="{{ relURL `vendor/magnific-popup/magnific-popup.min.js` }}" defer></script>
+    <script src="{{ relURL `js/script.js` }}" defer></script>
     <title>{{print .Page.Title " | " .Site.Title}}</title>
   </head>
   <body>

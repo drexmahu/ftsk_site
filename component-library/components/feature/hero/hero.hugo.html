@@ -7,17 +7,17 @@
           <p>{{.description | markdownify}}</p>
           <div class="d-block mb-6">
             {{ with .btn }}
-            <a href="{{.link}}" class="btn btn-primary btn-lg"> {{.text}} </a>
+            <a href="{{ partial `url.html` .link }}" class="btn btn-primary btn-lg"> {{.text}} </a>
             {{ end }}
           </div>
         </div>
       </div>
       <div class="col-lg-6">
         <div class="feature-hero-banner">
-          <img src="{{.image_path}}" alt="banner-image" loading="lazy" />
+          <img src="{{ partial `url.html` .image_path }}" alt="banner-image" loading="lazy" />
           <div class="shape">
             <img
-              src="/images/feature/effect-4.png"
+              src="{{ relURL `images/feature/effect-4.png` }}"
               alt="shape"
               loading="lazy"
             />

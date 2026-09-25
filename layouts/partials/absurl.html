@@ -1,0 +1,3 @@
+{{/* Same as url.html but fully-qualified (absURL) - for meta/OG/Twitter tags
+     that require an absolute image URL regardless of environment. */}}
+{{ return (. | strings.TrimPrefix "/" | absURL) }}

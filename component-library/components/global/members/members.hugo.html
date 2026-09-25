@@ -26,13 +26,13 @@
           data-group="{{ $groupLabel }}"
           data-initials="{{ $initials | upper }}"
           data-avatar-color="{{ $colorIdx }}"
-          {{ with .image }}data-image="{{ . }}"{{ end }}
-          {{ with .modal_image }}data-modal-image="{{ . }}"{{ end }}
+          {{ with .image }}data-image="{{ partial `url.html` . }}"{{ end }}
+          {{ with .modal_image }}data-modal-image="{{ partial `url.html` . }}"{{ end }}
           {{ with .bio }}data-bio="{{ . }}"{{ end }}
         >
           <span class="ftsk-members-avatar ftsk-avatar-{{ $colorIdx }}">
             {{ if .image }}
-            <img src="{{ .image }}" alt="{{ .name }}" loading="lazy" />
+            <img src="{{ partial `url.html` .image }}" alt="{{ .name }}" loading="lazy" />
             {{ else }}
             <span class="ftsk-members-initials">{{ $initials | upper }}</span>
             {{ end }}

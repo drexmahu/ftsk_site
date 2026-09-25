@@ -20,7 +20,7 @@
                </div>
                <div class="rounded-box mb-xxl-11 mb-8">
                   <img
-                     src="{{.Params.featuredImg.image_path}}"
+                     src="{{ partial `url.html` .Params.featuredImg.image_path }}"
                      class="w-100"
                      alt="featured-image"
                   />
@@ -47,7 +47,7 @@
             <article class="blog-post">
                <div class="blog-post-thumb">
                   <a href="{{.Permalink | relURL}}">
-                     <img src="{{.Params.thumbImg.image_path}}" alt="blog-thum" />
+                     <img src="{{ partial `url.html` .Params.thumbImg.image_path }}" alt="blog-thum" />
                   </a>
                </div>
                <div class="blog-post-content">

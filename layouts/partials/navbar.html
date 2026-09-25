@@ -6,8 +6,8 @@
 <header>
     <nav class="navbar navbar-expand-xl position-fixed w-100 zindex-dropdown" id="mainnavigationBar">
         <div class="container-fluid">
-            <a class="navbar-brand" href="/">
-                <img src="{{ .logo }}" alt="Nav-Logo" />
+            <a class="navbar-brand" href="{{ relURL `` }}">
+                <img src="{{ partial `url.html` .logo }}" alt="Nav-Logo" />
             </a>
             <button
             class="navbar-toggler"
@@ -89,16 +89,16 @@
                         {{ $url := .link }}
                         <li class="nav-item dropdown">
                             {{ if and .enable_dropdown .dropdown }}
-                                <a class="nav-link dropdown-link {{ if eq $current.Permalink $url }}active{{ end }}" href="{{ .link }}" id="navbarDropdown" role="button" aria-expanded="false">{{ .text }}</a>
+                                <a class="nav-link dropdown-link {{ if eq $current.Permalink $url }}active{{ end }}" href="{{ partial `url.html` .link }}" id="navbarDropdown" role="button" aria-expanded="false">{{ .text }}</a>
                                 <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                                     {{ range .dropdown }}
                                         <li>
-                                            <a class="dropdown-item" href="{{ .dropdown_link }}">{{ .dropdown_text }}</a>
+                                            <a class="dropdown-item" href="{{ partial `url.html` .dropdown_link }}">{{ .dropdown_text }}</a>
                                         </li>
                                     {{ end }}
                                 </ul>
                             {{ else }}
-                                <a class="nav-link {{ if eq $current.Permalink $url }}active{{ end }}" href="{{ .link }}">{{ .text }}</a>
+                                <a class="nav-link {{ if eq $current.Permalink $url }}active{{ end }}" href="{{ partial `url.html` .link }}">{{ .text }}</a>
                             {{ end }}
                         </li>
                     {{ end }}
@@ -106,7 +106,7 @@
                         {{ with hugo.Data.tanfolyam }}
                             {{ if .active }}
                                 <li class="nav-item d-xl-none">
-                                    <a href="{{ .url }}" class="btn btn-sm btn-links">{{ .nav_text }}</a>
+                                    <a href="{{ partial `url.html` .url }}" class="btn btn-sm btn-links">{{ .nav_text }}</a>
                                 </li>
                             {{ end }}
                         {{ end }}
@@ -118,7 +118,7 @@
                     {{ if .active }}
                         <div class="d-none d-xl-block">
                             <div class="nav-item">
-                                <a href="{{ .url }}" class="btn btn-sm btn-links">{{ .nav_text }}</a>
+                                <a href="{{ partial `url.html` .url }}" class="btn btn-sm btn-links">{{ .nav_text }}</a>
                             </div>
                         </div>
                     {{ end }}

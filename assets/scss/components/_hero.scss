@@ -252,7 +252,7 @@
 .hero-two-media-motif {
   position: absolute;
   inset: 0;
-  background-image: url('/images/motifs/cave-silhouette.svg');
+  background-image: url($cave-silhouette-url);
   background-repeat: no-repeat;
   background-position: bottom center;
   background-size: cover;

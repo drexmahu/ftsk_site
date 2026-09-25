@@ -5,8 +5,8 @@
       <div class="row">
         <div class="col-12 col-lg-4 me-auto order-2 order-lg-1">
           <div class="footer-logo mt-7 mt-md-0">
-            <a href="{{.logo_url}}" class="">
-              <img src="{{.logo}}" alt="logo" />
+            <a href="{{ partial `url.html` .logo_url }}" class="">
+              <img src="{{ partial `url.html` .logo }}" alt="logo" />
             </a>
             <p>
               © Copyright <span>{{ dateFormat "2006" now }}</span> {{.copyright}}
@@ -16,7 +16,7 @@
             <ul class="list-unstyled">
               {{ range .social }}
               <li>
-                <a href="{{.link}}"> <i class="{{.icon}}"></i> </a>
+                <a href="{{ partial `url.html` .link }}"> <i class="{{.icon}}"></i> </a>
               </li>
               {{ end }}
             </ul>
@@ -29,7 +29,7 @@
             <ul class="list-unstyled">
               {{ range .links }}
               <li>
-                <a href="{{.link}}">{{.text}}</a>
+                <a href="{{ partial `url.html` .link }}">{{.text}}</a>
               </li>
               {{ end }}
             </ul>

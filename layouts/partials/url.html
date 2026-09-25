@@ -1,0 +1,10 @@
+{{/*
+  Resolves a stored root-relative path (e.g. "/images/x.jpg") against the
+  CURRENT build's baseURL, including any subpath (Hugo Pages project sites,
+  staging, PR previews all live under a subpath, not the domain root).
+  A plain relURL/absURL call would NOT do this - per Hugo's docs, an input
+  starting with "/" is resolved relative to the protocol+host only, ignoring
+  baseURL's own path segment. Stripping the leading slash first fixes that.
+  Absolute URLs (external links) pass through relURL untouched either way.
+*/}}
+{{ return (. | strings.TrimPrefix "/" | relURL) }}

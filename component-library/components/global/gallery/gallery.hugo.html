@@ -10,8 +10,8 @@
     </div>
     <div class="ftsk-gallery-grid">
       {{ range .images }}
-      <a href="{{ .image_path }}" class="ftsk-gallery-item" {{ with .caption }}title="{{ . }}"{{ end }}>
-        <img src="{{ .image_path }}" alt="{{ with .caption }}{{ . }}{{ else }}galéria kép{{ end }}" loading="lazy" />
+      <a href="{{ partial `url.html` .image_path }}" class="ftsk-gallery-item" {{ with .caption }}title="{{ . }}"{{ end }}>
+        <img src="{{ partial `url.html` .image_path }}" alt="{{ with .caption }}{{ . }}{{ else }}galéria kép{{ end }}" loading="lazy" />
         {{ with .caption }}<span class="ftsk-gallery-caption">{{ . }}</span>{{ end }}
       </a>
       {{ end }}

@@ -19,13 +19,13 @@
 {{ if eq .Permalink "/" }}
     <meta name="og:title" content="{{ hugo.Data.meta.site_title }}" />
     <meta property="og:type" content="website" />
-    <meta name="og:image" content="{{ hugo.Data.meta.image }}" />
+    <meta name="og:image" content="{{ partial `absurl.html` hugo.Data.meta.image }}" />
     <meta name="twitter:creator" content="{{ hugo.Data.meta.twitter_site }}" />
     <meta name="twitter:title" content="{{ hugo.Data.meta.title }}" />
     {{ with hugo.Data.meta.twitter_image }}
-    <meta name="twitter:image" content="{{ . }}" />
+    <meta name="twitter:image" content="{{ partial `absurl.html` . }}" />
     {{ else }}
-    <meta name="twitter:image" content="{{ hugo.Data.meta.image }}" />
+    <meta name="twitter:image" content="{{ partial `absurl.html` hugo.Data.meta.image }}" />
     {{ end }}
 {{ else }}
     <meta name="og:title" content="{{ .Title }}" />
@@ -36,14 +36,14 @@
     <meta property="og:type" content="website" />
     {{ end }}
     {{ with .Params.seo.featured_image }}
-    <meta name="og:image" content="{{ . }}" />
-    <meta name="twitter:image" content="{{ . }}" />
+    <meta name="og:image" content="{{ partial `absurl.html` . }}" />
+    <meta name="twitter:image" content="{{ partial `absurl.html` . }}" />
     {{ else }}
-    <meta name="og:image" content="{{ hugo.Data.meta.image }}" />
+    <meta name="og:image" content="{{ partial `absurl.html` hugo.Data.meta.image }}" />
     {{ with hugo.Data.meta.twitter_image }}
-        <meta name="twitter:image" content="{{ . }}" />
+        <meta name="twitter:image" content="{{ partial `absurl.html` . }}" />
     {{ else }}
-        <meta name="twitter:image" content="{{ hugo.Data.meta.image }}" />
+        <meta name="twitter:image" content="{{ partial `absurl.html` hugo.Data.meta.image }}" />
     {{ end }}
     {{ end }}
     {{ with .Params.seo.author_twitter_handle }}  
