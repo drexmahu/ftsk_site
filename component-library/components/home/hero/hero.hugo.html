@@ -25,7 +25,17 @@
         {{ if isset . "amount" }}{{ $animAmount = .amount }}{{ end }}
         {{ $duration = .duration | default 12 }}
       {{ end }}
-      {{ $hideBelow := $slide.hide_below }}
+      {{ $hideOn := $slide.hide_on }}
+      {{ $mirrorX := 1.0 }}
+      {{ $mirrorY := 1.0 }}
+      {{ if eq $slide.mirror "horizontal" }}
+        {{ $mirrorX = -1.0 }}
+      {{ else if eq $slide.mirror "vertical" }}
+        {{ $mirrorY = -1.0 }}
+      {{ else if eq $slide.mirror "both" }}
+        {{ $mirrorX = -1.0 }}
+        {{ $mirrorY = -1.0 }}
+      {{ end }}
       {{ $anim := partial "hero-animation.html" (dict "zoom" $startZoom "type" $animType "direction" $animDirection "amount" $animAmount) }}
 
       {{/* Per-breakpoint overrides (data/hero_images.yaml's `mobile`/`tablet` maps) are

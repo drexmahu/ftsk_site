@@ -202,25 +202,28 @@
   // Static fallback zoom (used verbatim under prefers-reduced-motion, and as the
   // resting value before the animation's first frame kicks in).
   --ftsk-hero-zoom-from: 1.35;
+  // 1 (unmirrored) or -1 (flipped), set via data/hero_images.yaml's `mirror` field.
+  --ftsk-hero-mirror-x: 1;
+  --ftsk-hero-mirror-y: 1;
   &.is-active {
     opacity: 1;
   }
-  // Excludes this slide entirely below a given breakpoint - for photos that don't
-  // read well cropped down to a narrow phone viewport but are fine on tablet/desktop.
-  // Set via data/hero_images.yaml's `hide_below: sm|md|lg` (the JS cycler skips
+  // Excludes this slide entirely on a given screen-size tier - for photos that don't
+  // read well cropped down to a narrow phone viewport (or vice versa). Set via
+  // data/hero_images.yaml's `hide_on: [mobile, tablet, desktop]` (the JS cycler skips
   // hidden slides instead of crossfading to them, see static/js/script.js).
-  &[data-hide-below='sm'] {
-    @include media-breakpoint-down-sm {
-      display: none;
-    }
-  }
-  &[data-hide-below='md'] {
+  &[data-hide-on~='mobile'] {
     @include media-breakpoint-down-md {
       display: none;
     }
   }
-  &[data-hide-below='lg'] {
-    @include media-breakpoint-down-lg {
+  &[data-hide-on~='tablet'] {
+    @include media-breakpoint-only-md {
+      display: none;
+    }
+  }
+  &[data-hide-on~='desktop'] {
+    @include media-breakpoint-up-lg {
       display: none;
     }
   }
@@ -281,7 +284,10 @@
     // "zoom reveals more room to push the focus point" behaviour panning already had
     // via its translate %, see the keyframes below).
     transform-origin: var(--ftsk-hero-focus-active, 50% 50%);
-    transform: scale(var(--ftsk-hero-zoom-from-active));
+    transform: scale(
+      calc(var(--ftsk-hero-zoom-from-active) * var(--ftsk-hero-mirror-x, 1)),
+      calc(var(--ftsk-hero-zoom-from-active) * var(--ftsk-hero-mirror-y, 1))
+    );
     animation-name: ftsk-hero-kb;
     animation-duration: var(--ftsk-hero-duration-active, 12s);
     animation-timing-function: ease-in-out;
@@ -301,12 +307,18 @@
 // every combination without needing a type-specific @keyframes block.
 @keyframes ftsk-hero-kb {
   from {
-    transform: scale(var(--ftsk-hero-zoom-from-active))
+    transform: scale(
+        calc(var(--ftsk-hero-zoom-from-active) * var(--ftsk-hero-mirror-x, 1)),
+        calc(var(--ftsk-hero-zoom-from-active) * var(--ftsk-hero-mirror-y, 1))
+      )
       translate(calc(var(--ftsk-hero-pan-x-from-active, 0) * 1%), calc(var(--ftsk-hero-pan-y-from-active, 0) * 1%))
       rotate(var(--ftsk-hero-rotate-from-active, 0deg));
   }
   to {
-    transform: scale(var(--ftsk-hero-zoom-to-active, var(--ftsk-hero-zoom-from-active)))
+    transform: scale(
+        calc(var(--ftsk-hero-zoom-to-active, var(--ftsk-hero-zoom-from-active)) * var(--ftsk-hero-mirror-x, 1)),
+        calc(var(--ftsk-hero-zoom-to-active, var(--ftsk-hero-zoom-from-active)) * var(--ftsk-hero-mirror-y, 1))
+      )
       translate(calc(var(--ftsk-hero-pan-x-to-active, 0) * 1%), calc(var(--ftsk-hero-pan-y-to-active, 0) * 1%))
       rotate(var(--ftsk-hero-rotate-to-active, 0deg));
   }
@@ -314,7 +326,10 @@
 @media (prefers-reduced-motion: reduce) {
   .ftsk-hero-slide img {
     animation: none !important;
-    transform: scale(var(--ftsk-hero-zoom-from-active, 1));
+    transform: scale(
+      calc(var(--ftsk-hero-zoom-from-active, 1) * var(--ftsk-hero-mirror-x, 1)),
+      calc(var(--ftsk-hero-zoom-from-active, 1) * var(--ftsk-hero-mirror-y, 1))
+    );
   }
 }
 

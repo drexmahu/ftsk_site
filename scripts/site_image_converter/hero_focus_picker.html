@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="hu">
+<html lang="en">
 <head>
 <meta charset="utf-8" />
 <title>Hero Focus Picker - FTSK</title>
@@ -156,6 +156,21 @@
     pointer-events: none;
     z-index: 5;
   }
+  .hidden-notice {
+    display: none;
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px;
+    background: rgba(10, 17, 22, 0.75);
+    color: var(--text-heading);
+    font-weight: 700;
+    font-size: 1rem;
+  }
+  .sim-hero.is-hidden-here .hidden-notice { display: flex; }
 
   .controls { display: flex; flex-direction: column; gap: 10px; font-size: 0.85rem; }
   .controls label { display: flex; flex-direction: column; gap: 4px; }
@@ -182,6 +197,9 @@
     cursor: pointer;
   }
   .override-row input { margin-top: 3px; }
+  .mirror-row { display: flex; gap: 18px; font-size: 0.8rem; color: var(--text-muted); }
+  .mirror-row label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+
 
   .yaml-output {
     background: var(--bg-page);
@@ -218,18 +236,20 @@
     readability gradient/dim, and the cave-silhouette motif overlay. Use the screen-size dropdown below to switch
     between the site's 3 supported breakpoints (like VS Code's device toolbar); each size can have its own crop/
     zoom/pan-or-zoom-animation - click on the photo (or drag the sliders) to set it, and tablet/phone start out
-    inheriting the desktop values until you tick "egyedi beállítás" for that size. Then copy the generated YAML
-    per photo into <code>data/hero_images.yaml</code>. Nothing here is uploaded anywhere - images are only read
-    locally in your browser.
+    inheriting the desktop values until you tick "Custom for this size" for that size. You can also mirror a photo
+    horizontally/vertically, and exclude it entirely from a given screen size ("Visible at this size"). Then
+    copy the generated YAML per photo into <code>data/hero_images.yaml</code>. Nothing here is uploaded anywhere -
+    images are only read locally in your browser.
   </p>
 
   <div class="toolbar">
     <label>
-      Szimulált képernyőméret (a site törésponjaihoz igazítva)
+
+      Simulated screen size (matches the site's breakpoints)
       <select id="viewportSelect">
-        <option value="desktop">Asztali gép (≥992px, ~1440px széles)</option>
-        <option value="tablet">Tablet (768–991px, ~834px széles)</option>
-        <option value="mobile">Telefon (&lt;768px, ~390px széles)</option>
+        <option value="desktop">Desktop (≥992px, ~1440px wide)</option>
+        <option value="tablet">Tablet (768–991px, ~834px wide)</option>
+        <option value="mobile">Phone (&lt;768px, ~390px wide)</option>
       </select>
     </label>
     <div class="btn-row">
@@ -400,6 +420,10 @@
     var marker = document.createElement('div');
     marker.className = 'focus-marker';
 
+    var hiddenNotice = document.createElement('div');
+    hiddenNotice.className = 'hidden-notice';
+    hiddenNotice.textContent = 'Hidden at this size (hide_on)';
+
     var simContent = document.createElement('div');
     simContent.className = 'sim-content';
     // Real homepage hero copy (content/_index.md's home/hero block) - so the
@@ -413,6 +437,7 @@
     simHero.appendChild(simMedia);
     simHero.appendChild(simContent);
     simHero.appendChild(marker);
+    simHero.appendChild(hiddenNotice);
     deviceFrame.appendChild(simHero);
     deviceWrapper.appendChild(deviceFrame);
 
@@ -435,15 +460,43 @@
 
     var altLabel = document.createElement('label');
     var altSpan = document.createElement('span');
-    altSpan.textContent = 'Alt szöveg (kép leírása képernyőolvasóknak / SEO-hoz)';
+    altSpan.textContent = 'Alt text (image description for screen readers / SEO)';
     var altInput = document.createElement('input');
     altInput.type = 'text';
-    altInput.placeholder = 'pl. Barlangász ereszkedés közben egy tágas teremben';
+    altInput.placeholder = 'e.g. A caver rappelling in a large chamber';
     altLabel.appendChild(altSpan);
     altLabel.appendChild(altInput);
 
+    var mirrorRow = document.createElement('div');
+    mirrorRow.className = 'mirror-row';
+    var mirrorXLabel = document.createElement('label');
+    var mirrorXCheckbox = document.createElement('input');
+    mirrorXCheckbox.type = 'checkbox';
+    mirrorXLabel.appendChild(mirrorXCheckbox);
+    mirrorXLabel.appendChild(document.createTextNode('Flip horizontal'));
+    var mirrorYLabel = document.createElement('label');
+    var mirrorYCheckbox = document.createElement('input');
+    mirrorYCheckbox.type = 'checkbox';
+    mirrorYLabel.appendChild(mirrorYCheckbox);
+    mirrorYLabel.appendChild(document.createTextNode('Flip vertical'));
+    mirrorRow.appendChild(mirrorXLabel);
+    mirrorRow.appendChild(mirrorYLabel);
+
     var sep2 = document.createElement('hr');
     sep2.className = 'sep';
+
+    var visibilityRow = document.createElement('label');
+    visibilityRow.className = 'override-row';
+    var visibilityCheckbox = document.createElement('input');
+    visibilityCheckbox.type = 'checkbox';
+    visibilityCheckbox.checked = true;
+    var visibilityText = document.createElement('span');
+    visibilityText.textContent = 'Visible at this size (hide_on)';
+    visibilityRow.appendChild(visibilityCheckbox);
+    visibilityRow.appendChild(visibilityText);
+
+    var sep3 = document.createElement('hr');
+    sep3.className = 'sep';
 
     var overrideRow = document.createElement('label');
     overrideRow.className = 'override-row';
@@ -453,13 +506,13 @@
     overrideRow.appendChild(overrideCheckbox);
     overrideRow.appendChild(overrideText);
 
-    var focusXRow = rangeRow('Vízszintes pozíció (focus X%)', '0', '100', '1', '50');
-    var focusYRow = rangeRow('Függőleges pozíció (focus Y%)', '0', '100', '1', '50');
-    var startZoom = rangeRow('Kezdő nagyítás (start.zoom)', '1', '2.5', '0.05', '1.35');
+    var focusXRow = rangeRow('Horizontal position (focus X%)', '0', '100', '1', '50');
+    var focusYRow = rangeRow('Vertical position (focus Y%)', '0', '100', '1', '50');
+    var startZoom = rangeRow('Start zoom (start.zoom)', '1', '2.5', '0.05', '1.35');
 
     var typeLabel = document.createElement('label');
     var typeSpan = document.createElement('span');
-    typeSpan.textContent = 'Animáció típusa (animation.type)';
+    typeSpan.textContent = 'Animation type (animation.type)';
     var typeSelect = document.createElement('select');
     ['pan', 'zoom-in', 'zoom-out', 'tilt', 'none'].forEach(function (value) {
       var opt = document.createElement('option');
@@ -472,29 +525,32 @@
 
     var directionLabel = document.createElement('label');
     var directionSpan = document.createElement('span');
-    directionSpan.textContent = 'Irány (animation.direction)';
+    directionSpan.textContent = 'Direction (animation.direction)';
     var directionSelect = document.createElement('select');
     directionLabel.appendChild(directionSpan);
     directionLabel.appendChild(directionSelect);
 
-    var amount = rangeRow('Mérték (animation.amount)', '0', '20', '1', '6');
-    var duration = rangeRow('Időtartam, mp (animation.duration)', '4', '30', '1', '12');
+    var amount = rangeRow('Amount (animation.amount)', '0', '20', '1', '6');
+    var duration = rangeRow('Duration, seconds (animation.duration)', '4', '30', '1', '12');
 
     var resetBtn = document.createElement('button');
     resetBtn.className = 'secondary';
-    resetBtn.textContent = 'Alaphelyzet (minden méret)';
+    resetBtn.textContent = 'Reset all to defaults';
 
     var yamlOutput = document.createElement('pre');
     yamlOutput.className = 'yaml-output';
     var copyBtn = document.createElement('button');
-    copyBtn.textContent = 'YAML másolása';
+    copyBtn.textContent = 'Copy YAML snippet';
 
     controls.appendChild(filenameEl);
     controls.appendChild(metaEl);
     controls.appendChild(playBtn);
     controls.appendChild(sep);
     controls.appendChild(altLabel);
+    controls.appendChild(mirrorRow);
     controls.appendChild(sep2);
+    controls.appendChild(visibilityRow);
+    controls.appendChild(sep3);
     controls.appendChild(overrideRow);
     controls.appendChild(focusXRow.label);
     controls.appendChild(focusYRow.label);
@@ -520,6 +576,9 @@
       tablet: Object.assign(makeTier(), { enabled: false }),
       mobile: Object.assign(makeTier(), { enabled: false }),
       playing: true,
+      mirrorX: false,
+      mirrorY: false,
+      hideOn: { desktop: false, tablet: false, mobile: false },
     };
 
     function isOverrideTier() {
@@ -625,16 +684,26 @@
       marker.style.left = eff.focusX + '%';
       marker.style.top = eff.focusY + '%';
 
+      // Mirror is folded into the SAME scale() call as zoom (matches _hero.scss) so
+      // pan/tilt direction auto-flips visually too, instead of needing separate logic.
+      var mx = state.mirrorX ? -1 : 1;
+      var my = state.mirrorY ? -1 : 1;
       var anim = computeAnim(eff);
       styleEl.textContent =
         '@keyframes ' + animName + ' {' +
-        'from { transform: scale(' + anim.zoomFrom + ') translate(' + anim.panXFrom + '%,' + anim.panYFrom + '%) rotate(' + anim.rotFrom + 'deg); }' +
-        'to { transform: scale(' + anim.zoomTo + ') translate(' + anim.panXTo + '%,' + anim.panYTo + '%) rotate(' + anim.rotTo + 'deg); }' +
+        'from { transform: scale(' + (anim.zoomFrom * mx) + ',' + (anim.zoomFrom * my) + ') translate(' + anim.panXFrom + '%,' + anim.panYFrom + '%) rotate(' + anim.rotFrom + 'deg); }' +
+        'to { transform: scale(' + (anim.zoomTo * mx) + ',' + (anim.zoomTo * my) + ') translate(' + anim.panXTo + '%,' + anim.panYTo + '%) rotate(' + anim.rotTo + 'deg); }' +
         '}';
       img.style.animationName = animName;
       img.style.animationDuration = eff.duration + 's';
       img.style.animationPlayState = state.playing ? 'running' : 'paused';
       playBtn.textContent = state.playing ? '⏸ Pause' : '▶ Play';
+
+      simHero.classList.toggle('is-hidden-here', !!state.hideOn[currentViewport]);
+    }
+
+    function refreshVisibilityUI() {
+      visibilityCheckbox.checked = !state.hideOn[currentViewport];
     }
 
     function refreshOverrideUI() {
@@ -644,8 +713,8 @@
         var enabled = state[currentViewport].enabled;
         overrideCheckbox.checked = enabled;
         overrideText.textContent = enabled
-          ? 'Egyedi beállítás ehhez a mérethez (bekapcsolva)'
-          : 'Egyedi beállítás ehhez a mérethez (most az asztali nézetet örökli)';
+          ? 'Custom for this size (enabled)'
+          : 'Custom for this size (currently inheriting desktop)';
       }
     }
 
@@ -674,6 +743,7 @@
 
     function refreshAll() {
       refreshOverrideUI();
+      refreshVisibilityUI();
       refreshControlValues();
       applyState();
       renderYaml();
@@ -718,9 +788,12 @@
       var lines = [
         '- path: /images/hero/' + file.name.replace(/\.[^.]+$/, '.webp'),
         '  alt: ' + (state.alt ? state.alt : 'TODO'),
-        '  start:',
-        '    focus: "' + b.focusX + '% ' + b.focusY + '%"',
       ];
+      if (state.mirrorX && state.mirrorY) lines.push('  mirror: both');
+      else if (state.mirrorX) lines.push('  mirror: horizontal');
+      else if (state.mirrorY) lines.push('  mirror: vertical');
+      lines.push('  start:');
+      lines.push('    focus: "' + b.focusX + '% ' + b.focusY + '%"');
       if (Math.abs(b.zoom - 1.35) > 0.001) lines.push('    zoom: ' + b.zoom.toFixed(2));
       lines.push('  animation:');
       lines.push('    type: ' + b.type);
@@ -728,6 +801,11 @@
       var bDefaults = amountDefaultsByType[b.type];
       if (bDefaults.max > 0 && Math.abs(b.amount - bDefaults.value) > 0.001) lines.push('    amount: ' + b.amount);
       if (b.duration !== 12) lines.push('    duration: ' + b.duration);
+
+      var hiddenTiers = ['desktop', 'tablet', 'mobile'].filter(function (t) {
+        return state.hideOn[t];
+      });
+      if (hiddenTiers.length) lines.push('  hide_on: [' + hiddenTiers.join(', ') + ']');
 
       ['tablet', 'mobile'].forEach(function (tierName) {
         var diff = diffTierLines(tierName);
@@ -773,6 +851,22 @@
         t.enabled = false;
       }
       refreshAll();
+    });
+
+    visibilityCheckbox.addEventListener('change', function () {
+      state.hideOn[currentViewport] = !visibilityCheckbox.checked;
+      refreshAll();
+    });
+
+    mirrorXCheckbox.addEventListener('change', function () {
+      state.mirrorX = mirrorXCheckbox.checked;
+      applyState();
+      renderYaml();
+    });
+    mirrorYCheckbox.addEventListener('change', function () {
+      state.mirrorY = mirrorYCheckbox.checked;
+      applyState();
+      renderYaml();
     });
 
     focusXRow.range.addEventListener('input', function () {
@@ -828,13 +922,18 @@
       state.base = makeTier();
       state.tablet = Object.assign(makeTier(), { enabled: false });
       state.mobile = Object.assign(makeTier(), { enabled: false });
+      state.mirrorX = false;
+      state.mirrorY = false;
+      state.hideOn = { desktop: false, tablet: false, mobile: false };
+      mirrorXCheckbox.checked = false;
+      mirrorYCheckbox.checked = false;
       refreshAll();
     });
 
     copyBtn.addEventListener('click', function () {
       navigator.clipboard.writeText(yamlOutput.textContent).then(function () {
         var original = copyBtn.textContent;
-        copyBtn.textContent = 'Másolva!';
+        copyBtn.textContent = 'Copied!';
         setTimeout(function () {
           copyBtn.textContent = original;
         }, 1200);
