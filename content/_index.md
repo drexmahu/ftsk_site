@@ -55,7 +55,7 @@ content_blocks:
       reversed: false
    -
       _bookshop_name: global/feature
-      image_path: /images/gallery/ftsk-gallery-1.jpg
+      image_path: /images/gallery/ftsk-gallery-3.webp
       title: Barlangtúrázás
       description: >-
          Rendszeresen szervezünk barlangtúrákat itthon és külföldön - Szlovéniában,
@@ -67,7 +67,7 @@ content_blocks:
       reversed: true
    -
       _bookshop_name: global/feature
-      image_path: /images/hero/ftsk-cave-hero.jpg
+      image_path: /images/gallery/ftsk-gallery-3.webp
       title: Oktatás és kanyoning
       description: >-
          Alapfokú barlangász tanfolyamainkkal új tagokat képzünk, alkalmanként

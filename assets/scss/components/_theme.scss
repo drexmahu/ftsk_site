@@ -65,8 +65,6 @@ html {
 .privacy-hero,
 .blog-hero,
 .blog-related,
-.cta,
-.cta-two,
 .feature-bg,
 .error,
 .works {
@@ -74,6 +72,25 @@ html {
   background-image: url($cave-silhouette-url);
   background-repeat: no-repeat;
   background-position: bottom center;
+  background-size: cover;
+}
+
+// The CTA card ("Új tanfolyam" on the front page etc.) is its own bordered/shadowed
+// card floating on the page background - no cave-silhouette motif at all, it was too
+// busy/competing with the card itself (previously just the bottom half, per earlier
+// feedback, now dropped entirely).
+.cta,
+.cta-two {
+  background-color: var(--bg-page);
+}
+
+// Plain section-header blocks (e.g. "Mivel foglalkozunk?") - just the top
+// (stalactite) half, same "too short to ever crop the full motif" reasoning as .cta.
+.ftsk-section-header {
+  background-color: var(--bg-page);
+  background-image: url($cave-silhouette-top-url);
+  background-repeat: no-repeat;
+  background-position: top center;
   background-size: cover;
 }
 

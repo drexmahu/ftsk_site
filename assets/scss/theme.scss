@@ -21,6 +21,7 @@
 // through resources.ExecuteAsTemplate in baseof.html before Sass compiles it - lets
 // the motif keep working under a subpath baseURL (GH Pages project/staging/PR previews).
 $cave-silhouette-url: "{{ "images/motifs/cave-silhouette.svg" | relURL }}";
+$cave-silhouette-top-url: "{{ "images/motifs/cave-silhouette-top.svg" | relURL }}";
 
 @import "variables";
 @import "mixins";
