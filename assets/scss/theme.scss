@@ -1,32 +1,19 @@
 /*!------------------------------------------------------------------
 [MAIN STYLESHEET]
-PROJECT:	JACKCREATIVE
 -------------------------------------------------------------------*/
 /* ====== index =====
-1.  Default Styles
-2.  Button Styles
-3.  Container and widths  Styles 
-4.  Spacing Styles
-5.  Navbar Styles
-6.  Hero Section Styles
-7.  Cta Page and Sections Styles
-8.  About Page and Section Styles
-9.  Feature Page nd Section Styles
-10. Access Section Styles
-11. Testimonial Section Styles
-12. Video Section Styles
-13. Pricing Page and Section Styles
-14. Work Section Styles
-15. Footer Section Styles
-16. Blog Page and Section Styles
-17. Galery Section Styles
-18. FAQ Section Styles
-19. Contact Form Page Styles
-20. Counter Up Section Styles
-21.Services Section Styles
-22.Sing-up Section Styles
-23.TeamSection Styles
-
+1.  Variables, Mixins, Root, Buttons, Container, Spacing
+2.  Navbar Styles
+3.  Hero Section Styles
+4.  About Section Styles
+5.  Feature Section Styles
+6.  Galery Section Styles
+7.  Cta Section Styles
+8.  Footer Section Styles
+9.  Blog Section Styles
+10. Contact Form Styles
+11. FTSK Custom Styles
+12. Theme (dark palette) Styles
 
 ===================== */
 
@@ -45,7 +32,6 @@ PROJECT:	JACKCREATIVE
 @import "components/cta";
 @import "components/footer";
 @import "components/blog";
-@import "components/faq";
 @import "components/contact-form";
 @import "components/ftsk";
 @import "components/theme";

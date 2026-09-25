@@ -1,48 +1,25 @@
-# Sendit
+# FTSK Barlangkutató Szakosztály - website
 
-Sendit is a polished, marketing website template for Hugo. Browse through a [live demo](https://jovial-pipe.cloudvent.net/). 
-
-![Sendit template screenshot](static/images/_screenshot.png)
-
-
-[![Deploy to CloudCannon](https://buttons.cloudcannon.com/deploy.svg)](https://app.cloudcannon.com/register#sites/connect/github/CloudCannon/sendit-hugo-template)
-
-## Features
-
-* Pre-built pages
-* Pre-styled components
-* Blog with pagination and category pages
-* Configurable navigation and footer
-* Multiple hero options 
-* Optimised for editing in [CloudCannon](https://cloudcannon.com/)
-
-## Setup
-
-Get a workflow going to see your site's output (with [CloudCannon](https://app.cloudcannon.com/) or Hugo locally).
+Source for the [ftsk.hu](https://www.ftsk.hu) site: a [Hugo](https://gohugo.io/) static
+site using the [Bookshop](https://github.com/cloudcannon/bookshop) component library
+engine (`component-library/`) for reusable page sections.
 
 ## Develop
 
-Sendit was built with [Hugo](https://gohugo.io/) version `0.128.1`, but should support newer versions as well.
-### Prerequisites
-* Hugo [install](https://gohugo.io/getting-started/installing/). `brew install hugo`
-* Go [install](https://go.dev/learn/). `brew install go`
+See [docs/TECHNICAL_ENVIRONMENT.md](docs/TECHNICAL_ENVIRONMENT.md) for full setup
+details (required tools, pinned versions, parameters). Quick start on Windows:
 
-### Quickstart
-1. In the terminal at the root dir, run: `npm i`
-2. Start site and bookshop: `npm run dev` OR site alone: `npm run start`
-* By default bookshop live browser will be at : [http://localhost:30775/](http://localhost:30775/)
-* By default the site will be at : [http://localhost:1313/](http://localhost:1313/)
+```powershell
+./scripts/setup-dev-env.ps1   # one-time: installs the pinned Hugo, checks Go/Node, npm install
+./scripts/dev-server.ps1      # hugo server at http://localhost:1313/
+```
 
-## Editing
+For the optional Bookshop live component browser alongside the dev server:
+`npm run bookshop` (defaults to [http://localhost:30775/](http://localhost:30775/)).
 
-Sendit is set up for adding, updating and removing pages, components, posts, portfolio items, company details and footer elements in [CloudCannon](https://app.cloudcannon.com/).
+## CI/CD
 
-### Company details
-
-* Reused around the site to save multiple editing locations.
-* Set in the *Data* / *Company* section.
-
-### Nav/footer details
-
-* Reused around the site to save multiple editing locations.
-* Set in the *Data* section with respective names
+Build validation, PR preview sites, a staging deploy, and manual production
+(FTP) deploy all live in [`.github/workflows/`](.github/workflows/) - see
+[docs/TECHNICAL_ENVIRONMENT.md](docs/TECHNICAL_ENVIRONMENT.md) for the pipeline
+overview and required repository configuration.

@@ -6,10 +6,10 @@ what has to be configured in GitHub for the CI/CD pipeline in `.github/workflows
 ## Stack
 
 - **Hugo** (extended) with **Hugo Modules** for the component library
-  (`component-library/`) and the CloudCannon Bookshop engine
+  (`component-library/`) and the [Bookshop](https://github.com/cloudcannon/bookshop) Hugo engine
   (`github.com/cloudcannon/bookshop/hugo/v3`, declared in [go.mod](../go.mod)).
   Module resolution needs **Go** on PATH, even though there's no Go code to compile.
-- **Node.js / npm** - only needed for the CloudCannon Bookshop *live component
+- **Node.js / npm** - only needed for the Bookshop *live component
   preview* (`npm run dev`), not for a plain `hugo build`/`hugo server`.
 - **SCSS** compiled via Hugo's built-in libsass transpiler (`css.Sass`, see
   [assets/scss/theme.scss](../assets/scss/theme.scss)) - no separate Dart Sass

@@ -1,7 +1,7 @@
 {
-  "name": "sendit_hugo",
+  "name": "ftsk-site",
   "version": "1.0.0",
-  "description": "Starter template for hugo and bookshop",
+  "description": "Source for the FTSK Barlangkutató Szakosztály website (Hugo + Bookshop component library)",
   "main": "index.js",
   "engines": {
     "node": ">=18.0.0"
@@ -18,7 +18,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/CloudCannon/sendit-hugo-template.git"
+    "url": "git+https://github.com/drexmahu/ftsk_site.git"
   },
   "keywords": [],
   "author": "",

@@ -1,4 +1,4 @@
-module sendit.local
+module ftsk.local
 
 go 1.17
 
