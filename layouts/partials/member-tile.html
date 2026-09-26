@@ -43,4 +43,5 @@
     {{ end }}
   </span>
   <span class="ftsk-members-name">{{ $name }}</span>
+  {{ with .role }}<span class="ftsk-members-role">{{ . }}</span>{{ end }}
 </button>

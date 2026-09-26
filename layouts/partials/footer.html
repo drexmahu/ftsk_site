@@ -1,4 +1,13 @@
 {{ with hugo.Data.footer }}
+{{/*
+  Build info: HUGO_BUILD_NUMBER/HUGO_BUILD_DATE are set by
+  .github/actions/build-site (github.run_number + UTC build timestamp) in CI;
+  both are empty for local `hugo`/`hugo server` builds, where "now" is used.
+*/}}
+{{ $buildNumber := os.Getenv "HUGO_BUILD_NUMBER" }}
+{{ $buildDateRaw := os.Getenv "HUGO_BUILD_DATE" }}
+{{ $buildDate := now }}
+{{ if $buildDateRaw }}{{ $buildDate = time.AsTime $buildDateRaw }}{{ end }}
 <footer class="footer pt-xxl-19 pt-8 pb-sm-7 pb-5" id="footer">
   <div class="container-fluid">
     <div class="footer-wrapper">
@@ -9,7 +18,11 @@
               <img src="{{ partial `url.html` .logo }}" alt="logo" />
             </a>
             <p>
-              © Copyright <span>{{ dateFormat "2006" now }}</span> {{.copyright}}
+              © Copyright <span>{{ dateFormat "2006" $buildDate }}</span> {{.copyright}}
+            </p>
+            <p class="ftsk-build-info">
+              Utolsó frissítés: {{ $buildDate | time.Format ":date_long" }}
+              {{ with $buildNumber }} · Build #{{ . }}{{ end }}
             </p>
           </div>
           <div class="social-icon">

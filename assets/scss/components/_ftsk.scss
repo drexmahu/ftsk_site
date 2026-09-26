@@ -213,6 +213,13 @@
   line-height: 1.3;
   color: var(--text-body);
 }
+.ftsk-members-role {
+  margin-top: -6px;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-style: italic;
+  line-height: 1.3;
+}
 
 // Deterministic decorative palette for initials avatars that have no photo yet
 .ftsk-avatar-0 {
