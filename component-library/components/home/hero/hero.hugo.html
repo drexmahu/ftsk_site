@@ -46,7 +46,7 @@
            ANY override gets its FULL animation recomputed and re-emitted (not just the
            one field that changed), or a mobile `type: zoom-in` override would still
            show the base tier's leftover pan/rotate on top of the new zoom. */}}
-      {{ $style := printf "--ftsk-hero-zoom-from: %v; --ftsk-hero-zoom-to: %v; --ftsk-hero-pan-x-from: %v; --ftsk-hero-pan-x-to: %v; --ftsk-hero-pan-y-from: %v; --ftsk-hero-pan-y-to: %v; --ftsk-hero-rotate-from: %vdeg; --ftsk-hero-rotate-to: %vdeg; --ftsk-hero-duration: %vs; --ftsk-hero-focus: %s;" $anim.zoomFrom $anim.zoomTo $anim.panXFrom $anim.panXTo $anim.panYFrom $anim.panYTo $anim.rotFrom $anim.rotTo $duration $startFocus }}
+      {{ $style := printf "--ftsk-hero-zoom-from: %v; --ftsk-hero-zoom-to: %v; --ftsk-hero-pan-x-from: %v; --ftsk-hero-pan-x-to: %v; --ftsk-hero-pan-y-from: %v; --ftsk-hero-pan-y-to: %v; --ftsk-hero-rotate-from: %vdeg; --ftsk-hero-rotate-to: %vdeg; --ftsk-hero-duration: %vs; --ftsk-hero-focus: %s; --ftsk-hero-mirror-x: %v; --ftsk-hero-mirror-y: %v;" $anim.zoomFrom $anim.zoomTo $anim.panXFrom $anim.panXTo $anim.panYFrom $anim.panYTo $anim.rotFrom $anim.rotTo $duration $startFocus $mirrorX $mirrorY }}
       {{ range $tier, $override := (dict "tablet" $slide.tablet "mobile" $slide.mobile) }}
       {{ with $override }}
         {{ $tierZoom := $startZoom }}

@@ -208,22 +208,24 @@
   &.is-active {
     opacity: 1;
   }
-  // Excludes this slide entirely on a given screen-size tier - for photos that don't
-  // read well cropped down to a narrow phone viewport (or vice versa). Set via
-  // data/hero_images.yaml's `hide_on: [mobile, tablet, desktop]` (the JS cycler skips
-  // hidden slides instead of crossfading to them, see static/js/script.js).
-  &[data-hide-on~='mobile'] {
+  // Excludes this slide entirely below a given breakpoint - for photos that don't
+  // read well cropped down to a narrow phone viewport. Set via data/hero_images.yaml's
+  // `hide_below: sm|md|lg` (the JS cycler skips hidden slides instead of crossfading
+  // to them, see static/js/script.js). Matches hero.hugo.html's emitted
+  // `data-hide-below="sm|md|lg"` attribute - "sm" hides below 576px, "md" below
+  // 768px, "lg" below 992px, per data/hero_images.yaml's own header comment.
+  &[data-hide-below='sm'] {
+    @include media-breakpoint-down-sm {
+      display: none;
+    }
+  }
+  &[data-hide-below='md'] {
     @include media-breakpoint-down-md {
       display: none;
     }
   }
-  &[data-hide-on~='tablet'] {
-    @include media-breakpoint-only-md {
-      display: none;
-    }
-  }
-  &[data-hide-on~='desktop'] {
-    @include media-breakpoint-up-lg {
+  &[data-hide-below='lg'] {
+    @include media-breakpoint-down-lg {
       display: none;
     }
   }
