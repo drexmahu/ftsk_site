@@ -61,7 +61,7 @@ npm script in another terminal: `npm run bookshop`.
 | Workflow | Trigger | Purpose |
 |---|---|---|
 | [`ci.yml`](../.github/workflows/ci.yml) | PR opened/updated and merge queue | Builds the site (drafts + future included); require `CI / Build site` so a failed build blocks merging. Also uploads the build as an artifact and runs a non-blocking broken-link check. |
-| [`pr-preview.yml`](../.github/workflows/pr-preview.yml) | PR opened/updated | Deploys the preview to the `github-pages` environment and verifies that Pages serves the current PR revision before succeeding. Require `PR Preview / preview` and the `github-pages` deployment before merging. |
+| [`pr-preview.yml`](../.github/workflows/pr-preview.yml) | PR opened/updated | Builds and deploys the preview under `gh-pages/pr-preview/`, then verifies that Pages serves the current PR revision before succeeding. Require `PR Preview / preview` before merging. |
 | [`pr-preview-cleanup.yml`](../.github/workflows/pr-preview-cleanup.yml) | PR close, push to `main`, daily, manual | Reconciles `gh-pages/pr-preview/` against open PRs targeting `main` and deletes orphaned preview folders. Use **Run workflow** to clean existing stale folders immediately after this workflow is merged. |
 | [`staging-deploy.yml`](../.github/workflows/staging-deploy.yml) | push to `main` | Publishes a shareable "always current `main`" preview to GitHub Pages. This is **not** production. |
 | [`deploy-production.yml`](../.github/workflows/deploy-production.yml) | manual (`workflow_dispatch`) only | Builds and publishes to the real production server over FTP. Requires typing `deploy` into the confirmation input. |
@@ -86,10 +86,9 @@ Settings:
    `pr-preview.yml` and `staging-deploy.yml`).
 3. **Settings > Actions > General > Workflow permissions** - "Read and write
    permissions" (needed so the preview/staging workflows can push to `gh-pages`).
-4. **Settings > Environments** - select `github-pages` in the branch rule's required
-   deployments. Also create an environment named `production`. Add required reviewers
-   there if you want a manual approval gate before every FTP deploy, and add the FTP
-   secrets below scoped to this environment.
+4. **Settings > Environments** - create an environment named `production`. Add required
+   reviewers there if you want a manual approval gate before every FTP deploy, and add
+   the FTP secrets below scoped to this environment.
 
 ### Secrets (Settings > Secrets and variables > Actions > Secrets)
 
