@@ -22,6 +22,9 @@ title: Kanin expedíció (2026) # "Name (year)", matches existing entries
 categories:
   - Expedíció # one of: Túra, Kutatás, Expedíció, Kanyoning, Szemétszedés (see data/blog-tags.yaml)
 author: "" # who wrote it - leave blank if unknown, don't guess
+participants: # optional - see "Participants" section below
+  - Name One
+  - Name Two (Nickname)
 thumbImg:
   image_path: /images/turak/<slug>/01-....webp # used in list/related-post cards
 featuredImg:
@@ -60,11 +63,6 @@ one continuous wall of text:
 ## Zárszó
 
 <closing thanks/wrap-up paragraph>
-
-## Résztvevők
-
-- Name One
-- Name Two
 ```
 
 - One `##` heading per day, even if that day has several paragraphs - don't
@@ -72,12 +70,32 @@ one continuous wall of text:
 - Number days sequentially from 1, and give each a real calendar date +
   weekday, derived from whatever date the article itself states (don't invent
   a date the text doesn't support).
-- Always close with `## Zárszó` (wrap-up) and `## Résztvevők` (participants as
-  a bullet list, one name per line) so every article ends the same way.
+- Always close with `## Zárszó` (wrap-up).
 - When editing an *existing* published report, only add structure (headings,
   paragraph breaks, images) - don't rewrite the author's actual sentences.
 
-## 3. Images
+## 3. Participants
+
+List who took part in the front matter, not the body - a plain list of names,
+one per entry, written however reads naturally (include a "(Nickname)" suffix
+if that's how the person is normally referred to):
+
+```yaml
+participants:
+  - Kámvás Linda
+  - Kun Imre (Bástya)
+  - Ács Réka
+```
+
+The article page automatically renders these as clickable member cards below
+the text (`layouts/partials/participant-cards.html`), looking each name up
+against the canonical roster in `data/members.yaml`. A match pulls in that
+person's real photo/role/bio; no match just renders a plain initials tile -
+that's expected, not every participant is a registered club member. Don't
+hand-write a "Résztvevők" heading/list in the body - the template adds the
+heading and card grid automatically whenever `participants:` is set.
+
+## 4. Images
 
 ### Converting photos
 
@@ -130,7 +148,7 @@ caption:
   `featuredImg` in the front matter - it doesn't need to be repeated in the
   body too, though it can be.
 
-## 4. Adding to a long-published article later
+## 5. Adding to a long-published article later
 
 Because images live in their own per-article folder and are embedded with
 plain Markdown, extending an old report is just:

@@ -4,6 +4,23 @@ title: Kanin expedíció (2026)
 categories:
   - Expedíció
 author: "Kámvás Linda"
+participants:
+  - Ács Réka
+  - Fábián Botond
+  - Fialowski Melinda
+  - Kalotai Zsófi
+  - Kámvás Linda
+  - Kiss Tímea
+  - Kralovánszki Ádám
+  - Kun Imre (Bástya)
+  - Mészáros József (Joe)
+  - Németh Zsolt (Kutya)
+  - Németh Bence
+  - Prakfalvi András
+  - Rehány Niki
+  - Sándor Ági
+  - Sas Dóri
+  - Tóth Attila
 thumbImg:
   image_path: /images/turak/2026-kanin-expedicio/01-csapat-a-ducatonal.webp
 featuredImg:
@@ -68,22 +85,3 @@ Péntek reggel kevésbé kipihenten, de legalább fájdalmak nélkül keltem. Az
 ## Zárszó
 
 Szeretném megköszönni mindenkinek, aki segített abban, hogy az idei tábor létrejöhessen. Örülök, hogy részese lehettem.
-
-## Résztvevők
-
-- Ács Réka
-- Fábián Botond
-- Fialowski Melinda
-- Kalotai Zsófi
-- Kámvás Linda
-- Kiss Tímea
-- Kralovánszki Ádám
-- Kun Imre (Bástya)
-- Mészáros József (Joe)
-- Németh Zsolt (Kutya)
-- Németh Bence
-- Prakfalvi András
-- Rehány Niki
-- Sándor Ági
-- Sas Dóri
-- Tóth Attila

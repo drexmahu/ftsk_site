@@ -1,0 +1,125 @@
+# Canonical member roster - single source of truth for:
+#   - the "Tagjaink" page (content/tagok.md's global/members content block reads
+#     hugo.Data.members.groups instead of inlining the roster itself)
+#   - trip report / expedition participant cards (layouts/partials/participant-cards.html
+#     looks up each content/turak/*.md article's `participants:` front matter names
+#     against this same list, so a participant who's also a club member automatically
+#     gets their real photo/bio pulled in - see docs/CONTENT_GUIDE.md)
+#
+# Each member entry:
+#   name      (required) - full/plain name, no nicknames or duties baked in
+#   nickname  (optional) - short informal name, shown as "Name (Nickname)" on the
+#     Tagjaink page and usable as an extra match key for participant lookups
+#   role      (optional) - duty/position text (e.g. "elnök", "raktáros"), shown in
+#     the member detail popup when present
+#   image / modal_image / bio - see members.bookshop.yml
+#
+# Matching for participant cards: a `participants:` entry matches this roster if,
+# after stripping any trailing "(...)" from the entry, it equals a member's `name`
+# OR `nickname`. Not finding a match is expected and fine - not every trip
+# participant is a registered member.
+groups:
+  - label: Vezetőség
+    members:
+      - name: Gyovai Tamás
+        role: elnök
+        image: /images/members/gyovai_tamas_thumb.webp
+        modal_image: /images/members/gyovai_tamas_full.webp
+      - name: Kalotai Zsófia
+        role: elnökségi tag, pénztáros
+      - name: Rehány Nikolett
+        role: elnökségi tag
+      - name: Fialowski Melinda
+        role: raktáros
+  - label: Rendes tagok
+    members:
+      - name: Ábrahám Gábor
+      - name: Bacsó Gábor
+      - name: Balázs Zoltán
+      - name: Borsos-Szabó Bálint
+        nickname: Zeusz
+      - name: Czumbel Péter
+      - name: dr. Zádor Zsófia Erzsébet
+        nickname: Zudi
+      - name: Drexler Máté
+        nickname: Drex
+      - name: Gyarmathy Ákos
+      - name: György Bence
+      - name: Huszár Péter
+        nickname: Yeti
+      - name: Kadlec Gergely
+      - name: Kámvás Linda
+      - name: Kántor Zsolt
+        nickname: Zsé
+      - name: Kapodisztria Lena
+      - name: Kertész Dániel
+      - name: Konkoly Péter
+      - name: Kovács Dániel
+        nickname: Damó
+      - name: Kovács Ferenc
+      - name: Kovács Imre
+      - name: Kovács Krisztina
+      - name: Kováts Gábor
+      - name: Kralovánszki Ádám
+        nickname: Kralo
+      - name: Kukoda Orsolya
+      - name: Kun Imre
+        nickname: Bástya
+      - name: Laták Rudolf
+      - name: Lőrincz Győző
+      - name: Lőrincz Vajk
+      - name: Magyar Péter
+      - name: Mezei Eszter
+      - name: Mihályi Tibor
+        nickname: Gebe
+      - name: Miklós Barnabás
+      - name: Nagy Eszter
+      - name: Prakfalvi András
+        nickname: Praki
+      - name: Sándor Ágnes
+      - name: Sas Dorottya
+      - name: Soltész Árpád
+      - name: Szieberth Dénes
+      - name: Tóth Ábris
+      - name: Tóth Csilla
+      - name: Turi László
+      - name: Varga Gábor
+  - label: Pártoló tagok
+    members:
+      - name: Brunner András
+      - name: Ekés Bálint
+      - name: Énekes Klaudia
+      - name: Gólya Bernadett
+        nickname: Detti
+      - name: Hamar Éva
+      - name: Juhász Anna
+      - name: Kosziba Andrea
+      - name: Kováts Boglárka
+      - name: Kozek András
+      - name: Köblös Csaba
+      - name: Lempochner Lili
+      - name: Péterfia Klári
+      - name: Pintér Gábor
+        nickname: Pinti
+      - name: Rádi Károly
+      - name: Sajtos Péter
+      - name: Seiben Gabriella
+      - name: Sojnóczki Annamária
+        nickname: Pötyi
+      - name: Soltész Abigél
+      - name: Szaniszló Anita
+      - name: Vajda Gábor
+      - name: Zsólyomi Andrea
+      - name: Zsólyomi Zsófia
+  - label: Tiszteletbeli tagok
+    members:
+      - name: Czirják Ferenc
+  - label: Örökös tagok
+    members:
+      - name: Horváth János
+        nickname: Jancsi bácsi
+      - name: Vidics Zoltánni
+        nickname: Erimama
+      - name: Zsólyomi Zsolt
+        nickname: Frédi
+

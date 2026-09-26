@@ -1,0 +1,41 @@
+{{/*
+  Renders a grid of clickable member/participant tiles for a trip report's
+  `participants:` front matter (see layouts/turak/single.html and
+  docs/CONTENT_GUIDE.md) - a plain list of name strings, e.g.:
+    participants:
+      - Kámvás Linda
+      - Ács Réka
+
+  Each entry is looked up against data/members.yaml: after stripping any
+  trailing "(...)" from the entry, it's compared to each member's `name` AND
+  `nickname` - a match pulls in that member's real photo/bio/group/role via
+  member-tile.html; participants who aren't (or aren't yet) registered members
+  simply render as a plain initials-only tile, which is expected - not every
+  trip participant is a club member.
+
+  `.` = the list of participant name strings.
+*/}}
+{{ $allMembers := slice }}
+{{ range hugo.Data.members.groups }}
+  {{ $group := .label }}
+  {{ range .members }}
+    {{ $allMembers = $allMembers | append (dict "name" .name "nickname" .nickname "role" .role "group" $group "image" .image "modal_image" .modal_image "bio" .bio) }}
+  {{ end }}
+{{ end }}
+<div class="ftsk-members-grid">
+  {{ range . }}
+  {{ $participantName := . }}
+  {{ $clean := replaceRE `\s*\([^)]*\)` "" $participantName }}
+  {{ $match := "" }}
+  {{ range $allMembers }}
+    {{ if and (eq $match "") (or (eq .name $clean) (and .nickname (eq .nickname $clean))) }}
+      {{ $match = . }}
+    {{ end }}
+  {{ end }}
+  {{ if $match }}
+  {{ partial "member-tile.html" (dict "name" $participantName "role" $match.role "group" $match.group "image" $match.image "modal_image" $match.modal_image "bio" $match.bio) }}
+  {{ else }}
+  {{ partial "member-tile.html" (dict "name" $participantName "group" "") }}
+  {{ end }}
+  {{ end }}
+</div>

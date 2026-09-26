@@ -8,48 +8,16 @@
         </div>
       </div>
     </div>
-    {{ range .groups }}
+    {{ range hugo.Data.members.groups }}
     {{ $groupLabel := .label }}
     <div class="ftsk-members-group">
       <h3>{{ .label }} <span class="ftsk-members-count">{{ len .members }}</span></h3>
       <div class="ftsk-members-grid">
         {{ range .members }}
-        {{ $cleanName := replaceRE `\s*\([^)]*\)` "" .name }}
-        {{ $words := split (trim $cleanName " ") " " }}
-        {{ $initials := "" }}
-        {{ range first 2 $words }}{{ $initials = printf "%s%s" $initials (substr . 0 1) }}{{ end }}
-        {{ $colorIdx := mod (len $cleanName) 5 }}
-        <button
-          type="button"
-          class="ftsk-members-tile"
-          data-name="{{ .name }}"
-          data-group="{{ $groupLabel }}"
-          data-initials="{{ $initials | upper }}"
-          data-avatar-color="{{ $colorIdx }}"
-          {{ with .image }}data-image="{{ partial `url.html` . }}"{{ end }}
-          {{ with .modal_image }}data-modal-image="{{ partial `url.html` . }}"{{ end }}
-          {{ with .bio }}data-bio="{{ . }}"{{ end }}
-        >
-          <span class="ftsk-members-avatar ftsk-avatar-{{ $colorIdx }}">
-            {{ if .image }}
-            <img src="{{ partial `url.html` .image }}" alt="{{ .name }}" loading="lazy" />
-            {{ else }}
-            <span class="ftsk-members-initials">{{ $initials | upper }}</span>
-            {{ end }}
-          </span>
-          <span class="ftsk-members-name">{{ .name }}</span>
-        </button>
+        {{ partial "member-tile.html" (dict "name" .name "nickname" .nickname "role" .role "group" $groupLabel "image" .image "modal_image" .modal_image "bio" .bio) }}
         {{ end }}
       </div>
     </div>
     {{ end }}
-  </div>
-  <div id="ftsk-member-modal" class="ftsk-member-modal mfp-hide">
-    <div class="ftsk-member-modal-avatar"></div>
-    <div class="ftsk-member-modal-body">
-      <h3 class="ftsk-member-modal-name"></h3>
-      <span class="ftsk-member-modal-group"></span>
-      <p class="ftsk-member-modal-bio d-none"></p>
-    </div>
   </div>
 </section>

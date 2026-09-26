@@ -1,0 +1,46 @@
+{{/*
+  Renders one clickable member tile (photo-or-initials avatar + name), used by
+  both the "Tagjaink" roster (component-library/components/global/members) and
+  article participant cards (layouts/partials/participant-cards.html) so both
+  share the exact same markup, styling, and click-to-open-modal behavior
+  (static/js/script.js, modal itself in layouts/partials/member-modal.html).
+
+  Params (dict):
+    name       (required) - display name; may already include a "(nickname)"
+               suffix as-authored (participant cards pass article text as-is)
+    nickname   (optional) - reconstructs the display name as "name (nickname)";
+               omit when `name` already contains any suffix you want shown
+    role       (optional) - duty/position text, shown in the modal
+    group      (optional) - shown as a pill in the modal (e.g. membership tier)
+    image      (optional) - small avatar photo path
+    modal_image(optional) - larger photo shown in the modal (falls back to image)
+    bio        (optional) - short text shown in the modal
+*/}}
+{{ $name := .name }}
+{{ with .nickname }}{{ $name = printf "%s (%s)" $.name . }}{{ end }}
+{{ $cleanName := replaceRE `\s*\([^)]*\)` "" $name }}
+{{ $words := split (trim $cleanName " ") " " }}
+{{ $initials := "" }}
+{{ range first 2 $words }}{{ $initials = printf "%s%s" $initials (substr . 0 1) }}{{ end }}
+{{ $colorIdx := mod (len $cleanName) 5 }}
+<button
+  type="button"
+  class="ftsk-members-tile"
+  data-name="{{ $name }}"
+  data-group="{{ .group }}"
+  data-role="{{ .role }}"
+  data-initials="{{ $initials | upper }}"
+  data-avatar-color="{{ $colorIdx }}"
+  {{ with .image }}data-image="{{ partial `url.html` . }}"{{ end }}
+  {{ with .modal_image }}data-modal-image="{{ partial `url.html` . }}"{{ end }}
+  {{ with .bio }}data-bio="{{ . }}"{{ end }}
+>
+  <span class="ftsk-members-avatar ftsk-avatar-{{ $colorIdx }}">
+    {{ if .image }}
+    <img src="{{ partial `url.html` .image }}" alt="{{ $name }}" loading="lazy" />
+    {{ else }}
+    <span class="ftsk-members-initials">{{ $initials | upper }}</span>
+    {{ end }}
+  </span>
+  <span class="ftsk-members-name">{{ $name }}</span>
+</button>

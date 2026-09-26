@@ -30,7 +30,13 @@
                      alt="featured-image"
                   />
                </div>
-               <div class="ftsk-prose" style="max-width: 900px; margin: 0 auto">{{.Content}}</div>
+               <div class="ftsk-prose" style="max-width: 900px; margin: 0 auto">
+                  {{ .Content }}
+                  {{ with .Params.participants }}
+                  <h3>Résztvevők</h3>
+                  {{ partial "participant-cards.html" . }}
+                  {{ end }}
+               </div>
             </article>
          </div>
       </div>

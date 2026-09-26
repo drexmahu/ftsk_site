@@ -30,7 +30,7 @@ typos, grammar mistakes, unclear antecedents, or structural gaps.
   wrong `-ba/-be` vs `-ban/-ben`, comma splices).
 - Consistent tense within a paragraph/day.
 - Consistent nicknames/name spelling for the same person across the article
-  (cross-check against the closing "Résztvevők" list).
+  (cross-check against the `participants:` front matter list).
 
 **Comprehension**
 - Any sentence/paragraph that's genuinely hard to follow (not just informal -
@@ -46,8 +46,9 @@ typos, grammar mistakes, unclear antecedents, or structural gaps.
   when article-specific photos exist), `seo`, `draft`.
 - Body uses `## N. nap – <dátum> (<hét napja>)` day headings, in order, with no
   gaps or repeats.
-- Closing `## Zárszó` and `## Résztvevők` sections present; participants listed
-  as a bullet list.
+- Closing `## Zárszó` section present. Participants belong in the `participants:`
+  front matter field (rendered automatically as member cards), not a
+  hand-written "Résztvevők" heading/list in the body.
 - Embedded images use standard Markdown image syntax with a quoted caption
   title (`![alt](path "caption")`) and live under
   `static/images/<section>/<article-slug>/`, not a generic/shared folder.
