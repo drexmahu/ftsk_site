@@ -9,8 +9,14 @@ the sibling tool `../membership_image_converter/` instead.
 
 ## Setup (once)
 
-1. Install Python 3 from [python.org/downloads](https://www.python.org/downloads/) - tick **"Add Python to PATH"**.
-2. Double-click `install_dependencies.bat`.
+Run `./scripts/setup-dev-env.ps1` from the repository root to install all
+site tools and the converter/hero editor dependencies into `.venv`. See
+the [setup guide](../../docs/TECHNICAL_ENVIRONMENT.md#local-setup-windows).
+The GUI/dependency/hero-picker launchers prefer that environment automatically.
+
+For a standalone copy without the project environment, install Python 3
+from [python.org/downloads](https://www.python.org/downloads/) with PATH/Tk
+support, then double-click `install_dependencies.bat`.
 
 ## Use
 
@@ -37,17 +43,99 @@ py site_image_converter.py --input ./photos --output ./out --max-width 1600 --ma
 For `cave-photo.jpg` you get `cave-photo.webp` - resized, original aspect
 ratio kept, no crop.
 
-## Picking the homepage hero crop/zoom/pan
+## Hero editor: subject, composition, and motion
 
-The homepage hero (`data/hero_images.yaml`) crops each photo with CSS
-`object-fit: cover` and Ken-Burns-pans/zooms it slowly - for some photos the
-interesting part isn't centered, or the default motion isn't quite right, so
-double-click `hero_focus_picker.html` (opens directly in your browser, no
-server needed) to preview the real crop/animation for each converted
-`.webp`: click on the photo to set its focus point, use the play/pause
-button and the zoom start/end, pan amount and duration sliders to fine-tune
-the motion, then copy the generated lines straight into
-`data/hero_images.yaml`.
+Double-click `run_hero_picker.bat` to open the connected editor with the
+real photos and settings from `data/hero_images.yaml`. **Save** writes to
+that file. **Add new photo** converts and adds a WebP photo; **Delete photo**
+removes both its configuration and image file.
+
+### Subject on the full source photo
+
+Use the crosshair button in **Subject** to open the original, uncropped,
+unmirrored photo. Click the important point, such as a face or helmet.
+**Fit photo** shows the whole image; **100%** and **200%** allow scrolling
+at native or enlarged resolution. Arrow keys adjust the point by 0.5%;
+Shift+arrow moves it by 5%. Close with the close button or Escape.
+Source X/Y inputs allow numeric adjustment.
+
+Every photo uses POI framing. A missing POI starts at the source center,
+and the reset button returns to that center. There is no alternate mode.
+The initial center is not a guess at the true subject: select it yourself.
+Coordinates refer to the original photo even when it is mirrored:
+
+```yaml
+poi:
+   x: 33
+   y: 40
+```
+
+Values are finite numbers between 0 and 100, without `%` signs. One source
+point applies to desktop, tablet, and phone. It marks a point, not the
+whole person or object; inspect the surrounding area too.
+
+### Compose and animate
+
+**Composition X/Y%** (`start.focus`) specifies where the selected subject
+should appear in the hero, not where it is in the source photo. Clicking
+the device preview changes composition only; source selection is independent.
+Try placing the subject toward the right on desktop to leave space for
+the headline. Use **Desktop**, **Tablet**, and **Phone** tabs for responsive
+overrides; tablet/phone inherit desktop until custom settings are enabled.
+
+```yaml
+- path: /images/hero/ftsk-hero-cave-2.webp
+   alt: "Describe the actual photo"
+   poi: { x: 33, y: 40 }
+   start:
+      zoom: 1.35
+      focus: "72% 50%"
+   animation:
+      type: pan
+      direction: down
+      amount: 4
+      duration: 12
+   mobile:
+      focus: "50% 50%"
+      type: zoom-in
+      amount: 0.15
+```
+
+This is a syntax example, not a recommended subject point for every photo.
+Adjust zoom, type, direction, amount, and duration; check the timeline at
+0%, 50%, and 100%, then use **Play**. Site and editor share the same framing
+calculation. Motion uses gentle easing and pauses on inactive slides/hidden
+tabs; reduced-motion preference produces a static frame on the site.
+
+Image coverage is recalculated on resize, including mirror and rotation.
+Requested positions/pan are limited by available image area; extreme target
+positions are restricted to the 10-90% range. Tilt may add enough zoom to
+cover the corners. **Edge-limited framing** means the requested composition
+cannot be achieved exactly without a blank border. **Outside this crop**
+means subject positioning is impossible at that zoom/tilt phase. Reduce
+tilt/zoom, choose a point farther inside the subject, use a device override,
+or use a different photo. Borders take priority over an impossible subject
+position; images are not stretched or distorted. Check that the headline
+and cave motifs do not obscure the subject, and test the actual homepage
+at narrow and wide widths as well as the representative device previews.
+
+### Save or export
+
+Connected **Save** persists POIs and responsive settings. Switching photos
+before saving discards local edits. Saving another photo preserves existing
+POIs and overrides. Selecting/resetting a POI does not reset motion settings.
+
+Opening `hero_focus_picker.html` directly uses offline mode: drop local
+files, select POIs, and adjust motion. **Copy YAML snippet** exports POI,
+responsive overrides, mirror, and `hide_below` for manual inclusion in the
+config. Offline files are only previewed, not uploaded or converted.
+Hero POIs do not change article images, galleries, or social-card cropping.
+
+Regression checks, from the repository root:
+
+```powershell
+node scripts/site_image_converter/test_hero_framing.js
+```
 
 ## Troubleshooting
 

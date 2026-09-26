@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <title>Frissítés alatt | FTSK</title>
+  <style>
+    :root { color-scheme: dark; --background: #0a1116; --text: #f2ede1; --muted: #b9c7c9; --accent: #bea070; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; min-height: 100svh; background: var(--background); color: var(--text); font-family: "Sora", "Trebuchet MS", sans-serif; }
+    body::before, body::after { content: ""; position: fixed; left: 0; right: 0; height: 24vh; max-height: 220px; background-repeat: no-repeat; background-size: max(100%, 960px) auto; pointer-events: none; opacity: 0.85; filter: brightness(0.72); }
+    body::before { top: 0; background-image: url("__HANGING_MOTIF__"); background-position: center top; }
+    body::after { bottom: 0; background-image: url("__STANDING_MOTIF__"); background-position: center bottom; }
+    main { position: relative; z-index: 1; min-height: 100vh; min-height: 100svh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 72px 24px; text-align: center; }
+    .brand { margin: 0 0 16px; color: var(--accent); font-size: 0.95rem; line-height: 1.5; }
+    img { display: block; width: min(100%, 760px); height: auto; aspect-ratio: 16 / 9; mask-image: radial-gradient(ellipse at 50% 40%, #000 45%, transparent 75%); -webkit-mask-image: radial-gradient(ellipse at 50% 40%, #000 45%, transparent 75%); }
+    h1 { font-size: 2rem; line-height: 1.2; font-weight: 600; margin: 16px 0; }
+    .message { color: var(--muted); max-width: 38rem; margin: 0; font-size: 1.05rem; line-height: 1.65; }
+    @media (max-width: 575px) { main { padding: 64px 20px; } h1 { font-size: 1.6rem; } .brand { max-width: 18rem; } body::before, body::after { background-size: 640px auto; } }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="brand">FTSK Barlangkutató Szakosztály</p>
+    <img src="__ERROR_IMAGE__" width="1920" height="1080" alt="" aria-hidden="true">
+    <h1>Éppen frissítjük az oldalt.</h1>
+    <p class="message">Egy kis szusszanás a felszín alatt.<br>Hamarosan visszatérünk!</p>
+  </main>
+  <script>
+    setTimeout(function () {
+      var url = new URL(location.href);
+      url.searchParams.set('_ftsk_deploy', Date.now());
+      location.replace(url.href);
+    }, 20000);
+  </script>
+</body>
+</html>

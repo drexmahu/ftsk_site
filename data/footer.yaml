@@ -5,6 +5,8 @@ copyright: "FTSK Barlangkutató Szakosztály. Minden jog fenntartva."
 social:
   - link: "https://www.facebook.com/ftskbarlang"
     icon: "ph-facebook-logo"
+  - link: "https://www.instagram.com/ftsk_barlang/"
+    icon: "ph-instagram-logo"
 sections:
   -
     title: Oldalak
@@ -15,7 +17,7 @@ sections:
         text: "Egyesületünk"
       - link: "/tagok"
         text: "Tagjaink"
-      - link: "/tevekenysegeink"
+      - link: "/egyesuletunk/#tevekenysegeink"
         text: "Tevékenységeink"
   -
     title: "Közösség"
@@ -24,8 +26,6 @@ sections:
         text: "Túrabeszámolók"
       - link: "/tanfolyamok"
         text: "Tanfolyamaink"
-      - link: "/galeria"
-        text: "Galéria"
       - link: "/linkek"
         text: "Linkek"
   -

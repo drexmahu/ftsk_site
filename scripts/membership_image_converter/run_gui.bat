@@ -2,6 +2,11 @@
 title Member Image Web Optimizer
 cd /d "%~dp0"
 
+if exist "%~dp0..\..\.venv\Scripts\python.exe" (
+    "%~dp0..\..\.venv\Scripts\python.exe" gui.py
+    goto :eof
+)
+
 where py >nul 2>nul
 if %errorlevel%==0 (
     py gui.py

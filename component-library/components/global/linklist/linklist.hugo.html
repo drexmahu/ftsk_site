@@ -1,11 +1,13 @@
-<section class="ftsk-linklist">
+<section class="ftsk-linklist"{{ with .anchor }} id="{{ . }}"{{ end }}>
   <div class="container">
     <div class="row">
       <div class="col-lg-8 mx-auto">
+        {{ if .title }}
         <div class="section-header">
           <h2>{{ .title }}<span>{{ .title_suffix }}</span></h2>
           {{ with .description }}<p>{{ . | markdownify }}</p>{{ end }}
         </div>
+        {{ end }}
       </div>
     </div>
     <div class="row">

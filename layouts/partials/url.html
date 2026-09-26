@@ -7,4 +7,8 @@
   baseURL's own path segment. Stripping the leading slash first fixes that.
   Absolute URLs (external links) pass through relURL untouched either way.
 */}}
-{{ return (. | strings.TrimPrefix "/" | relURL) }}
+{{ $url := . }}
+{{ if or (strings.HasPrefix $url "#") (strings.HasPrefix $url "?") (strings.HasPrefix $url "//") }}
+  {{ return $url }}
+{{ end }}
+{{ return ($url | strings.TrimPrefix "/" | relURL) }}

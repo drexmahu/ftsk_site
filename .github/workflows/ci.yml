@@ -6,12 +6,16 @@ name: CI
 on:
   pull_request:
     branches: [main]
+    types: [opened, reopened, synchronize, edited, ready_for_review]
+  merge_group:
+    types: [checks_requested]
+    branches: [main]
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.event.pull_request.number }}
+  group: ci-${{ github.event.pull_request.number || github.event.merge_group.head_sha }}
   cancel-in-progress: true
 
 jobs:
@@ -22,10 +26,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Verify member roster and participants
+        run: |
+          pip install --quiet PyYAML
+          python scripts/verify_members.py
+
+      - name: Test deployment safeguards
+        run: |
+          python -m unittest discover -s scripts -p test_deployment.py
+          node scripts/test_404_navigation.js
+
       - name: Build Hugo site
         uses: ./.github/actions/build-site
         with:
           base-url: ${{ vars.STAGING_BASE_URL || format('https://{0}.github.io/{1}/', github.repository_owner, github.event.repository.name) }}
+          canonical-base-url: ${{ vars.PRODUCTION_BASE_URL || '' }}
           hugo-version: ${{ vars.HUGO_VERSION }}
           build-drafts: "true"
           build-future: "true"
@@ -33,7 +53,7 @@ jobs:
       - name: Upload build output
         uses: actions/upload-artifact@v7
         with:
-          name: hugo-build-pr-${{ github.event.pull_request.number }}
+          name: hugo-build-${{ github.event.pull_request.number || github.event.merge_group.head_sha }}
           path: public
           retention-days: 7
 

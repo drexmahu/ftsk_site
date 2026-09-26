@@ -1,0 +1,26 @@
+{{/*
+  Embedded PDF viewer + download button for legacy trip reports whose full
+  write-up only exists as an old PDF (see docs/CONTENT_GUIDE.md). Usage:
+
+    {{< pdf src="/pdfs/turak/legacy-bu56-pireneusok-1998.pdf" title="BU 56 (Pireneusok, 1998) - teljes beszámoló" >}}
+
+  Renders the PDF inline via the browser's native PDF viewer (no JS library
+  needed - every evergreen browser can render a same-origin PDF in an
+  <iframe>), plus a styled, obviously-clickable download button below it for
+  people who'd rather save the file (or whose browser can't show it inline).
+*/}}
+{{ $src := partial "url.html" (.Get "src") }}
+{{ $title := .Get "title" | default "Teljes beszámoló (PDF)" }}
+<div class="ftsk-pdf-embed">
+  <p class="ftsk-pdf-embed-caption">{{ $title }}</p>
+  <div class="ftsk-pdf-embed-frame">
+    <iframe src="{{ $src }}" title="{{ $title }}" loading="lazy">
+      A böngésződ nem tudja megjeleníteni a beágyazott PDF-et - használd a
+      letöltés gombot alább.
+    </iframe>
+  </div>
+  <a href="{{ $src }}" class="btn btn-secondary ftsk-pdf-embed-download" download>
+    <i class="ph ph-file-arrow-down" aria-hidden="true"></i>
+    PDF letöltése
+  </a>
+</div>

@@ -7,9 +7,9 @@
   flex-wrap: wrap; // allow us to do the line break for collapsing content
   align-items: center;
   justify-content: space-between; // space out brand from logo
-  padding-top: 1.5rem;
+  padding-top: 0.5rem;
   padding-right: 3.5rem; // default: null
-  padding-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
   padding-left: 3.5rem; // default: null
   background-color: none;
   z-index: 1000;
@@ -31,6 +31,15 @@
   // share a row with 8 nav links between the xl and xxl breakpoints.
   .btn-links {
      padding: 0.6rem 1rem;
+     // Same gold ring-pulse as the tanfolyamok milestone stepper's "current"
+     // dot (@keyframes ftsk-milestone-pulse, _ftsk.scss) - a subtle ambient
+     // cue that this CTA leads somewhere active, not a static link. Stops on
+     // hover/focus so it doesn't fight with the solid-fill hover state.
+     animation: ftsk-milestone-pulse 2.4s ease-in-out infinite;
+     &:hover,
+     &:focus {
+        animation: none;
+     }
   }
   @include media-breakpoint-only-xl {
      .btn-links {
@@ -41,7 +50,7 @@
 @include media-breakpoint-down-xl {
   .navbar {
      margin: $base-margin * 0;
-     padding: 1.5rem;
+     padding: 0.5rem 1.5rem;
      border-radius: 0;
      width: 100%;
      // width: calc(100% - 32px) !important;
@@ -50,7 +59,7 @@
 }
 @include media-breakpoint-down-sm {
   .navbar {
-     padding: 1rem 0;
+     padding: 0.4rem 0;
   }
 }
 
@@ -62,7 +71,7 @@
   width: 155px;
 
   img {
-   max-height: 52px;
+   max-height: 72px;
    max-width: 155px;
  }
 }
@@ -70,7 +79,135 @@
 @include media-breakpoint-down-sm {
   .navbar-brand {
      flex: 1;
+
+     img {
+        max-height: 60px;
+     }
   }
+}
+
+// Groups the search box with the CTA button as ONE flex child of
+// .container-fluid (mirrors how just the CTA div used to be the last child)
+// so adding the search box doesn't change how many top-level items .navbar's
+// justify-content:space-between has to juggle - that spacing is already
+// tuned tightly (see navbar overflow notes elsewhere in this file). Always
+// rendered (unlike the CTA button, which only shows while a course is
+// active), so search stays available on the right of the nav regardless.
+.ftsk-navbar-end {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ftsk-nav-search {
+  position: relative;
+}
+.ftsk-nav-search-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border-subtle);
+  background: transparent;
+  color: var(--text-heading);
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  &:hover,
+  &.is-active {
+     border-color: $color-primary;
+     color: $color-primary;
+  }
+}
+.ftsk-nav-search-panel {
+  position: absolute;
+  top: calc(100% + 12px);
+  // Anchored to the right edge (search now sits at the right of the navbar,
+  // next to the CTA) so the panel opens back toward the menu instead of
+  // overflowing past the viewport's right edge.
+  right: 0;
+  z-index: 30;
+  // libsass (this repo's Sass transpiler) errors on mixed vw/px units passed
+  // directly to min() - wrap as a literal string so it passes through as-is.
+  width: unquote('min(92vw, 420px)');
+  padding: 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  box-shadow: 0 20px 50px var(--shadow-ambient);
+}
+.ftsk-nav-search-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 12px;
+  padding: 0.6rem 1rem;
+  color: var(--text-muted);
+  input {
+     flex-grow: 1;
+     width: 100%;
+     background: transparent;
+     border: 0;
+     color: var(--text-heading);
+     font-family: $font-secondary;
+     &:focus {
+        outline: none;
+     }
+     &::placeholder {
+        color: var(--text-muted);
+     }
+  }
+}
+.ftsk-nav-search-results {
+  margin-top: 10px;
+  max-height: 340px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ftsk-nav-search-result {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 0.6rem 0.7rem;
+  border-radius: 10px;
+  color: var(--text-heading);
+  text-decoration: none;
+  transition: background 0.2s ease-in-out;
+  i {
+     flex-shrink: 0;
+     margin-top: 3px;
+     color: $color-primary;
+  }
+  &:hover,
+  &:focus {
+     background: var(--bg-surface-hover);
+  }
+}
+.ftsk-nav-search-result-body {
+  min-width: 0;
+}
+.ftsk-nav-search-result-title {
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+.ftsk-nav-search-result-meta {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ftsk-nav-search-empty {
+  margin: 10px 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
 }
 
 // Custom navbar navigation (doesn't require `.nav`, but does make use of `.nav-link`).
@@ -295,22 +432,11 @@
 //Sticky Navbar
 
 .sticky-nav {
-  padding: $base-padding $base-padding * 2 !important;
   background: $color-white;
   box-shadow: 0px 4px 30px rgba(0, 0, 0, 0.05);
   z-index: 1000;
 }
 
-@include media-breakpoint-down-xl {
-  .sticky-nav {
-     padding: $base-padding * 1.5 !important;
-  }
-}
-@include media-breakpoint-down-sm {
-  .sticky-nav {
-     padding: $base-padding * 1 $base-padding * 0 !important;
-  }
-}
 /**
 * Note: I have omitted any vendor-prefixes for clarity.
 * Adding them is left as an exercise for the reader.

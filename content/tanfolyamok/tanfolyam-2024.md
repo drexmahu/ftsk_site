@@ -33,4 +33,4 @@ fejlámpa, kötéltechnikai felszerelés) használatát.
 Az elméleti oktatások szerdánként este 7-től zajlottak a Bartók Béla úti
 klubhelyiségben, a tanfolyam túrái pedig hétvégenként, főként vidéken.
 
-[GYIK a tanfolyammal kapcsolatban (PDF)](https://www.ftsk.hu/FTSK/tanfolyamosGYIK2024.pdf)
+[GYIK a tanfolyammal kapcsolatban (PDF)](/FTSK/tanfolyamosGYIK2024.pdf)

@@ -1,1 +1,110 @@
-{{ define "main" }} {{ partial "blog-list" . }} {{ end }}
+{{ define "main" }}
+{{ $pages := (where site.RegularPages "Section" "tanfolyamok").ByDate.Reverse }}
+{{ $current := index (where $pages "Params.current" true) 0 }}
+{{ $archive := where $pages "Params.current" "ne" true }}
+
+<section class="blog-hero ftsk-tanfolyam-hero ftsk-hero-top-motif position-relative">
+   <div class="container">
+      <div class="row">
+         <div class="col-xl-6 col-lg-8 col-md-10 mx-auto">
+            <div class="blog-hero-content">
+               <h1 class="blog-hero-title">{{ .Title }}</h1>
+               <p>{{ .Params.description }}</p>
+            </div>
+         </div>
+      </div>
+   </div>
+</section>
+
+{{ with $current }}
+<section class="ftsk-turak-featured">
+   <div class="container">
+      <div class="section-header text-start">
+         <h2><i class="ph ph-star" aria-hidden="true"></i> Aktuális tanfolyam</h2>
+         <p>Most induló, jelentkezésre nyitott alapfokú tanfolyamunk.</p>
+      </div>
+      <div class="row">
+         <div class="col-lg-8 mx-auto">
+            <article class="ftsk-turak-featured-card">
+               <a href="{{ .RelPermalink }}" class="ftsk-turak-featured-thumb">
+                  <img src="{{ partial `url.html` .Params.thumbImg.image_path }}" alt="{{ .Title }}" loading="lazy" />
+               </a>
+               <div class="ftsk-turak-featured-content">
+                  <h3><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
+                  <p class="ftsk-turak-featured-excerpt">{{ .Summary | plainify | truncate 170 }}</p>
+                  <div class="ftsk-turak-featured-meta">
+                     <span><i class="ph ph-calendar" aria-hidden="true"></i>{{ .Date | time.Format ":date_long" }}</span>
+                  </div>
+                  <a href="{{ .RelPermalink }}" class="btn btn-secondary ftsk-turak-featured-cta">
+                     Részletek és jelentkezés <i class="ph ph-arrow-right" aria-hidden="true"></i>
+                  </a>
+               </div>
+            </article>
+         </div>
+      </div>
+   </div>
+</section>
+{{ end }}
+
+<section class="blog blog-two">
+   <div class="container">
+      <div class="ftsk-turak-archive-header">
+         <h2><i class="ph ph-archive" aria-hidden="true"></i> Korábbi tanfolyamaink</h2>
+      </div>
+      <div class="ftsk-turak-toolbar-row">
+         <div class="ftsk-turak-search">
+            <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
+            <input type="search" id="ftsk-course-search" placeholder="Keresés cím vagy év szerint…" aria-label="Korábbi tanfolyamok keresése" />
+         </div>
+         <div class="ftsk-turak-decade">
+            <i class="ph ph-calendar-blank" aria-hidden="true"></i>
+            <select id="ftsk-course-year" aria-label="Szűrés év szerint">
+               <option value="">Összes év</option>
+               {{ $years := slice }}
+               {{ range $archive }}
+               {{ if not (in $years .Date.Year) }}
+               {{ $years = $years | append .Date.Year }}
+               <option value="{{ .Date.Year }}">{{ .Date.Year }}</option>
+               {{ end }}
+               {{ end }}
+            </select>
+         </div>
+      </div>
+      <div class="ftsk-turak-toolbar-status">
+         <p id="ftsk-course-count" role="status" aria-live="polite"></p>
+         <button type="button" id="ftsk-course-reset" class="ftsk-turak-reset d-none">
+            <i class="ph ph-x" aria-hidden="true"></i> Szűrők törlése
+         </button>
+      </div>
+      <div class="row" id="ftsk-course-grid">
+         {{ range $archive }}
+         <div class="col-lg-4 col-md-6 mb-4" data-year="{{ .Date.Year }}" data-search="{{ printf "%s %d" .Title .Date.Year | lower }}">
+            <article class="blog-post">
+               <div class="blog-post-thumb">
+                  <a href="{{ .RelPermalink }}">
+                     <img src="{{ partial `url.html` .Params.thumbImg.image_path }}" alt="blog-thumb" loading="lazy" />
+                  </a>
+               </div>
+               <div class="blog-post-content">
+                  <div class="blog-post-title">
+                     <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+                  </div>
+                  <div class="blog-post-footer">
+                     <span class="blog-post-date">{{ .Date | time.Format ":date_long" }}</span>
+                     {{ with .Params.participants }}
+                     <span class="ftsk-turak-author"><i class="ph ph-users" aria-hidden="true"></i> {{ len . }} fő</span>
+                     {{ end }}
+                  </div>
+               </div>
+            </article>
+         </div>
+         {{ end }}
+      </div>
+      <div class="ftsk-turak-empty d-none" id="ftsk-course-empty">
+         <i class="ph ph-calendar-blank" aria-hidden="true"></i>
+         <p>Nincs a szűrésnek megfelelő tanfolyam.</p>
+      </div>
+      {{ partial "archive-pager.html" "ftsk-course-pager" }}
+   </div>
+</section>
+{{ end }}

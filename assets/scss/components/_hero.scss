@@ -175,11 +175,11 @@
 // Homepage hero: photos fill the whole section as a background layer (weighted to
 // the right, since the left holds the text), slowly Ken-Burns-panning and crossfading
 // on a loop. Toggled by static/js/script.js (swaps "is-active" between slides on a
-// timer) - all fade/pan motion itself lives here in CSS.
+// timer). Crossfades live here; framing/motion uses static/js/hero-framing.js.
 //
 // Stacking (back to front, all within .hero-two's own stacking context):
 // .hero-two's own bg -> .hero-two-shape (legacy decorative blob) -> .hero-two-media
-// (photos, then the left-to-right readability fade, then the cave-silhouette motif
+// (photos, then the left-to-right readability fade, then the real cave silhouettes
 // redrawn on top so it reads as being in front of the photos) -> the real text/content.
 .hero-two-media {
   position: absolute;
@@ -199,75 +199,32 @@
   inset: 0;
   opacity: 0;
   transition: opacity 1.8s ease;
-  // Static fallback zoom (used verbatim under prefers-reduced-motion, and as the
-  // resting value before the animation's first frame kicks in).
-  --ftsk-hero-zoom-from: 1.35;
   // 1 (unmirrored) or -1 (flipped), set via data/hero_images.yaml's `mirror` field.
   --ftsk-hero-mirror-x: 1;
   --ftsk-hero-mirror-y: 1;
   &.is-active {
     opacity: 1;
   }
-  // Excludes this slide entirely on a given screen-size tier - for photos that don't
-  // read well cropped down to a narrow phone viewport (or vice versa). Set via
-  // data/hero_images.yaml's `hide_on: [mobile, tablet, desktop]` (the JS cycler skips
-  // hidden slides instead of crossfading to them, see static/js/script.js).
-  &[data-hide-on~='mobile'] {
+  // Excludes this slide entirely below a given breakpoint - for photos that don't
+  // read well cropped down to a narrow phone viewport. Set via data/hero_images.yaml's
+  // `hide_below: sm|md|lg` (the JS cycler skips hidden slides instead of crossfading
+  // to them, see static/js/script.js). Matches hero.hugo.html's emitted
+  // `data-hide-below="sm|md|lg"` attribute - "sm" hides below 576px, "md" below
+  // 768px, "lg" below 992px, per data/hero_images.yaml's own header comment.
+  &[data-hide-below='sm'] {
+    @include media-breakpoint-down-sm {
+      display: none;
+    }
+  }
+  &[data-hide-below='md'] {
     @include media-breakpoint-down-md {
       display: none;
     }
   }
-  &[data-hide-on~='tablet'] {
-    @include media-breakpoint-only-md {
+  &[data-hide-below='lg'] {
+    @include media-breakpoint-down-lg {
       display: none;
     }
-  }
-  &[data-hide-on~='desktop'] {
-    @include media-breakpoint-up-lg {
-      display: none;
-    }
-  }
-
-  // Resolves the base --ftsk-hero-*-from/-to/-duration/-focus (set inline per slide by
-  // hero.hugo.html, computed from data/hero_images.yaml's start/animation fields) down
-  // to a single "-active" custom property per breakpoint tier, preferring a "-tablet"/
-  // "-mobile" suffixed override (also set inline, a FULLY recomputed animation - see
-  // hero.hugo.html) only where a photo actually needs different framing/motion at that
-  // size. Static media queries here (rather than per-slide generated ones) since Go's
-  // html/template CSS sanitizer can't safely handle a per-slide dynamic CSS selector.
-  --ftsk-hero-zoom-from-active: var(--ftsk-hero-zoom-from);
-  --ftsk-hero-zoom-to-active: var(--ftsk-hero-zoom-to);
-  --ftsk-hero-pan-x-from-active: var(--ftsk-hero-pan-x-from, 0);
-  --ftsk-hero-pan-x-to-active: var(--ftsk-hero-pan-x-to, 0);
-  --ftsk-hero-pan-y-from-active: var(--ftsk-hero-pan-y-from, 0);
-  --ftsk-hero-pan-y-to-active: var(--ftsk-hero-pan-y-to, 0);
-  --ftsk-hero-rotate-from-active: var(--ftsk-hero-rotate-from, 0deg);
-  --ftsk-hero-rotate-to-active: var(--ftsk-hero-rotate-to, 0deg);
-  --ftsk-hero-duration-active: var(--ftsk-hero-duration, 12s);
-  --ftsk-hero-focus-active: var(--ftsk-hero-focus, 50% 50%);
-  @media (min-width: 768px) and (max-width: 991.98px) {
-    --ftsk-hero-zoom-from-active: var(--ftsk-hero-zoom-from-tablet, var(--ftsk-hero-zoom-from));
-    --ftsk-hero-zoom-to-active: var(--ftsk-hero-zoom-to-tablet, var(--ftsk-hero-zoom-to));
-    --ftsk-hero-pan-x-from-active: var(--ftsk-hero-pan-x-from-tablet, var(--ftsk-hero-pan-x-from, 0));
-    --ftsk-hero-pan-x-to-active: var(--ftsk-hero-pan-x-to-tablet, var(--ftsk-hero-pan-x-to, 0));
-    --ftsk-hero-pan-y-from-active: var(--ftsk-hero-pan-y-from-tablet, var(--ftsk-hero-pan-y-from, 0));
-    --ftsk-hero-pan-y-to-active: var(--ftsk-hero-pan-y-to-tablet, var(--ftsk-hero-pan-y-to, 0));
-    --ftsk-hero-rotate-from-active: var(--ftsk-hero-rotate-from-tablet, var(--ftsk-hero-rotate-from, 0deg));
-    --ftsk-hero-rotate-to-active: var(--ftsk-hero-rotate-to-tablet, var(--ftsk-hero-rotate-to, 0deg));
-    --ftsk-hero-duration-active: var(--ftsk-hero-duration-tablet, var(--ftsk-hero-duration, 12s));
-    --ftsk-hero-focus-active: var(--ftsk-hero-focus-tablet, var(--ftsk-hero-focus, 50% 50%));
-  }
-  @media (max-width: 767.98px) {
-    --ftsk-hero-zoom-from-active: var(--ftsk-hero-zoom-from-mobile, var(--ftsk-hero-zoom-from));
-    --ftsk-hero-zoom-to-active: var(--ftsk-hero-zoom-to-mobile, var(--ftsk-hero-zoom-to));
-    --ftsk-hero-pan-x-from-active: var(--ftsk-hero-pan-x-from-mobile, var(--ftsk-hero-pan-x-from, 0));
-    --ftsk-hero-pan-x-to-active: var(--ftsk-hero-pan-x-to-mobile, var(--ftsk-hero-pan-x-to, 0));
-    --ftsk-hero-pan-y-from-active: var(--ftsk-hero-pan-y-from-mobile, var(--ftsk-hero-pan-y-from, 0));
-    --ftsk-hero-pan-y-to-active: var(--ftsk-hero-pan-y-to-mobile, var(--ftsk-hero-pan-y-to, 0));
-    --ftsk-hero-rotate-from-active: var(--ftsk-hero-rotate-from-mobile, var(--ftsk-hero-rotate-from, 0deg));
-    --ftsk-hero-rotate-to-active: var(--ftsk-hero-rotate-to-mobile, var(--ftsk-hero-rotate-to, 0deg));
-    --ftsk-hero-duration-active: var(--ftsk-hero-duration-mobile, var(--ftsk-hero-duration, 12s));
-    --ftsk-hero-focus-active: var(--ftsk-hero-focus-mobile, var(--ftsk-hero-focus, 50% 50%));
   }
 
   img {
@@ -275,65 +232,20 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: var(--ftsk-hero-focus-active, 50% 50%);
-    // Pivoting scale/rotate around the SAME point as object-position (instead of the
-    // default box center) is what makes the focus point actually "stick" and matter -
-    // without this, zooming always re-centers back toward the middle regardless of
-    // focus, drowning out off-center horizontal/vertical choices; with it, a higher
-    // start zoom increasingly frames tighter around the chosen point (exactly the
-    // "zoom reveals more room to push the focus point" behaviour panning already had
-    // via its translate %, see the keyframes below).
-    transform-origin: var(--ftsk-hero-focus-active, 50% 50%);
-    transform: scale(
-      calc(var(--ftsk-hero-zoom-from-active) * var(--ftsk-hero-mirror-x, 1)),
-      calc(var(--ftsk-hero-zoom-from-active) * var(--ftsk-hero-mirror-y, 1))
-    );
-    animation-name: ftsk-hero-kb;
-    animation-duration: var(--ftsk-hero-duration-active, 12s);
-    animation-timing-function: ease-in-out;
-    animation-iteration-count: infinite;
-    animation-direction: alternate;
-    animation-play-state: paused;
+    object-position: var(--ftsk-hero-poi, 50% 50%);
+    transform-origin: center;
+    transform: scale(var(--ftsk-hero-mirror-x, 1), var(--ftsk-hero-mirror-y, 1));
   }
-  &.is-active img {
-    animation-play-state: running;
-  }
-}
-// Shared Ken Burns animation for every slide, driven entirely by the "-active" custom
-// properties resolved above - covers all 4 animation types (data/hero_images.yaml's
-// `animation.type`: zoom-in/zoom-out only move zoomFrom->zoomTo, pan only moves pan-x/
-// pan-y, tilt only moves rotate - hero.hugo.html's hero-animation.html partial always
-// resolves the OTHER channels to a no-op (identical from/to), so one keyframe covers
-// every combination without needing a type-specific @keyframes block.
-@keyframes ftsk-hero-kb {
-  from {
-    transform: scale(
-        calc(var(--ftsk-hero-zoom-from-active) * var(--ftsk-hero-mirror-x, 1)),
-        calc(var(--ftsk-hero-zoom-from-active) * var(--ftsk-hero-mirror-y, 1))
-      )
-      translate(calc(var(--ftsk-hero-pan-x-from-active, 0) * 1%), calc(var(--ftsk-hero-pan-y-from-active, 0) * 1%))
-      rotate(var(--ftsk-hero-rotate-from-active, 0deg));
-  }
-  to {
-    transform: scale(
-        calc(var(--ftsk-hero-zoom-to-active, var(--ftsk-hero-zoom-from-active)) * var(--ftsk-hero-mirror-x, 1)),
-        calc(var(--ftsk-hero-zoom-to-active, var(--ftsk-hero-zoom-from-active)) * var(--ftsk-hero-mirror-y, 1))
-      )
-      translate(calc(var(--ftsk-hero-pan-x-to-active, 0) * 1%), calc(var(--ftsk-hero-pan-y-to-active, 0) * 1%))
-      rotate(var(--ftsk-hero-rotate-to-active, 0deg));
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .ftsk-hero-slide img {
+  &.is-poi-framed img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    max-width: none;
+    object-fit: fill;
+    transform-origin: 0 0;
     animation: none !important;
-    transform: scale(
-      calc(var(--ftsk-hero-zoom-from-active, 1) * var(--ftsk-hero-mirror-x, 1)),
-      calc(var(--ftsk-hero-zoom-from-active, 1) * var(--ftsk-hero-mirror-y, 1))
-    );
   }
 }
-
-
 // Left side stays fully opaque behind the text, fading away by the right edge so the
 // photos show through clearly there. The dark stops are custom properties (rather than
 // literal rgba() in the gradient) purely so they can be re-tuned without touching the
@@ -365,14 +277,31 @@
   }
 }
 
-// Redraws the same cave-silhouette drip motif used as .hero-two's own background, as a
-// foreground layer over the photos - the "dropstone" shapes read as being in front.
+// Bring the real cave edges in front of the hero photos without covering the text.
+// Y offset = navbar height minus the artwork's flat ceiling margin, same reasoning
+// as --motif-top-inset in _theme.scss, so the drips touch the navbar flush here too.
+// The top gradient fades from an OPAQUE color at 0px so the seam against the navbar
+// is a true match, not just a tint - pre-divided by this rule's own brightness(0.72)
+// filter (applied after compositing) so it renders back out as rgb(10, 17, 22),
+// the navbar's own background color, instead of coming out darker than intended.
 .hero-two-media-motif {
   position: absolute;
   inset: 0;
-  background-image: url($cave-silhouette-url);
-  background-repeat: no-repeat;
-  background-position: bottom center;
-  background-size: cover;
+  background-image:
+    linear-gradient(to bottom, rgb(14, 24, 31) 0, rgba(14, 24, 31, 0) 90px),
+    url($hero-cave-hanging-url),
+    url($hero-cave-standing-url);
+  background-repeat: no-repeat, no-repeat, no-repeat;
+  background-position: top, center 74px, bottom center;
+  background-size: 100% 100%, unquote("max(100%, 960px)") auto, unquote("max(100%, 960px)") auto;
   opacity: 0.9;
+  filter: brightness(0.72);
+  @include media-breakpoint-down-lg {
+    background-position: top, left 74px, bottom center;
+  }
+  @include media-breakpoint-down-sm {
+    background-position: top, left 68px, bottom center;
+    background-size: 100% 100%, 640px auto, 640px auto;
+  }
 }
+

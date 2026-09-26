@@ -16,30 +16,13 @@ content_blocks:
       A Ferencvárosi Természetbarátok Sportköre DELFIN Klub Barlangkutató
       Szakosztálya 1954 óta fedez fel, kutat és jár barlangokat - nyitott
       közösségként várunk mindenkit, akit érdekel a barlangos világ.
-    hero_images:
-      - image_path: /images/gallery/ftsk-gallery-1.jpg
-        placer: front_bottom
-      - image_path: /images/gallery/ftsk-gallery-2.png
-        placer: back_top_right
-      - image_path: /images/hero/ftsk-cave-hero.jpg
-        placer: back_top_left
+    logo_image: /images/ftsk-logo.png
     link:
       text: Csatlakozz hozzánk
       url: /kapcsolat/
   - _bookshop_name: global/richtext
-    title: Fontos és közérdekű adatok
-    content: >-
-      **Az egyesület hivatalos neve:** Ferencvárosi Természetbarátok Sportköre
-      DELFIN Klub
-
-
-      **Cím:** Budapest, XI. kerület, Bartók Béla út 19.
-
-
-      **Elérhetőség:** [gyovai94@gmail.com](mailto:gyovai94@gmail.com) (Gyovai
-      Tamás, elnök)
-  - _bookshop_name: global/richtext
     title: Történetünk
+    anchor: tortenetunk
     content: >-
       Egyesületünk története régre nyúlik vissza. Dr. Balázs Dénes
       (barlangkutató, földrajztudós, világutazó) 1954-ben mintegy 20 fős
@@ -62,6 +45,7 @@ content_blocks:
       Hóvirág Szakosztály vezetője Baloghné Szentirmay Judit lemondott
       tisztségéről, így a hivatalos egyesületet a barlangászok vették át.
 
+      ![Egyesületi logók](/images/gallery/ftsk-gallery-2.png "Korábbi szakosztályaink")
 
       A Barlangkutató Szakosztály legnagyobb érdeme a Szabadság-barlangban
       feltárt jelentős, 500 m hosszú új rész 1991-ben, Vidics Zoltánné és
@@ -91,7 +75,7 @@ content_blocks:
       barlangos világ és a társasági élet.
 
 
-      **Az FTSK Barlangkutató Szakosztály korábbi vezetői sorrendben:**
+      ### Az FTSK Barlangkutató Szakosztály korábbi vezetői sorrendben
 
 
       - Dr. Balázs Dénes
@@ -109,22 +93,79 @@ content_blocks:
       - Czirják Ferenc (Fefe)
 
       - Kántor Zsolt (Zsé)
+  - _bookshop_name: global/header
+    anchor: tevekenysegeink
+    title: "Amit "
+    title_suffix: csinálunk
+    description: >-
+      Szakosztályunk fő tevékenysége sokáig csak a barlangkutatás és a
+      társasági élet megélése volt, ma azonban ezeken felül fontos része
+      életünknek a barlangi túrázás, az oktatás és alkalmanként a kanyoning is.
+  - _bookshop_name: global/feature
+    image_path: /images/gallery/ftsk-gallery-2.png
+    title: Barlangkutatás
+    description: >-
+      1954 óta kutatjuk a hazai barlangokat. A Szabadság-barlangban 1991-ben
+      Vidics Zoltánné és Frecska József vezetésével 500 méter új szakaszt
+      tártunk fel, de a Danca-barlang, a Solymári-ördöglyuk, a
+      Háromlyukú-zsomboly és a Látó-hegyi-barlang kutatásában is részt
+      vettünk.
+    btn:
+      link: /egyesuletunk/#tortenetunk
+      text: Történetünk
+    reversed: false
+  - _bookshop_name: global/feature
+    image_path: /images/gallery/ftsk-gallery-1.jpg
+    title: Barlangtúrázás
+    description: >-
+      Rendszeresen szervezünk hazai és külföldi barlangtúrákat - jártunk már
+      Szlovéniában, Olaszországban, Ausztriában, Spanyolországban és a
+      Pireneusokban is. Túráinkról részletes beszámolókat is olvashatsz.
+    btn:
+      link: /turak/
+      text: Túrabeszámolók
+    reversed: true
+  - _bookshop_name: global/feature
+    image_path: /images/hero/ftsk-cave-hero.jpg
+    title: Alapfokú tanfolyam és kanyoning
+    description: >-
+      Alapfokú barlangász tanfolyamainkkal új tagokat képzünk és vonzunk a
+      barlangos világ felé, alkalmanként pedig kanyoning túrákon is részt
+      veszünk - ebből nőtte ki magát a mai Magyar Kanyoning Sportegyesület is.
+    btn:
+      link: /tanfolyamok/
+      text: Tanfolyamaink
+    reversed: false
+  - _bookshop_name: global/richtext
+    title: Fontos és közérdekű adatok
+    anchor: kozerdeku-adatok
+    content: >-
+      **Az egyesület hivatalos neve:** Ferencvárosi Természetbarátok Sportköre
+      DELFIN Klub
+
+
+      **Cím:** Budapest, XI. kerület, Bartók Béla út 19.
+
+
+      **Elérhetőség:** [gyovai94@gmail.com](mailto:gyovai94@gmail.com) (Gyovai
+      Tamás, elnök)
   - _bookshop_name: global/linklist
     title: Beszámolóink
+    anchor: beszamoloink
     title_suffix:
     description: Egyesületünk éves szakmai és pénzügyi beszámolói.
     items:
       - text: "2023. évi beszámoló"
-        url: https://www.ftsk.hu/FTSK/2023besz.pdf
+        url: /FTSK/2023besz.pdf
       - text: "2022. évi beszámoló"
-        url: https://www.ftsk.hu/FTSK/2022besz.pdf
+        url: /FTSK/2022besz.pdf
       - text: "2021. évi beszámoló"
-        url: https://www.ftsk.hu/FTSK/2021besz.pdf
+        url: /FTSK/2021besz.pdf
       - text: "2020. évi beszámoló"
-        url: https://www.ftsk.hu/FTSK/2020besz.pdf
+        url: /FTSK/2020besz.pdf
       - text: "2019. évi beszámoló"
-        url: https://www.ftsk.hu/FTSK/2019besz.pdf
+        url: /FTSK/2019besz.pdf
       - text: "2018. évi beszámoló"
-        url: https://www.ftsk.hu/FTSK/2018besz.pdf
+        url: /FTSK/2018besz.pdf
 ---
 

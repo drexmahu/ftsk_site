@@ -6,8 +6,8 @@
 
 @font-face {
   font-family: 'FontAwesome';
-  src: url('../../../fonts/fontawesome-webfont.woff') format('woff'),
-       url('../../../fonts/fontawesome-webfont.ttf') format('truetype');
+    src: url('../fonts/fontawesome-webfont.woff') format('woff'),
+      url('../fonts/fontawesome-webfont.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
 }
@@ -318,15 +318,30 @@ a {
 // 404 page style
 .error {
   position: relative;
+  isolation: isolate;
   background: $color-secondary;
+  padding: 88px 0 64px;
+  @include media-breakpoint-down-sm {
+    padding: 73px 0 48px;
+  }
   &-content {
     position: relative;
+    h3, a {
+      position: relative;
+      z-index: 2;
+    }
     h3 {
       color: $color-header;
       font-weight: $bold-font-weight;
     }
     img {
-      max-width: 100%;
+      display: block;
+      width: 100%;
+      max-width: 800px;
+      height: auto;
+      margin: 0 auto;
+      -webkit-mask-image: radial-gradient(ellipse at 50% 40%, #000 45%, transparent 75%);
+      mask-image: radial-gradient(ellipse at 50% 40%, #000 45%, transparent 75%);
     }
   }
 }

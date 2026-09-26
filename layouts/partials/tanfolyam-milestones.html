@@ -1,0 +1,74 @@
+{{/*
+  Horizontal milestone progress bar for the current course (see
+  content/tanfolyamok/tanfolyam-2027.md's `milestones:` front matter). Each
+  milestone is the START of a phase:
+    done     - its date and the next one's have both passed (phase is over;
+               the last milestone is done as soon as its own date passed)
+    current  - its date has passed but the next one's hasn't (phase running)
+    upcoming - future or dateless date, or anything after one of those
+
+  Each milestone dict:
+    label     (required) - phase name, e.g. "Jelentkezés"
+    date      (optional) - blank/omitted means "not known yet"
+    estimated (optional) - true shows a "(becsült)" note next to the date
+
+  `.` = the milestones list.
+
+  The connector after each milestone gets a fill ratio `--p` (0-1): full
+  after a done milestone, date-interpolated after the current one (plus a
+  "now" dot there), empty otherwise.
+*/}}
+{{ $now := now }}
+{{ $list := . }}
+{{ $last := sub (len $list) 1 }}
+{{ $stopped := false }}
+<ol class="ftsk-milestones">
+  {{ range $i, $m := $list }}
+  {{ $reached := false }}
+  {{ if not $stopped }}
+    {{ with $m.date }}{{ $reached = $now.After (time.AsTime .) }}{{ end }}
+    {{ $stopped = not $reached }}
+  {{ end }}
+  {{ $next := dict }}
+  {{ if lt $i $last }}{{ $next = index $list (add $i 1) }}{{ end }}
+  {{ $nextReached := false }}
+  {{ with $next.date }}{{ $nextReached = $now.After (time.AsTime .) }}{{ end }}
+  {{ $status := "upcoming" }}
+  {{ if $reached }}
+    {{ $status = cond (or (eq $i $last) $nextReached) "done" "current" }}
+  {{ end }}
+  <li class="ftsk-milestone ftsk-milestone--{{ $status }}">
+    <span class="ftsk-milestone-dot" aria-hidden="true">
+      {{ if eq $status "done" }}<i class="ph ph-check-bold" aria-hidden="true"></i>{{ end }}
+    </span>
+    <span class="ftsk-milestone-label">{{ $m.label }}</span>
+    <span class="ftsk-milestone-date">
+      {{ with $m.date }}
+        {{ time.AsTime . | time.Format ":date_medium" }}{{ if $m.estimated }} <span class="ftsk-milestone-estimated">(becsült)</span>{{ end }}
+      {{ else }}
+        <span class="ftsk-milestone-estimated">Dátum még nem ismert</span>
+      {{ end }}
+    </span>
+    {{ if lt $i $last }}
+      {{ $p := 0.0 }}
+      {{ $showNow := false }}
+      {{ if eq $status "done" }}
+        {{ $p = 1.0 }}
+      {{ else if eq $status "current" }}
+        {{ $showNow = true }}
+        {{ with $next.date }}
+          {{ $startU := (time.AsTime $m.date).Unix }}
+          {{ $span := sub (time.AsTime .).Unix $startU }}
+          {{ if gt $span 0 }}
+            {{ $p = math.Min 1 (math.Max 0 (div (float (sub $now.Unix $startU)) $span)) }}
+          {{ end }}
+        {{ end }}
+      {{ end }}
+      <span class="ftsk-milestone-line" aria-hidden="true" style="--p: {{ printf "%.4f" $p }}; --i: {{ $i }};">
+        <span class="ftsk-milestone-fill"></span>
+        {{ if $showNow }}<span class="ftsk-milestone-now"></span>{{ end }}
+      </span>
+    {{ end }}
+  </li>
+  {{ end }}
+</ol>

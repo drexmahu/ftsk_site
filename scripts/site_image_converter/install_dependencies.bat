@@ -9,6 +9,11 @@ echo  Windows Dependency Installer
 echo ============================================================
 echo.
 
+if exist "%~dp0..\..\.venv\Scripts\python.exe" (
+    set "PYTHON_CMD=%~dp0..\..\.venv\Scripts\python.exe"
+    goto :python_found
+)
+
 where py >nul 2>nul
 if %errorlevel%==0 (
     set "PYTHON_CMD=py"
@@ -35,16 +40,21 @@ exit /b 1
 :python_found
 
 echo Python found:
-%PYTHON_CMD% --version
+"%PYTHON_CMD%" --version
 echo.
 
 echo Updating pip...
-%PYTHON_CMD% -m pip install --upgrade pip
+"%PYTHON_CMD%" -m pip install --upgrade pip
 if errorlevel 1 goto :install_failed
 
 echo.
 echo Installing Pillow...
-%PYTHON_CMD% -m pip install Pillow
+"%PYTHON_CMD%" -m pip install Pillow
+if errorlevel 1 goto :install_failed
+
+echo.
+echo Installing PyYAML (needed by hero_config_server.py)...
+"%PYTHON_CMD%" -m pip install PyYAML
 if errorlevel 1 goto :install_failed
 
 echo.

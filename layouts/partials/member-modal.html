@@ -1,0 +1,15 @@
+{{/*
+  Single shared modal for the member-tile popup (see member-tile.html), included
+  once sitewide from baseof.html so it's available on any page that renders member
+  tiles - the "Tagjaink" roster AND article participant cards - without duplicating
+  the #ftsk-member-modal id per page.
+*/}}
+<div id="ftsk-member-modal" class="ftsk-member-modal mfp-hide">
+  <div class="ftsk-member-modal-avatar"></div>
+  <div class="ftsk-member-modal-body">
+    <h3 class="ftsk-member-modal-name"></h3>
+    <span class="ftsk-member-modal-group"></span>
+    <span class="ftsk-member-modal-role d-none"></span>
+    <p class="ftsk-member-modal-bio d-none"></p>
+  </div>
+</div>

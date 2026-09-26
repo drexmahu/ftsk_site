@@ -1,0 +1,19 @@
+<nav class="ftsk-archive-pager" id="{{ . }}" aria-label="Archívum lapozása">
+  <label class="ftsk-archive-page-size">
+    <i class="ph ph-list" aria-hidden="true"></i>
+    <select aria-label="Megjelenített bejegyzések száma">
+      <option value="6">6 / oldal</option>
+      <option value="12">12 / oldal</option>
+      <option value="all">Összes találat</option>
+    </select>
+  </label>
+  <div class="ftsk-archive-page-controls">
+    <button type="button" data-page-step="-1" aria-label="Előző oldal" title="Előző oldal" disabled>
+      <i class="ph ph-caret-left" aria-hidden="true"></i>
+    </button>
+    <p class="ftsk-archive-page-status" role="status" aria-live="polite"></p>
+    <button type="button" data-page-step="1" aria-label="Következő oldal" title="Következő oldal" disabled>
+      <i class="ph ph-caret-right" aria-hidden="true"></i>
+    </button>
+  </div>
+</nav>

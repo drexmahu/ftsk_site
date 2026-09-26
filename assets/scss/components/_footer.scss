@@ -48,6 +48,14 @@
         max-width: 100%;
       }
     }
+    .ftsk-build-info {
+      color: $color-secondary-dark;
+      font-family: $font-primary;
+      font-size: $base-font-size * 0.7;
+      font-weight: 400;
+      opacity: 0.6;
+      margin-top: -($base-margin * 2.5);
+    }
     .social-icon {
       position: relative;
       ul {
