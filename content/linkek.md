@@ -25,4 +25,6 @@ content_blocks:
         url: http://oktatas.barlang.hu/
       - text: "FTSK Facebook-oldala"
         url: https://www.facebook.com/ftskbarlang
+      - text: "FTSK Instagram-oldala"
+        url: https://www.instagram.com/ftsk_barlang/
 ---

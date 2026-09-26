@@ -48,6 +48,50 @@
   }
   .btn-row { display: flex; gap: 8px; }
 
+  /* --- Connected mode: editing the real data/hero_images.yaml + static/images/hero/
+     via hero_config_server.py, instead of the offline drag-drop/copy-paste flow below. */
+  .connected-panel {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-bottom: 24px;
+    background: var(--bg-surface);
+  }
+  .connected-status {
+    margin: 0 0 12px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+  .connected-status.is-error { color: #e0796f; }
+  .connected-toolbar {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    margin-bottom: 4px;
+  }
+  .connected-toolbar label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.85rem;
+    min-width: 260px;
+  }
+  .connected-toolbar select { width: 100%; }
+  .connected-save-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .connected-save-note {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+  .connected-save-note.is-success { color: #8fce9c; }
+  button.danger { background: #6b2b26; color: #f2ede1; }
+
+
   .drop-zone {
     border: 2px dashed var(--border);
     border-radius: 12px;
@@ -72,11 +116,44 @@
      the readability gradient/flat dim, and the cave-silhouette motif overlay. */
   .device-frame-wrapper {
     width: 100%;
+    max-height: 220px;
     overflow: hidden;
     border-radius: 10px;
     border: 1px solid var(--border);
     background: #000;
     margin-bottom: 16px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  /* Compact by default (you're adjusting sliders, not inspecting pixels) -
+     "View full size" expands it to a real overlay for a closer look. */
+  .device-frame-wrapper.is-expanded {
+    position: fixed;
+    inset: 32px;
+    max-height: none;
+    z-index: 1001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0;
+  }
+  .modal-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(5, 9, 12, 0.8);
+    z-index: 1000;
+  }
+  .modal-backdrop.is-visible { display: block; }
+  .expand-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 20;
+    padding: 4px 10px;
+    font-size: 0.78rem;
   }
   .device-frame { transform-origin: top left; }
   .sim-hero {
@@ -185,6 +262,7 @@
     font-family: inherit;
   }
   .controls select { width: 100%; }
+  select:disabled { opacity: 0.5; cursor: not-allowed; }
   .filename { color: var(--text-heading); font-weight: 600; word-break: break-all; }
   .meta { color: var(--text-muted); font-size: 0.78rem; }
   hr.sep { border: none; border-top: 1px solid var(--border); margin: 2px 0; width: 100%; }
@@ -200,6 +278,52 @@
   .mirror-row { display: flex; gap: 18px; font-size: 0.8rem; color: var(--text-muted); }
   .mirror-row label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
 
+  /* The "which screen size am I editing" control lives INSIDE each photo's own
+     controls (it's a property of that photo's editing session), not a separate
+     global toolbar - so it's styled to stand out as the first, most important row. */
+  .viewport-row {
+    background: rgba(190, 160, 112, 0.1);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+  }
+  .viewport-row span:first-child { color: var(--text-heading); font-weight: 600; }
+  .section-title {
+    color: var(--text-heading);
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-top: 6px;
+  }
+
+  /* Tabs replace the old separate "preview at screen size" select for the
+     connected editor - one control picks both which fields show AND what the
+     preview simulates, so there's no separate always-visible tablet/mobile
+     sections to scroll past. */
+  .tier-tabs { display: flex; gap: 6px; }
+  .tier-tabs button {
+    flex: 1;
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    font-weight: 600;
+  }
+  .tier-tabs button.is-active {
+    background: var(--accent);
+    color: var(--bg-page);
+    border-color: var(--accent);
+  }
+  .timeline-row {
+    background: rgba(190, 160, 112, 0.1);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+  }
+  .timeline-row span:first-child { color: var(--text-heading); font-weight: 600; }
+  .playback-row { display: flex; align-items: center; gap: 10px; }
+  .playback-row button { flex-shrink: 0; }
+  .playback-row .meta { margin: 0; }
 
   .yaml-output {
     background: var(--bg-page);
@@ -231,27 +355,27 @@
 <body>
   <h1>Hero Focus Picker</h1>
   <p class="lead">
-    Load the converted <code>.webp</code> files from <code>static/images/hero/</code> to preview exactly how each
-    one gets cropped and animated on the homepage - including the real hero title/description/button text, the
-    readability gradient/dim, and the cave-silhouette motif overlay. Use the screen-size dropdown below to switch
-    between the site's 3 supported breakpoints (like VS Code's device toolbar); each size can have its own crop/
-    zoom/pan-or-zoom-animation - click on the photo (or drag the sliders) to set it, and tablet/phone start out
-    inheriting the desktop values until you tick "Custom for this size" for that size. You can also mirror a photo
-    horizontally/vertically, and exclude it entirely from a given screen size ("Visible at this size"). Then
-    copy the generated YAML per photo into <code>data/hero_images.yaml</code>. Nothing here is uploaded anywhere -
-    images are only read locally in your browser.
+    Adjust hero image animation properties directly for the page.
   </p>
 
-  <div class="toolbar">
-    <label>
+  <div class="connected-panel" id="connectedPanel" style="display: none">
+    <p class="connected-status" id="connectedStatus"></p>
+    <div class="connected-toolbar">
+      <label>
+        Editing which photo?
+        <select id="connectedSelect"></select>
+      </label>
+      <div class="btn-row">
+        <button id="connectedAddBtn">+ Add new photo</button>
+        <button id="connectedDeleteBtn" class="danger">Delete photo</button>
+      </div>
+      <input type="file" id="connectedFileInput" accept="image/*" hidden />
+    </div>
+    <div id="connectedEditorMount"></div>
+  </div>
 
-      Simulated screen size (matches the site's breakpoints)
-      <select id="viewportSelect">
-        <option value="desktop">Desktop (≥992px, ~1440px wide)</option>
-        <option value="tablet">Tablet (768–991px, ~834px wide)</option>
-        <option value="mobile">Phone (&lt;768px, ~390px wide)</option>
-      </select>
-    </label>
+  <div class="toolbar">
+    <p class="connected-status" style="margin: 0">Batch controls for offline preview cards below:</p>
     <div class="btn-row">
       <button id="playAllBtn">▶ Play all</button>
       <button id="pauseAllBtn" class="secondary">⏸ Pause all</button>
@@ -272,22 +396,21 @@
   var dropZone = document.getElementById('dropZone');
   var fileInput = document.getElementById('fileInput');
   var cards = document.getElementById('cards');
-  var viewportSelect = document.getElementById('viewportSelect');
   var playAllBtn = document.getElementById('playAllBtn');
   var pauseAllBtn = document.getElementById('pauseAllBtn');
   var cardControllers = [];
-  var nextAnimId = 0;
+  var COMPACT_MAX_HEIGHT = 220;
 
-  // Representative widths for each of the site's 3 breakpoint tiers (see
+  // Representative widths/heights for each of the site's 3 breakpoint tiers (see
   // assets/scss/_mixins.scss: mobile <768px, tablet 768-991px, desktop >=992px) -
   // matches data/hero_images.yaml's `mobile`/`tablet` override maps + the
-  // top-level (desktop) start/animation fields.
+  // top-level (desktop) start/animation fields. Heights mirror .sim-hero's own
+  // per-tier min-height rules above.
   var VIEWPORTS = {
-    desktop: { width: 1440, tier: 'desktop' },
-    tablet: { width: 834, tier: 'tablet' },
-    mobile: { width: 390, tier: 'mobile' },
+    desktop: { width: 1440, height: 640, tier: 'desktop' },
+    tablet: { width: 834, height: 480, tier: 'tablet' },
+    mobile: { width: 390, height: 420, tier: 'mobile' },
   };
-  var currentViewport = 'desktop';
 
   dropZone.addEventListener('click', function () {
     fileInput.click();
@@ -309,12 +432,6 @@
     fileInput.value = '';
   });
 
-  viewportSelect.addEventListener('change', function () {
-    currentViewport = viewportSelect.value;
-    cardControllers.forEach(function (c) {
-      c.refreshViewport();
-    });
-  });
   playAllBtn.addEventListener('click', function () {
     cardControllers.forEach(function (c) {
       c.setPlaying(true);
@@ -390,9 +507,6 @@
 
   function addCard(file) {
     var url = URL.createObjectURL(file);
-    var animName = 'ftsk-focus-picker-anim-' + nextAnimId++;
-    var styleEl = document.createElement('style');
-    document.head.appendChild(styleEl);
 
     var card = document.createElement('div');
     card.className = 'card';
@@ -400,6 +514,13 @@
     // ---- device frame: full homepage hero mockup (photo + real text/button) ----
     var deviceWrapper = document.createElement('div');
     deviceWrapper.className = 'device-frame-wrapper';
+    var expandBtn = document.createElement('button');
+    expandBtn.type = 'button';
+    expandBtn.className = 'expand-btn secondary';
+    expandBtn.textContent = '\u26f6 View full size';
+    var backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    document.body.appendChild(backdrop);
     var deviceFrame = document.createElement('div');
     deviceFrame.className = 'device-frame';
     var simHero = document.createElement('div');
@@ -452,8 +573,32 @@
     var metaEl = document.createElement('div');
     metaEl.className = 'meta';
 
+    // "Which screen size am I editing" is a property of THIS photo's own editor,
+    // not a shared/global control - each card gets its own.
+    var currentViewport = 'desktop';
+    var viewportRow = document.createElement('label');
+    viewportRow.className = 'viewport-row';
+    var viewportSpan = document.createElement('span');
+    viewportSpan.textContent = 'Preview at screen size';
+    var viewportRowSelect = document.createElement('select');
+    [
+      ['desktop', 'Desktop (\u2265992px, ~1440px wide)'],
+      ['tablet', 'Tablet (768\u2013991px, ~834px wide)'],
+      ['mobile', 'Phone (<768px, ~390px wide)'],
+    ].forEach(function (pair) {
+      var opt = document.createElement('option');
+      opt.value = pair[0];
+      opt.textContent = pair[1];
+      viewportRowSelect.appendChild(opt);
+    });
+    viewportRow.appendChild(viewportSpan);
+    viewportRow.appendChild(viewportRowSelect);
+
     var playBtn = document.createElement('button');
-    playBtn.textContent = '⏸ Pause';
+    playBtn.textContent = '\u25b6 Play';
+
+    var timelineRow = rangeRow('Timeline position', 0, 100, 1, 0);
+    timelineRow.label.className = 'timeline-row';
 
     var sep = document.createElement('hr');
     sep.className = 'sep';
@@ -544,6 +689,8 @@
 
     controls.appendChild(filenameEl);
     controls.appendChild(metaEl);
+    controls.appendChild(viewportRow);
+    controls.appendChild(timelineRow.label);
     controls.appendChild(playBtn);
     controls.appendChild(sep);
     controls.appendChild(altLabel);
@@ -575,7 +722,7 @@
       base: makeTier(),
       tablet: Object.assign(makeTier(), { enabled: false }),
       mobile: Object.assign(makeTier(), { enabled: false }),
-      playing: true,
+      playing: false,
       mirrorX: false,
       mirrorY: false,
       hideOn: { desktop: false, tablet: false, mobile: false },
@@ -623,14 +770,16 @@
       amount.label.style.display = defaults.max > 0 ? '' : 'none';
     }
 
-    function setDeviceWidth() {
+    function fitDeviceFrame() {
       var vp = VIEWPORTS[currentViewport];
       deviceFrame.style.width = vp.width + 'px';
       simHero.dataset.tier = vp.tier;
-      // Scale the true-pixel-width frame down to fit the panel, like a device
-      // toolbar's zoom-to-fit (only shrinks, never upscales past 100%).
+      var expanded = deviceWrapper.classList.contains('is-expanded');
       var wrapperWidth = deviceWrapper.clientWidth || vp.width;
-      deviceFrame.style.zoom = Math.min(1, wrapperWidth / vp.width);
+      var wrapperHeight = expanded ? deviceWrapper.clientHeight || vp.height : COMPACT_MAX_HEIGHT;
+      // Scale the true-pixel-width frame down to fit the panel (both dimensions),
+      // like a device toolbar's zoom-to-fit (only shrinks, never upscales past 100%).
+      deviceFrame.style.zoom = Math.min(1, wrapperWidth / vp.width, wrapperHeight / vp.height);
     }
 
     // Mirrors layouts/partials/hero-animation.html exactly, so the preview here
@@ -672,8 +821,43 @@
       };
     }
 
+    // Timeline-driven rendering (no CSS @keyframes) - a scrubber can show any
+    // exact point of the motion, and "0%" always means the true start point.
+    var timeline = 0;
+    var timelineDirection = 1;
+    var rafId = null;
+    var lastFrameTs = null;
+
+    function renderTransform() {
+      var eff = effective();
+      var anim = computeAnim(eff);
+      var mx = state.mirrorX ? -1 : 1;
+      var my = state.mirrorY ? -1 : 1;
+      var zoom = anim.zoomFrom + (anim.zoomTo - anim.zoomFrom) * timeline;
+      var panX = anim.panXFrom + (anim.panXTo - anim.panXFrom) * timeline;
+      var panY = anim.panYFrom + (anim.panYTo - anim.panYFrom) * timeline;
+      var rot = anim.rotFrom + (anim.rotTo - anim.rotFrom) * timeline;
+      img.style.transform =
+        'scale(' + (zoom * mx) + ',' + (zoom * my) + ') translate(' + panX + '%,' + panY + '%) rotate(' + rot + 'deg)';
+    }
+
+    function tick(ts) {
+      if (lastFrameTs != null) {
+        var eff = effective();
+        var dt = (ts - lastFrameTs) / 1000;
+        var speed = eff.duration > 0 ? 1 / eff.duration : 0;
+        timeline += timelineDirection * speed * dt;
+        if (timeline >= 1) { timeline = 1; timelineDirection = -1; }
+        if (timeline <= 0) { timeline = 0; timelineDirection = 1; }
+        timelineRow.range.value = Math.round(timeline * 100);
+        timelineRow.valueSpan.textContent = Math.round(timeline * 100);
+        renderTransform();
+      }
+      lastFrameTs = ts;
+      if (state.playing) rafId = requestAnimationFrame(tick);
+    }
+
     function applyState() {
-      setDeviceWidth();
       var eff = effective();
       img.style.objectPosition = eff.focusX + '% ' + eff.focusY + '%';
       // Matches _hero.scss: pivoting scale/rotate around the focus point (instead of
@@ -683,23 +867,11 @@
       img.style.transformOrigin = eff.focusX + '% ' + eff.focusY + '%';
       marker.style.left = eff.focusX + '%';
       marker.style.top = eff.focusY + '%';
-
-      // Mirror is folded into the SAME scale() call as zoom (matches _hero.scss) so
-      // pan/tilt direction auto-flips visually too, instead of needing separate logic.
-      var mx = state.mirrorX ? -1 : 1;
-      var my = state.mirrorY ? -1 : 1;
-      var anim = computeAnim(eff);
-      styleEl.textContent =
-        '@keyframes ' + animName + ' {' +
-        'from { transform: scale(' + (anim.zoomFrom * mx) + ',' + (anim.zoomFrom * my) + ') translate(' + anim.panXFrom + '%,' + anim.panYFrom + '%) rotate(' + anim.rotFrom + 'deg); }' +
-        'to { transform: scale(' + (anim.zoomTo * mx) + ',' + (anim.zoomTo * my) + ') translate(' + anim.panXTo + '%,' + anim.panYTo + '%) rotate(' + anim.rotTo + 'deg); }' +
-        '}';
-      img.style.animationName = animName;
-      img.style.animationDuration = eff.duration + 's';
-      img.style.animationPlayState = state.playing ? 'running' : 'paused';
+      renderTransform();
       playBtn.textContent = state.playing ? '⏸ Pause' : '▶ Play';
 
       simHero.classList.toggle('is-hidden-here', !!state.hideOn[currentViewport]);
+      fitDeviceFrame();
     }
 
     function refreshVisibilityUI() {
@@ -751,6 +923,14 @@
 
     function setPlaying(playing) {
       state.playing = playing;
+      timelineRow.range.disabled = playing;
+      if (playing) {
+        lastFrameTs = null;
+        rafId = requestAnimationFrame(tick);
+      } else if (rafId != null) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
       applyState();
     }
 
@@ -840,6 +1020,31 @@
 
     playBtn.addEventListener('click', function () {
       setPlaying(!state.playing);
+    });
+
+    viewportRowSelect.addEventListener('change', function () {
+      currentViewport = viewportRowSelect.value;
+      refreshAll();
+    });
+
+    timelineRow.range.addEventListener('input', function () {
+      if (state.playing) setPlaying(false);
+      timeline = parseInt(timelineRow.range.value, 10) / 100;
+      timelineRow.valueSpan.textContent = timelineRow.range.value;
+      renderTransform();
+    });
+
+    function setExpanded(value) {
+      deviceWrapper.classList.toggle('is-expanded', value);
+      backdrop.classList.toggle('is-visible', value);
+      expandBtn.textContent = value ? '\u2715 Close' : '\u26f6 View full size';
+      fitDeviceFrame();
+    }
+    expandBtn.addEventListener('click', function () {
+      setExpanded(!deviceWrapper.classList.contains('is-expanded'));
+    });
+    backdrop.addEventListener('click', function () {
+      setExpanded(false);
     });
 
     overrideCheckbox.addEventListener('change', function () {
@@ -943,6 +1148,825 @@
     refreshAll();
     cardControllers.push({ refreshViewport: refreshAll, setPlaying: setPlaying });
   }
+})();
+
+(function () {
+  'use strict';
+
+  // ---- Connected mode: talks to hero_config_server.py to load/save the REAL
+  // data/hero_images.yaml and static/images/hero/ files. Silently does nothing
+  // (leaves #connectedPanel hidden) if no server is reachable, e.g. the file
+  // was opened directly - the offline drag-drop mode above still works then.
+
+  var connectedPanel = document.getElementById('connectedPanel');
+  var connectedStatus = document.getElementById('connectedStatus');
+  var connectedSelect = document.getElementById('connectedSelect');
+  var connectedAddBtn = document.getElementById('connectedAddBtn');
+  var connectedDeleteBtn = document.getElementById('connectedDeleteBtn');
+  var connectedFileInput = document.getElementById('connectedFileInput');
+  var connectedEditorMount = document.getElementById('connectedEditorMount');
+
+  var VIEWPORTS = { desktop: 1440, tablet: 834, mobile: 390 };
+  var HIDE_THRESHOLD_PX = { sm: 576, md: 768, lg: 992 };
+  var directionsByType = { pan: ['right', 'left', 'up', 'down'], tilt: ['right', 'left'], 'zoom-in': [], 'zoom-out': [], none: [] };
+  var amountDefaultsByType = {
+    pan: { min: 0, max: 20, step: 1, value: 6 },
+    'zoom-in': { min: 0, max: 0.6, step: 0.01, value: 0.15 },
+    'zoom-out': { min: 0, max: 0.6, step: 0.01, value: 0.15 },
+    tilt: { min: 0, max: 15, step: 0.5, value: 2 },
+    none: { min: 0, max: 0, step: 1, value: 0 },
+  };
+
+  var config = null; // {header, images: [...]}
+  var currentPath = null;
+  var activeEditor = null; // {refreshViewport(), setPlaying()}
+
+  function setStatus(text, isError) {
+    connectedStatus.textContent = text;
+    connectedStatus.classList.toggle('is-error', !!isError);
+  }
+
+  function filenameOf(path) {
+    return path.split('/').pop();
+  }
+
+  function parseFocus(str) {
+    var m = /^(-?\d+(?:\.\d+)?)%\s+(-?\d+(?:\.\d+)?)%$/.exec(String(str || '').trim());
+    return m ? { x: parseFloat(m[1]), y: parseFloat(m[2]) } : { x: 50, y: 50 };
+  }
+
+  function baseStateFrom(entry) {
+    var start = entry.start || {};
+    var animation = entry.animation || {};
+    var focus = parseFocus(start.focus);
+    var type = animation.type || 'pan';
+    return {
+      focusX: focus.x,
+      focusY: focus.y,
+      zoom: start.zoom != null ? start.zoom : 1.35,
+      type: type,
+      direction: animation.direction || 'right',
+      amount: animation.amount != null ? animation.amount : amountDefaultsByType[type].value,
+      duration: animation.duration != null ? animation.duration : 12,
+    };
+  }
+
+  function tierStateFrom(entry, tierName, base) {
+    var t = entry[tierName];
+    if (!t) return Object.assign({ enabled: false }, base);
+    var focus = t.focus ? parseFocus(t.focus) : { x: base.focusX, y: base.focusY };
+    return {
+      enabled: true,
+      focusX: focus.x,
+      focusY: focus.y,
+      zoom: t.zoom != null ? t.zoom : base.zoom,
+      type: t.type || base.type,
+      direction: t.direction || base.direction,
+      amount: t.amount != null ? t.amount : base.amount,
+      duration: t.duration != null ? t.duration : base.duration,
+    };
+  }
+
+  function entryToState(entry) {
+    var base = baseStateFrom(entry);
+    return {
+      path: entry.path,
+      alt: entry.alt || '',
+      mirror: entry.mirror || '',
+      hideBelow: entry.hide_below || '',
+      base: base,
+      tablet: tierStateFrom(entry, 'tablet', base),
+      mobile: tierStateFrom(entry, 'mobile', base),
+    };
+  }
+
+  function stateToEntry(state) {
+    var e = { path: state.path };
+    if (state.alt) e.alt = state.alt;
+    if (state.mirror) e.mirror = state.mirror;
+    if (state.hideBelow) e.hide_below = state.hideBelow;
+    e.start = { focus: state.base.focusX + '% ' + state.base.focusY + '%', zoom: state.base.zoom };
+    e.animation = {
+      type: state.base.type,
+      direction: state.base.direction,
+      amount: state.base.amount,
+      duration: state.base.duration,
+    };
+    ['tablet', 'mobile'].forEach(function (tierName) {
+      var t = state[tierName];
+      if (t.enabled) {
+        e[tierName] = {
+          enabled: true,
+          focus: t.focusX + '% ' + t.focusY + '%',
+          zoom: t.zoom,
+          type: t.type,
+          direction: t.direction,
+          amount: t.amount,
+          duration: t.duration,
+        };
+      }
+    });
+    return e;
+  }
+
+  // Matches layouts/partials/hero-animation.html's own math exactly.
+  function computeAnim(eff) {
+    var zoomFrom = eff.zoom;
+    var zoomTo = eff.zoom;
+    var panXFrom = 0, panXTo = 0;
+    var panYFrom = 0, panYTo = 0;
+    var rotFrom = 0, rotTo = 0;
+
+    if (eff.type === 'pan') {
+      if (eff.direction === 'left') {
+        panXFrom = eff.amount; panXTo = -eff.amount;
+      } else if (eff.direction === 'up') {
+        panYFrom = eff.amount; panYTo = -eff.amount;
+      } else if (eff.direction === 'down') {
+        panYFrom = -eff.amount; panYTo = eff.amount;
+      } else {
+        panXFrom = -eff.amount; panXTo = eff.amount;
+      }
+    } else if (eff.type === 'zoom-in') {
+      zoomTo = eff.zoom + eff.amount;
+    } else if (eff.type === 'zoom-out') {
+      zoomTo = Math.max(1, eff.zoom - eff.amount);
+    } else if (eff.type === 'tilt') {
+      if (eff.direction === 'left') {
+        rotFrom = eff.amount; rotTo = -eff.amount;
+      } else {
+        rotFrom = -eff.amount; rotTo = eff.amount;
+      }
+    }
+
+    return { zoomFrom: zoomFrom, zoomTo: zoomTo, panXFrom: panXFrom, panXTo: panXTo, panYFrom: panYFrom, panYTo: panYTo, rotFrom: rotFrom, rotTo: rotTo };
+  }
+
+  function rangeRow(labelText, min, max, step, value) {
+    var label = document.createElement('label');
+    var top = document.createElement('div');
+    top.className = 'row-value';
+    var span = document.createElement('span');
+    span.textContent = labelText;
+    var valueSpan = document.createElement('span');
+    valueSpan.textContent = value;
+    top.appendChild(span);
+    top.appendChild(valueSpan);
+    var range = document.createElement('input');
+    range.type = 'range';
+    range.min = min;
+    range.max = max;
+    range.step = step;
+    range.value = value;
+    label.appendChild(top);
+    label.appendChild(range);
+    return { label: label, range: range, valueSpan: valueSpan };
+  }
+
+  function populateSelect() {
+    var previous = connectedSelect.value;
+    connectedSelect.innerHTML = '';
+    config.images.forEach(function (entry) {
+      var opt = document.createElement('option');
+      opt.value = entry.path;
+      opt.textContent = filenameOf(entry.path) + (entry.alt ? ' - ' + entry.alt : '');
+      connectedSelect.appendChild(opt);
+    });
+    if (config.images.some(function (e) { return e.path === previous; })) {
+      connectedSelect.value = previous;
+    }
+  }
+
+  /* Timeline-accurate device-frame preview (see hero_config_server.py docs):
+     the editor never relies on a live/looping CSS animation for editing - a
+     scrubber directly renders any point between the configured start and end,
+     so "start" always shows exactly what "start" means. Play just previews
+     the motion; pausing (or dragging the scrubber) freezes an exact frame. */
+  var TIER_HEIGHTS = { desktop: 640, tablet: 480, mobile: 420 };
+  var COMPACT_MAX_HEIGHT = 220;
+
+  function renderEditor(entry) {
+    if (activeEditor && activeEditor.cleanup) activeEditor.cleanup();
+    connectedEditorMount.innerHTML = '';
+    activeEditor = null;
+    var state = entryToState(entry);
+
+    var card = document.createElement('div');
+    card.className = 'card';
+
+    var deviceWrapper = document.createElement('div');
+    deviceWrapper.className = 'device-frame-wrapper';
+    var expandBtn = document.createElement('button');
+    expandBtn.type = 'button';
+    expandBtn.className = 'expand-btn secondary';
+    expandBtn.textContent = '\u26f6 View full size';
+    var backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    var deviceFrame = document.createElement('div');
+    deviceFrame.className = 'device-frame';
+    var simHero = document.createElement('div');
+    simHero.className = 'sim-hero';
+    var simMedia = document.createElement('div');
+    simMedia.className = 'sim-media';
+    var img = document.createElement('img');
+    img.src = '/images/hero/' + encodeURIComponent(filenameOf(entry.path));
+    var simFade = document.createElement('div');
+    simFade.className = 'sim-fade';
+    var simMotif = document.createElement('div');
+    simMotif.className = 'sim-motif';
+    simMedia.appendChild(img);
+    simMedia.appendChild(simFade);
+    simMedia.appendChild(simMotif);
+    var marker = document.createElement('div');
+    marker.className = 'focus-marker';
+    var hiddenNotice = document.createElement('div');
+    hiddenNotice.className = 'hidden-notice';
+    hiddenNotice.textContent = 'Hidden at this size (hide_below)';
+    var simContent = document.createElement('div');
+    simContent.className = 'sim-content';
+    simContent.innerHTML =
+      '<h1>Barlangászat, kutatás, közösség</h1>' +
+      '<p>Az FTSK Barlangkutató Szakosztály 1954 óta fedez fel, kutat és jár barlangokat itthon és külföldön. ' +
+      'Csatlakozz hozzánk barlangtúrákon, kutatásokon vagy a legújabb alapfokú tanfolyamunkon!</p>' +
+      '<div class="sim-btn">Ismerd meg az egyesületet</div>';
+    simHero.appendChild(simMedia);
+    simHero.appendChild(simContent);
+    simHero.appendChild(marker);
+    simHero.appendChild(hiddenNotice);
+    deviceFrame.appendChild(simHero);
+    deviceWrapper.appendChild(deviceFrame);
+    deviceWrapper.appendChild(expandBtn);
+
+    var controls = document.createElement('div');
+    controls.className = 'controls';
+
+    var filenameEl = document.createElement('div');
+    filenameEl.className = 'filename';
+    filenameEl.textContent = filenameOf(entry.path);
+
+    // Tabs both pick which breakpoint's fields are shown AND which one the
+    // preview simulates - screen size is a property of what you're editing.
+    var currentViewport = 'desktop';
+    var tierTabs = document.createElement('div');
+    tierTabs.className = 'tier-tabs';
+    var tabButtons = {};
+    [
+      ['desktop', 'Desktop'],
+      ['tablet', 'Tablet'],
+      ['mobile', 'Phone'],
+    ].forEach(function (pair) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'secondary';
+      btn.textContent = pair[1];
+      btn.addEventListener('click', function () {
+        currentViewport = pair[0];
+        refreshAll();
+      });
+      tabButtons[pair[0]] = btn;
+      tierTabs.appendChild(btn);
+    });
+
+    var timelineRow = rangeRow('Timeline position', 0, 100, 1, 0);
+    timelineRow.label.className = 'timeline-row';
+    var playBtn = document.createElement('button');
+    playBtn.textContent = '\u25b6 Play';
+    var playbackRow = document.createElement('div');
+    playbackRow.className = 'playback-row';
+    playbackRow.appendChild(playBtn);
+    var playbackHint = document.createElement('span');
+    playbackHint.className = 'meta';
+    playbackHint.textContent = 'Drag the timeline above to inspect any point of the motion.';
+    playbackRow.appendChild(playbackHint);
+
+    var altLabel = document.createElement('label');
+    var altSpan = document.createElement('span');
+    altSpan.textContent = 'Alt text';
+    var altInput = document.createElement('input');
+    altInput.type = 'text';
+    altInput.value = state.alt;
+    altLabel.appendChild(altSpan);
+    altLabel.appendChild(altInput);
+
+    function selectRow(labelText, options, value) {
+      var label = document.createElement('label');
+      var span = document.createElement('span');
+      span.textContent = labelText;
+      var select = document.createElement('select');
+      options.forEach(function (opt) {
+        var o = document.createElement('option');
+        o.value = opt.value;
+        o.textContent = opt.text;
+        select.appendChild(o);
+      });
+      select.value = value;
+      label.appendChild(span);
+      label.appendChild(select);
+      return { label: label, select: select };
+    }
+
+    var mirrorRow = selectRow('Mirror', [
+      { value: '', text: 'None' },
+      { value: 'horizontal', text: 'Horizontal' },
+      { value: 'vertical', text: 'Vertical' },
+      { value: 'both', text: 'Both' },
+    ], state.mirror);
+
+    var hideBelowRow = selectRow('Hide below (hide_below)', [
+      { value: '', text: 'Always visible' },
+      { value: 'sm', text: 'sm - hidden below 576px' },
+      { value: 'md', text: 'md - hidden below 768px' },
+      { value: 'lg', text: 'lg - hidden below 992px' },
+    ], state.hideBelow);
+
+    var sep1 = document.createElement('hr');
+    sep1.className = 'sep';
+
+    function buildTierFields(tierState) {
+      var focusXRow = rangeRow('Focus X%', 0, 100, 1, tierState.focusX);
+      var focusYRow = rangeRow('Focus Y%', 0, 100, 1, tierState.focusY);
+      var zoomRow = rangeRow('Zoom (start.zoom)', 1, 2.5, 0.05, tierState.zoom);
+      var typeRow = selectRow(
+        'Animation type',
+        ['pan', 'zoom-in', 'zoom-out', 'tilt', 'none'].map(function (v) {
+          return { value: v, text: v };
+        }),
+        tierState.type
+      );
+      var directionRow = selectRow('Direction', [], tierState.direction);
+      var amountRow = rangeRow('Amount', 0, 20, 1, tierState.amount);
+      var durationRow = rangeRow('Duration, seconds', 4, 30, 1, tierState.duration);
+      return {
+        focusXRow: focusXRow, focusYRow: focusYRow, zoomRow: zoomRow,
+        typeRow: typeRow, directionRow: directionRow, amountRow: amountRow, durationRow: durationRow,
+      };
+    }
+    function appendTierFields(container, fields) {
+      container.appendChild(fields.focusXRow.label);
+      container.appendChild(fields.focusYRow.label);
+      container.appendChild(fields.zoomRow.label);
+      container.appendChild(fields.typeRow.label);
+      container.appendChild(fields.directionRow.label);
+      container.appendChild(fields.amountRow.label);
+      container.appendChild(fields.durationRow.label);
+    }
+
+    var baseFields = buildTierFields(state.base);
+    var baseBox = document.createElement('div');
+    appendTierFields(baseBox, baseFields);
+
+    var tabletEnable = document.createElement('label');
+    tabletEnable.className = 'override-row';
+    var tabletCheckbox = document.createElement('input');
+    tabletCheckbox.type = 'checkbox';
+    tabletCheckbox.checked = state.tablet.enabled;
+    tabletEnable.appendChild(tabletCheckbox);
+    tabletEnable.appendChild(document.createTextNode('Use custom settings for tablet (otherwise inherits Desktop)'));
+    var tabletFields = buildTierFields(state.tablet);
+    var tabletBox = document.createElement('div');
+    tabletBox.appendChild(tabletEnable);
+    appendTierFields(tabletBox, tabletFields);
+
+    var mobileEnable = document.createElement('label');
+    mobileEnable.className = 'override-row';
+    var mobileCheckbox = document.createElement('input');
+    mobileCheckbox.type = 'checkbox';
+    mobileCheckbox.checked = state.mobile.enabled;
+    mobileEnable.appendChild(mobileCheckbox);
+    mobileEnable.appendChild(document.createTextNode('Use custom settings for phone (otherwise inherits Desktop)'));
+    var mobileFields = buildTierFields(state.mobile);
+    var mobileBox = document.createElement('div');
+    mobileBox.appendChild(mobileEnable);
+    appendTierFields(mobileBox, mobileFields);
+
+    var saveBtn = document.createElement('button');
+    saveBtn.textContent = 'Save';
+    var saveNote = document.createElement('span');
+    saveNote.className = 'connected-save-note';
+    var saveRow = document.createElement('div');
+    saveRow.className = 'connected-save-row';
+    saveRow.appendChild(saveBtn);
+    saveRow.appendChild(saveNote);
+
+    var previewOutput = document.createElement('pre');
+    previewOutput.className = 'yaml-output';
+
+    var sectionSave = document.createElement('div');
+    sectionSave.className = 'section-title';
+    sectionSave.textContent = 'Save';
+
+    controls.appendChild(filenameEl);
+    controls.appendChild(tierTabs);
+    controls.appendChild(timelineRow.label);
+    controls.appendChild(playbackRow);
+    controls.appendChild(altLabel);
+    controls.appendChild(mirrorRow.label);
+    controls.appendChild(hideBelowRow.label);
+    controls.appendChild(sep1);
+    controls.appendChild(baseBox);
+    controls.appendChild(tabletBox);
+    controls.appendChild(mobileBox);
+    var sep4 = document.createElement('hr');
+    sep4.className = 'sep';
+    controls.appendChild(sep4);
+    controls.appendChild(sectionSave);
+    controls.appendChild(saveRow);
+    controls.appendChild(previewOutput);
+
+    card.appendChild(deviceWrapper);
+    card.appendChild(controls);
+    connectedEditorMount.appendChild(card);
+    document.body.appendChild(backdrop);
+
+    function effectiveTierName() {
+      return currentViewport === 'desktop' ? 'base' : currentViewport;
+    }
+    function effective() {
+      var tierName = effectiveTierName();
+      if (tierName === 'base') return state.base;
+      return state[tierName].enabled ? state[tierName] : state.base;
+    }
+    function refreshDirectionOptions(fields, eff) {
+      var options = directionsByType[eff.type] || [];
+      fields.directionRow.select.innerHTML = '';
+      fields.directionRow.label.style.display = options.length ? '' : 'none';
+      options.forEach(function (value) {
+        var opt = document.createElement('option');
+        opt.value = value;
+        opt.textContent = value;
+        fields.directionRow.select.appendChild(opt);
+      });
+      fields.directionRow.select.value = options.indexOf(eff.direction) !== -1 ? eff.direction : options[0] || eff.direction;
+    }
+    function refreshAmountRange(fields, eff) {
+      var d = amountDefaultsByType[eff.type];
+      fields.amountRow.range.min = d.min;
+      fields.amountRow.range.max = d.max;
+      fields.amountRow.range.step = d.step;
+      fields.amountRow.label.style.display = d.max > 0 ? '' : 'none';
+    }
+    function syncFieldsFromState(fields, tierState, disabled) {
+      [fields.focusXRow.range, fields.focusYRow.range, fields.zoomRow.range, fields.typeRow.select,
+        fields.directionRow.select, fields.amountRow.range, fields.durationRow.range].forEach(function (el) {
+        el.disabled = !!disabled;
+      });
+      fields.focusXRow.range.value = tierState.focusX;
+      fields.focusXRow.valueSpan.textContent = tierState.focusX;
+      fields.focusYRow.range.value = tierState.focusY;
+      fields.focusYRow.valueSpan.textContent = tierState.focusY;
+      fields.zoomRow.range.value = tierState.zoom;
+      fields.zoomRow.valueSpan.textContent = tierState.zoom;
+      fields.typeRow.select.value = tierState.type;
+      refreshDirectionOptions(fields, tierState);
+      refreshAmountRange(fields, tierState);
+      fields.amountRow.range.value = tierState.amount;
+      fields.amountRow.valueSpan.textContent = tierState.amount;
+      fields.durationRow.range.value = tierState.duration;
+      fields.durationRow.valueSpan.textContent = tierState.duration;
+    }
+
+    // ---- Timeline-driven rendering (no CSS @keyframes - direct transform per frame) ----
+    var timeline = 0; // 0 = configured start point, 1 = configured end point
+    var timelineDirection = 1;
+    var playing = false;
+    var rafId = null;
+    var lastFrameTs = null;
+
+    function renderTransform() {
+      var eff = effective();
+      var anim = computeAnim(eff);
+      var zoom = anim.zoomFrom + (anim.zoomTo - anim.zoomFrom) * timeline;
+      var panX = anim.panXFrom + (anim.panXTo - anim.panXFrom) * timeline;
+      var panY = anim.panYFrom + (anim.panYTo - anim.panYFrom) * timeline;
+      var rot = anim.rotFrom + (anim.rotTo - anim.rotFrom) * timeline;
+      var mx = state.mirror === 'horizontal' || state.mirror === 'both' ? -1 : 1;
+      var my = state.mirror === 'vertical' || state.mirror === 'both' ? -1 : 1;
+      img.style.transform =
+        'scale(' + (zoom * mx) + ',' + (zoom * my) + ') translate(' + panX + '%,' + panY + '%) rotate(' + rot + 'deg)';
+    }
+
+    function tick(ts) {
+      if (lastFrameTs != null) {
+        var eff = effective();
+        var dt = (ts - lastFrameTs) / 1000;
+        var speed = eff.duration > 0 ? 1 / eff.duration : 0;
+        timeline += timelineDirection * speed * dt;
+        if (timeline >= 1) { timeline = 1; timelineDirection = -1; }
+        if (timeline <= 0) { timeline = 0; timelineDirection = 1; }
+        timelineRow.range.value = Math.round(timeline * 100);
+        timelineRow.valueSpan.textContent = Math.round(timeline * 100) + '%';
+        renderTransform();
+      }
+      lastFrameTs = ts;
+      if (playing) rafId = requestAnimationFrame(tick);
+    }
+
+    function setPlaying(value) {
+      playing = value;
+      playBtn.textContent = playing ? '\u23f8 Pause' : '\u25b6 Play';
+      timelineRow.range.disabled = playing;
+      if (playing) {
+        lastFrameTs = null;
+        rafId = requestAnimationFrame(tick);
+      } else if (rafId != null) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+    }
+
+    function fitDeviceFrame() {
+      var vpWidth = VIEWPORTS[currentViewport];
+      var vpHeight = TIER_HEIGHTS[currentViewport];
+      deviceFrame.style.width = vpWidth + 'px';
+      var expanded = deviceWrapper.classList.contains('is-expanded');
+      var wrapperWidth = deviceWrapper.clientWidth || vpWidth;
+      var wrapperHeight = expanded ? deviceWrapper.clientHeight || vpHeight : COMPACT_MAX_HEIGHT;
+      deviceFrame.style.zoom = Math.min(1, wrapperWidth / vpWidth, wrapperHeight / vpHeight);
+    }
+
+    function applyPreview() {
+      var eff = effective();
+      img.style.objectPosition = eff.focusX + '% ' + eff.focusY + '%';
+      img.style.transformOrigin = eff.focusX + '% ' + eff.focusY + '%';
+      marker.style.left = eff.focusX + '%';
+      marker.style.top = eff.focusY + '%';
+      renderTransform();
+
+      var vpWidth = VIEWPORTS[currentViewport];
+      var hidden = state.hideBelow && vpWidth < HIDE_THRESHOLD_PX[state.hideBelow];
+      simHero.classList.toggle('is-hidden-here', !!hidden);
+      simHero.dataset.tier = currentViewport;
+
+      fitDeviceFrame();
+    }
+
+    function refreshTabsAndBoxes() {
+      Object.keys(tabButtons).forEach(function (key) {
+        tabButtons[key].classList.toggle('is-active', key === currentViewport);
+      });
+      baseBox.style.display = currentViewport === 'desktop' ? '' : 'none';
+      tabletBox.style.display = currentViewport === 'tablet' ? '' : 'none';
+      mobileBox.style.display = currentViewport === 'mobile' ? '' : 'none';
+    }
+
+    function renderPreviewJson() {
+      previewOutput.textContent = JSON.stringify(stateToEntry(state), null, 2);
+    }
+
+    function refreshAll() {
+      refreshTabsAndBoxes();
+      syncFieldsFromState(baseFields, state.base, false);
+      syncFieldsFromState(tabletFields, state.tablet, !state.tablet.enabled);
+      syncFieldsFromState(mobileFields, state.mobile, !state.mobile.enabled);
+      applyPreview();
+      renderPreviewJson();
+    }
+
+    simHero.addEventListener('click', function (e) {
+      var rect = simHero.getBoundingClientRect();
+      var tierName = effectiveTierName();
+      var target = state.base;
+      if (tierName !== 'base') {
+        target = state[tierName];
+        if (!target.enabled) {
+          Object.assign(target, state.base, { enabled: true });
+          if (tierName === 'tablet') tabletCheckbox.checked = true;
+          if (tierName === 'mobile') mobileCheckbox.checked = true;
+        }
+      }
+      target.focusX = Math.round(Math.min(100, Math.max(0, ((e.clientX - rect.left) / rect.width) * 100)));
+      target.focusY = Math.round(Math.min(100, Math.max(0, ((e.clientY - rect.top) / rect.height) * 100)));
+      refreshAll();
+    });
+
+    playBtn.addEventListener('click', function () {
+      setPlaying(!playing);
+    });
+
+    timelineRow.range.addEventListener('input', function () {
+      if (playing) setPlaying(false);
+      timeline = parseInt(timelineRow.range.value, 10) / 100;
+      timelineRow.valueSpan.textContent = timelineRow.range.value + '%';
+      renderTransform();
+    });
+
+    function setExpanded(value) {
+      deviceWrapper.classList.toggle('is-expanded', value);
+      backdrop.classList.toggle('is-visible', value);
+      expandBtn.textContent = value ? '\u2715 Close' : '\u26f6 View full size';
+      fitDeviceFrame();
+    }
+    expandBtn.addEventListener('click', function () {
+      setExpanded(!deviceWrapper.classList.contains('is-expanded'));
+    });
+    backdrop.addEventListener('click', function () {
+      setExpanded(false);
+    });
+
+    altInput.addEventListener('input', function () {
+      state.alt = altInput.value;
+      renderPreviewJson();
+    });
+    mirrorRow.select.addEventListener('change', function () {
+      state.mirror = mirrorRow.select.value;
+      applyPreview();
+      renderPreviewJson();
+    });
+    hideBelowRow.select.addEventListener('change', function () {
+      state.hideBelow = hideBelowRow.select.value;
+      applyPreview();
+      renderPreviewJson();
+    });
+
+    function wireTierControls(fields, tierState) {
+      fields.focusXRow.range.addEventListener('input', function () {
+        tierState.focusX = parseInt(fields.focusXRow.range.value, 10);
+        refreshAll();
+      });
+      fields.focusYRow.range.addEventListener('input', function () {
+        tierState.focusY = parseInt(fields.focusYRow.range.value, 10);
+        refreshAll();
+      });
+      fields.zoomRow.range.addEventListener('input', function () {
+        tierState.zoom = parseFloat(fields.zoomRow.range.value);
+        refreshAll();
+      });
+      fields.typeRow.select.addEventListener('change', function () {
+        tierState.type = fields.typeRow.select.value;
+        tierState.amount = amountDefaultsByType[tierState.type].value;
+        tierState.direction = (directionsByType[tierState.type] || [])[0] || tierState.direction;
+        refreshAll();
+      });
+      fields.directionRow.select.addEventListener('change', function () {
+        tierState.direction = fields.directionRow.select.value;
+        refreshAll();
+      });
+      fields.amountRow.range.addEventListener('input', function () {
+        tierState.amount = parseFloat(fields.amountRow.range.value);
+        refreshAll();
+      });
+      fields.durationRow.range.addEventListener('input', function () {
+        tierState.duration = parseFloat(fields.durationRow.range.value);
+        refreshAll();
+      });
+    }
+
+    wireTierControls(baseFields, state.base);
+    wireTierControls(tabletFields, state.tablet);
+    wireTierControls(mobileFields, state.mobile);
+
+    tabletCheckbox.addEventListener('change', function () {
+      state.tablet.enabled = tabletCheckbox.checked;
+      if (state.tablet.enabled) Object.assign(state.tablet, state.base, { enabled: true });
+      refreshAll();
+    });
+    mobileCheckbox.addEventListener('change', function () {
+      state.mobile.enabled = mobileCheckbox.checked;
+      if (state.mobile.enabled) Object.assign(state.mobile, state.base, { enabled: true });
+      refreshAll();
+    });
+
+    saveBtn.addEventListener('click', function () {
+      var idx = config.images.findIndex(function (e) {
+        return e.path === state.path;
+      });
+      if (idx === -1) return;
+      var updated = config.images.slice();
+      updated[idx] = stateToEntry(state);
+      saveNote.textContent = 'Saving...';
+      saveNote.classList.remove('is-success');
+      fetch('/api/config', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ images: updated }),
+      })
+        .then(function (r) {
+          return r.json().then(function (data) {
+            if (!r.ok) throw new Error(data.error || 'Save failed');
+            return data;
+          });
+        })
+        .then(function (data) {
+          config = data;
+          populateSelect();
+          saveNote.textContent = 'Saved!';
+          saveNote.classList.add('is-success');
+        })
+        .catch(function (err) {
+          saveNote.textContent = 'Error: ' + err.message;
+          saveNote.classList.remove('is-success');
+        });
+    });
+
+    img.addEventListener('load', refreshAll);
+    refreshAll();
+
+    activeEditor = {
+      refreshViewport: fitDeviceFrame,
+      setPlaying: setPlaying,
+      cleanup: function () {
+        if (rafId != null) cancelAnimationFrame(rafId);
+        backdrop.remove();
+      },
+    };
+  }
+
+  function loadEditorFor(path) {
+    currentPath = path;
+    var entry = config.images.find(function (e) {
+      return e.path === path;
+    });
+    if (entry) renderEditor(entry);
+  }
+
+  connectedSelect.addEventListener('change', function () {
+    loadEditorFor(connectedSelect.value);
+  });
+
+  connectedAddBtn.addEventListener('click', function () {
+    connectedFileInput.click();
+  });
+
+  connectedFileInput.addEventListener('change', function () {
+    var file = connectedFileInput.files[0];
+    connectedFileInput.value = '';
+    if (!file) return;
+    setStatus('Uploading and converting...', false);
+    fetch('/api/upload', {
+      method: 'POST',
+      headers: { 'X-Filename': encodeURIComponent(file.name) },
+      body: file,
+    })
+      .then(function (r) {
+        return r.json().then(function (data) {
+          if (!r.ok) throw new Error(data.error || 'Upload failed');
+          return data;
+        });
+      })
+      .then(function (data) {
+        config = data;
+        populateSelect();
+        connectedSelect.value = data.new_path;
+        loadEditorFor(data.new_path);
+        setStatus('Connected - data/hero_images.yaml, ' + config.images.length + ' photo(s)', false);
+      })
+      .catch(function (err) {
+        setStatus('Upload failed: ' + err.message, true);
+      });
+  });
+
+  connectedDeleteBtn.addEventListener('click', function () {
+    if (!currentPath) return;
+    if (!confirm('Delete this photo from data/hero_images.yaml and static/images/hero/? This cannot be undone.')) return;
+    fetch('/api/image?path=' + encodeURIComponent(currentPath), { method: 'DELETE' })
+      .then(function (r) {
+        return r.json().then(function (data) {
+          if (!r.ok) throw new Error(data.error || 'Delete failed');
+          return data;
+        });
+      })
+      .then(function (data) {
+        config = data;
+        populateSelect();
+        if (config.images.length) {
+          connectedSelect.value = config.images[0].path;
+          loadEditorFor(config.images[0].path);
+        } else {
+          if (activeEditor && activeEditor.cleanup) activeEditor.cleanup();
+          currentPath = null;
+          activeEditor = null;
+          connectedEditorMount.innerHTML = '';
+        }
+        setStatus('Connected - data/hero_images.yaml, ' + config.images.length + ' photo(s)', false);
+      })
+      .catch(function (err) {
+        setStatus('Delete failed: ' + err.message, true);
+      });
+  });
+
+  window.addEventListener('resize', function () {
+    if (activeEditor) activeEditor.refreshViewport();
+  });
+
+  fetch('/api/config')
+    .then(function (r) {
+      if (!r.ok) throw new Error('no server');
+      return r.json();
+    })
+    .then(function (data) {
+      config = data;
+      connectedPanel.style.display = '';
+      populateSelect();
+      setStatus('Connected - data/hero_images.yaml, ' + config.images.length + ' photo(s)', false);
+      if (config.images.length) {
+        connectedSelect.value = config.images[0].path;
+        loadEditorFor(config.images[0].path);
+      }
+    })
+    .catch(function () {
+      // No hero_config_server.py running (or opened as a plain file) - stay in
+      // offline/manual mode, #connectedPanel remains hidden.
+    });
 })();
 </script>
 </body>

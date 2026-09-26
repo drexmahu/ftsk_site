@@ -48,6 +48,11 @@ echo Installing Pillow...
 if errorlevel 1 goto :install_failed
 
 echo.
+echo Installing PyYAML (needed by hero_config_server.py)...
+%PYTHON_CMD% -m pip install PyYAML
+if errorlevel 1 goto :install_failed
+
+echo.
 echo ============================================================
 echo  Installation completed successfully.
 echo ============================================================

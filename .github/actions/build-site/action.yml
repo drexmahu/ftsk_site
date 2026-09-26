@@ -49,8 +49,20 @@ runs:
         hugo-version: ${{ steps.hugo-version.outputs.resolved }}
         extended: true
 
+    - name: Resolve build date
+      shell: bash
+      run: echo "now=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+      id: build-date
+
     - name: Build
       shell: bash
+      env:
+        # Consumed by layouts/partials/footer.html via os.Getenv (Hugo only
+        # allows env vars matching ^HUGO_ through by default). run_number
+        # auto-increments every run of the calling workflow - no extra
+        # storage/repo-write automation needed to "increment" it.
+        HUGO_BUILD_NUMBER: ${{ github.run_number }}
+        HUGO_BUILD_DATE: ${{ steps.build-date.outputs.now }}
       run: |
         set -euo pipefail
         args=(--destination "${{ inputs.destination }}" --baseURL "${{ inputs.base-url }}")

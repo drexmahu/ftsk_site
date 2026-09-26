@@ -60,8 +60,9 @@ npm script in another terminal: `npm run bookshop`.
 
 | Workflow | Trigger | Purpose |
 |---|---|---|
-| [`ci.yml`](../.github/workflows/ci.yml) | PR to `main` | Builds the site (drafts + future included); **required check** - must be enabled under Settings > Branches so a failed build blocks merging. Also uploads the build as an artifact and runs a non-blocking broken-link check. |
-| [`pr-preview.yml`](../.github/workflows/pr-preview.yml) | PR opened/updated/closed | Deploys a sandboxed preview of the PR to GitHub Pages, comments the link on the PR, and removes it when the PR closes. Best-effort, not a required check. |
+| [`ci.yml`](../.github/workflows/ci.yml) | PR opened/updated and merge queue | Validates `data/members.yaml` and every article's `participants:` front matter (`scripts/verify_members.py`), then builds the site (drafts + future included); require `CI / Build site` so a failed check/build blocks merging. Also uploads the build as an artifact and runs a non-blocking broken-link check. |
+| [`pr-preview.yml`](../.github/workflows/pr-preview.yml) | PR opened/updated | Builds and deploys the preview under `gh-pages/pr-preview/`, then verifies that Pages serves the current PR revision before succeeding. Require `PR Preview / preview` before merging. |
+| [`pr-preview-cleanup.yml`](../.github/workflows/pr-preview-cleanup.yml) | PR close, push to `main`, daily, manual | Reconciles `gh-pages/pr-preview/` against open PRs targeting `main` and deletes orphaned preview folders. Use **Run workflow** to clean existing stale folders immediately after this workflow is merged. |
 | [`staging-deploy.yml`](../.github/workflows/staging-deploy.yml) | push to `main` | Publishes a shareable "always current `main`" preview to GitHub Pages. This is **not** production. |
 | [`deploy-production.yml`](../.github/workflows/deploy-production.yml) | manual (`workflow_dispatch`) only | Builds and publishes to the real production server over FTP. Requires typing `deploy` into the confirmation input. |
 
@@ -73,14 +74,20 @@ someone manually runs `deploy-production.yml`.
 These can't be expressed in the workflow YAML and must be set up once in the repo's
 Settings:
 
-1. **Settings > Branches** - add a protection rule for `main` requiring the `CI / Build
-   site` status check to pass before merging.
+1. **Settings > Branches** - protect `main` and require both `CI / Build site` and
+   `PR Preview / preview`. Enable **Require branches to be up to date before merging**.
+   A push/rebase to the PR branch reruns checks automatically; a push to `main` alone
+   does not emit a PR `synchronize` event. Strict up-to-date checks block stale PRs until
+   their branches are updated. This repo does not automatically update PR branches when
+   `main` advances; doing that requires a trusted GitHub App or token. `ci.yml` checks
+   merge-group refs, but the Pages preview is PR-scoped, so a merge queue needs additional
+   preview/deployment handling before it can replace branch updates for both gates.
 2. **Settings > Pages** - Source = "Deploy from a branch" -> `gh-pages` (needed for
    `pr-preview.yml` and `staging-deploy.yml`).
 3. **Settings > Actions > General > Workflow permissions** - "Read and write
    permissions" (needed so the preview/staging workflows can push to `gh-pages`).
 4. **Settings > Environments** - create an environment named `production`. Add required
-   reviewers here if you want a manual approval gate before every FTP deploy, and add
+   reviewers there if you want a manual approval gate before every FTP deploy, and add
    the FTP secrets below scoped to this environment.
 
 ### Secrets (Settings > Secrets and variables > Actions > Secrets)

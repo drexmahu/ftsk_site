@@ -57,47 +57,38 @@
 # live and generate all of the above values interactively instead of guessing (note:
 # the picker currently only generates the top-level/desktop `start`/`animation` -
 # hide_below and mobile/tablet overrides need to be added by hand).
-images:
-  - path: /images/hero/ftsk-hero-cave-1.webp
-    alt: Kötélen ereszkedő barlangász egy világos aknában
-    start:
-      focus: "42% 42%"
-    animation:
-      type: pan
-      direction: right
-  - path: /images/hero/ftsk-hero-cave-2.webp
-    alt: Barlangász ereszkedés közben, fénysugarak között
-    start:
-      focus: "40% 38%"
-    animation:
-      type: pan
-      direction: right
-  - path: /images/hero/ftsk-hero-cave-3.webp
-    alt: Tágas barlangterem barlangászokkal
-    start:
-      focus: "35% 68%"
-    animation:
-      type: pan
-      direction: right
-  - path: /images/hero/ftsk-hero-cave-4.webp
-    alt: Barlangászok egy szűk sziklakapun át nézve
-    start:
-      focus: "55% 55%"
-    animation:
-      type: pan
-      direction: right
-  - path: /images/hero/ftsk-hero-cave-5.webp
-    alt: Fiatal barlangász közelről, sisakkal és kötelekkel
-    start:
-      focus: "65% 35%"
-    animation:
-      type: pan
-      direction: right
-  - path: /images/hero/ftsk-hero-cave-6.webp
-    alt: Barlangász egy mohás sziklahasadékban, fejlámpával megvilágítva
-    start:
-      focus: "50% 58%"
-    animation:
-      type: pan
-      direction: down
-
+"images":
+- "path": "/images/hero/ftsk-hero-cave-1.webp"
+  "alt": "Kötélen ereszkedő barlangász egy világos aknában"
+  "start":
+    "focus": "0% 32%"
+- "path": "/images/hero/ftsk-hero-cave-2.webp"
+  "alt": "Barlangász ereszkedés közben, fénysugarak között"
+  "mirror": "horizontal"
+  "start":
+    "focus": "55% 30%"
+  "animation":
+    "direction": "down"
+- "path": "/images/hero/ftsk-hero-cave-3.webp"
+  "alt": "Tágas barlangterem barlangászokkal"
+  "mirror": "horizontal"
+  "start":
+    "focus": "52% 91%"
+    "zoom": 1.25
+- "path": "/images/hero/ftsk-hero-cave-4.webp"
+  "alt": "Barlangászok egy szűk sziklakapun át nézve"
+  "start":
+    "focus": "40% 55%"
+  "mobile":
+    "direction": "up"
+    "focus": "57% 55%"
+- "path": "/images/hero/ftsk-hero-cave-5.webp"
+  "alt": "Fiatal barlangász közelről, sisakkal és kötelekkel"
+  "start":
+    "focus": "65% 35%"
+- "path": "/images/hero/ftsk-hero-cave-6.webp"
+  "alt": "Barlangász egy mohás sziklahasadékban, fejlámpával megvilágítva"
+  "start":
+    "focus": "50% 58%"
+  "animation":
+    "direction": "down"

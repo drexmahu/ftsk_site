@@ -32,6 +32,15 @@ $(document).ready(function () {
       mainClass: 'mfp-fade',
    });
 
+   // Embedded article photos (see layouts/_default/_markup/render-image.html) -
+   // grouped into one lightbox gallery per article.
+   $('.ftsk-prose').magnificPopup({
+      delegate: '.ftsk-article-figure-link',
+      type: 'image',
+      gallery: { enabled: true },
+      mainClass: 'mfp-fade',
+   });
+
    // Member tile popup
    $('.ftsk-members-grid').on('click', '.ftsk-members-tile', function () {
       var $tile = $(this);
@@ -39,7 +48,11 @@ $(document).ready(function () {
       var $modal = $('#ftsk-member-modal');
 
       $modal.find('.ftsk-member-modal-name').text(name);
-      $modal.find('.ftsk-member-modal-group').text($tile.data('group'));
+      var group = $tile.data('group');
+      $modal.find('.ftsk-member-modal-group').text(group || '').toggleClass('d-none', !group);
+
+      var role = $tile.data('role');
+      $modal.find('.ftsk-member-modal-role').text(role || '').toggleClass('d-none', !role);
 
       var bio = $tile.data('bio');
       $modal.find('.ftsk-member-modal-bio').text(bio || '').toggleClass('d-none', !bio);
