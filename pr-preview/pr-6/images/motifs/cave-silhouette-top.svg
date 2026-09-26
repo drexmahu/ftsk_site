@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 400" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <radialGradient id="lampGlow" cx="72%" cy="52%" r="55%">
+      <stop offset="0%" stop-color="#BEA070" stop-opacity="0.55"/>
+      <stop offset="55%" stop-color="#BEA070" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#BEA070" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <circle cx="1180" cy="208" r="230" fill="url(#lampGlow)"/>
+  <path d="M0,0 L1600,0 Q1512,80 1424,0 Q1334,140 1246,0 Q1156,100 1068,0 Q978,160 890,0 Q800,60 712,0 Q623,180 534,0 Q445,90 356,0 Q267,150 178,0 Q89,70 0,0 Z"
+    fill="#123246" fill-opacity="0.55" stroke="#14B1B8" stroke-opacity="0.14" stroke-width="2"/>
+</svg>
