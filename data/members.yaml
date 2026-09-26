@@ -1,4 +1,4 @@
-# Canonical member roster - single source of truth for:
+ # Canonical member roster - single source of truth for:
 #   - the "Tagjaink" page (content/tagok.md's global/members content block reads
 #     hugo.Data.members.groups instead of inlining the roster itself)
 #   - trip report / expedition participant cards (layouts/partials/participant-cards.html

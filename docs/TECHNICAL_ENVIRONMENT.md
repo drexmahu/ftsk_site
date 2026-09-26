@@ -60,7 +60,7 @@ npm script in another terminal: `npm run bookshop`.
 
 | Workflow | Trigger | Purpose |
 |---|---|---|
-| [`ci.yml`](../.github/workflows/ci.yml) | PR opened/updated and merge queue | Builds the site (drafts + future included); require `CI / Build site` so a failed build blocks merging. Also uploads the build as an artifact and runs a non-blocking broken-link check. |
+| [`ci.yml`](../.github/workflows/ci.yml) | PR opened/updated and merge queue | Validates `data/members.yaml` and every article's `participants:` front matter (`scripts/verify_members.py`), then builds the site (drafts + future included); require `CI / Build site` so a failed check/build blocks merging. Also uploads the build as an artifact and runs a non-blocking broken-link check. |
 | [`pr-preview.yml`](../.github/workflows/pr-preview.yml) | PR opened/updated | Builds and deploys the preview under `gh-pages/pr-preview/`, then verifies that Pages serves the current PR revision before succeeding. Require `PR Preview / preview` before merging. |
 | [`pr-preview-cleanup.yml`](../.github/workflows/pr-preview-cleanup.yml) | PR close, push to `main`, daily, manual | Reconciles `gh-pages/pr-preview/` against open PRs targeting `main` and deletes orphaned preview folders. Use **Run workflow** to clean existing stale folders immediately after this workflow is merged. |
 | [`staging-deploy.yml`](../.github/workflows/staging-deploy.yml) | push to `main` | Publishes a shareable "always current `main`" preview to GitHub Pages. This is **not** production. |

@@ -95,6 +95,13 @@ that's expected, not every participant is a registered club member. Don't
 hand-write a "Résztvevők" heading/list in the body - the template adds the
 heading and card grid automatically whenever `participants:` is set.
 
+Run `python scripts/verify_members.py` locally (needs `pip install PyYAML`) to
+check `data/members.yaml` and every article's `participants:` list before
+pushing - it catches things like duplicate names/nicknames, a name/nickname
+that still has "(...)" baked in instead of using the proper field, unknown
+member fields (typos), missing `image`/`modal_image` files, and empty/duplicate
+`participants:` entries. The same check runs in CI on every PR.
+
 ## 4. Images
 
 ### Converting photos
