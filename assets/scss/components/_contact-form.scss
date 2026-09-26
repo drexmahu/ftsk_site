@@ -44,53 +44,13 @@
       }
     }
   }
-  &-form-Information {
-    .address {
-      padding-top: $base-padding * 5;
-      @include media-breakpoint-down-md {
-        padding-top: $base-padding * 3.1;
-      }
-      h3 {
-        font-size: $base-font-size * 1.6;
-        font-weight: 600;
-        margin-bottom: $base-margin * 0.8;
-      }
-      p {
-        font-size: $base-font-size * 1.25;
-        color: $color-text-light;
-        margin-bottom: $base-margin * 2.6;
-        @include media-breakpoint-down-md {
-          margin-bottom: $base-margin * 1.5;
-        }
-      }
-      .item {
-        background: $color-secondary-dark;
-        border-radius: 10px;
-        padding: $base-padding * 0.9 $base-padding * 1.25;
-        h3 {
-          font-size: $base-font-size * 0.8;
-          font-weight: 300;
-          color: $color-text-light;
-          margin-bottom: $base-margin * 0.3;
-        }
-        a {
-          display: flex;
-          justify-content: space-between;
-          font-size: $base-font-size * 1.25;
-          color: $color-header;
-          font-family: $font-secondary;
-          font-weight: 700;
-          span {
-            margin-bottom: $base-margin * 0.7;
-          }
-        }
-      }
-    }
-  }
   &-form {
     position: relative;
     z-index: 1;
-    form {
+    // Was a literal <form>; now just a plain card wrapping the contact-tile
+    // list (see layouts/partials/tanfolyam-contacts.html reused here) - kept
+    // the exact same overlap/shadow/radius look, no more input styling.
+    .contact-form-card {
       border: 1px solid $color-secondary-dark;
       box-shadow: 0px 0px 80px rgba(150, 0, 0, 0.06);
       border-radius: 20px;
@@ -115,33 +75,27 @@
         font-size: $base-font-size * 1.9;
         margin-bottom: $base-margin * 3;
       }
-      .label {
-        margin-bottom: $base-margin * 0.8;
-        font-weight: 600;
-        color: $color-text;
-      }
-      .form-control {
-        padding: 19px 20px;
-        font-size: $base-font-size * 0.9;
-        font-weight: 600;
-        color: $color-header;
-        background: $color-secondary-dark;
-        border: 1px solid $color-text-dark;
-        border-radius: 10px;
-        margin-bottom: $base-margin * 1.9;
-
-        &:focus {
-          background: $color-header-dark;
-          border: 1px solid $color-anchor;
-          outline: 0;
-          box-shadow: none;
+      // Klubhelyiség address, now stacked at the top of this same card
+      // (previously its own separate column/section) - a smaller heading than
+      // the "Kapcsolattartóink" h3 above so it reads as a lead-in, not a
+      // second equally-weighted title, plus a divider to separate it from
+      // the contact tiles below.
+      &-address {
+        h3 {
+          font-size: $base-font-size * 1.3;
+          font-weight: 600;
+          margin-bottom: $base-margin * 0.5;
+        }
+        p {
+          font-size: $base-font-size * 1.1;
+          color: $color-text-light;
+          margin-bottom: 0;
         }
       }
-      textarea {
-        resize: none;
-      }
-      ::placeholder {
-        color: $color-cyan;
+      &-sep {
+        border: none;
+        border-top: 1px solid $color-secondary-dark;
+        margin: $base-margin * 2 0;
       }
     }
     .effect {

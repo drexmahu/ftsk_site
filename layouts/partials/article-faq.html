@@ -1,0 +1,18 @@
+{{ $page := . }}
+{{ with .Params.faq }}
+<section class="ftsk-article-faq" id="gyik" aria-labelledby="gyik-title">
+  <h2 id="gyik-title"><i class="ph ph-question" aria-hidden="true"></i> Gyakran ismételt kérdések (GYIK)</h2>
+  {{ range . }}
+  {{ if not (and .question .answer) }}
+    {{ errorf "GYIK: both question and answer are required in %s" $page.RelPermalink }}
+  {{ end }}
+  <details class="ftsk-article-faq-item">
+    <summary>
+      <span>{{ .question }}</span>
+      <i class="ph ph-caret-down" aria-hidden="true"></i>
+    </summary>
+    <div class="ftsk-article-faq-answer ftsk-prose">{{ $page.RenderString (dict "display" "block") .answer }}</div>
+  </details>
+  {{ end }}
+</section>
+{{ end }}

@@ -1,0 +1,17 @@
+{{/*
+  Photo-grid gallery for long trip reports (see docs/CONTENT_GUIDE.md) - use when
+  an article has extra photos that aren't tied to one specific paragraph. Wrap a
+  series of {{< photo >}} shortcodes:
+
+    {{< gallery >}}
+    {{< photo src="/images/turak/<slug>/08-....webp" alt="..." caption="..." >}}
+    {{< /gallery >}}
+
+  Reuses the same grid look as the standalone Galéria page's bookshop component
+  (.ftsk-gallery-grid, see component-library/components/global/gallery), but each
+  photo also gets .ftsk-article-figure-link so it's grouped into the article's
+  own lightbox (see layouts/_default/_markup/render-image.html + static/js/script.js).
+*/}}
+<div class="ftsk-gallery-grid ftsk-article-gallery">
+  {{ .Inner }}
+</div>

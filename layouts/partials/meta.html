@@ -16,17 +16,14 @@
 <!-- Meta tags for open graph and twitter -->
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:site" content="{{ hugo.Data.meta.twitter_site }}" />
-{{ if eq .Permalink "/" }}
+{{ $socialCard := partial "social-card.html" . }}
+{{ if .IsHome }}
     <meta name="og:title" content="{{ hugo.Data.meta.site_title }}" />
     <meta property="og:type" content="website" />
-    <meta name="og:image" content="{{ partial `absurl.html` hugo.Data.meta.image }}" />
+    <meta name="og:image" content="{{ $socialCard }}" />
     <meta name="twitter:creator" content="{{ hugo.Data.meta.twitter_site }}" />
-    <meta name="twitter:title" content="{{ hugo.Data.meta.title }}" />
-    {{ with hugo.Data.meta.twitter_image }}
-    <meta name="twitter:image" content="{{ partial `absurl.html` . }}" />
-    {{ else }}
-    <meta name="twitter:image" content="{{ partial `absurl.html` hugo.Data.meta.image }}" />
-    {{ end }}
+    <meta name="twitter:title" content="{{ hugo.Data.meta.site_title }}" />
+    <meta name="twitter:image" content="{{ $socialCard }}" />
 {{ else }}
     <meta name="og:title" content="{{ .Title }}" />
     <meta name="twitter:title" content="{{ .Title }}" />
@@ -35,17 +32,8 @@
     {{ else }}
     <meta property="og:type" content="website" />
     {{ end }}
-    {{ with .Params.seo.featured_image }}
-    <meta name="og:image" content="{{ partial `absurl.html` . }}" />
-    <meta name="twitter:image" content="{{ partial `absurl.html` . }}" />
-    {{ else }}
-    <meta name="og:image" content="{{ partial `absurl.html` hugo.Data.meta.image }}" />
-    {{ with hugo.Data.meta.twitter_image }}
-        <meta name="twitter:image" content="{{ partial `absurl.html` . }}" />
-    {{ else }}
-        <meta name="twitter:image" content="{{ partial `absurl.html` hugo.Data.meta.image }}" />
-    {{ end }}
-    {{ end }}
+    <meta name="og:image" content="{{ $socialCard }}" />
+    <meta name="twitter:image" content="{{ $socialCard }}" />
     {{ with .Params.seo.author_twitter_handle }}  
     <meta name="twitter:creator" content="{{ . }}" />
     {{ else }}
@@ -54,14 +42,21 @@
 {{ end }}
 
 <!-- Add robots no index -->
-{{ if .Params.seo.no_index }}
+{{ if or .Params.seo.no_index (eq (os.Getenv "HUGO_PAGES_PREVIEWS") "true") }}
     <meta name="robots" content="noindex">
     <meta name="googlebot" content="noindex">
 {{ end }}
 
 <!-- Canonical URL for SEO -->
+{{ $productionBase := strings.TrimSuffix "/" (os.Getenv "HUGO_CANONICAL_BASE_URL" | default hugo.Data.meta.BaseURL) }}
+{{ $buildPath := strings.TrimSuffix "/" (urls.Parse .Site.BaseURL).Path }}
+{{ $pagePath := strings.TrimPrefix $buildPath .RelPermalink }}
+{{ $canonical := printf "%s/%s" $productionBase (strings.TrimPrefix "/" $pagePath) }}
 {{ with .Params.seo.canonical_url }}
-    <link rel="canonical" href="{{ hugo.Data.meta.BaseURL }}{{ . | absURL }}" />
-{{ else }}
-    <link rel="canonical" href="{{ hugo.Data.meta.BaseURL }}{{ .RelPermalink }}" />  
+        {{ if or (strings.HasPrefix . "https://") (strings.HasPrefix . "http://") }}
+            {{ $canonical = . }}
+        {{ else }}
+            {{ $canonical = printf "%s/%s" $productionBase (strings.TrimPrefix "/" .) }}
+        {{ end }}
 {{ end }}
+<link rel="canonical" href="{{ $canonical }}" />

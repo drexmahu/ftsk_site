@@ -1,0 +1,203 @@
+ # Canonical member roster - single source of truth for:
+#   - the "Tagjaink" page (content/tagok.md's global/members content block reads
+#     hugo.Data.members.groups instead of inlining the roster itself)
+#   - trip report / expedition participant cards (layouts/partials/participant-cards.html
+#     looks up each content/turak/*.md article's `participants:` front matter names
+#     against this same list, so a participant who's also a club member automatically
+#     gets their real photo/bio pulled in - see docs/CONTENT_GUIDE.md)
+#
+# Each member entry:
+#   name      (required) - full/plain name, no nicknames or duties baked in
+#   nickname  (optional) - short informal name, shown as "Name (Nickname)" on the
+#     Tagjaink page and usable as an extra match key for participant lookups
+#   role      (optional) - duty/position text (e.g. "elnök", "raktáros"), shown in
+#     the member detail popup when present
+#   image / modal_image / bio - see members.bookshop.yml
+#
+# Matching for participant cards: a `participants:` entry matches this roster if,
+# after stripping any trailing "(...)" from the entry, it equals a member's `name`
+# OR `nickname`. Not finding a match is expected and fine - not every trip
+# participant is a registered member.
+groups:
+  - label: Vezetőség
+    members:
+      - name: Gyovai Tamás
+        role: elnök, kutatásvezető
+        image: /images/members/gyovai_tamas_thumb.webp
+        modal_image: /images/members/gyovai_tamas_full.webp
+      - name: Kalotai Zsófia
+        role: elnökségi tag, pénztáros, kutatásvezető
+      - name: Rehány Nikolett
+        role: elnökségi tag, túravezető
+        image: /images/members/rehany_nikolett_thumb.webp
+        modal_image: /images/members/rehany_nikolett_full.webp
+      - name: Fialowski Melinda
+        role: raktáros, túravezető
+        image: /images/members/fialowski_melinda_thumb.webp
+        modal_image: /images/members/fialowski_melinda_full.webp
+  - label: Rendes tagok
+    members:
+      - name: Ábrahám Gábor
+      - name: Bacsó Gábor
+        role: túravezető
+        image: /images/members/bacso_gabor_thumb.webp
+        modal_image: /images/members/bacso_gabor_full.webp
+      - name: Balázs Zoltán
+      - name: Borsos-Szabó Bálint
+        nickname: Zeusz
+      - name: Czumbel Péter
+      - name: dr. Zádor Zsófia Erzsébet
+        nickname: Zudi
+        role: túravezető
+        image: /images/members/zador_zsófia_thumb.webp
+        modal_image: /images/members/zador_zsófia_full.webp
+      - name: Drexler Máté
+        nickname: Drex
+      - name: Gyarmathy Ákos
+      - name: György Bence
+      - name: Huszár Péter
+        nickname: Yeti
+        image: /images/members/huszar_peter_thumb.webp
+        modal_image: /images/members/huszar_peter_full.webp
+      - name: Kadlec Gergely
+      - name: Kámvás Linda
+      - name: Kántor Zsolt
+        nickname: Zsé
+        role: túravezető
+      - name: Kapodisztria Lena
+      - name: Kertész Dániel
+      - name: Konkoly Péter
+        nickname: Tege
+        role: túravezető
+      - name: Kovács Dániel
+        nickname: Damó
+        image: /images/members/kovacs_daniel_thumb.webp
+        modal_image: /images/members/kovacs_daniel_full.webp
+      - name: Kovács Ferenc
+        image: /images/members/kovacs_ferenc_thumb.webp
+        modal_image: /images/members/kovacs_ferenc_full.webp
+      - name: Kovács Imre
+        image: /images/members/kovacs.imre_thumb.webp
+        modal_image: /images/members/kovacs.imre_full.webp
+      - name: Kovács Krisztina
+        image: /images/members/kovacs_kriszta_thumb.webp
+        modal_image: /images/members/kovacs_kriszta_full.webp
+      - name: Kováts Gábor
+        image: /images/members/kovats_gabor_thumb.webp
+        modal_image: /images/members/kovats_gabor_full.webp
+      - name: Kralovánszki Ádám
+        nickname: Kralo
+        image: /images/members/kralovanszki_adam_thumb.webp
+        modal_image: /images/members/kralovanszki_adam_full.webp
+      - name: Kukoda Orsolya
+      - name: Kun Imre
+        nickname: Bástya
+        image: /images/members/kun_imre_thumb.webp
+        modal_image: /images/members/kun_imre_full.webp
+      - name: Laták Rudolf
+        image: /images/members/latak_rudolf_thumb.webp
+        modal_image: /images/members/latak_rudolf_full.webp
+      - name: Lőrincz Győző
+        image: /images/members/lorincz_gyozo_thumb.webp
+        modal_image: /images/members/lorincz_gyozo_full.webp
+      - name: Lőrincz Vajk
+      - name: Magyar Péter
+        role: túravezető
+        image: /images/members/magyar_peter_thumb.webp
+        modal_image: /images/members/magyar_peter_full.webp
+      - name: Mezei Eszter
+      - name: Mihályi Tibor
+        nickname: Gebe
+        role: túravezető
+        image: /images/members/mihalyi_tibor_thumb.webp
+        modal_image: /images/members/mihalyi_tibor_full.webp
+      - name: Miklós Barnabás
+        image: /images/members/miklos_barnabas_thumb.webp
+        modal_image: /images/members/miklos_barnabas_full.webp
+      - name: Nagy Eszter
+        role: túravezető
+        image: /images/members/nagy_eszter_thumb.webp
+        modal_image: /images/members/nagy_eszter_full.webp
+      - name: Prakfalvi András
+        nickname: Praki
+        image: /images/members/prakfalvi_andras_thumb.webp
+        modal_image: /images/members/prakfalvi_andras_full.webp
+      - name: Sándor Ágnes
+      - name: Sas Dorottya
+        image: /images/members/sas_dorottya_thumb.webp
+        modal_image: /images/members/sas_dorottya_full.webp
+      - name: Soltész Árpád
+      - name: Szieberth Dénes
+      - name: Tóth Ábris
+        image: /images/members/Toth_Abris_thumb.webp
+        modal_image: /images/members/Toth_Abris_full.webp
+      - name: Tóth Csilla
+      - name: Turi László
+        role: túravezető
+        image: /images/members/turi_laszlo_thumb.webp
+        modal_image: /images/members/turi_laszlo_full.webp
+      - name: Varga Gábor
+  - label: Pártoló tagok
+    members:
+      - name: Brunner András
+        image: /images/members/brunner_andras_thumb.webp
+        modal_image: /images/members/brunner_andras_full.webp
+      - name: Ekés Bálint
+        image: /images/members/ekes_balint_thumb.webp
+        modal_image: /images/members/ekes_balint_full.webp
+      - name: Énekes Klaudia
+      - name: Gólya Bernadett
+        nickname: Detti
+        image: /images/members/golya_bernadett_thumb.webp
+        modal_image: /images/members/golya_bernadett_full.webp
+      - name: Hamar Éva
+      - name: Juhász Anna
+        image: /images/members/juhasz_anna_thumb.webp
+        modal_image: /images/members/juhasz_anna_full.webp
+      - name: Kosziba Andrea
+      - name: Kováts Boglárka
+        image: /images/members/kovats_boglarka_thumb.webp
+        modal_image: /images/members/kovats_boglarka_full.webp
+      - name: Kozek András
+        image: /images/members/kozek_andras_thumb.webp
+        modal_image: /images/members/kozek_andras_full.webp
+      - name: Köblös Csaba
+        image: /images/members/koblos_csaba_thumb.webp
+        modal_image: /images/members/koblos_csaba_full.webp
+      - name: Lempochner Lili
+      - name: Péterfia Klári
+      - name: Pintér Gábor
+        nickname: Pinti
+        role: kutatásvezető
+        image: /images/members/pinter_gabor_thumb.webp
+        modal_image: /images/members/pinter_gabor_full.webp
+      - name: Rádi Károly
+      - name: Sajtos Péter
+      - name: Seiben Gabriella
+      - name: Sojnóczki Annamária
+        nickname: Pötyi
+      - name: Soltész Abigél
+      - name: Szaniszló Anita
+      - name: Vajda Gábor
+        image: /images/members/vajda_gabor_thumb.webp
+        modal_image: /images/members/vajda_gabor_full.webp
+      - name: Zsólyomi Andrea
+      - name: Zsólyomi Zsófia
+  - label: Tiszteletbeli tagok
+    members:
+      - name: Czirják Ferenc
+        image: /images/members/czirjak_ferenc_thumb.webp
+        modal_image: /images/members/czirjak_ferenc_full.webp
+  - label: Örökös tagok
+    members:
+      - name: Horváth János
+        nickname: Jancsi bácsi
+      - name: Vidics Zoltánné
+        nickname: Erimama
+        image: /images/members/vidics_zoltanne_thumb.webp
+        modal_image: /images/members/vidics_zoltanne_full.webp
+      - name: Zsólyomi Zsolt
+        nickname: Frédi
+        image: /images/members/zsolyomi_zsolt_thumb.webp
+        modal_image: /images/members/zsolyomi_zsolt_full.webp
+

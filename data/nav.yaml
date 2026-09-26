@@ -6,34 +6,28 @@ items:
     dropdown:
   - link: /egyesuletunk/
     text: Egyesületünk
-    enable_dropdown: false
+    enable_dropdown: true
     dropdown:
+      - dropdown_text: Egyesületünk
+        dropdown_link: /egyesuletunk/
+      - dropdown_text: Történetünk
+        dropdown_link: /egyesuletunk/#tortenetunk
+      - dropdown_text: Tevékenységeink
+        dropdown_link: /egyesuletunk/#tevekenysegeink
+      - dropdown_text: Közérdekű adatok
+        dropdown_link: /egyesuletunk/#kozerdeku-adatok
+      - dropdown_text: Beszámolóink
+        dropdown_link: /egyesuletunk/#beszamoloink
   - link: /tagok/
     text: Tagjaink
     enable_dropdown: false
     dropdown:
   - link: /turak/
     text: Túrabeszámolók
-    enable_dropdown: true
-    dropdown:
-      - dropdown_text: Összes beszámoló
-        dropdown_link: /turak
-      - dropdown_text: Túra
-        dropdown_link: /categories/tura
-      - dropdown_text: Kutatás
-        dropdown_link: /categories/kutatas
-      - dropdown_text: Expedíció
-        dropdown_link: /categories/expedicio
-      - dropdown_text: Kanyoning
-        dropdown_link: /categories/kanyoning
-      - dropdown_text: Szemétszedés
-        dropdown_link: /categories/szemetszedes
-  - link: /galeria/
-    text: Galéria
     enable_dropdown: false
     dropdown:
-  - link: /tevekenysegeink/
-    text: Tevékenységeink
+  - link: /tanfolyamok/
+    text: Tanfolyamok
     enable_dropdown: false
     dropdown:
   - link: /linkek/

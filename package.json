@@ -10,7 +10,7 @@
     "start": "run-p hugo-server",
     "dev": "run-p hugo-server bookshop",
     "init": "npx @bookshop/init@latest",
-    "hugo-server": "hugo server -D --watch",
+    "hugo-server": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/dev-server.ps1",
     "build": "hugo --source ./ --destination public --baseURL /",
     "bookshop": "npx @bookshop/browser@latest",
     "bookshop-update": "npx @bookshop/up@latest",

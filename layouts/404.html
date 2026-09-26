@@ -1,12 +1,12 @@
 {{ define "main" }}
-<section class="error py-xxl-12 py-lg-9 py-10 py-sm-6">
+<section class="error" data-pages-previews="{{ eq (os.Getenv "HUGO_PAGES_PREVIEWS") "true" }}">
   <div class="container">
     <div class="row">
       <div class="col-lg-12">
         <div class="error-content text-center">
-          <img width="300" src="{{ relURL `images/404/error.png` }}" class="" alt="error-image" />
-          <h3 class="my-5">This page is missing.</h3>
-          <a href="{{ relURL `` }}" class="btn btn-lg btn-primary">Go home</a>
+          <img width="1920" height="1080" src="{{ relURL `images/404/error.svg` }}" alt="" />
+          <h3 class="my-5">Hűha, az oldal nem található :(</h3>
+          <a href="{{ relURL `` }}" class="btn btn-lg btn-primary" data-error-home>Vissza a főoldalra</a>
         </div>
       </div>
     </div>

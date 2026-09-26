@@ -1,0 +1,12 @@
+{{ if not (.Get "src") }}{{ errorf "media shortcode requires src (%s)" .Position }}{{ end }}
+{{ if not (.Get "alt") }}{{ errorf "media shortcode requires descriptive alt text (%s)" .Position }}{{ end }}
+{{ $width := partial "article-size.html" (dict "name" "image-width" "value" (.Get "image-width") "default" 40 "min" 10 "max" 90) }}
+{{ $font := partial "article-size.html" (dict "name" "font-size" "value" (.Get "font-size") "default" 1 "min" 0.8 "max" 1.5) }}
+{{ $side := .Get "image-side" | default "right" }}
+{{ if not (in (slice "left" "right") $side) }}
+  {{ errorf "media shortcode: image-side must be left or right (%s)" .Position }}
+{{ end }}
+<div class="ftsk-article-media ftsk-article-media-{{ $side }}" style="--article-media-width: {{ $width }}%; --article-font-scale: {{ $font }};">
+  <div class="ftsk-article-media-text">{{ .Page.RenderString (dict "display" "block") .Inner }}</div>
+  {{ partial "article-figure.html" (dict "src" (.Get "src") "alt" (.Get "alt") "caption" (.Get "caption") "mobileWidth" (.Get "mobile-width")) }}
+</div>

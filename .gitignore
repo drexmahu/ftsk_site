@@ -17,5 +17,6 @@ hugo.linux
 
 # Python bytecode cache (scripts/membership_image_converter/)
 __pycache__/
+/.venv/
 
 /node_modules

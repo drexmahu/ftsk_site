@@ -1,34 +1,20 @@
-<section class="about-hero-two">
+<section class="blog-hero about-hero-two ftsk-hero-top-motif position-relative">
   <div class="container">
-    <div class="row">
-      <div class="col-xl-5 col-lg-10 mx-auto">
-        <div class="about-hero-two-content position-relative">
-          <h2>{{.title}}</h2>
-          <p class="mb-20 w-xxl-80">{{.description | markdownify}}</p>
-          <div class="">
-            {{with .link}}
-            <a href="{{ partial `url.html` .url }}" class="btn btn-primary btn-lg"> {{.text}} </a>
-            {{end}}
-          </div>
+    <div class="row align-items-center">
+      <div class="col-lg-7 col-md-9 mx-auto mx-lg-0">
+        <div class="blog-hero-content">
+          <h1 class="blog-hero-title">{{ .title }}</h1>
+          <p>{{ .description | markdownify }}</p>
+          {{ with .link }}
+          <a href="{{ partial `url.html` .url }}" class="btn btn-primary btn-lg">{{ .text }}</a>
+          {{ end }}
         </div>
       </div>
-      <div class="col-xl-7 col-lg-12">
+      <div class="col-lg-5 col-md-6 mx-auto">
         <div class="about-hero-two-banner">
-          {{ range .hero_images }}
-            <div class="rounded-box 
-              {{ if eq .placer "back_top_right" }}
-                image-one
-              {{ else if eq .placer "front_bottom" }}
-                image-two
-              {{ else if eq .placer "back_top_left" }}
-                image-three
-              {{ end }}">
-              <img src="{{ partial `url.html` .image_path }}" alt="aboutfeature" loading="lazy"/>
-            </div>
+          {{ with .logo_image }}
+          <img src="{{ partial `url.html` . }}" alt="Embléma" class="about-hero-two-logo" loading="lazy" />
           {{ end }}
-          <div class="pattern">
-            <img src="{{ relURL `images/about/patterns-two.png` }}" alt="patterns" loading="lazy"/>
-          </div>
         </div>
       </div>
     </div>

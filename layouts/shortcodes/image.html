@@ -1,0 +1,5 @@
+{{ if not (.Get "src") }}{{ errorf "image shortcode requires src (%s)" .Position }}{{ end }}
+{{ if not (.Get "alt") }}{{ errorf "image shortcode requires descriptive alt text (%s)" .Position }}{{ end }}
+{{ $width := .Get "width" }}
+{{ if not (isset .Params "width") }}{{ $width = .Page.Params.article_image_width }}{{ end }}
+{{ partial "article-figure.html" (dict "src" (.Get "src") "alt" (.Get "alt") "caption" (.Get "caption") "width" $width "mobileWidth" (.Get "mobile-width") "align" (.Get "align")) }}

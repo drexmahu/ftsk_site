@@ -1,0 +1,16 @@
+{{ $value := .default }}
+{{ $input := "" }}
+{{ if ne .value nil }}{{ $input = printf "%v" .value }}{{ end }}
+{{ if ne $input "" }}
+  {{ if not (findRE `^[0-9]+(\.[0-9]+)?$` $input) }}
+    {{ errorf "Article layout: %s must be a number between %v and %v (received %q)" $.name $.min $.max $input }}
+  {{ else }}
+    {{ $number := float $input }}
+    {{ if or (lt $number $.min) (gt $number $.max) }}
+      {{ errorf "Article layout: %s must be between %v and %v (received %v)" $.name $.min $.max $number }}
+    {{ else }}
+      {{ $value = $number }}
+    {{ end }}
+  {{ end }}
+{{ end }}
+{{ return $value }}

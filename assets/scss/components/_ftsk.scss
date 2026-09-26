@@ -5,18 +5,42 @@
 **********/
 
 .ftsk-cta {
-  padding: $base-padding * 6 0;
+  padding: $base-padding * 3.5 0;
 }
 .ftsk-cta-card {
   position: relative;
-  max-width: 900px;
+  max-width: 960px;
   margin: 0 auto;
   text-align: center;
-  padding: $base-padding * 4.5 $base-padding * 3;
+  padding: $base-padding * 2.75 $base-padding * 3;
   border-radius: 28px;
   border: 1px solid var(--border-subtle);
   background: linear-gradient(135deg, rgba(190, 160, 112, 0.18), var(--bg-surface) 60%);
   box-shadow: 0 30px 60px var(--shadow-ambient);
+  @include media-breakpoint-down-sm {
+    padding: $base-padding * 2 $base-padding * 1.5;
+  }
+}
+// The generic ".section-header" (_root.scss) is sized for a full hero/landing
+// section (9.4rem top padding + a 4rem heading) - this CTA is a single tile
+// inside an already-padded page, not its own hero, so cut both way down to
+// something proportionate to the compact card around it (was making the
+// whole tile needlessly tall).
+.ftsk-cta .section-header {
+  padding: 0 0 $base-padding * 1.5;
+  h2 {
+    font-size: $base-font-size * 2.2;
+    line-height: 1.3;
+    margin-bottom: $base-margin * 0.7;
+    @include media-breakpoint-down-sm {
+      font-size: $base-font-size * 1.6;
+      line-height: 1.3;
+    }
+  }
+  p {
+    font-size: 1.05rem;
+    line-height: 1.6;
+  }
 }
 .ftsk-cta-eyebrow {
   display: inline-block;
@@ -37,7 +61,22 @@
 }
 
 .ftsk-richtext {
-  padding: $base-padding * 5 0;
+  padding: $base-padding * 3 0;
+}
+// So an in-page anchor jump (e.g. from the "Egyesületünk" nav dropdown) lands
+// below the fixed navbar instead of tucking the heading underneath it.
+.ftsk-richtext[id],
+.ftsk-linklist[id],
+.ftsk-section-header[id] {
+  scroll-margin-top: 110px;
+}
+// The generic ".section-header" (see _root.scss) is sized for a standalone
+// hero/landing section (9.4rem top padding!) - way too tall stacked between
+// already-padded content blocks like these, so it's cut down to just enough
+// breathing room below its own heading.
+.ftsk-richtext .section-header,
+.ftsk-linklist .section-header {
+  padding: 0 0 $base-padding * 1.5;
 }
 .ftsk-prose {
   color: var(--text-body);
@@ -46,8 +85,11 @@
   p {
     margin-bottom: $base-margin * 1.5;
   }
-  h3 {
-    margin-top: $base-margin * 2;
+  h2,
+  h3,
+  h4 {
+    margin-top: $base-margin * 3;
+    margin-bottom: $base-margin;
   }
   ul,
   ol {
@@ -63,8 +105,671 @@
   }
 }
 
-.ftsk-linklist {
+.ftsk-article-faq {
+  width: 100%;
+  max-width: 900px;
+  margin: 3rem auto;
+  scroll-margin-top: 110px;
+  > h2 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--text-heading);
+    font-size: 1.6rem;
+    line-height: 1.35;
+    margin: 0 0 1rem;
+    > i {
+      flex-shrink: 0;
+      color: $color-primary;
+    }
+  }
+}
+.ftsk-article-faq-item {
+  border-bottom: 1px solid var(--border-subtle);
+  > summary {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 0;
+    color: var(--text-heading);
+    font-size: 1.05rem;
+    line-height: 1.55;
+    font-weight: 600;
+    cursor: pointer;
+    list-style: none;
+    &::-webkit-details-marker { display: none; }
+    &:focus-visible {
+      outline: 2px solid $color-primary;
+      outline-offset: 4px;
+    }
+    > span {
+      min-width: 0;
+      flex: 1;
+      overflow-wrap: anywhere;
+    }
+    > i {
+      flex-shrink: 0;
+      width: 1.25rem;
+      text-align: center;
+      color: $color-primary;
+      transition: transform 0.15s ease;
+    }
+  }
+  &[open] > summary > i { transform: rotate(180deg); }
+}
+.ftsk-article-faq-answer {
+  padding: 0 0 20px;
+  overflow-wrap: anywhere;
+  > :first-child { margin-top: 0; }
+  > :last-child { margin-bottom: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ftsk-article-faq-item > summary > i { transition: none; }
+}
+
+// Egyesületünk page's two stacked global/richtext blocks (see
+// content/egyesuletunk.md) - a bigger opening line + accent-colored bold
+// labels ("Az egyesület hivatalos neve:", "Cím:" etc.) for a bit more visual
+// structure than plain body-text paragraphs.
+.ftsk-richtext .ftsk-prose {
+  > p:first-of-type {
+    font-size: 1.25rem;
+    color: var(--text-heading);
+  }
+  h3 {
+    font-size: 1.3rem;
+  }
+  strong {
+    color: $color-primary;
+  }
+}
+
+// Images embedded in these richtext blocks (currently just the "Egyesületi
+// logók" photo in the Történetünk history text) read as smaller inline
+// illustrations rather than a full-bleed trip-report photo - capped as a
+// percentage of the prose column so it still scales with the viewport
+// instead of a fixed pixel size, full-width again on small screens.
+.ftsk-richtext .ftsk-article-figure {
+  max-width: 55%;
+  margin-left: auto;
+  margin-right: auto;
+  @include media-breakpoint-down-sm {
+    max-width: 100%;
+  }
+}
+
+// A single embedded article photo (see layouts/_default/_markup/render-image.html),
+// used for the day-by-day photos in long trip reports/expeditions.
+.ftsk-article-figure {
+  margin: $base-margin * 2.5 0;
+  width: var(--article-image-width, 100%);
+  text-align: center;
+  @include media-breakpoint-down-md {
+    width: var(--article-mobile-image-width, 100%);
+  }
+}
+.ftsk-article-figure-center {
+  margin-left: auto;
+  margin-right: auto;
+}
+.ftsk-article-figure-left {
+  margin-right: auto;
+}
+.ftsk-article-figure-right {
+  margin-left: auto;
+}
+.ftsk-article-media {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, var(--article-media-width, 40%));
+  align-items: start;
+  gap: 2rem;
+  margin: $base-margin * 2.5 0;
+  > .ftsk-article-figure {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+  &-left {
+    grid-template-columns: minmax(0, var(--article-media-width, 40%)) minmax(0, 1fr);
+    > .ftsk-article-figure {
+      order: -1;
+    }
+  }
+  @include media-breakpoint-down-md {
+    grid-template-columns: minmax(0, 1fr);
+    > .ftsk-article-figure {
+      order: 0;
+    }
+  }
+}
+.ftsk-article-media-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: calc(1.1rem * var(--article-font-scale, 1));
+  p, li {
+    font-size: inherit;
+  }
+  > :first-child {
+    margin-top: 0;
+  }
+  > :last-child {
+    margin-bottom: 0;
+  }
+}
+.ftsk-article-figure-link {
+  display: block;
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow: 0 20px 40px var(--shadow-ambient);
+  transition: transform 0.25s ease;
+  &:hover {
+    transform: scale(1.01);
+  }
+}
+.ftsk-article-figure img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.ftsk-article-figure figcaption {
+  margin-top: $base-margin * 0.6;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  font-style: italic;
+}
+
+// A {{< gallery >}} block of {{< photo >}} shortcodes embedded in an article
+// (see layouts/shortcodes/gallery.html) - reuses .ftsk-gallery-grid/-item's grid
+// and hover-caption look, just with prose-appropriate spacing instead of the
+// standalone Galéria page's section padding.
+.ftsk-article-gallery {
+  margin: $base-margin * 2.5 0;
+}
+
+// {{< pdf >}} shortcode (see layouts/shortcodes/pdf.html) - an inline PDF
+// viewer + download button for legacy reports that only exist as an old PDF.
+.ftsk-pdf-embed {
+  margin: $base-margin * 2.5 0;
+  text-align: center;
+}
+.ftsk-pdf-embed-caption {
+  margin-bottom: $base-margin * 0.6;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  font-style: italic;
+}
+.ftsk-pdf-embed-frame {
+  margin-bottom: $base-margin;
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow: 0 20px 40px var(--shadow-ambient);
+  border: 1px solid var(--border-subtle);
+
+  iframe {
+    display: block;
+    width: 100%;
+    height: 70vh;
+    min-height: 480px;
+    border: 0;
+  }
+}
+.ftsk-pdf-embed-download {
+  display: inline-flex !important;
+  width: auto !important;
+  i {
+    margin-right: 10px;
+    font-size: 1.2em;
+  }
+}
+
+// Túrabeszámolók (turak) list page - featured reports, filter toolbar and archive
+// badges (see layouts/turak/list.html). Filtering itself is client-side (see
+// the "#ftsk-turak-grid" binding in static/js/script.js) - .is-hidden just
+// removes a card from layout without touching the DOM.
+.ftsk-turak-card.is-hidden {
+  display: none;
+}
+
+.ftsk-turak-featured {
+  padding: $base-padding * 0.5 0 $base-padding * 1.5;
+  border-bottom: 1px solid var(--border-subtle);
+  // This section sits right below the toolbar, not at the top of the page -
+  // override the generic ".section-header"'s hero-scale padding (meant for a
+  // standalone landing section) down to something compact on both sides.
+  .section-header {
+    padding: 0 0 $base-padding * 1.5;
+    h2 {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: $base-font-size * 2.2;
+      line-height: 1.3;
+      i {
+        color: $color-primary;
+      }
+    }
+  }
+}
+.ftsk-turak-featured-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border-radius: 20px;
+  overflow: hidden;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 20px 40px var(--shadow-ambient);
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+  @include media-breakpoint-up-md {
+    flex-direction: row;
+  }
+  &:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 26px 45px -16px rgba(0, 0, 0, 0.55);
+    .ftsk-turak-featured-thumb img {
+      transform: scale(1.06);
+    }
+  }
+}
+.ftsk-turak-featured-thumb {
+  display: block;
+  overflow: hidden;
+  flex-shrink: 0;
+  @include media-breakpoint-up-md {
+    width: 42%;
+  }
+  img {
+    width: 100%;
+    height: 230px;
+    object-fit: cover;
+    transition: transform 0.5s ease-in-out;
+    @include media-breakpoint-up-md {
+      height: 100%;
+    }
+  }
+}
+.ftsk-turak-featured-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  padding: $base-padding * 1.8;
+  h3 {
+    font-size: $base-font-size * 1.5;
+    margin: $base-margin * 0.6 0;
+    a {
+      color: var(--text-heading);
+      &:hover {
+        color: $color-primary;
+      }
+    }
+  }
+}
+.ftsk-turak-featured-excerpt {
+  color: var(--text-muted);
+  margin-bottom: $base-margin;
+}
+.ftsk-turak-featured-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: $base-margin;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+}
+
+// Author name shown on both the "Legújabb" featured cards and the small
+// archive cards (see author-badge.html). A plain label unless the author is
+// also a registered club member, in which case it's a real <button> that
+// opens the shared member modal (".ftsk-member-trigger" in script.js).
+.ftsk-turak-author {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+button.ftsk-turak-author {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font-family: $font-secondary;
+  cursor: pointer;
+  transition: color 0.2s ease-in-out;
+  &:hover,
+  &:focus-visible {
+    color: $color-primary;
+    text-decoration: underline;
+  }
+}
+.blog-post-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-top: $base-margin * 0.9;
+  .blog-post-date {
+    margin-top: 0;
+  }
+}
+.ftsk-turak-featured-cta {
+  margin-top: auto;
+  align-self: flex-start;
+  padding: 0.7rem 1.4rem !important;
+  i {
+    margin-left: 8px;
+    margin-right: 0;
+  }
+}
+
+// Filter toolbar
+.ftsk-turak-toolbar {
+  padding: $base-padding * 1 0 $base-padding * 0.5;
+}
+.ftsk-turak-toolbar-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: $base-margin;
+}
+.ftsk-turak-search,
+.ftsk-turak-decade {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 12px;
+  padding: 0.6rem 1rem;
+  color: var(--text-muted);
+  i {
+    flex-shrink: 0;
+  }
+}
+.ftsk-turak-search {
+  position: relative;
+  flex: 1 1 260px;
+  input {
+    flex-grow: 1;
+    background: transparent;
+    border: 0;
+    color: var(--text-heading);
+    font-family: $font-secondary;
+    &:focus {
+      outline: none;
+    }
+    &::placeholder {
+      color: var(--text-muted);
+    }
+  }
+}
+
+// Autocomplete-like search tips (see the "#ftsk-turak-suggestions" binding in
+// static/js/script.js) - a floating dropdown of matching titles/authors.
+.ftsk-turak-search-suggestions {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  box-shadow: 0 20px 40px var(--shadow-ambient);
+}
+.ftsk-turak-suggestion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0.55rem 0.7rem;
+  border-radius: 8px;
+  color: var(--text-heading);
+  text-decoration: none;
+  transition: background 0.2s ease-in-out;
+  &:hover,
+  &:focus {
+    background: var(--bg-surface-hover);
+  }
+}
+.ftsk-turak-suggestion-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.ftsk-turak-suggestion-author {
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.ftsk-turak-decade {
+  flex: 0 1 220px;
+  @include media-breakpoint-down-sm {
+    flex-grow: 1;
+  }
+  select {
+    flex-grow: 1;
+    background: transparent;
+    border: 0;
+    color: var(--text-heading);
+    font-family: $font-secondary;
+    &:focus {
+      outline: none;
+    }
+    option {
+      background: var(--bg-surface);
+      color: var(--text-heading);
+    }
+  }
+}
+.ftsk-turak-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: $base-margin * 0.8;
+}
+.ftsk-turak-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.5rem 1.1rem;
+  border-radius: 999px;
+  background: rgba(190, 160, 112, 0.16);
+  border: 1px solid rgba(190, 160, 112, 0.4);
+  color: var(--text-heading);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease-in-out;
+  &.tag-tura {
+    border-color: rgba(20, 177, 184, 0.5);
+  }
+  &.tag-kutatas {
+    border-color: rgba(190, 160, 112, 0.5);
+  }
+  &.tag-expedicio {
+    border-color: rgba(29, 135, 153, 0.55);
+  }
+  &.tag-kanyoning {
+    border-color: rgba(91, 107, 94, 0.65);
+  }
+  &.tag-szemetszedes {
+    border-color: rgba(24, 65, 117, 0.7);
+  }
+  &:hover {
+    border-color: $color-primary;
+  }
+  &.is-active {
+    background: $color-primary;
+    border-color: $color-primary;
+    color: var(--bg-page);
+  }
+}
+// Compact heading above the small-card archive grid - deliberately NOT the
+// generic hero-scale ".section-header" (used by ".ftsk-turak-featured" above
+// it), since two of those in a row would be visually way too heavy this far
+// down the page.
+.ftsk-turak-archive-header {
+  padding: $base-padding * 1.5 0 $base-padding * 0.5;
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: $base-font-size * 1.6;
+    margin: 0;
+    i {
+      color: $color-primary;
+    }
+  }
+}
+.ftsk-turak-toolbar-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  #ftsk-turak-count,
+  #ftsk-course-count {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin: 0;
+  }
+}
+.ftsk-archive-pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 0;
+}
+.ftsk-archive-page-size,
+.ftsk-archive-page-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-muted);
+}
+.ftsk-archive-page-size select {
+  padding: 10px;
+  color: var(--text-heading);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 8px;
+}
+.ftsk-archive-page-controls button {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  color: var(--text-heading);
+  background: var(--bg-surface);
+  border: 1px solid var(--input-border);
+  border-radius: 8px;
+  &:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+  &:not(:disabled):hover {
+    background: var(--bg-surface-hover);
+  }
+}
+.ftsk-archive-page-status {
+  margin: 0;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+#ftsk-course-grid,
+#ftsk-turak-grid {
+  scroll-margin-top: 110px;
+  > .is-hidden {
+    display: none;
+  }
+}
+.ftsk-turak-reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 0;
+  color: $color-primary;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+// "Archív" badge on legacy-* report cards (see layouts/turak/list.html)
+.ftsk-turak-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(10, 17, 22, 0.75);
+  color: var(--text-heading);
+  font-size: 0.75rem;
+  font-weight: 600;
+  backdrop-filter: blur(2px);
+}
+.blog-post-thumb {
+  position: relative;
+}
+.ftsk-turak-card-legacy .blog-post-thumb img {
+  filter: saturate(0.85);
+  // The shared fallback thumbnail (no article-specific photo) is the full
+  // cave-silhouette illustration - anchor to the top so the card crops into
+  // the hanging stalactites, not the standing stalagmites at its bottom.
+  object-position: top;
+}
+
+// Compact hero for the /turak/ list page - the stock .blog-hero padding
+// utility classes (pt-22/pb-25 etc.) were designed to be visually cancelled
+// out by a large negative margin-top on an immediately-following ".blog"
+// section (an overlap trick); this page doesn't use that pairing, so it needs
+// its own modest, self-contained padding instead.
+.ftsk-turak-hero {
+  padding: $base-padding * 9 0 $base-padding * 4;
+  @include media-breakpoint-down-lg {
+    padding: $base-padding * 7 0 $base-padding * 3;
+  }
+  @include media-breakpoint-down-sm {
+    padding: $base-padding * 6 0 $base-padding * 2.5;
+    .blog-hero-title {
+      font-size: 2rem;
+      line-height: 1.25;
+    }
+  }
+}
+
+.ftsk-turak-empty {
+  text-align: center;
   padding: $base-padding * 5 0;
+  color: var(--text-muted);
+  i {
+    font-size: 2.5rem;
+    color: $color-primary;
+    margin-bottom: $base-margin * 0.6;
+  }
+  p {
+    margin-bottom: $base-margin;
+  }
+}
+
+.ftsk-linklist {
+  padding: $base-padding * 3 0;
 }
 .ftsk-linklist-items {
   list-style: none;
@@ -99,7 +804,13 @@
 }
 
 .ftsk-members {
-  padding: $base-padding * 5 0;
+  padding: $base-padding * 9 0 $base-padding * 5;
+  @include media-breakpoint-down-lg {
+    padding-top: $base-padding * 7;
+  }
+  @include media-breakpoint-down-sm {
+    padding-top: $base-padding * 6;
+  }
 }
 .ftsk-members-group {
   margin-bottom: $base-margin * 3;
@@ -182,6 +893,13 @@
   line-height: 1.3;
   color: var(--text-body);
 }
+.ftsk-members-role {
+  margin-top: -6px;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-style: italic;
+  line-height: 1.3;
+}
 
 // Deterministic decorative palette for initials avatars that have no photo yet
 .ftsk-avatar-0 {
@@ -211,6 +929,7 @@
   width: 100%;
   max-width: 460px;
   margin: 40px auto;
+  padding: 44px 20px 0;
   background: var(--bg-surface);
   border: 1px solid var(--border-strong);
   border-radius: 20px;
@@ -218,19 +937,20 @@
   text-align: center;
   box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.6);
 }
-// Real photo: rectangular, full-bleed across the top, height follows the photo's own
-// aspect ratio (no forced crop) but is capped so an oversized/very tall photo can't
-// blow up the whole modal - object-fit only kicks in once that cap clips the height.
+// Real photos retain their aspect ratio within the modal's width and height limits.
 // Uses modal_image when set (lets an off-center-face tile photo have a better-composed
 // large counterpart), falling back to the tile's image otherwise.
 .ftsk-member-modal-avatar {
   width: 100%;
   img {
     display: block;
-    width: 100%;
+    width: auto;
+    max-width: 100%;
     height: auto;
     max-height: unquote('min(55vh, 420px)');
-    object-fit: cover;
+    object-fit: contain;
+    margin: 0 auto;
+    border-radius: 8px;
   }
   // No photo: fall back to a fixed-ratio rectangle filled with the initials color
   &--initials {
@@ -244,7 +964,7 @@
   }
 }
 .ftsk-member-modal-body {
-  padding: 24px 32px 34px;
+  padding: 24px 12px 28px;
 }
 .ftsk-member-modal-name {
   margin-bottom: 8px;
@@ -261,6 +981,13 @@
   font-size: 0.8rem;
   font-weight: 600;
 }
+.ftsk-member-modal-role {
+  display: block;
+  margin: -6px 0 14px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-style: italic;
+}
 .ftsk-member-modal-bio {
   margin: 0;
   color: var(--text-body);
@@ -268,15 +995,62 @@
   line-height: 1.6;
 }
 .ftsk-member-mfp .mfp-close {
+  top: 4px;
+  right: 6px;
+  width: 40px;
+  height: 40px;
+  line-height: 40px;
   color: $color-secondary;
   opacity: 0.8;
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: -4px;
+  }
   &:hover {
     opacity: 1;
   }
 }
 
+.ftsk-member-modal {
+  isolation: isolate;
+  border-radius: 12px;
+}
+.ftsk-member-modal-avatar img {
+  box-shadow: 0 0 0 1px var(--border-subtle), 0 10px 24px rgba(0, 0, 0, 0.16);
+}
+.ftsk-member-modal-body {
+  position: relative;
+  isolation: isolate;
+  margin-top: 20px;
+  padding: 20px 12px 28px;
+  border-top: 1px solid var(--border-subtle);
+}
+.ftsk-member-modal-name {
+  margin-bottom: 10px;
+  font-size: 1.4rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.ftsk-member-modal-group {
+  padding: 0;
+  margin-bottom: 0;
+  border: 0;
+  background: transparent;
+  border-radius: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.ftsk-member-modal-role { margin: 8px 0 0; }
+.ftsk-member-modal-bio { margin: 16px 0 0; }
 .ftsk-gallery {
-  padding: $base-padding * 5 0 $base-padding * 8;
+  padding: $base-padding * 9 0 $base-padding * 8;
+  @include media-breakpoint-down-lg {
+    padding-top: $base-padding * 7;
+  }
+  @include media-breakpoint-down-sm {
+    padding-top: $base-padding * 6;
+  }
 }
 .ftsk-gallery-grid {
   display: grid;
@@ -315,4 +1089,293 @@
 }
 .ftsk-gallery-item:hover .ftsk-gallery-caption {
   opacity: 1;
+}
+
+// Tanfolyamok (courses) list + single pages - compact hero (same scale as
+// ".ftsk-turak-hero"), the "aktuális tanfolyam" badge, milestone stepper,
+// flyer image row and "Jelentkezem!" direct-contact section.
+.ftsk-tanfolyam-hero {
+  padding: $base-padding * 9 0 $base-padding * 4;
+  @include media-breakpoint-down-lg {
+    padding: $base-padding * 7 0 $base-padding * 3;
+  }
+  @include media-breakpoint-down-sm {
+    padding: $base-padding * 6 0 $base-padding * 2.5;
+  }
+}
+
+.ftsk-tanfolyam-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(190, 160, 112, 0.16);
+  color: $color-primary;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.ftsk-tanfolyam-milestones-wrap {
+  margin: $base-margin * 2 0 $base-margin * 3;
+}
+
+// Horizontal (vertical below md) milestone stepper - see
+// layouts/partials/tanfolyam-milestones.html.
+.ftsk-milestones {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  @include media-breakpoint-down-md {
+    flex-direction: column;
+    gap: 28px;
+  }
+}
+.ftsk-milestone {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  padding: 0 8px;
+  @include media-breakpoint-down-md {
+    flex-direction: row;
+    align-items: flex-start;
+    text-align: left;
+    padding: 0;
+  }
+}
+// Connector to the next milestone; `--p` (0-1) and `--i` (index) come from the
+// template. Segments fill one after another, each taking $seg * --p.
+$ftsk-milestone-seg: 0.5s;
+.ftsk-milestone-line {
+  position: absolute;
+  top: 17px;
+  left: calc(50% + 18px);
+  width: calc(100% - 36px);
+  height: 2px;
+  background: var(--border-subtle);
+  z-index: 0;
+  @include media-breakpoint-down-md {
+    top: 36px;
+    left: 17px;
+    width: 2px;
+    height: calc(100% + 20px);
+  }
+}
+.ftsk-milestone-fill,
+.ftsk-milestone-now {
+  position: absolute;
+  animation-delay: calc(var(--i) * #{$ftsk-milestone-seg});
+  animation-duration: calc(var(--p) * #{$ftsk-milestone-seg});
+  animation-timing-function: linear;
+  animation-fill-mode: both;
+}
+.ftsk-milestone-fill {
+  top: 0;
+  left: 0;
+  width: calc(var(--p) * 100%);
+  height: 100%;
+  background: $color-primary;
+  animation-name: ftsk-milestone-fill-x;
+  @include media-breakpoint-down-md {
+    width: 100%;
+    height: calc(var(--p) * 100%);
+    animation-name: ftsk-milestone-fill-y;
+  }
+}
+.ftsk-milestone-now {
+  top: 50%;
+  left: calc(var(--p) * 100%);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: $color-primary;
+  border: 2px solid var(--bg-surface);
+  transform: translate(-50%, -50%);
+  animation-name: ftsk-milestone-now-x, ftsk-milestone-pulse;
+  animation-duration: calc(var(--p) * #{$ftsk-milestone-seg}), 2s;
+  animation-delay: calc(var(--i) * #{$ftsk-milestone-seg}),
+    calc((var(--i) + var(--p)) * #{$ftsk-milestone-seg});
+  animation-timing-function: linear, ease-in-out;
+  animation-iteration-count: 1, infinite;
+  @include media-breakpoint-down-md {
+    top: calc(var(--p) * 100%);
+    left: 50%;
+    animation-name: ftsk-milestone-now-y, ftsk-milestone-pulse;
+  }
+}
+@keyframes ftsk-milestone-fill-x {
+  from {
+    width: 0;
+  }
+}
+@keyframes ftsk-milestone-fill-y {
+  from {
+    height: 0;
+  }
+}
+@keyframes ftsk-milestone-now-x {
+  from {
+    left: 0;
+    opacity: 0;
+  }
+  1% {
+    opacity: 1;
+  }
+}
+@keyframes ftsk-milestone-now-y {
+  from {
+    top: 0;
+    opacity: 0;
+  }
+  1% {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ftsk-milestone-fill,
+  .ftsk-milestone-now {
+    animation: none;
+  }
+}
+.ftsk-milestone-dot {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg-surface);
+  border: 2px solid var(--border-subtle);
+  color: var(--text-muted);
+  font-size: 1.1rem;
+}
+.ftsk-milestone--done .ftsk-milestone-dot {
+  background: $color-primary;
+  border-color: $color-primary;
+  color: var(--bg-page);
+}
+.ftsk-milestone--current .ftsk-milestone-dot {
+  border-color: $color-primary;
+  &::after {
+    content: "";
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: $color-primary;
+  }
+}
+@keyframes ftsk-milestone-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(190, 160, 112, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(190, 160, 112, 0);
+  }
+}
+.ftsk-milestone-label {
+  font-weight: 700;
+  color: var(--text-muted);
+}
+.ftsk-milestone--done .ftsk-milestone-label,
+.ftsk-milestone--current .ftsk-milestone-label {
+  color: var(--text-heading);
+}
+.ftsk-milestone-date {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.ftsk-milestone-estimated {
+  font-style: italic;
+}
+
+.ftsk-tanfolyam-flyers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: $base-margin * 2;
+  img {
+    width: 100%;
+    border-radius: 16px;
+    border: 1px solid var(--border-subtle);
+  }
+}
+
+.ftsk-tanfolyam-jelentkezem {
+  margin-top: $base-margin * 3;
+}
+.ftsk-tanfolyam-jelentkezem-header {
+  margin-bottom: $base-margin * 1.5;
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.6rem;
+    margin-bottom: $base-margin * 0.4;
+    i {
+      color: $color-primary;
+    }
+  }
+  p {
+    color: var(--text-muted);
+    margin: 0;
+  }
+}
+.ftsk-tanfolyam-contacts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+.ftsk-tanfolyam-contact-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 16px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+}
+.ftsk-tanfolyam-contact-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(190, 160, 112, 0.16);
+  color: $color-primary;
+  font-size: 1.4rem;
+}
+.ftsk-tanfolyam-contact-name {
+  font-weight: 700;
+  color: var(--text-heading);
+}
+.ftsk-tanfolyam-contact-role {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.ftsk-tanfolyam-contact-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-body);
+    font-size: 0.9rem;
+    &:hover {
+      color: $color-primary;
+    }
+  }
 }

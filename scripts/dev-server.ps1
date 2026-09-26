@@ -58,22 +58,46 @@ try {
     $useDrafts = -not $NoDrafts
     $useFuture = -not $NoFuture
 
+    foreach ($relativePath in @('public', 'resources/_gen')) {
+        $generatedPath = Join-Path $repoRoot $relativePath
+        if (Test-Path -LiteralPath $generatedPath) {
+            $generatedItem = Get-Item -LiteralPath $generatedPath -Force
+            if ($generatedItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
+                throw "Refusing to purge a linked output directory: $generatedPath"
+            }
+            $pendingDirectories = New-Object 'System.Collections.Generic.Stack[string]'
+            if ($generatedItem.PSIsContainer) { $pendingDirectories.Push($generatedPath) }
+            while ($pendingDirectories.Count -gt 0) {
+                foreach ($child in Get-ChildItem -LiteralPath $pendingDirectories.Pop() -Force) {
+                    if ($child.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
+                        throw "Refusing to purge an output tree containing a link: $($child.FullName)"
+                    }
+                    if ($child.PSIsContainer) { $pendingDirectories.Push($child.FullName) }
+                }
+            }
+            Remove-Item -LiteralPath $generatedPath -Recurse -Force
+        }
+    }
+
     if ($BuildOnly) {
-        $args = @('--destination', 'public', '--minify', '--gc')
-        if ($BaseUrl) { $args += @('--baseURL', $BaseUrl) }
-        if ($useDrafts) { $args += '-D' }
-        if ($useFuture) { $args += '--buildFuture' }
+        $hugoArgs = @('--destination', 'public', '--minify', '--gc', '--cleanDestinationDir')
+        if ($BaseUrl) { $hugoArgs += @('--baseURL', $BaseUrl) }
+        if ($useDrafts) { $hugoArgs += '-D' }
+        if ($useFuture) { $hugoArgs += '--buildFuture' }
 
         Write-Host "Building site to ./public/ ..." -ForegroundColor Cyan
-        & $hugoExe @args
+        & $hugoExe @hugoArgs
     } else {
-        $args = @('server', '--watch', '--port', $Port)
-        if ($BaseUrl) { $args += @('--baseURL', $BaseUrl) }
-        if ($useDrafts) { $args += '-D' }
-        if ($useFuture) { $args += '--buildFuture' }
+        $hugoArgs = @('server', '--watch', '--port', $Port, '--destination', 'public', '--cleanDestinationDir', '--disableFastRender')
+        if ($BaseUrl) { $hugoArgs += @('--baseURL', $BaseUrl) }
+        if ($useDrafts) { $hugoArgs += '-D' }
+        if ($useFuture) { $hugoArgs += '--buildFuture' }
 
         Write-Host "Starting Hugo dev server on http://localhost:$Port/ (Ctrl+C to stop) ..." -ForegroundColor Cyan
-        & $hugoExe @args
+        & $hugoExe @hugoArgs
+    }
+    if ($LASTEXITCODE -ne 0) {
+        throw "Hugo exited with code $LASTEXITCODE."
     }
 }
 finally {

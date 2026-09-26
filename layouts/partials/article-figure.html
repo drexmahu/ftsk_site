@@ -1,0 +1,13 @@
+{{ $src := partial "url.html" .src }}
+{{ $width := partial "article-size.html" (dict "name" "width" "value" .width "default" 100 "min" 10 "max" 100) }}
+{{ $mobileWidth := partial "article-size.html" (dict "name" "mobile-width" "value" .mobileWidth "default" 100 "min" 10 "max" 100) }}
+{{ $align := .align | default "center" }}
+{{ if not (in (slice "left" "center" "right") $align) }}
+  {{ errorf "Article image: align must be left, center or right (received %q)" $align }}
+{{ end }}
+<figure class="ftsk-article-figure ftsk-article-figure-{{ $align }}" style="--article-image-width: {{ $width }}%; --article-mobile-image-width: {{ $mobileWidth }}%;">
+  <a href="{{ $src }}" class="ftsk-article-figure-link"{{ with .caption }} title="{{ . }}"{{ end }}>
+    <img src="{{ $src }}" alt="{{ .alt }}" loading="lazy" />
+  </a>
+  {{ with .caption }}<figcaption>{{ . }}</figcaption>{{ end }}
+</figure>

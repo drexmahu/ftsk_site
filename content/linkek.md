@@ -8,10 +8,13 @@ seo:
   open_graph_type:
   no_index: false
 content_blocks:
-  - _bookshop_name: global/linklist
-    title: "Hasznos "
-    title_suffix: linkek
+  - _bookshop_name: global/page-hero
+    title: Hasznos linkek
     description: Barlangászathoz és barlangkutatáshoz kapcsolódó oldalak gyűjteménye.
+  - _bookshop_name: global/linklist
+    title:
+    title_suffix:
+    description:
     items:
       - text: "Magyar Karszt- és Barlangkutató Társulat"
         url: https://www.barlang.hu/
@@ -25,4 +28,6 @@ content_blocks:
         url: http://oktatas.barlang.hu/
       - text: "FTSK Facebook-oldala"
         url: https://www.facebook.com/ftskbarlang
+      - text: "FTSK Instagram-oldala"
+        url: https://www.instagram.com/ftsk_barlang/
 ---

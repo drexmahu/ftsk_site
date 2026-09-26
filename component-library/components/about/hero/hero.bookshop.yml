@@ -11,9 +11,7 @@ spec:
 blueprint:
   title: On a mission to change email marketing
   description: We’re here to breathe new air into email marketing and help grow your business.
-  hero_images:
-    - image_path: /images/about/aboutfeature-three.jpg
-      placer: front_bottom
+  logo_image: /images/ftsk-logo.png
   link:
     text: "Try Free"
     url: "/#"
@@ -24,16 +22,8 @@ preview:
 
 # Any extra Bookshop inputs configuration to apply to the blueprint
 _inputs:
-  placer:
-    type: select
-    options:
-      values:
-        - front_bottom
-        - back_top_right
-        - back_top_left
-  image:
+  logo_image:
     type: image
     options:
       width: 450
       height: 450
-      resize_style: crop

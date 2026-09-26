@@ -17,12 +17,17 @@
     <script src="{{ relURL `vendor/bootstrap/bootstrap.bundle.min.js` }}" defer></script>
     <script src="{{ relURL `vendor/counter-up/countup.js` }}" defer></script>
     <script src="{{ relURL `vendor/magnific-popup/magnific-popup.min.js` }}" defer></script>
-    <script src="{{ relURL `js/script.js` }}" defer></script>
+    {{ if eq .Kind "404" }}
+    <script src="{{ relURL `js/404.js` }}" defer></script>
+    {{ end }}
+    <script src="{{ relURL `js/hero-framing.js` }}" defer></script>
+    {{ $siteScript := resources.FromString "js/site.js" (os.ReadFile "static/js/script.js") | resources.Minify | resources.Fingerprint }}
+    <script src="{{ $siteScript.RelPermalink }}" defer></script>
     <title>{{print .Page.Title " | " .Site.Title}}</title>
   </head>
   <body>
     {{ partial "navbar.html" . }} {{ block "main" . }} {{ end }} {{ partial
-    "footer.html" . }}
+    "footer.html" . }} {{ partial "member-modal.html" . }}
 
   
   </body>

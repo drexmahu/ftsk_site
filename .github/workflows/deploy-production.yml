@@ -1,8 +1,8 @@
-name: Deploy to Production (FTP)
+name: Deploy to Production (SFTP)
 
 # Manually-triggered only. Publishes the current `main` branch to the live
-# production server over FTP. Requires an environment named "production"
-# (Settings > Environments) holding the FTP_* secrets below - add required
+# production server over SFTP. Requires an environment named "production"
+# (Settings > Environments) holding the SFTP_* secrets below - add required
 # reviewers there to get a manual approval gate on top of this trigger.
 on:
   workflow_dispatch:
@@ -32,21 +32,35 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          ref: main
 
       - name: Build Hugo site
         uses: ./.github/actions/build-site
         with:
           base-url: ${{ vars.PRODUCTION_BASE_URL || 'https://www.ftsk.hu/' }}
+          canonical-base-url: ${{ vars.PRODUCTION_BASE_URL || '' }}
           hugo-version: ${{ vars.HUGO_VERSION }}
 
-      - name: Deploy over FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+      - name: Set up Python
+        uses: actions/setup-python@v6
         with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: ${{ secrets.FTP_SERVER_DIR || './' }}
-          port: ${{ vars.FTP_PORT || 21 }}
-          protocol: ${{ vars.FTP_PROTOCOL || 'ftps' }}
-          local-dir: ./public/
-          dry-run: ${{ github.event.inputs.dry_run }}
+          python-version: "3.12"
+
+      - name: Install SFTP deployment dependencies
+        run: python -m pip install -r scripts/deploy_requirements.txt
+
+      - name: Show deployment page and replace site over SFTP
+        env:
+          SFTP_SERVER: ${{ secrets.SFTP_SERVER }}
+          SFTP_USERNAME: ${{ secrets.SFTP_USERNAME }}
+          SFTP_PASSWORD: ${{ secrets.SFTP_PASSWORD }}
+          SFTP_SERVER_DIR: ${{ secrets.SFTP_SERVER_DIR }}
+          SFTP_KNOWN_HOSTS: ${{ secrets.SFTP_KNOWN_HOSTS }}
+          SFTP_PORT: ${{ vars.SFTP_PORT || '22' }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          args=(--source public)
+          if [[ "$DRY_RUN" == "true" ]]; then args+=(--dry-run); fi
+          python scripts/deploy_sftp.py "${args[@]}"
