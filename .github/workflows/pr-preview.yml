@@ -4,10 +4,16 @@ name: PR Preview
 # Uses https://github.com/rossjrw/pr-preview-action - requires repo Settings >
 # Pages source = "Deploy from a branch" -> gh-pages, and Settings > Actions >
 # General > Workflow permissions = "Read and write permissions".
+# Builds, deploys, and verifies the PR preview before reporting success.
+# Requires Pages source = "Deploy from a branch" -> gh-pages and read/write
+# workflow permissions in Settings > Actions > General.
+# Builds, deploys, and verifies the PR preview before reporting success.
+# Requires Pages source = "Deploy from a branch" -> gh-pages and read/write
+# workflow permissions in Settings > Actions > General.
 on:
   pull_request:
     branches: [main]
-    types: [opened, reopened, synchronize, closed]
+    types: [opened, reopened, synchronize, edited]
 
 concurrency:
   group: pr-preview-${{ github.event.pull_request.number }}
@@ -16,16 +22,20 @@ concurrency:
 permissions:
   contents: write
   pull-requests: write
+  deployments: write
 
 jobs:
   preview:
+    if: github.event.action != 'closed'
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/pr-preview/pr-${{ github.event.pull_request.number }}/
     steps:
       - name: Checkout
         uses: actions/checkout@v7
 
       - name: Build Hugo site for preview
-        if: github.event.action != 'closed' # no build needed when just tearing the preview down
         uses: ./.github/actions/build-site
         with:
           base-url: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/pr-preview/pr-${{ github.event.pull_request.number }}/
@@ -33,10 +43,34 @@ jobs:
           build-drafts: "true"
           build-future: "true"
 
-      - name: Deploy / remove PR preview
+      - name: Mark preview revision
+        env:
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: printf '%s\n' "$PR_HEAD_SHA" > public/pr-preview-head.txt
+
+      - name: Deploy PR preview
+        id: deploy
         uses: rossjrw/pr-preview-action@v1
         with:
           source-dir: ./public/
           preview-branch: gh-pages
           umbrella-dir: pr-preview
-          action: auto
+          action: deploy
+          wait-for-pages-deployment: true
+
+      - name: Verify the deployed preview revision
+        env:
+          PREVIEW_URL: ${{ steps.deploy.outputs.preview-url }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          for attempt in {1..12}; do
+            served_sha=$(curl --fail --silent --location --max-time 15 \
+              "${PREVIEW_URL}pr-preview-head.txt?sha=${PR_HEAD_SHA}" || true)
+            if [[ "$served_sha" == "$PR_HEAD_SHA" ]]; then
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "GitHub Pages did not serve the current PR preview revision." >&2
+          exit 1

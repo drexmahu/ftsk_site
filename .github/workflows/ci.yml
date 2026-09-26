@@ -6,12 +6,16 @@ name: CI
 on:
   pull_request:
     branches: [main]
+    types: [opened, reopened, synchronize, edited, ready_for_review]
+  merge_group:
+    types: [checks_requested]
+    branches: [main]
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.event.pull_request.number }}
+  group: ci-${{ github.event.pull_request.number || github.event.merge_group.head_sha }}
   cancel-in-progress: true
 
 jobs:
@@ -33,7 +37,7 @@ jobs:
       - name: Upload build output
         uses: actions/upload-artifact@v7
         with:
-          name: hugo-build-pr-${{ github.event.pull_request.number }}
+          name: hugo-build-${{ github.event.pull_request.number || github.event.merge_group.head_sha }}
           path: public
           retention-days: 7
 
