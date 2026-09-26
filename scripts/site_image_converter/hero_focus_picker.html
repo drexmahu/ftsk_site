@@ -48,6 +48,50 @@
   }
   .btn-row { display: flex; gap: 8px; }
 
+  /* --- Connected mode: editing the real data/hero_images.yaml + static/images/hero/
+     via hero_config_server.py, instead of the offline drag-drop/copy-paste flow below. */
+  .connected-panel {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-bottom: 24px;
+    background: var(--bg-surface);
+  }
+  .connected-status {
+    margin: 0 0 12px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+  .connected-status.is-error { color: #e0796f; }
+  .connected-toolbar {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    margin-bottom: 4px;
+  }
+  .connected-toolbar label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.85rem;
+    min-width: 260px;
+  }
+  .connected-toolbar select { width: 100%; }
+  .connected-save-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .connected-save-note {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+  .connected-save-note.is-success { color: #8fce9c; }
+  button.danger { background: #6b2b26; color: #f2ede1; }
+
+
   .drop-zone {
     border: 2px dashed var(--border);
     border-radius: 12px;
@@ -185,6 +229,7 @@
     font-family: inherit;
   }
   .controls select { width: 100%; }
+  select:disabled { opacity: 0.5; cursor: not-allowed; }
   .filename { color: var(--text-heading); font-weight: 600; word-break: break-all; }
   .meta { color: var(--text-muted); font-size: 0.78rem; }
   hr.sep { border: none; border-top: 1px solid var(--border); margin: 2px 0; width: 100%; }
@@ -199,6 +244,25 @@
   .override-row input { margin-top: 3px; }
   .mirror-row { display: flex; gap: 18px; font-size: 0.8rem; color: var(--text-muted); }
   .mirror-row label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+
+  /* The "which screen size am I editing" control lives INSIDE each photo's own
+     controls (it's a property of that photo's editing session), not a separate
+     global toolbar - so it's styled to stand out as the first, most important row. */
+  .viewport-row {
+    background: rgba(190, 160, 112, 0.1);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+  }
+  .viewport-row span:first-child { color: var(--text-heading); font-weight: 600; }
+  .section-title {
+    color: var(--text-heading);
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-top: 6px;
+  }
 
 
   .yaml-output {
@@ -231,27 +295,37 @@
 <body>
   <h1>Hero Focus Picker</h1>
   <p class="lead">
-    Load the converted <code>.webp</code> files from <code>static/images/hero/</code> to preview exactly how each
-    one gets cropped and animated on the homepage - including the real hero title/description/button text, the
-    readability gradient/dim, and the cave-silhouette motif overlay. Use the screen-size dropdown below to switch
-    between the site's 3 supported breakpoints (like VS Code's device toolbar); each size can have its own crop/
-    zoom/pan-or-zoom-animation - click on the photo (or drag the sliders) to set it, and tablet/phone start out
-    inheriting the desktop values until you tick "Custom for this size" for that size. You can also mirror a photo
-    horizontally/vertically, and exclude it entirely from a given screen size ("Visible at this size"). Then
-    copy the generated YAML per photo into <code>data/hero_images.yaml</code>. Nothing here is uploaded anywhere -
-    images are only read locally in your browser.
+    If you started this via <code>run_hero_picker.bat</code>, the panel below lets you pick, add, or delete a real
+    site hero photo and save changes straight to <code>data/hero_images.yaml</code>. Opened directly as a file
+    instead (no server running)? Everything further down still works in offline/preview mode: load the converted
+    <code>.webp</code> files from <code>static/images/hero/</code> to preview exactly how each one gets cropped
+    and animated on the homepage - including the real hero title/description/button text, the readability
+    gradient/dim, and the cave-silhouette motif overlay. Each photo has its own "Preview at" screen-size control
+    right in its editor, matching the site's 3 supported breakpoints (like a device toolbar); each size can have
+    its own crop/zoom/pan-or-zoom-animation - click on the photo (or drag the sliders) to set it, and tablet/phone
+    start out inheriting the desktop values until you tick "Custom settings for this size". You can also mirror a
+    photo horizontally/vertically, and hide it below a chosen breakpoint. Nothing here is uploaded anywhere -
+    offline-mode images are only read locally in your browser.
   </p>
 
-  <div class="toolbar">
-    <label>
+  <div class="connected-panel" id="connectedPanel" style="display: none">
+    <p class="connected-status" id="connectedStatus"></p>
+    <div class="connected-toolbar">
+      <label>
+        Editing which photo?
+        <select id="connectedSelect"></select>
+      </label>
+      <div class="btn-row">
+        <button id="connectedAddBtn">+ Add new photo</button>
+        <button id="connectedDeleteBtn" class="danger">Delete photo</button>
+      </div>
+      <input type="file" id="connectedFileInput" accept="image/*" hidden />
+    </div>
+    <div id="connectedEditorMount"></div>
+  </div>
 
-      Simulated screen size (matches the site's breakpoints)
-      <select id="viewportSelect">
-        <option value="desktop">Desktop (≥992px, ~1440px wide)</option>
-        <option value="tablet">Tablet (768–991px, ~834px wide)</option>
-        <option value="mobile">Phone (&lt;768px, ~390px wide)</option>
-      </select>
-    </label>
+  <div class="toolbar">
+    <p class="connected-status" style="margin: 0">Batch controls for offline preview cards below:</p>
     <div class="btn-row">
       <button id="playAllBtn">▶ Play all</button>
       <button id="pauseAllBtn" class="secondary">⏸ Pause all</button>
@@ -272,7 +346,6 @@
   var dropZone = document.getElementById('dropZone');
   var fileInput = document.getElementById('fileInput');
   var cards = document.getElementById('cards');
-  var viewportSelect = document.getElementById('viewportSelect');
   var playAllBtn = document.getElementById('playAllBtn');
   var pauseAllBtn = document.getElementById('pauseAllBtn');
   var cardControllers = [];
@@ -287,7 +360,6 @@
     tablet: { width: 834, tier: 'tablet' },
     mobile: { width: 390, tier: 'mobile' },
   };
-  var currentViewport = 'desktop';
 
   dropZone.addEventListener('click', function () {
     fileInput.click();
@@ -309,12 +381,6 @@
     fileInput.value = '';
   });
 
-  viewportSelect.addEventListener('change', function () {
-    currentViewport = viewportSelect.value;
-    cardControllers.forEach(function (c) {
-      c.refreshViewport();
-    });
-  });
   playAllBtn.addEventListener('click', function () {
     cardControllers.forEach(function (c) {
       c.setPlaying(true);
@@ -452,6 +518,27 @@
     var metaEl = document.createElement('div');
     metaEl.className = 'meta';
 
+    // "Which screen size am I editing" is a property of THIS photo's own editor,
+    // not a shared/global control - each card gets its own.
+    var currentViewport = 'desktop';
+    var viewportRow = document.createElement('label');
+    viewportRow.className = 'viewport-row';
+    var viewportSpan = document.createElement('span');
+    viewportSpan.textContent = 'Preview at screen size';
+    var viewportRowSelect = document.createElement('select');
+    [
+      ['desktop', 'Desktop (\u2265992px, ~1440px wide)'],
+      ['tablet', 'Tablet (768\u2013991px, ~834px wide)'],
+      ['mobile', 'Phone (<768px, ~390px wide)'],
+    ].forEach(function (pair) {
+      var opt = document.createElement('option');
+      opt.value = pair[0];
+      opt.textContent = pair[1];
+      viewportRowSelect.appendChild(opt);
+    });
+    viewportRow.appendChild(viewportSpan);
+    viewportRow.appendChild(viewportRowSelect);
+
     var playBtn = document.createElement('button');
     playBtn.textContent = '⏸ Pause';
 
@@ -544,6 +631,7 @@
 
     controls.appendChild(filenameEl);
     controls.appendChild(metaEl);
+    controls.appendChild(viewportRow);
     controls.appendChild(playBtn);
     controls.appendChild(sep);
     controls.appendChild(altLabel);
@@ -842,6 +930,11 @@
       setPlaying(!state.playing);
     });
 
+    viewportRowSelect.addEventListener('change', function () {
+      currentViewport = viewportRowSelect.value;
+      refreshAll();
+    });
+
     overrideCheckbox.addEventListener('change', function () {
       if (!isOverrideTier()) return;
       var t = state[currentViewport];
@@ -943,6 +1036,738 @@
     refreshAll();
     cardControllers.push({ refreshViewport: refreshAll, setPlaying: setPlaying });
   }
+})();
+
+(function () {
+  'use strict';
+
+  // ---- Connected mode: talks to hero_config_server.py to load/save the REAL
+  // data/hero_images.yaml and static/images/hero/ files. Silently does nothing
+  // (leaves #connectedPanel hidden) if no server is reachable, e.g. the file
+  // was opened directly - the offline drag-drop mode above still works then.
+
+  var connectedPanel = document.getElementById('connectedPanel');
+  var connectedStatus = document.getElementById('connectedStatus');
+  var connectedSelect = document.getElementById('connectedSelect');
+  var connectedAddBtn = document.getElementById('connectedAddBtn');
+  var connectedDeleteBtn = document.getElementById('connectedDeleteBtn');
+  var connectedFileInput = document.getElementById('connectedFileInput');
+  var connectedEditorMount = document.getElementById('connectedEditorMount');
+
+  var VIEWPORTS = { desktop: 1440, tablet: 834, mobile: 390 };
+  var HIDE_THRESHOLD_PX = { sm: 576, md: 768, lg: 992 };
+  var directionsByType = { pan: ['right', 'left', 'up', 'down'], tilt: ['right', 'left'], 'zoom-in': [], 'zoom-out': [], none: [] };
+  var amountDefaultsByType = {
+    pan: { min: 0, max: 20, step: 1, value: 6 },
+    'zoom-in': { min: 0, max: 0.6, step: 0.01, value: 0.15 },
+    'zoom-out': { min: 0, max: 0.6, step: 0.01, value: 0.15 },
+    tilt: { min: 0, max: 15, step: 0.5, value: 2 },
+    none: { min: 0, max: 0, step: 1, value: 0 },
+  };
+
+  var config = null; // {header, images: [...]}
+  var currentPath = null;
+  var activeEditor = null; // {refreshViewport(), setPlaying()}
+
+  function setStatus(text, isError) {
+    connectedStatus.textContent = text;
+    connectedStatus.classList.toggle('is-error', !!isError);
+  }
+
+  function filenameOf(path) {
+    return path.split('/').pop();
+  }
+
+  function parseFocus(str) {
+    var m = /^(-?\d+(?:\.\d+)?)%\s+(-?\d+(?:\.\d+)?)%$/.exec(String(str || '').trim());
+    return m ? { x: parseFloat(m[1]), y: parseFloat(m[2]) } : { x: 50, y: 50 };
+  }
+
+  function baseStateFrom(entry) {
+    var start = entry.start || {};
+    var animation = entry.animation || {};
+    var focus = parseFocus(start.focus);
+    var type = animation.type || 'pan';
+    return {
+      focusX: focus.x,
+      focusY: focus.y,
+      zoom: start.zoom != null ? start.zoom : 1.35,
+      type: type,
+      direction: animation.direction || 'right',
+      amount: animation.amount != null ? animation.amount : amountDefaultsByType[type].value,
+      duration: animation.duration != null ? animation.duration : 12,
+    };
+  }
+
+  function tierStateFrom(entry, tierName, base) {
+    var t = entry[tierName];
+    if (!t) return Object.assign({ enabled: false }, base);
+    var focus = t.focus ? parseFocus(t.focus) : { x: base.focusX, y: base.focusY };
+    return {
+      enabled: true,
+      focusX: focus.x,
+      focusY: focus.y,
+      zoom: t.zoom != null ? t.zoom : base.zoom,
+      type: t.type || base.type,
+      direction: t.direction || base.direction,
+      amount: t.amount != null ? t.amount : base.amount,
+      duration: t.duration != null ? t.duration : base.duration,
+    };
+  }
+
+  function entryToState(entry) {
+    var base = baseStateFrom(entry);
+    return {
+      path: entry.path,
+      alt: entry.alt || '',
+      mirror: entry.mirror || '',
+      hideBelow: entry.hide_below || '',
+      base: base,
+      tablet: tierStateFrom(entry, 'tablet', base),
+      mobile: tierStateFrom(entry, 'mobile', base),
+    };
+  }
+
+  function stateToEntry(state) {
+    var e = { path: state.path };
+    if (state.alt) e.alt = state.alt;
+    if (state.mirror) e.mirror = state.mirror;
+    if (state.hideBelow) e.hide_below = state.hideBelow;
+    e.start = { focus: state.base.focusX + '% ' + state.base.focusY + '%', zoom: state.base.zoom };
+    e.animation = {
+      type: state.base.type,
+      direction: state.base.direction,
+      amount: state.base.amount,
+      duration: state.base.duration,
+    };
+    ['tablet', 'mobile'].forEach(function (tierName) {
+      var t = state[tierName];
+      if (t.enabled) {
+        e[tierName] = {
+          enabled: true,
+          focus: t.focusX + '% ' + t.focusY + '%',
+          zoom: t.zoom,
+          type: t.type,
+          direction: t.direction,
+          amount: t.amount,
+          duration: t.duration,
+        };
+      }
+    });
+    return e;
+  }
+
+  // Matches layouts/partials/hero-animation.html's own math exactly.
+  function computeAnim(eff) {
+    var zoomFrom = eff.zoom;
+    var zoomTo = eff.zoom;
+    var panXFrom = 0, panXTo = 0;
+    var panYFrom = 0, panYTo = 0;
+    var rotFrom = 0, rotTo = 0;
+
+    if (eff.type === 'pan') {
+      if (eff.direction === 'left') {
+        panXFrom = eff.amount; panXTo = -eff.amount;
+      } else if (eff.direction === 'up') {
+        panYFrom = eff.amount; panYTo = -eff.amount;
+      } else if (eff.direction === 'down') {
+        panYFrom = -eff.amount; panYTo = eff.amount;
+      } else {
+        panXFrom = -eff.amount; panXTo = eff.amount;
+      }
+    } else if (eff.type === 'zoom-in') {
+      zoomTo = eff.zoom + eff.amount;
+    } else if (eff.type === 'zoom-out') {
+      zoomTo = Math.max(1, eff.zoom - eff.amount);
+    } else if (eff.type === 'tilt') {
+      if (eff.direction === 'left') {
+        rotFrom = eff.amount; rotTo = -eff.amount;
+      } else {
+        rotFrom = -eff.amount; rotTo = eff.amount;
+      }
+    }
+
+    return { zoomFrom: zoomFrom, zoomTo: zoomTo, panXFrom: panXFrom, panXTo: panXTo, panYFrom: panYFrom, panYTo: panYTo, rotFrom: rotFrom, rotTo: rotTo };
+  }
+
+  function rangeRow(labelText, min, max, step, value) {
+    var label = document.createElement('label');
+    var top = document.createElement('div');
+    top.className = 'row-value';
+    var span = document.createElement('span');
+    span.textContent = labelText;
+    var valueSpan = document.createElement('span');
+    valueSpan.textContent = value;
+    top.appendChild(span);
+    top.appendChild(valueSpan);
+    var range = document.createElement('input');
+    range.type = 'range';
+    range.min = min;
+    range.max = max;
+    range.step = step;
+    range.value = value;
+    label.appendChild(top);
+    label.appendChild(range);
+    return { label: label, range: range, valueSpan: valueSpan };
+  }
+
+  function populateSelect() {
+    var previous = connectedSelect.value;
+    connectedSelect.innerHTML = '';
+    config.images.forEach(function (entry) {
+      var opt = document.createElement('option');
+      opt.value = entry.path;
+      opt.textContent = filenameOf(entry.path) + (entry.alt ? ' - ' + entry.alt : '');
+      connectedSelect.appendChild(opt);
+    });
+    if (config.images.some(function (e) { return e.path === previous; })) {
+      connectedSelect.value = previous;
+    }
+  }
+
+  function renderEditor(entry) {
+    connectedEditorMount.innerHTML = '';
+    activeEditor = null;
+    var state = entryToState(entry);
+    var animName = 'ftsk-connected-anim-' + Math.random().toString(36).slice(2);
+    var styleEl = document.createElement('style');
+    document.head.appendChild(styleEl);
+
+    var card = document.createElement('div');
+    card.className = 'card';
+
+    var deviceWrapper = document.createElement('div');
+    deviceWrapper.className = 'device-frame-wrapper';
+    var deviceFrame = document.createElement('div');
+    deviceFrame.className = 'device-frame';
+    var simHero = document.createElement('div');
+    simHero.className = 'sim-hero';
+    var simMedia = document.createElement('div');
+    simMedia.className = 'sim-media';
+    var img = document.createElement('img');
+    img.src = '/images/hero/' + encodeURIComponent(filenameOf(entry.path));
+    var simFade = document.createElement('div');
+    simFade.className = 'sim-fade';
+    var simMotif = document.createElement('div');
+    simMotif.className = 'sim-motif';
+    simMedia.appendChild(img);
+    simMedia.appendChild(simFade);
+    simMedia.appendChild(simMotif);
+    var marker = document.createElement('div');
+    marker.className = 'focus-marker';
+    var hiddenNotice = document.createElement('div');
+    hiddenNotice.className = 'hidden-notice';
+    hiddenNotice.textContent = 'Hidden at this size (hide_below)';
+    var simContent = document.createElement('div');
+    simContent.className = 'sim-content';
+    simContent.innerHTML =
+      '<h1>Barlangászat, kutatás, közösség</h1>' +
+      '<p>Az FTSK Barlangkutató Szakosztály 1954 óta fedez fel, kutat és jár barlangokat itthon és külföldön. ' +
+      'Csatlakozz hozzánk barlangtúrákon, kutatásokon vagy a legújabb alapfokú tanfolyamunkon!</p>' +
+      '<div class="sim-btn">Ismerd meg az egyesületet</div>';
+    simHero.appendChild(simMedia);
+    simHero.appendChild(simContent);
+    simHero.appendChild(marker);
+    simHero.appendChild(hiddenNotice);
+    deviceFrame.appendChild(simHero);
+    deviceWrapper.appendChild(deviceFrame);
+
+    var controls = document.createElement('div');
+    controls.className = 'controls';
+
+    var filenameEl = document.createElement('div');
+    filenameEl.className = 'filename';
+    filenameEl.textContent = filenameOf(entry.path);
+
+    var playBtn = document.createElement('button');
+    playBtn.textContent = '⏸ Pause';
+    var playing = true;
+
+    // "Which screen size am I editing" is a property of THIS photo's own editor.
+    var currentViewport = 'desktop';
+    var viewportRow = selectRow('Preview at screen size', [
+      { value: 'desktop', text: 'Desktop (\u2265992px, ~1440px wide)' },
+      { value: 'tablet', text: 'Tablet (768\u2013991px, ~834px wide)' },
+      { value: 'mobile', text: 'Phone (<768px, ~390px wide)' },
+    ], currentViewport);
+    viewportRow.label.classList.add('viewport-row');
+
+    var altLabel = document.createElement('label');
+    var altSpan = document.createElement('span');
+    altSpan.textContent = 'Alt text';
+    var altInput = document.createElement('input');
+    altInput.type = 'text';
+    altInput.value = state.alt;
+    altLabel.appendChild(altSpan);
+    altLabel.appendChild(altInput);
+
+    function selectRow(labelText, options, value) {
+      var label = document.createElement('label');
+      var span = document.createElement('span');
+      span.textContent = labelText;
+      var select = document.createElement('select');
+      options.forEach(function (opt) {
+        var o = document.createElement('option');
+        o.value = opt.value;
+        o.textContent = opt.text;
+        select.appendChild(o);
+      });
+      select.value = value;
+      label.appendChild(span);
+      label.appendChild(select);
+      return { label: label, select: select };
+    }
+
+    var mirrorRow = selectRow('Mirror', [
+      { value: '', text: 'None' },
+      { value: 'horizontal', text: 'Horizontal' },
+      { value: 'vertical', text: 'Vertical' },
+      { value: 'both', text: 'Both' },
+    ], state.mirror);
+
+    var hideBelowRow = selectRow('Hide below (hide_below)', [
+      { value: '', text: 'Always visible' },
+      { value: 'sm', text: 'sm - hidden below 576px' },
+      { value: 'md', text: 'md - hidden below 768px' },
+      { value: 'lg', text: 'lg - hidden below 992px' },
+    ], state.hideBelow);
+
+    var sep1 = document.createElement('hr');
+    sep1.className = 'sep';
+
+    function buildTierFields(tierState) {
+      var focusXRow = rangeRow('Focus X%', 0, 100, 1, tierState.focusX);
+      var focusYRow = rangeRow('Focus Y%', 0, 100, 1, tierState.focusY);
+      var zoomRow = rangeRow('Zoom (start.zoom)', 1, 2.5, 0.05, tierState.zoom);
+      var typeRow = selectRow(
+        'Animation type',
+        ['pan', 'zoom-in', 'zoom-out', 'tilt', 'none'].map(function (v) {
+          return { value: v, text: v };
+        }),
+        tierState.type
+      );
+      var directionRow = selectRow('Direction', [], tierState.direction);
+      var amountRow = rangeRow('Amount', 0, 20, 1, tierState.amount);
+      var durationRow = rangeRow('Duration, seconds', 4, 30, 1, tierState.duration);
+      return {
+        focusXRow: focusXRow, focusYRow: focusYRow, zoomRow: zoomRow,
+        typeRow: typeRow, directionRow: directionRow, amountRow: amountRow, durationRow: durationRow,
+      };
+    }
+
+    var baseFields = buildTierFields(state.base);
+
+    var tabletEnable = document.createElement('label');
+    tabletEnable.className = 'override-row';
+    var tabletCheckbox = document.createElement('input');
+    tabletCheckbox.type = 'checkbox';
+    tabletCheckbox.checked = state.tablet.enabled;
+    tabletEnable.appendChild(tabletCheckbox);
+    tabletEnable.appendChild(document.createTextNode('Custom settings for tablet'));
+    var tabletFields = buildTierFields(state.tablet);
+    var tabletBox = document.createElement('div');
+    Object.keys(tabletFields).forEach(function (k) {
+      tabletBox.appendChild(tabletFields[k].label);
+    });
+
+    var mobileEnable = document.createElement('label');
+    mobileEnable.className = 'override-row';
+    var mobileCheckbox = document.createElement('input');
+    mobileCheckbox.type = 'checkbox';
+    mobileCheckbox.checked = state.mobile.enabled;
+    mobileEnable.appendChild(mobileCheckbox);
+    mobileEnable.appendChild(document.createTextNode('Custom settings for phone'));
+    var mobileFields = buildTierFields(state.mobile);
+    var mobileBox = document.createElement('div');
+    Object.keys(mobileFields).forEach(function (k) {
+      mobileBox.appendChild(mobileFields[k].label);
+    });
+
+    var saveBtn = document.createElement('button');
+    saveBtn.textContent = 'Save';
+    var saveNote = document.createElement('span');
+    saveNote.className = 'connected-save-note';
+    var saveRow = document.createElement('div');
+    saveRow.className = 'connected-save-row';
+    saveRow.appendChild(saveBtn);
+    saveRow.appendChild(saveNote);
+
+    var previewOutput = document.createElement('pre');
+    previewOutput.className = 'yaml-output';
+
+    var sectionPosition = document.createElement('div');
+    sectionPosition.className = 'section-title';
+    sectionPosition.textContent = 'Position & animation (desktop)';
+    var sectionTablet = document.createElement('div');
+    sectionTablet.className = 'section-title';
+    sectionTablet.textContent = 'Tablet override';
+    var sectionMobile = document.createElement('div');
+    sectionMobile.className = 'section-title';
+    sectionMobile.textContent = 'Phone override';
+    var sectionSave = document.createElement('div');
+    sectionSave.className = 'section-title';
+    sectionSave.textContent = 'Save';
+
+    controls.appendChild(filenameEl);
+    controls.appendChild(viewportRow.label);
+    controls.appendChild(playBtn);
+    controls.appendChild(altLabel);
+    controls.appendChild(mirrorRow.label);
+    controls.appendChild(hideBelowRow.label);
+    controls.appendChild(sep1);
+    controls.appendChild(sectionPosition);
+    controls.appendChild(baseFields.focusXRow.label);
+    controls.appendChild(baseFields.focusYRow.label);
+    controls.appendChild(baseFields.zoomRow.label);
+    controls.appendChild(baseFields.typeRow.label);
+    controls.appendChild(baseFields.directionRow.label);
+    controls.appendChild(baseFields.amountRow.label);
+    controls.appendChild(baseFields.durationRow.label);
+    var sep2 = document.createElement('hr');
+    sep2.className = 'sep';
+    controls.appendChild(sep2);
+    controls.appendChild(sectionTablet);
+    controls.appendChild(tabletEnable);
+    controls.appendChild(tabletBox);
+    var sep3 = document.createElement('hr');
+    sep3.className = 'sep';
+    controls.appendChild(sep3);
+    controls.appendChild(sectionMobile);
+    controls.appendChild(mobileEnable);
+    controls.appendChild(mobileBox);
+    var sep4 = document.createElement('hr');
+    sep4.className = 'sep';
+    controls.appendChild(sep4);
+    controls.appendChild(sectionSave);
+    controls.appendChild(saveRow);
+    controls.appendChild(previewOutput);
+
+    card.appendChild(deviceWrapper);
+    card.appendChild(controls);
+    connectedEditorMount.appendChild(card);
+
+    function effectiveTierName() {
+      return currentViewport === 'desktop' ? 'base' : currentViewport;
+    }
+    function effective() {
+      var tierName = effectiveTierName();
+      if (tierName === 'base') return state.base;
+      return state[tierName].enabled ? state[tierName] : state.base;
+    }
+    function fieldsFor(tierName) {
+      return tierName === 'base' ? baseFields : tierName === 'tablet' ? tabletFields : mobileFields;
+    }
+    function refreshDirectionOptions(fields, eff) {
+      var options = directionsByType[eff.type] || [];
+      fields.directionRow.select.innerHTML = '';
+      fields.directionRow.label.style.display = options.length ? '' : 'none';
+      options.forEach(function (value) {
+        var opt = document.createElement('option');
+        opt.value = value;
+        opt.textContent = value;
+        fields.directionRow.select.appendChild(opt);
+      });
+      fields.directionRow.select.value = options.indexOf(eff.direction) !== -1 ? eff.direction : options[0] || eff.direction;
+    }
+    function refreshAmountRange(fields, eff) {
+      var d = amountDefaultsByType[eff.type];
+      fields.amountRow.range.min = d.min;
+      fields.amountRow.range.max = d.max;
+      fields.amountRow.range.step = d.step;
+      fields.amountRow.label.style.display = d.max > 0 ? '' : 'none';
+    }
+    function syncFieldsFromState(fields, tierState) {
+      fields.focusXRow.range.value = tierState.focusX;
+      fields.focusXRow.valueSpan.textContent = tierState.focusX;
+      fields.focusYRow.range.value = tierState.focusY;
+      fields.focusYRow.valueSpan.textContent = tierState.focusY;
+      fields.zoomRow.range.value = tierState.zoom;
+      fields.zoomRow.valueSpan.textContent = tierState.zoom;
+      fields.typeRow.select.value = tierState.type;
+      refreshDirectionOptions(fields, tierState);
+      refreshAmountRange(fields, tierState);
+      fields.amountRow.range.value = tierState.amount;
+      fields.amountRow.valueSpan.textContent = tierState.amount;
+      fields.durationRow.range.value = tierState.duration;
+      fields.durationRow.valueSpan.textContent = tierState.duration;
+    }
+
+    function applyPreview() {
+      var eff = effective();
+      img.style.objectPosition = eff.focusX + '% ' + eff.focusY + '%';
+      img.style.transformOrigin = eff.focusX + '% ' + eff.focusY + '%';
+      marker.style.left = eff.focusX + '%';
+      marker.style.top = eff.focusY + '%';
+      var mx = state.mirror === 'horizontal' || state.mirror === 'both' ? -1 : 1;
+      var my = state.mirror === 'vertical' || state.mirror === 'both' ? -1 : 1;
+      var anim = computeAnim(eff);
+      styleEl.textContent =
+        '@keyframes ' + animName + ' {' +
+        'from { transform: scale(' + (anim.zoomFrom * mx) + ',' + (anim.zoomFrom * my) + ') translate(' + anim.panXFrom + '%,' + anim.panYFrom + '%) rotate(' + anim.rotFrom + 'deg); }' +
+        'to { transform: scale(' + (anim.zoomTo * mx) + ',' + (anim.zoomTo * my) + ') translate(' + anim.panXTo + '%,' + anim.panYTo + '%) rotate(' + anim.rotTo + 'deg); }' +
+        '}';
+      img.style.animationName = animName;
+      img.style.animationDuration = eff.duration + 's';
+      img.style.animationPlayState = playing ? 'running' : 'paused';
+      playBtn.textContent = playing ? '⏸ Pause' : '▶ Play';
+
+      var vpWidth = VIEWPORTS[currentViewport];
+      var hidden = state.hideBelow && vpWidth < HIDE_THRESHOLD_PX[state.hideBelow];
+      simHero.classList.toggle('is-hidden-here', !!hidden);
+      simHero.dataset.tier = currentViewport;
+
+      var wrapperWidth = deviceWrapper.clientWidth || vpWidth;
+      deviceFrame.style.width = vpWidth + 'px';
+      deviceFrame.style.zoom = Math.min(1, wrapperWidth / vpWidth);
+    }
+
+    function refreshOverrideVisibility() {
+      tabletBox.style.display = state.tablet.enabled ? '' : 'none';
+      mobileBox.style.display = state.mobile.enabled ? '' : 'none';
+    }
+
+    function renderPreviewJson() {
+      previewOutput.textContent = JSON.stringify(stateToEntry(state), null, 2);
+    }
+
+    function refreshAll() {
+      refreshOverrideVisibility();
+      syncFieldsFromState(baseFields, state.base);
+      syncFieldsFromState(tabletFields, state.tablet);
+      syncFieldsFromState(mobileFields, state.mobile);
+      applyPreview();
+      renderPreviewJson();
+    }
+
+    simHero.addEventListener('click', function (e) {
+      var rect = simHero.getBoundingClientRect();
+      var tierName = effectiveTierName();
+      var target = state.base;
+      if (tierName !== 'base') {
+        target = state[tierName];
+        if (!target.enabled) {
+          Object.assign(target, state.base, { enabled: true });
+          if (tierName === 'tablet') tabletCheckbox.checked = true;
+          if (tierName === 'mobile') mobileCheckbox.checked = true;
+        }
+      }
+      target.focusX = Math.round(Math.min(100, Math.max(0, ((e.clientX - rect.left) / rect.width) * 100)));
+      target.focusY = Math.round(Math.min(100, Math.max(0, ((e.clientY - rect.top) / rect.height) * 100)));
+      refreshAll();
+    });
+
+    playBtn.addEventListener('click', function () {
+      playing = !playing;
+      applyPreview();
+    });
+
+    viewportRow.select.addEventListener('change', function () {
+      currentViewport = viewportRow.select.value;
+      refreshAll();
+    });
+
+    altInput.addEventListener('input', function () {
+      state.alt = altInput.value;
+      renderPreviewJson();
+    });
+    mirrorRow.select.addEventListener('change', function () {
+      state.mirror = mirrorRow.select.value;
+      applyPreview();
+      renderPreviewJson();
+    });
+    hideBelowRow.select.addEventListener('change', function () {
+      state.hideBelow = hideBelowRow.select.value;
+      applyPreview();
+      renderPreviewJson();
+    });
+
+    function wireTierControls(fields, tierState, tierName) {
+      fields.focusXRow.range.addEventListener('input', function () {
+        tierState.focusX = parseInt(fields.focusXRow.range.value, 10);
+        refreshAll();
+      });
+      fields.focusYRow.range.addEventListener('input', function () {
+        tierState.focusY = parseInt(fields.focusYRow.range.value, 10);
+        refreshAll();
+      });
+      fields.zoomRow.range.addEventListener('input', function () {
+        tierState.zoom = parseFloat(fields.zoomRow.range.value);
+        refreshAll();
+      });
+      fields.typeRow.select.addEventListener('change', function () {
+        tierState.type = fields.typeRow.select.value;
+        tierState.amount = amountDefaultsByType[tierState.type].value;
+        tierState.direction = (directionsByType[tierState.type] || [])[0] || tierState.direction;
+        refreshAll();
+      });
+      fields.directionRow.select.addEventListener('change', function () {
+        tierState.direction = fields.directionRow.select.value;
+        refreshAll();
+      });
+      fields.amountRow.range.addEventListener('input', function () {
+        tierState.amount = parseFloat(fields.amountRow.range.value);
+        refreshAll();
+      });
+      fields.durationRow.range.addEventListener('input', function () {
+        tierState.duration = parseFloat(fields.durationRow.range.value);
+        refreshAll();
+      });
+    }
+
+    wireTierControls(baseFields, state.base, 'base');
+    wireTierControls(tabletFields, state.tablet, 'tablet');
+    wireTierControls(mobileFields, state.mobile, 'mobile');
+
+    tabletCheckbox.addEventListener('change', function () {
+      state.tablet.enabled = tabletCheckbox.checked;
+      if (state.tablet.enabled) Object.assign(state.tablet, state.base, { enabled: true });
+      refreshAll();
+    });
+    mobileCheckbox.addEventListener('change', function () {
+      state.mobile.enabled = mobileCheckbox.checked;
+      if (state.mobile.enabled) Object.assign(state.mobile, state.base, { enabled: true });
+      refreshAll();
+    });
+
+    saveBtn.addEventListener('click', function () {
+      var idx = config.images.findIndex(function (e) {
+        return e.path === state.path;
+      });
+      if (idx === -1) return;
+      var updated = config.images.slice();
+      updated[idx] = stateToEntry(state);
+      saveNote.textContent = 'Saving...';
+      saveNote.classList.remove('is-success');
+      fetch('/api/config', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ images: updated }),
+      })
+        .then(function (r) {
+          return r.json().then(function (data) {
+            if (!r.ok) throw new Error(data.error || 'Save failed');
+            return data;
+          });
+        })
+        .then(function (data) {
+          config = data;
+          populateSelect();
+          saveNote.textContent = 'Saved!';
+          saveNote.classList.add('is-success');
+        })
+        .catch(function (err) {
+          saveNote.textContent = 'Error: ' + err.message;
+          saveNote.classList.remove('is-success');
+        });
+    });
+
+    img.addEventListener('load', refreshAll);
+    refreshAll();
+
+    activeEditor = {
+      refreshViewport: refreshAll,
+      setPlaying: function (value) {
+        playing = value;
+        applyPreview();
+      },
+    };
+  }
+
+  function loadEditorFor(path) {
+    currentPath = path;
+    var entry = config.images.find(function (e) {
+      return e.path === path;
+    });
+    if (entry) renderEditor(entry);
+  }
+
+  connectedSelect.addEventListener('change', function () {
+    loadEditorFor(connectedSelect.value);
+  });
+
+  connectedAddBtn.addEventListener('click', function () {
+    connectedFileInput.click();
+  });
+
+  connectedFileInput.addEventListener('change', function () {
+    var file = connectedFileInput.files[0];
+    connectedFileInput.value = '';
+    if (!file) return;
+    setStatus('Uploading and converting...', false);
+    fetch('/api/upload', {
+      method: 'POST',
+      headers: { 'X-Filename': encodeURIComponent(file.name) },
+      body: file,
+    })
+      .then(function (r) {
+        return r.json().then(function (data) {
+          if (!r.ok) throw new Error(data.error || 'Upload failed');
+          return data;
+        });
+      })
+      .then(function (data) {
+        config = data;
+        populateSelect();
+        connectedSelect.value = data.new_path;
+        loadEditorFor(data.new_path);
+        setStatus('Connected - data/hero_images.yaml, ' + config.images.length + ' photo(s)', false);
+      })
+      .catch(function (err) {
+        setStatus('Upload failed: ' + err.message, true);
+      });
+  });
+
+  connectedDeleteBtn.addEventListener('click', function () {
+    if (!currentPath) return;
+    if (!confirm('Delete this photo from data/hero_images.yaml and static/images/hero/? This cannot be undone.')) return;
+    fetch('/api/image?path=' + encodeURIComponent(currentPath), { method: 'DELETE' })
+      .then(function (r) {
+        return r.json().then(function (data) {
+          if (!r.ok) throw new Error(data.error || 'Delete failed');
+          return data;
+        });
+      })
+      .then(function (data) {
+        config = data;
+        populateSelect();
+        if (config.images.length) {
+          connectedSelect.value = config.images[0].path;
+          loadEditorFor(config.images[0].path);
+        } else {
+          currentPath = null;
+          activeEditor = null;
+          connectedEditorMount.innerHTML = '';
+        }
+        setStatus('Connected - data/hero_images.yaml, ' + config.images.length + ' photo(s)', false);
+      })
+      .catch(function (err) {
+        setStatus('Delete failed: ' + err.message, true);
+      });
+  });
+
+  window.addEventListener('resize', function () {
+    if (activeEditor) activeEditor.refreshViewport();
+  });
+
+  fetch('/api/config')
+    .then(function (r) {
+      if (!r.ok) throw new Error('no server');
+      return r.json();
+    })
+    .then(function (data) {
+      config = data;
+      connectedPanel.style.display = '';
+      populateSelect();
+      setStatus('Connected - data/hero_images.yaml, ' + config.images.length + ' photo(s)', false);
+      if (config.images.length) {
+        connectedSelect.value = config.images[0].path;
+        loadEditorFor(config.images[0].path);
+      }
+    })
+    .catch(function () {
+      // No hero_config_server.py running (or opened as a plain file) - stay in
+      // offline/manual mode, #connectedPanel remains hidden.
+    });
 })();
 </script>
 </body>
