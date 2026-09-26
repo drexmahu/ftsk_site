@@ -17,6 +17,12 @@ details (required tools, pinned versions, parameters). Quick start on Windows:
 For the optional Bookshop live component browser alongside the dev server:
 `npm run bookshop` (defaults to [http://localhost:30775/](http://localhost:30775/)).
 
+## Writing content
+
+See [docs/CONTENT_GUIDE.md](docs/CONTENT_GUIDE.md) for how to write and extend
+long-form articles (trip reports, expeditions, courses), including the
+day-by-day structure and how to add/convert photos.
+
 ## CI/CD
 
 Build validation, PR preview sites, a staging deploy, and manual production

@@ -46,8 +46,11 @@
   p {
     margin-bottom: $base-margin * 1.5;
   }
-  h3 {
-    margin-top: $base-margin * 2;
+  h2,
+  h3,
+  h4 {
+    margin-top: $base-margin * 3;
+    margin-bottom: $base-margin;
   }
   ul,
   ol {
@@ -61,6 +64,34 @@
     color: $color-primary;
     text-decoration: underline;
   }
+}
+
+// A single embedded article photo (see layouts/_default/_markup/render-image.html),
+// used for the day-by-day photos in long trip reports/expeditions.
+.ftsk-article-figure {
+  margin: $base-margin * 2.5 0;
+  text-align: center;
+}
+.ftsk-article-figure-link {
+  display: block;
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow: 0 20px 40px var(--shadow-ambient);
+  transition: transform 0.25s ease;
+  &:hover {
+    transform: scale(1.01);
+  }
+}
+.ftsk-article-figure img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.ftsk-article-figure figcaption {
+  margin-top: $base-margin * 0.6;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  font-style: italic;
 }
 
 .ftsk-linklist {

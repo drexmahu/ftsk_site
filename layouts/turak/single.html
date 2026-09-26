@@ -12,9 +12,11 @@
                         <li class="list-inline-item">
                            <p>{{.Date | time.Format ":date_long"}}</p>
                         </li>
+                        {{ with .Params.author }}
                         <li class="list-inline-item">
-                           <p>{{.Params.author}}</p>
+                           <p>{{ . }}</p>
                         </li>
+                        {{ end }}
                         <li class="list-inline-item">
                            <p>{{ .ReadingTime }} <span>perc olvasás</span></p>
                         </li>
@@ -28,7 +30,7 @@
                      alt="featured-image"
                   />
                </div>
-               <div style="max-width: 900px; margin: 0 auto">{{.Content}}</div>
+               <div class="ftsk-prose" style="max-width: 900px; margin: 0 auto">{{.Content}}</div>
             </article>
          </div>
       </div>

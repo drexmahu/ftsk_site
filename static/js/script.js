@@ -32,6 +32,15 @@ $(document).ready(function () {
       mainClass: 'mfp-fade',
    });
 
+   // Embedded article photos (see layouts/_default/_markup/render-image.html) -
+   // grouped into one lightbox gallery per article.
+   $('.ftsk-prose').magnificPopup({
+      delegate: '.ftsk-article-figure-link',
+      type: 'image',
+      gallery: { enabled: true },
+      mainClass: 'mfp-fade',
+   });
+
    // Member tile popup
    $('.ftsk-members-grid').on('click', '.ftsk-members-tile', function () {
       var $tile = $(this);
