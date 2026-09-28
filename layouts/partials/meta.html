@@ -16,17 +16,14 @@
 <!-- Meta tags for open graph and twitter -->
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:site" content="{{ hugo.Data.meta.twitter_site }}" />
+{{ $socialCard := partial "social-card.html" . }}
 {{ if eq .Permalink "/" }}
     <meta name="og:title" content="{{ hugo.Data.meta.site_title }}" />
     <meta property="og:type" content="website" />
-    <meta name="og:image" content="{{ partial `absurl.html` hugo.Data.meta.image }}" />
+    <meta name="og:image" content="{{ $socialCard }}" />
     <meta name="twitter:creator" content="{{ hugo.Data.meta.twitter_site }}" />
     <meta name="twitter:title" content="{{ hugo.Data.meta.title }}" />
-    {{ with hugo.Data.meta.twitter_image }}
-    <meta name="twitter:image" content="{{ partial `absurl.html` . }}" />
-    {{ else }}
-    <meta name="twitter:image" content="{{ partial `absurl.html` hugo.Data.meta.image }}" />
-    {{ end }}
+    <meta name="twitter:image" content="{{ $socialCard }}" />
 {{ else }}
     <meta name="og:title" content="{{ .Title }}" />
     <meta name="twitter:title" content="{{ .Title }}" />
@@ -35,17 +32,8 @@
     {{ else }}
     <meta property="og:type" content="website" />
     {{ end }}
-    {{ with .Params.seo.featured_image }}
-    <meta name="og:image" content="{{ partial `absurl.html` . }}" />
-    <meta name="twitter:image" content="{{ partial `absurl.html` . }}" />
-    {{ else }}
-    <meta name="og:image" content="{{ partial `absurl.html` hugo.Data.meta.image }}" />
-    {{ with hugo.Data.meta.twitter_image }}
-        <meta name="twitter:image" content="{{ partial `absurl.html` . }}" />
-    {{ else }}
-        <meta name="twitter:image" content="{{ partial `absurl.html` hugo.Data.meta.image }}" />
-    {{ end }}
-    {{ end }}
+    <meta name="og:image" content="{{ $socialCard }}" />
+    <meta name="twitter:image" content="{{ $socialCard }}" />
     {{ with .Params.seo.author_twitter_handle }}  
     <meta name="twitter:creator" content="{{ . }}" />
     {{ else }}

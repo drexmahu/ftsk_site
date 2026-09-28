@@ -197,3 +197,28 @@ vannak beágyazva, egy régi beszámoló bővítése ennyi:
    új napi szakaszt ugyanazzal a `## N. nap – ...` cím mintával.
 
 Egyik esethez sem kell front matter vagy sablon módosítás.
+
+## 6. Régi, csak PDF-es beszámolók (`legacy-*`)
+
+A `turak` mappa régebbi cikkei nem a fenti napról napra bontott formátumot
+követik - ezek csak egy rövid bevezető bekezdésből állnak, a teljes
+beszámoló pedig egy régi PDF-ben él. Ezeket a fájlneve is megkülönbözteti:
+`legacy-` előtaggal kezdődnek (pl. `legacy-bu56-pireneusok-1998.md`).
+
+- A PDF-eket ne külső (ftsk.hu-s) linkként hivatkozd - töltsd le és tedd be
+  a repóba a `static/pdfs/<szekció>/<cikk-slug>.pdf` útvonalra (pl.
+  `static/pdfs/turak/legacy-bu56-pireneusok-1998.pdf`).
+- A szövegbe a `{{< pdf >}}` shortcode-dal ágyazd be, ami egy beágyazott
+  PDF-nézetet és egy stílusos letöltés gombot is megjelenít:
+
+  ```markdown
+  {{< pdf src="/pdfs/turak/legacy-bu56-pireneusok-1998.pdf" title="BU 56 (Pireneusok, 1998)" >}}
+  ```
+
+- Ne írd meg kézzel a beágyazás HTML-jét/CSS-ét - a `layouts/shortcodes/pdf.html`
+  és a hozzá tartozó `.ftsk-pdf-embed` stílus (lásd
+  `assets/scss/components/_ftsk.scss`) intézi ezt.
+- Ha egy régi cikk nem PDF-re, hanem valamilyen más régi oldalra (pl. `.htm`)
+  hivatkozik, azt nem kell letölteni/beágyazni - elég csak a `legacy-`
+  fájlnév-előtagot alkalmazni rá.
+

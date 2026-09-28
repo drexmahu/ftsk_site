@@ -94,6 +94,15 @@ html {
   background-size: cover;
 }
 
+// Reusable modifier for any hero-ish section that's too short to crop the
+// full motif nicely (stalactites AND stalagmites) - just the top (hanging
+// stalactite) half, same reasoning as .ftsk-section-header above. Add
+// alongside .blog-hero etc. (later in source = wins at equal specificity).
+.ftsk-hero-top-motif {
+  background-image: url($cave-silhouette-top-url);
+  background-position: top center;
+}
+
 .footer {
   background-color: var(--bg-surface);
   background-image: url($cave-silhouette-url);

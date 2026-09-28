@@ -12,8 +12,7 @@ content_blocks:
     title: Tagjaink
     title_suffix:
     description: >-
-      Büszkék vagyunk aktív és lelkes tagságunkra. Az alábbiakban tagjainkat
-      tagsági kategóriák szerint csoportosítva mutatjuk be.
+      Büszkék vagyunk aktív és lelkes tagságunkra.
   - _bookshop_name: global/cta
     eyebrow: Csatlakoznál?
     title: "Te is a "

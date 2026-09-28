@@ -102,6 +102,328 @@
   margin: $base-margin * 2.5 0;
 }
 
+// {{< pdf >}} shortcode (see layouts/shortcodes/pdf.html) - an inline PDF
+// viewer + download button for legacy reports that only exist as an old PDF.
+.ftsk-pdf-embed {
+  margin: $base-margin * 2.5 0;
+  text-align: center;
+}
+.ftsk-pdf-embed-caption {
+  margin-bottom: $base-margin * 0.6;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  font-style: italic;
+}
+.ftsk-pdf-embed-frame {
+  margin-bottom: $base-margin;
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow: 0 20px 40px var(--shadow-ambient);
+  border: 1px solid var(--border-subtle);
+
+  iframe {
+    display: block;
+    width: 100%;
+    height: 70vh;
+    min-height: 480px;
+    border: 0;
+  }
+}
+.ftsk-pdf-embed-download {
+  display: inline-flex !important;
+  width: auto !important;
+  i {
+    margin-right: 10px;
+    font-size: 1.2em;
+  }
+}
+
+// Túrabeszámolók (turak) list page - featured reports, filter toolbar and archive
+// badges (see layouts/turak/list.html). Filtering itself is client-side (see
+// the "#ftsk-turak-grid" binding in static/js/script.js) - .is-hidden just
+// removes a card from layout without touching the DOM.
+.ftsk-turak-card.is-hidden {
+  display: none;
+}
+
+.ftsk-turak-featured {
+  padding: $base-padding * 2 0 $base-padding * 1;
+  .section-header {
+    padding-bottom: $base-padding * 1.5;
+    h2 {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      i {
+        color: $color-primary;
+      }
+    }
+  }
+}
+.ftsk-turak-featured-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border-radius: 20px;
+  overflow: hidden;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 20px 40px var(--shadow-ambient);
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+  @include media-breakpoint-up-md {
+    flex-direction: row;
+  }
+  &:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 26px 45px -16px rgba(0, 0, 0, 0.55);
+    .ftsk-turak-featured-thumb img {
+      transform: scale(1.06);
+    }
+  }
+}
+.ftsk-turak-featured-thumb {
+  display: block;
+  overflow: hidden;
+  flex-shrink: 0;
+  @include media-breakpoint-up-md {
+    width: 42%;
+  }
+  img {
+    width: 100%;
+    height: 230px;
+    object-fit: cover;
+    transition: transform 0.5s ease-in-out;
+    @include media-breakpoint-up-md {
+      height: 100%;
+    }
+  }
+}
+.ftsk-turak-featured-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  padding: $base-padding * 1.8;
+  h3 {
+    font-size: $base-font-size * 1.5;
+    margin: $base-margin * 0.6 0;
+    a {
+      color: var(--text-heading);
+      &:hover {
+        color: $color-primary;
+      }
+    }
+  }
+}
+.ftsk-turak-featured-excerpt {
+  color: var(--text-muted);
+  margin-bottom: $base-margin;
+}
+.ftsk-turak-featured-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: $base-margin;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+}
+.ftsk-turak-featured-cta {
+  margin-top: auto;
+  align-self: flex-start;
+  padding: 0.7rem 1.4rem !important;
+  i {
+    margin-left: 8px;
+    margin-right: 0;
+  }
+}
+
+// Filter toolbar
+.ftsk-turak-toolbar {
+  padding: $base-padding * 1 0 $base-padding * 2;
+}
+.ftsk-turak-toolbar-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: $base-margin;
+}
+.ftsk-turak-search,
+.ftsk-turak-decade {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 12px;
+  padding: 0.6rem 1rem;
+  color: var(--text-muted);
+  i {
+    flex-shrink: 0;
+  }
+}
+.ftsk-turak-search {
+  flex: 1 1 260px;
+  input {
+    flex-grow: 1;
+    background: transparent;
+    border: 0;
+    color: var(--text-heading);
+    font-family: $font-secondary;
+    &:focus {
+      outline: none;
+    }
+    &::placeholder {
+      color: var(--text-muted);
+    }
+  }
+}
+.ftsk-turak-decade {
+  flex: 0 1 220px;
+  select {
+    flex-grow: 1;
+    background: transparent;
+    border: 0;
+    color: var(--text-heading);
+    font-family: $font-secondary;
+    &:focus {
+      outline: none;
+    }
+    option {
+      background: var(--bg-surface);
+      color: var(--text-heading);
+    }
+  }
+}
+.ftsk-turak-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: $base-margin * 0.8;
+}
+.ftsk-turak-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.5rem 1.1rem;
+  border-radius: 999px;
+  background: rgba(190, 160, 112, 0.16);
+  border: 1px solid rgba(190, 160, 112, 0.4);
+  color: var(--text-heading);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease-in-out;
+  &.tag-tura {
+    border-color: rgba(20, 177, 184, 0.5);
+  }
+  &.tag-kutatas {
+    border-color: rgba(190, 160, 112, 0.5);
+  }
+  &.tag-expedicio {
+    border-color: rgba(29, 135, 153, 0.55);
+  }
+  &.tag-kanyoning {
+    border-color: rgba(91, 107, 94, 0.65);
+  }
+  &.tag-szemetszedes {
+    border-color: rgba(24, 65, 117, 0.7);
+  }
+  &:hover {
+    border-color: $color-primary;
+  }
+  &.is-active {
+    background: $color-primary;
+    border-color: $color-primary;
+    color: var(--bg-page);
+  }
+}
+.ftsk-turak-toolbar-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  #ftsk-turak-count {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin: 0;
+  }
+}
+.ftsk-turak-reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 0;
+  color: $color-primary;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+// "Archív" badge on legacy-* report cards (see layouts/turak/list.html)
+.ftsk-turak-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(10, 17, 22, 0.75);
+  color: var(--text-heading);
+  font-size: 0.75rem;
+  font-weight: 600;
+  backdrop-filter: blur(2px);
+}
+.blog-post-thumb {
+  position: relative;
+}
+.ftsk-turak-card-legacy .blog-post-thumb img {
+  filter: saturate(0.85);
+  // The shared fallback thumbnail (no article-specific photo) is the full
+  // cave-silhouette illustration - anchor to the top so the card crops into
+  // the hanging stalactites, not the standing stalagmites at its bottom.
+  object-position: top;
+}
+
+// Compact hero for the /turak/ list page - the stock .blog-hero padding
+// utility classes (pt-22/pb-25 etc.) were designed to be visually cancelled
+// out by a large negative margin-top on an immediately-following ".blog"
+// section (an overlap trick); this page doesn't use that pairing, so it needs
+// its own modest, self-contained padding instead.
+.ftsk-turak-hero {
+  padding: $base-padding * 9 0 $base-padding * 4;
+  @include media-breakpoint-down-lg {
+    padding: $base-padding * 7 0 $base-padding * 3;
+  }
+  @include media-breakpoint-down-sm {
+    padding: $base-padding * 6 0 $base-padding * 2.5;
+  }
+}
+
+.ftsk-turak-empty {
+  text-align: center;
+  padding: $base-padding * 5 0;
+  color: var(--text-muted);
+  i {
+    font-size: 2.5rem;
+    color: $color-primary;
+    margin-bottom: $base-margin * 0.6;
+  }
+  p {
+    margin-bottom: $base-margin;
+  }
+}
+
 .ftsk-linklist {
   padding: $base-padding * 5 0;
 }
