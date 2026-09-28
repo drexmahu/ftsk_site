@@ -94,6 +94,14 @@
   font-style: italic;
 }
 
+// A {{< gallery >}} block of {{< photo >}} shortcodes embedded in an article
+// (see layouts/shortcodes/gallery.html) - reuses .ftsk-gallery-grid/-item's grid
+// and hover-caption look, just with prose-appropriate spacing instead of the
+// standalone Galéria page's section padding.
+.ftsk-article-gallery {
+  margin: $base-margin * 2.5 0;
+}
+
 .ftsk-linklist {
   padding: $base-padding * 5 0;
 }

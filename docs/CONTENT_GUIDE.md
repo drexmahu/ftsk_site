@@ -1,34 +1,35 @@
-# Writing long-form articles (trip reports, expeditions, courses)
+# Hosszú cikkek írása (túrabeszámolók, expedíciók, tanfolyamok)
 
-How to write and maintain a long, photo-illustrated article under
-`content/turak/` or `content/tanfolyamok/` - the pattern used by multi-day
-expedition write-ups (e.g. day-by-day trip reports) as opposed to the older,
-short "see the attached PDF" style entries that also live in those folders.
+Hogyan írj és bővíts egy hosszú, fotókkal illusztrált cikket a `content/turak/`
+vagy a `content/tanfolyamok/` mappában - ez a minta a napról napra bontott
+expedíciós beszámolóknál használatos, szemben a régebbi, rövid "lásd a
+csatolt PDF-et" típusú bejegyzésekkel, amik szintén ezekben a mappákban
+találhatók.
 
-This is the counterpart used by
-[`.github/instructions/content-review.instructions.md`](../.github/instructions/content-review.instructions.md),
-which asks Copilot code review to check new/changed articles against this
-structure.
+Ez a párja a
+[`.github/instructions/content-review.instructions.md`](../.github/instructions/content-review.instructions.md)
+fájlnak, ami alapján a Copilot code review ellenőrzi az új/módosított
+cikkeket ehhez a struktúrához képest.
 
 ## 1. Front matter
 
-Every article needs the same front matter block as the rest of `turak`/
-`tanfolyamok`:
+Minden cikknek ugyanaz a front matter blokkja kell legyen, mint a `turak`/
+`tanfolyamok` mappák többi cikkének:
 
 ```yaml
 ---
-date: 2026-08-14T00:00:00Z # the event's start date, used for sorting
-title: Kanin expedíció (2026) # "Name (year)", matches existing entries
+date: 2026-08-14T00:00:00Z # az esemény kezdő dátuma, ez alapján rendeződik a lista
+title: Kanin expedíció (2026) # "Név (évszám)", ahogy a meglévő bejegyzéseknél is
 categories:
-  - Expedíció # one of: Túra, Kutatás, Expedíció, Kanyoning, Szemétszedés (see data/blog-tags.yaml)
-author: "" # who wrote it - leave blank if unknown, don't guess
-participants: # optional - see "Participants" section below
-  - Name One
-  - Name Two (Nickname)
+  - Expedíció # egy a következők közül: Túra, Kutatás, Expedíció, Kanyoning, Szemétszedés (lásd data/blog-tags.yaml)
+author: "" # ki írta - hagyd üresen, ha nem tudod biztosan, ne találgass
+participants: # opcionális - lásd a "Résztvevők" szakaszt lentebb
+  - Első Név
+  - Második Név (Becenév)
 thumbImg:
-  image_path: /images/turak/<slug>/01-....webp # used in list/related-post cards
+  image_path: /images/turak/<slug>/01-....webp # a lista/kapcsolódó cikkek kártyáin jelenik meg
 featuredImg:
-  image_path: /images/turak/<slug>/01-....webp # used as the big banner on the article page
+  image_path: /images/turak/<slug>/01-....webp # a cikk oldalán a nagy banner képe
 seo:
   page_description:
   canonical_url:
@@ -40,21 +41,21 @@ draft: false
 ---
 ```
 
-`<slug>` is the article's filename without `.md` (e.g. `2026-kanin-expedicio`).
-Leave `author` blank rather than guessing - misattributing a report is worse
-than an empty field.
+A `<slug>` a cikk fájlneve `.md` kiterjesztés nélkül (pl. `2026-kanin-expedicio`).
+Az `author` mezőt inkább hagyd üresen, mint hogy találgass - egy rosszul
+tulajdonított beszámoló rosszabb, mint egy üres mező.
 
-## 2. Body structure
+## 2. A szöveg felépítése
 
-Long trip reports read much better broken into day-by-day sections instead of
-one continuous wall of text:
+A hosszú túrabeszámolók sokkal jobban olvashatók, ha napról napra vannak
+tagolva, nem pedig egyetlen összefüggő szövegfalként:
 
 ```markdown
-<opening/intro paragraph, no heading>
+<bevezető/nyitó bekezdés, cím nélkül>
 
 ## 1. nap – augusztus 14. (péntek)
 
-<that day's paragraph(s)>
+<az adott nap bekezdése(i)>
 
 ## 2. nap – augusztus 15. (szombat)
 
@@ -62,23 +63,23 @@ one continuous wall of text:
 
 ## Zárszó
 
-<closing thanks/wrap-up paragraph>
+<záró köszönet/összegző bekezdés>
 ```
 
-- One `##` heading per day, even if that day has several paragraphs - don't
-  repeat the heading for every paragraph of the same day.
-- Number days sequentially from 1, and give each a real calendar date +
-  weekday, derived from whatever date the article itself states (don't invent
-  a date the text doesn't support).
-- Always close with `## Zárszó` (wrap-up).
-- When editing an *existing* published report, only add structure (headings,
-  paragraph breaks, images) - don't rewrite the author's actual sentences.
+- Naponta egy `##` cím, még akkor is, ha az adott napnak több bekezdése van -
+  ne ismételd meg a címet ugyanannak a napnak minden bekezdésénél.
+- A napokat sorban, 1-től számozd, és adj mindegyikhez valódi naptári dátumot
+  + hét napját, a cikkben ténylegesen megadott dátumból kiindulva (ne találj
+  ki olyan dátumot, amit a szöveg nem támaszt alá).
+- Mindig zárd `## Zárszó` szakasszal (összegzés).
+- Ha egy már publikált cikket szerkesztesz, csak struktúrát adj hozzá
+  (címek, bekezdéshatárok, képek) - ne írd át a szerző eredeti mondatait.
 
-## 3. Participants
+## 3. Résztvevők
 
-List who took part in the front matter, not the body - a plain list of names,
-one per entry, written however reads naturally (include a "(Nickname)" suffix
-if that's how the person is normally referred to):
+A résztvevőket a front matterben soroljuk fel, nem a szövegben - egy egyszerű
+névlista, soronként egy név, ahogy természetesen olvasható (ha úgy szokás
+hivatkozni rá, tüntesd fel a "(Becenév)" toldalékot):
 
 ```yaml
 participants:
@@ -87,28 +88,31 @@ participants:
   - Ács Réka
 ```
 
-The article page automatically renders these as clickable member cards below
-the text (`layouts/partials/participant-cards.html`), looking each name up
-against the canonical roster in `data/members.yaml`. A match pulls in that
-person's real photo/role/bio; no match just renders a plain initials tile -
-that's expected, not every participant is a registered club member. Don't
-hand-write a "Résztvevők" heading/list in the body - the template adds the
-heading and card grid automatically whenever `participants:` is set.
+A cikk oldala ezekből automatikusan kattintható tagkártyákat generál a
+szöveg alatt (`layouts/partials/participant-cards.html`), a neveket a
+`data/members.yaml` hiteles taglistájához illesztve. Ha van találat, bekerül
+a személy valódi fotója/tisztsége/bemutatkozása; ha nincs találat, egyszerű
+monogramos csempe jelenik meg - ez elvárt, nem minden résztvevő egyesületi
+tag. Ne írj kézzel "Résztvevők" címet/listát a szövegbe - a sablon
+automatikusan hozzáadja a címet és a kártyarácsot, amint a `participants:`
+mező ki van töltve.
 
-Run `python scripts/verify_members.py` locally (needs `pip install PyYAML`) to
-check `data/members.yaml` and every article's `participants:` list before
-pushing - it catches things like duplicate names/nicknames, a name/nickname
-that still has "(...)" baked in instead of using the proper field, unknown
-member fields (typos), missing `image`/`modal_image` files, and empty/duplicate
-`participants:` entries. The same check runs in CI on every PR.
+Push előtt futtasd le helyben a `python scripts/verify_members.py` parancsot
+(ehhez kell a `pip install PyYAML`), hogy ellenőrizd a `data/members.yaml`-t
+és minden cikk `participants:` listáját - ez kiszűri például a duplikált
+neveket/becenevek, egy olyan név/becenév, amiben még ott maradt a "(...)" a
+megfelelő mező helyett, ismeretlen tagmezőket (elgépeléseket), és üres/duplikált
+`participants:` bejegyzéseket. Ugyanez az ellenőrzés fut a CI-ban is minden
+pull requestnél.
 
-## 4. Images
+## 4. Képek
 
-### Converting photos
+### Fotók konvertálása
 
-Use `scripts/site_image_converter/` (see its own `readme.md`) to produce
-resized, web-friendly `.webp` files - never commit original camera/phone
-photos directly, they're far too large. Non-interactive example:
+Használd a `scripts/site_image_converter/` szkriptet (lásd a saját
+`readme.md`-jét) átméretezett, webre optimalizált `.webp` fájlok
+előállításához - soha ne commitolj eredeti kamera-/telefonfotókat, azok
+messze túl nagyok. Nem interaktív példa:
 
 ```powershell
 python scripts\site_image_converter\site_image_converter.py `
@@ -117,52 +121,79 @@ python scripts\site_image_converter\site_image_converter.py `
   --max-width 1600 --max-height 1600 --quality 82
 ```
 
-### Folder & naming convention
+### Mappa- és elnevezési konvenció
 
-Each article gets its **own** folder, so photos never mix between articles and
-old ones are easy to find or delete later:
+Minden cikk kap egy **saját** mappát, hogy a fotók sose keveredjenek a cikkek
+között, és a régiek is könnyen megtalálhatók/törölhetők legyenek később:
 
 ```
-static/images/turak/<article-slug>/
-  01-short-descriptive-slug.webp
-  02-another-photo.webp
+static/images/turak/<cikk-slug>/
+  01-rovid-leiro-nev.webp
+  02-egy-masik-foto.webp
   03-....webp
 ```
 
-Rename the converter's output (which keeps the original camera filename) to a
-short, descriptive, numbered slug - `01-csapat-a-ducatonal.webp`, not
+Nevezd át a konverter kimenetét (ami megtartja az eredeti kamera-fájlnevet)
+egy rövid, leíró, számozott névre - `01-csapat-a-ducatonal.webp`, ne
 `810814349_1602452671581952_...webp`.
 
-### Embedding photos in the article body
+### Fotók beágyazása a cikk szövegébe
 
-Just use standard Markdown image syntax, placed near the paragraph it
-illustrates, with an optional quoted **title** that becomes the visible
-caption:
+Egyszerűen a szabványos Markdown kép szintaxist használd, az illusztrált
+bekezdés közelében, egy opcionális idézőjeles **title**-lel, ami a látható
+képaláírás lesz:
 
 ```markdown
 ![Rövid alt szöveg a fotóról](/images/turak/2026-kanin-expedicio/01-csapat-a-ducatonal.webp "Ez a felirat jelenik meg a kép alatt")
 ```
 
-- The bracketed `alt` text is required (accessibility + shown if the image
-  fails to load) - describe what's in the photo.
-- The quoted `"title"` after the path is optional and becomes the caption
-  under the photo. Omit it for an uncaptioned image.
-- Don't hand-write `<img>`/`<figure>` HTML - a Goldmark render hook
-  (`layouts/_default/_markup/render-image.html`) automatically wraps every
-  Markdown image into a styled, captioned figure that opens full-size in the
-  site's lightbox (all images in one article are grouped into one gallery).
-- Pick one photo (usually the most representative one) as both `thumbImg` and
-  `featuredImg` in the front matter - it doesn't need to be repeated in the
-  body too, though it can be.
+- A szögletes zárójeles `alt` szöveg kötelező (akadálymentesség + akkor
+  jelenik meg, ha a kép nem töltődik be) - írd le, mi látható a fotón.
+- Az idézőjeles `"title"` az elérési út után opcionális, ez lesz a kép
+  alatti felirat. Ha nincs felirat, hagyd el.
+- Ne írj kézzel `<img>`/`<figure>` HTML-t - egy Goldmark render hook
+  (`layouts/_default/_markup/render-image.html`) automatikusan minden
+  Markdown képet egy stílusos, feliratozott figure-be csomagol, ami a
+  webhely lightboxában nyílik meg teljes méretben (egy cikk összes képe egy
+  galériába kerül csoportosítva).
+- Válassz egy fotót (általában a legjellemzőbbet) `thumbImg`-nek és
+  `featuredImg`-nek is a front matterben - nem kell megismételni a szövegben
+  is, de lehet.
 
-## 5. Adding to a long-published article later
+### Sok extra fotó csoportosítása galéria-rácsba
 
-Because images live in their own per-article folder and are embedded with
-plain Markdown, extending an old report is just:
+Ha egy beszámolóhoz több fotó tartozik, mint amennyi bekezdéshez rendelhető
+(ez gyakori a többnapos expedícióknál), ne fűzz egymás után sok teljes
+szélességű `![...]()` képet - ehelyett csoportosítsd a maradék fotókat egy
+rácsba a `gallery`/`photo` shortcode-okkal:
 
-1. Convert and drop new photos into its existing
-   `static/images/turak/<slug>/` folder (continue the numbering).
-2. Add `![...](...)` lines at the right point in the body, or a new day
-   section following the same `## N. nap – ...` heading pattern.
+```markdown
+{{< gallery >}}
+{{< photo src="/images/turak/2026-kanin-expedicio/08-....webp" alt="Rövid alt szöveg" caption="Opcionális felirat" >}}
+{{< photo src="/images/turak/2026-kanin-expedicio/09-....webp" alt="Rövid alt szöveg" >}}
+{{< /gallery >}}
+```
 
-No front matter or template changes are needed for either case.
+- A `src` kötelező (a teljes `/images/turak/<slug>/...` elérési út); az `alt`
+  kötelező az akadálymentesség miatt; a `caption` opcionális, és rámutatáskor
+  jelenik meg, ugyanúgy, mint az önálló Galéria oldal rácsán.
+- Minden `photo` továbbra is teljes méretben nyílik meg a cikk közös
+  lightboxában, az egyszerű beágyazott képek mellett (mindkettő
+  `.ftsk-article-figure-link`-kel jelenik meg), így az olvasó a cikk összes
+  fotóján végig tud lapozni, akár beágyazott, akár rácsos elrendezésben van.
+- Ne írd meg kézzel a rács HTML-jét/CSS-ét - a `layouts/shortcodes/gallery.html`
+  és a `layouts/shortcodes/photo.html` ugyanazt a `.ftsk-gallery-grid`/
+  `.ftsk-gallery-item` stílust használja, mint a
+  `component-library/components/global/gallery` (a Galéria oldal).
+
+## 5. Már publikált cikk bővítése később
+
+Mivel a képek saját, cikkenkénti mappában élnek, és egyszerű Markdownnal
+vannak beágyazva, egy régi beszámoló bővítése ennyi:
+
+1. Konvertáld és tedd be az új fotókat a meglévő
+   `static/images/turak/<slug>/` mappába (folytasd a számozást).
+2. Illessz be `![...](...)` sorokat a megfelelő helyre a szövegben, vagy egy
+   új napi szakaszt ugyanazzal a `## N. nap – ...` cím mintával.
+
+Egyik esethez sem kell front matter vagy sablon módosítás.

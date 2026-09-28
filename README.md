@@ -1,31 +1,34 @@
 # FTSK Barlangkutató Szakosztály - website
 
-Source for the [ftsk.hu](https://www.ftsk.hu) site: a [Hugo](https://gohugo.io/) static
-site using the [Bookshop](https://github.com/cloudcannon/bookshop) component library
-engine (`component-library/`) for reusable page sections.
+Az [ftsk.hu](https://www.ftsk.hu) weboldal forráskódja: egy [Hugo](https://gohugo.io/)
+statikus webhely, ami a [Bookshop](https://github.com/cloudcannon/bookshop)
+komponenskönyvtár motort használja (`component-library/`) az újrafelhasználható
+oldalrészekhez.
 
-## Develop
+## Fejlesztés
 
-See [docs/TECHNICAL_ENVIRONMENT.md](docs/TECHNICAL_ENVIRONMENT.md) for full setup
-details (required tools, pinned versions, parameters). Quick start on Windows:
+A teljes beállítási útmutatóért (szükséges eszközök, rögzített verziók,
+paraméterek) lásd a [docs/TECHNICAL_ENVIRONMENT.md](docs/TECHNICAL_ENVIRONMENT.md)
+fájlt. Gyors indítás Windows alatt:
 
 ```powershell
-./scripts/setup-dev-env.ps1   # one-time: installs the pinned Hugo, checks Go/Node, npm install
-./scripts/dev-server.ps1      # hugo server at http://localhost:1313/
+./scripts/setup-dev-env.ps1   # egyszeri: telepíti a rögzített Hugo verziót, ellenőrzi a Go/Node-ot, npm install
+./scripts/dev-server.ps1      # hugo server a http://localhost:1313/ címen
 ```
 
-For the optional Bookshop live component browser alongside the dev server:
-`npm run bookshop` (defaults to [http://localhost:30775/](http://localhost:30775/)).
+Az opcionális Bookshop élő komponens-böngészőhöz a dev szerver mellett:
+`npm run bookshop` (alapértelmezetten [http://localhost:30775/](http://localhost:30775/)).
 
-## Writing content
+## Tartalom írása
 
-See [docs/CONTENT_GUIDE.md](docs/CONTENT_GUIDE.md) for how to write and extend
-long-form articles (trip reports, expeditions, courses), including the
-day-by-day structure and how to add/convert photos.
+Ha cikket (túrabeszámolót, expedíciós naplót, tanfolyami leírást) írsz vagy
+szerkesztesz, lásd a **[docs/CONTENT_GUIDE.md](docs/CONTENT_GUIDE.md)** útmutatót
+a napról napra bontott struktúráról, a résztvevők felsorolásáról, valamint a
+fotók konvertálásáról/beágyazásáról és a galéria-rács használatáról.
 
 ## CI/CD
 
-Build validation, PR preview sites, a staging deploy, and manual production
-(FTP) deploy all live in [`.github/workflows/`](.github/workflows/) - see
-[docs/TECHNICAL_ENVIRONMENT.md](docs/TECHNICAL_ENVIRONMENT.md) for the pipeline
-overview and required repository configuration.
+A build ellenőrzés, a PR előnézeti oldalak, a staging deploy és a kézi éles
+(FTP) deploy mind a [`.github/workflows/`](.github/workflows/) mappában
+találhatók - lásd a [docs/TECHNICAL_ENVIRONMENT.md](docs/TECHNICAL_ENVIRONMENT.md)
+fájlt a pipeline áttekintéséhez és a szükséges repository beállításokhoz.
