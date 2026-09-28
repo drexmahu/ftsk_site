@@ -198,4 +198,86 @@ els.forEach(el => {
          });
       }
    }
+
+   // Túrabeszámolók (turak) list page - client-side filter toolbar (see
+   // layouts/turak/list.html). Everything lives in the DOM already (no
+   // pagination), this just toggles ".is-hidden" on cards that don't match.
+   var $turakGrid = $('#ftsk-turak-grid');
+   if ($turakGrid.length) {
+      var $turakCards = $turakGrid.find('.ftsk-turak-card');
+      var $turakSearch = $('#ftsk-turak-search');
+      var $turakDecade = $('#ftsk-turak-decade');
+      var $turakPills = $('.ftsk-turak-pill');
+      var $turakCount = $('#ftsk-turak-count');
+      var $turakEmpty = $('#ftsk-turak-empty');
+      var $turakResetButtons = $('#ftsk-turak-reset, #ftsk-turak-empty-reset');
+      var activeCategories = [];
+
+      function applyTurakFilters() {
+         var term = $.trim($turakSearch.val()).toLowerCase();
+         var decade = $turakDecade.val();
+         var visible = 0;
+
+         $turakCards.each(function () {
+            var $card = $(this);
+            var cardCategories = ($card.data('categories') || '').toString().split(' ');
+            var matchesSearch = !term || ($card.data('search') || '').toString().indexOf(term) !== -1;
+            var matchesDecade = !decade || $card.data('decade').toString() === decade;
+            var matchesCategory =
+               activeCategories.length === 0 ||
+               cardCategories.some(function (c) {
+                  return activeCategories.indexOf(c) !== -1;
+               });
+            var isVisible = matchesSearch && matchesDecade && matchesCategory;
+            $card.toggleClass('is-hidden', !isVisible);
+            if (isVisible) visible++;
+         });
+
+         $turakCount.text(visible + ' beszámoló található');
+         $turakEmpty.toggleClass('d-none', visible !== 0);
+         var hasActiveFilter = term || decade || activeCategories.length > 0;
+         $turakResetButtons.filter('#ftsk-turak-reset').toggleClass('d-none', !hasActiveFilter);
+      }
+
+      $turakSearch.on('input', applyTurakFilters);
+      $turakDecade.on('change', applyTurakFilters);
+
+      $turakPills.on('click', function () {
+         var $pill = $(this);
+         var category = $pill.data('category');
+
+         if (!category) {
+            activeCategories = [];
+         } else {
+            var idx = activeCategories.indexOf(category);
+            if (idx === -1) {
+               activeCategories.push(category);
+            } else {
+               activeCategories.splice(idx, 1);
+            }
+         }
+
+         $turakPills.removeClass('is-active');
+         if (activeCategories.length === 0) {
+            $turakPills.filter('[data-category=""]').addClass('is-active');
+         } else {
+            $turakPills.filter(function () {
+               return activeCategories.indexOf($(this).data('category')) !== -1;
+            }).addClass('is-active');
+         }
+
+         applyTurakFilters();
+      });
+
+      $turakResetButtons.on('click', function () {
+         $turakSearch.val('');
+         $turakDecade.val('');
+         activeCategories = [];
+         $turakPills.removeClass('is-active');
+         $turakPills.filter('[data-category=""]').addClass('is-active');
+         applyTurakFilters();
+      });
+
+      applyTurakFilters();
+   }
 });
