@@ -62,6 +62,8 @@
   "alt": "Kötélen ereszkedő barlangász egy világos aknában"
   "start":
     "focus": "0% 32%"
+  "animation":
+    "direction": "left"
 - "path": "/images/hero/ftsk-hero-cave-2.webp"
   "alt": "Barlangász ereszkedés közben, fénysugarak között"
   "mirror": "horizontal"
@@ -79,16 +81,17 @@
   "alt": "Barlangászok egy szűk sziklakapun át nézve"
   "start":
     "focus": "40% 55%"
-  "mobile":
-    "direction": "up"
-    "focus": "57% 55%"
 - "path": "/images/hero/ftsk-hero-cave-5.webp"
   "alt": "Fiatal barlangász közelről, sisakkal és kötelekkel"
+  "hide_below": "sm"
   "start":
-    "focus": "65% 35%"
+    "focus": "52% 27%"
 - "path": "/images/hero/ftsk-hero-cave-6.webp"
   "alt": "Barlangász egy mohás sziklahasadékban, fejlámpával megvilágítva"
   "start":
-    "focus": "50% 58%"
+    "focus": "0% 66%"
+    "zoom": 1.15
   "animation":
     "direction": "down"
+  "tablet":
+    "focus": "0% 77%"
