@@ -53,7 +53,7 @@ jobs:
           preview-branch: gh-pages
           umbrella-dir: pr-preview
           action: deploy
-          wait-for-pages-deployment: true
+          wait-for-pages-deployment: false
 
       - name: Verify the deployed preview revision
         env:
