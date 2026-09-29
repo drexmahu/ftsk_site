@@ -1,0 +1,40 @@
+{{/*
+  Renders a túrabeszámoló's author name (front matter `author:` field, plain
+  string, `.` param). If the name matches a registered club member in
+  data/members.yaml (same match rule as participant-cards.html: strip a
+  trailing "(...)" then compare against each member's `name` or `nickname`),
+  renders a clickable trigger that opens the shared member detail modal
+  (layouts/partials/member-modal.html, via the ".ftsk-member-trigger"
+  delegate in static/js/script.js) - otherwise just a plain label.
+*/}}
+{{ $name := . }}
+{{ $clean := replaceRE `\s*\([^)]*\)` "" $name }}
+{{ $match := "" }}
+{{ range hugo.Data.members.groups }}
+  {{ $group := .label }}
+  {{ range .members }}
+    {{ if and (eq $match "") (or (eq .name $clean) (and .nickname (eq .nickname $clean))) }}
+      {{ $match = dict "role" .role "group" $group "image" .image "modal_image" .modal_image "bio" .bio }}
+    {{ end }}
+  {{ end }}
+{{ end }}
+{{ if $match }}
+{{ $words := split (trim $clean " ") " " }}
+{{ $initials := "" }}
+{{ range first 2 $words }}{{ $initials = printf "%s%s" $initials (substr . 0 1) }}{{ end }}
+{{ $colorIdx := mod (len $clean) 5 }}
+<button
+   type="button"
+   class="ftsk-turak-author ftsk-member-trigger"
+   data-name="{{ $name }}"
+   data-group="{{ $match.group }}"
+   data-role="{{ $match.role }}"
+   data-initials="{{ $initials | upper }}"
+   data-avatar-color="{{ $colorIdx }}"
+   {{ with $match.image }}data-image="{{ partial `url.html` . }}"{{ end }}
+   {{ with $match.modal_image }}data-modal-image="{{ partial `url.html` . }}"{{ end }}
+   {{ with $match.bio }}data-bio="{{ . }}"{{ end }}
+><i class="ph ph-user-circle" aria-hidden="true"></i> {{ $name }}</button>
+{{ else }}
+<span class="ftsk-turak-author"><i class="ph ph-user-circle" aria-hidden="true"></i> {{ $name }}</span>
+{{ end }}

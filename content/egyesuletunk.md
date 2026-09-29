@@ -16,13 +16,7 @@ content_blocks:
       A Ferencvárosi Természetbarátok Sportköre DELFIN Klub Barlangkutató
       Szakosztálya 1954 óta fedez fel, kutat és jár barlangokat - nyitott
       közösségként várunk mindenkit, akit érdekel a barlangos világ.
-    hero_images:
-      - image_path: /images/gallery/ftsk-gallery-1.jpg
-        placer: front_bottom
-      - image_path: /images/gallery/ftsk-gallery-2.png
-        placer: back_top_right
-      - image_path: /images/hero/ftsk-cave-hero.jpg
-        placer: back_top_left
+    logo_image: /images/ftsk-logo.png
     link:
       text: Csatlakozz hozzánk
       url: /kapcsolat/
@@ -62,6 +56,7 @@ content_blocks:
       Hóvirág Szakosztály vezetője Baloghné Szentirmay Judit lemondott
       tisztségéről, így a hivatalos egyesületet a barlangászok vették át.
 
+      ![Egyesületi logók](/images/gallery/ftsk-gallery-2.png "Korábbi szakosztályaink")
 
       A Barlangkutató Szakosztály legnagyobb érdeme a Szabadság-barlangban
       feltárt jelentős, 500 m hosszú új rész 1991-ben, Vidics Zoltánné és
@@ -91,7 +86,7 @@ content_blocks:
       barlangos világ és a társasági élet.
 
 
-      **Az FTSK Barlangkutató Szakosztály korábbi vezetői sorrendben:**
+      ### Az FTSK Barlangkutató Szakosztály korábbi vezetői sorrendben
 
 
       - Dr. Balázs Dénes

@@ -21,10 +21,19 @@
   {{ end }}
 {{ end }}
 
+{{/* Permalinks of the 2 reports already shown in "Legújabb" - the small-card
+     grid below skips them by default (see script.js) to avoid showing the
+     exact same 2 reports twice on the page; a search/filter still reveals
+     them there like any other matching result. */}}
+{{ $featuredLinks := slice }}
+{{ range first 2 $featured }}
+  {{ $featuredLinks = $featuredLinks | append .RelPermalink }}
+{{ end }}
+
 <section class="blog-hero ftsk-turak-hero ftsk-hero-top-motif position-relative">
    <div class="container">
       <div class="row">
-         <div class="col-xl-8 col-lg-10 mx-auto">
+         <div class="col-xl-6 col-lg-8 col-md-10 mx-auto">
             <div class="blog-hero-content">
                <h1 class="blog-hero-title">{{ .Title }}</h1>
                <p>{{ .Params.description }}</p>
@@ -33,47 +42,6 @@
       </div>
    </div>
 </section>
-
-{{ if gt (len $featured) 0 }}
-<section class="ftsk-turak-featured">
-   <div class="container">
-      <div class="section-header text-start">
-         <h2><i class="ph ph-compass" aria-hidden="true"></i> Legújabb</h2>
-         <p>A legfrissebb túrabeszámolóink.</p>
-      </div>
-      <div class="row">
-         {{ range first 2 $featured }}
-         <div class="col-lg-6 mb-4">
-            <article class="ftsk-turak-featured-card">
-               <a href="{{ .RelPermalink }}" class="ftsk-turak-featured-thumb">
-                  <img src="{{ partial `url.html` .Params.thumbImg.image_path }}" alt="{{ .Title }}" loading="lazy" />
-               </a>
-               <div class="ftsk-turak-featured-content">
-                  <div class="blog-post-tag">
-                     {{ range .Params.categories }}
-                     {{ $href := print (absURL "categories/") (urlize .) }}
-                     <a href="{{ $href }}" class="tag-{{ . | urlize }}">{{ . | humanize }}</a>
-                     {{ end }}
-                  </div>
-                  <h3><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
-                  <p class="ftsk-turak-featured-excerpt">{{ .Summary | plainify | truncate 170 }}</p>
-                  <div class="ftsk-turak-featured-meta">
-                     <span><i class="ph ph-calendar" aria-hidden="true"></i>{{ .Date | time.Format ":date_long" }}</span>
-                     {{ with .Params.participants }}
-                     <span><i class="ph ph-users" aria-hidden="true"></i>{{ len . }} résztvevő</span>
-                     {{ end }}
-                  </div>
-                  <a href="{{ .RelPermalink }}" class="btn btn-secondary ftsk-turak-featured-cta">
-                     Teljes beszámoló <i class="ph ph-arrow-right" aria-hidden="true"></i>
-                  </a>
-               </div>
-            </article>
-         </div>
-         {{ end }}
-      </div>
-   </div>
-</section>
-{{ end }}
 
 <section class="ftsk-turak-toolbar">
    <div class="container">
@@ -85,7 +53,14 @@
                id="ftsk-turak-search"
                placeholder="Keresés cím vagy szerző szerint…"
                aria-label="Beszámolók keresése"
+               autocomplete="off"
             />
+            <div
+               class="ftsk-turak-search-suggestions d-none"
+               id="ftsk-turak-suggestions"
+               role="listbox"
+               aria-label="Javaslatok"
+            ></div>
          </div>
          <div class="ftsk-turak-decade">
             <i class="ph ph-calendar-blank" aria-hidden="true"></i>
@@ -116,8 +91,55 @@
    </div>
 </section>
 
+{{ if gt (len $featured) 0 }}
+<section class="ftsk-turak-featured" id="ftsk-turak-featured">
+   <div class="container">
+      <div class="section-header text-start">
+         <h2><i class="ph ph-compass" aria-hidden="true"></i> Legújabb</h2>
+         <p>A legfrissebb túrabeszámolóink.</p>
+      </div>
+      <div class="row">
+         {{ range first 2 $featured }}
+         <div class="col-lg-6 mb-4">
+            <article class="ftsk-turak-featured-card">
+               <a href="{{ .RelPermalink }}" class="ftsk-turak-featured-thumb">
+                  <img src="{{ partial `url.html` .Params.thumbImg.image_path }}" alt="{{ .Title }}" loading="lazy" />
+               </a>
+               <div class="ftsk-turak-featured-content">
+                  <div class="blog-post-tag">
+                     {{ range .Params.categories }}
+                     {{ $href := print (absURL "categories/") (urlize .) }}
+                     <a href="{{ $href }}" class="tag-{{ . | urlize }}">{{ . | humanize }}</a>
+                     {{ end }}
+                  </div>
+                  <h3><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
+                  <p class="ftsk-turak-featured-excerpt">{{ .Summary | plainify | truncate 170 }}</p>
+                  <div class="ftsk-turak-featured-meta">
+                     <span><i class="ph ph-calendar" aria-hidden="true"></i>{{ .Date | time.Format ":date_long" }}</span>
+                     {{ with .Params.author }}
+                     {{ partial "author-badge.html" . }}
+                     {{ end }}
+                     {{ with .Params.participants }}
+                     <span><i class="ph ph-users" aria-hidden="true"></i>{{ len . }} résztvevő</span>
+                     {{ end }}
+                  </div>
+                  <a href="{{ .RelPermalink }}" class="btn btn-secondary ftsk-turak-featured-cta">
+                     Teljes beszámoló <i class="ph ph-arrow-right" aria-hidden="true"></i>
+                  </a>
+               </div>
+            </article>
+         </div>
+         {{ end }}
+      </div>
+   </div>
+</section>
+{{ end }}
+
 <section class="blog blog-two">
    <div class="container">
+      <div class="ftsk-turak-archive-header">
+         <h2><i class="ph ph-archive" aria-hidden="true"></i> Összes beszámoló</h2>
+      </div>
       <div class="row" id="ftsk-turak-grid">
          {{ range $pages }}
          {{ $isLegacy := strings.HasPrefix .File.BaseFileName "legacy-" }}
@@ -126,12 +148,17 @@
          {{ range .Params.categories }}
          {{ $catSlugs = $catSlugs | append (. | urlize) }}
          {{ end }}
-         {{ $searchText := printf "%s %s" .Title (.Params.author | default "") | lower }}
+         {{ $author := .Params.author | default "" }}
+         {{ $searchText := printf "%s %s" .Title $author | lower }}
          <div
             class="col-lg-4 col-md-6 mb-4 ftsk-turak-card"
             data-categories="{{ delimit $catSlugs " " }}"
             data-decade="{{ $decade }}"
             data-search="{{ $searchText }}"
+            data-title="{{ .Title }}"
+            data-author="{{ $author }}"
+            data-href="{{ .RelPermalink }}"
+            data-featured="{{ in $featuredLinks .RelPermalink }}"
          >
             <article class="blog-post{{ if $isLegacy }} ftsk-turak-card-legacy{{ end }}">
                <div class="blog-post-thumb">
@@ -152,7 +179,12 @@
                   <div class="blog-post-title">
                      <a href="{{ .RelPermalink }}">{{ .Title }}</a>
                   </div>
-                  <div class="blog-post-date">{{ .Date | time.Format ":date_long" }}</div>
+                  <div class="blog-post-footer">
+                     <span class="blog-post-date">{{ .Date | time.Format ":date_long" }}</span>
+                     {{ with $author }}
+                     {{ partial "author-badge.html" . }}
+                     {{ end }}
+                  </div>
                </div>
             </article>
          </div>

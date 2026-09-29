@@ -37,7 +37,15 @@
 }
 
 .ftsk-richtext {
-  padding: $base-padding * 5 0;
+  padding: $base-padding * 3 0;
+}
+// The generic ".section-header" (see _root.scss) is sized for a standalone
+// hero/landing section (9.4rem top padding!) - way too tall stacked between
+// already-padded content blocks like these, so it's cut down to just enough
+// breathing room below its own heading.
+.ftsk-richtext .section-header,
+.ftsk-linklist .section-header {
+  padding: 0 0 $base-padding * 1.5;
 }
 .ftsk-prose {
   color: var(--text-body);
@@ -63,6 +71,37 @@
   a {
     color: $color-primary;
     text-decoration: underline;
+  }
+}
+
+// Egyesületünk page's two stacked global/richtext blocks (see
+// content/egyesuletunk.md) - a bigger opening line + accent-colored bold
+// labels ("Az egyesület hivatalos neve:", "Cím:" etc.) for a bit more visual
+// structure than plain body-text paragraphs.
+.ftsk-richtext .ftsk-prose {
+  > p:first-of-type {
+    font-size: 1.25rem;
+    color: var(--text-heading);
+  }
+  h3 {
+    font-size: 1.3rem;
+  }
+  strong {
+    color: $color-primary;
+  }
+}
+
+// Images embedded in these richtext blocks (currently just the "Egyesületi
+// logók" photo in the Történetünk history text) read as smaller inline
+// illustrations rather than a full-bleed trip-report photo - capped as a
+// percentage of the prose column so it still scales with the viewport
+// instead of a fixed pixel size, full-width again on small screens.
+.ftsk-richtext .ftsk-article-figure {
+  max-width: 55%;
+  margin-left: auto;
+  margin-right: auto;
+  @include media-breakpoint-down-sm {
+    max-width: 100%;
   }
 }
 
@@ -147,13 +186,19 @@
 }
 
 .ftsk-turak-featured {
-  padding: $base-padding * 2 0 $base-padding * 1;
+  padding: $base-padding * 0.5 0 $base-padding * 1.5;
+  border-bottom: 1px solid var(--border-subtle);
+  // This section sits right below the toolbar, not at the top of the page -
+  // override the generic ".section-header"'s hero-scale padding (meant for a
+  // standalone landing section) down to something compact on both sides.
   .section-header {
-    padding-bottom: $base-padding * 1.5;
+    padding: 0 0 $base-padding * 1.5;
     h2 {
       display: flex;
       align-items: center;
       gap: 12px;
+      font-size: $base-font-size * 2.2;
+      line-height: 1.3;
       i {
         color: $color-primary;
       }
@@ -231,6 +276,42 @@
     gap: 6px;
   }
 }
+
+// Author name shown on both the "Legújabb" featured cards and the small
+// archive cards (see author-badge.html). A plain label unless the author is
+// also a registered club member, in which case it's a real <button> that
+// opens the shared member modal (".ftsk-member-trigger" in script.js).
+.ftsk-turak-author {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+button.ftsk-turak-author {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font-family: $font-secondary;
+  cursor: pointer;
+  transition: color 0.2s ease-in-out;
+  &:hover,
+  &:focus-visible {
+    color: $color-primary;
+    text-decoration: underline;
+  }
+}
+.blog-post-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-top: $base-margin * 0.9;
+  .blog-post-date {
+    margin-top: 0;
+  }
+}
 .ftsk-turak-featured-cta {
   margin-top: auto;
   align-self: flex-start;
@@ -243,7 +324,7 @@
 
 // Filter toolbar
 .ftsk-turak-toolbar {
-  padding: $base-padding * 1 0 $base-padding * 2;
+  padding: $base-padding * 1 0 $base-padding * 0.5;
 }
 .ftsk-turak-toolbar-row {
   display: flex;
@@ -266,6 +347,7 @@
   }
 }
 .ftsk-turak-search {
+  position: relative;
   flex: 1 1 260px;
   input {
     flex-grow: 1;
@@ -280,6 +362,48 @@
       color: var(--text-muted);
     }
   }
+}
+
+// Autocomplete-like search tips (see the "#ftsk-turak-suggestions" binding in
+// static/js/script.js) - a floating dropdown of matching titles/authors.
+.ftsk-turak-search-suggestions {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  box-shadow: 0 20px 40px var(--shadow-ambient);
+}
+.ftsk-turak-suggestion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0.55rem 0.7rem;
+  border-radius: 8px;
+  color: var(--text-heading);
+  text-decoration: none;
+  transition: background 0.2s ease-in-out;
+  &:hover,
+  &:focus {
+    background: var(--bg-surface-hover);
+  }
+}
+.ftsk-turak-suggestion-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.ftsk-turak-suggestion-author {
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
 }
 .ftsk-turak-decade {
   flex: 0 1 220px;
@@ -339,6 +463,23 @@
     background: $color-primary;
     border-color: $color-primary;
     color: var(--bg-page);
+  }
+}
+// Compact heading above the small-card archive grid - deliberately NOT the
+// generic hero-scale ".section-header" (used by ".ftsk-turak-featured" above
+// it), since two of those in a row would be visually way too heavy this far
+// down the page.
+.ftsk-turak-archive-header {
+  padding: $base-padding * 1.5 0 $base-padding * 0.5;
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: $base-font-size * 1.6;
+    margin: 0;
+    i {
+      color: $color-primary;
+    }
   }
 }
 .ftsk-turak-toolbar-status {
@@ -425,7 +566,7 @@
 }
 
 .ftsk-linklist {
-  padding: $base-padding * 5 0;
+  padding: $base-padding * 3 0;
 }
 .ftsk-linklist-items {
   list-style: none;
