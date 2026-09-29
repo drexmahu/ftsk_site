@@ -9,7 +9,7 @@ seo:
   no_index: false
 content_blocks:
   - _bookshop_name: contact/hero
-    title: Gyere közénk!
+    title: Vedd fel velünk a kapcsolatot!
     description: Kérdésed van, vagy csatlakoznál hozzánk? Írj nekünk bátran!
   - _bookshop_name: contact/info
     address:

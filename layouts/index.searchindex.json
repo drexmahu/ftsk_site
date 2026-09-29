@@ -1,0 +1,35 @@
+{{- /*
+  Sitewide search index (see config.toml's [outputFormats.SearchIndex]) - fetched
+  once by the navbar search box (static/js/script.js) and filtered entirely
+  client-side, so this just needs to dump every searchable page as plain data.
+
+  Covers site.RegularPages (individual túra reports, tanfolyam courses, and the
+  standalone root pages like kapcsolat/tagok/linkek/galeria/egyesuletunk) plus
+  site.Sections (the /turak/ and /tanfolyamok/ archive pages themselves, so
+  searching e.g. "túra" also surfaces the archive, not just individual reports).
+*/ -}}
+{{- $items := slice -}}
+{{- range (site.RegularPages | union site.Sections) -}}
+  {{- $skip := false -}}
+  {{- with .Params.seo -}}
+    {{- if .no_index }}{{ $skip = true }}{{ end -}}
+  {{- end -}}
+  {{- if not $skip -}}
+    {{- $summary := "" -}}
+    {{- if .IsSection -}}
+      {{- with .Params.seo -}}{{ $summary = (.page_description | default "") }}{{- end -}}
+      {{- if not $summary }}{{ $summary = (.Params.description | default "") }}{{ end -}}
+    {{- else -}}
+      {{- $summary = (.Summary | plainify | truncate 160) -}}
+    {{- end -}}
+    {{- $items = $items | append (dict
+          "title" .Title
+          "url" .RelPermalink
+          "section" .Section
+          "kind" .Kind
+          "summary" $summary
+          "author" (.Params.author | default "")
+        ) -}}
+  {{- end -}}
+{{- end -}}
+{{ $items | jsonify }}

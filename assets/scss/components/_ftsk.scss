@@ -344,6 +344,7 @@ button.ftsk-turak-author {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-height: 46px;
   background: var(--input-bg);
   border: 1px solid var(--input-border);
   border-radius: 12px;
@@ -414,6 +415,9 @@ button.ftsk-turak-author {
 }
 .ftsk-turak-decade {
   flex: 0 1 220px;
+  @include media-breakpoint-down-sm {
+    flex-grow: 1;
+  }
   select {
     flex-grow: 1;
     background: transparent;
