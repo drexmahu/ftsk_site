@@ -8,6 +8,9 @@
 {{ $type := .type }}
 {{ $direction := .direction }}
 {{ $amount := .amount }}
+{{ $focus := .focus | default "50% 50%" }}
+{{ $mirrorX := .mirrorX | default 1.0 }}
+{{ $mirrorY := .mirrorY | default 1.0 }}
 
 {{ $zoomFrom := $zoom }}
 {{ $zoomTo := $zoom }}
@@ -19,6 +22,35 @@
 {{ $rotTo := 0.0 }}
 
 {{ if eq $type "pan" }}
+  {{/* _hero.scss pivots the pan/zoom transform around the SAME point as the focus
+       (transform-origin), not the box center - so panning translates the whole
+       already-zoomed slide around that off-center point. If the focus sits close to
+       the edge being panned toward, the translate can push that edge inside the
+       frame, exposing the background behind it (a "crop" gap). Clamp `amount` down
+       to the largest value that's still guaranteed to fully cover the frame, given
+       the start zoom, mirror sign, and how close the focus is to that edge. */}}
+  {{ $isHorizontal := or (eq $direction "left") (eq $direction "right") }}
+  {{ $focusParts := split $focus " " }}
+  {{ $fx := 50.0 }}
+  {{ $fy := 50.0 }}
+  {{ if ge (len $focusParts) 2 }}
+    {{ $fx = replaceRE "%" "" (index $focusParts 0) | float }}
+    {{ $fy = replaceRE "%" "" (index $focusParts 1) | float }}
+  {{ end }}
+  {{ $focusPct := cond $isHorizontal $fx $fy }}
+  {{ $mirrorSign := cond $isHorizontal $mirrorX $mirrorY }}
+  {{ $p := div $focusPct 100.0 }}
+  {{ $q := math.Max $zoom 1.0 }}
+  {{ $safeAmount := 0.0 }}
+  {{ if lt $mirrorSign 0.0 }}
+    {{ $tMin := sub (add (div $p $q) $p) 1.0 }}
+    {{ $tMax := sub (add (div $p $q) $p) (div 1.0 $q) }}
+    {{ $safeAmount = mul (math.Max 0.0 (math.Min (mul $tMin -1.0) $tMax)) 100.0 }}
+  {{ else }}
+    {{ $safeAmount = mul (div (mul (math.Min $p (sub 1.0 $p)) (sub $q 1.0)) $q) 100.0 }}
+  {{ end }}
+  {{ $amount = math.Min $amount $safeAmount }}
+
   {{ if eq $direction "left" }}
     {{ $panXFrom = $amount }}
     {{ $panXTo = mul $amount -1.0 }}

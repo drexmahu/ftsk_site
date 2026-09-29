@@ -58,12 +58,6 @@
 # the picker currently only generates the top-level/desktop `start`/`animation` -
 # hide_below and mobile/tablet overrides need to be added by hand).
 "images":
-- "path": "/images/hero/ftsk-hero-cave-1.webp"
-  "alt": "Kötélen ereszkedő barlangász egy világos aknában"
-  "start":
-    "focus": "0% 32%"
-  "animation":
-    "direction": "left"
 - "path": "/images/hero/ftsk-hero-cave-2.webp"
   "alt": "Barlangász ereszkedés közben, fénysugarak között"
   "mirror": "horizontal"
@@ -71,16 +65,28 @@
     "focus": "55% 30%"
   "animation":
     "direction": "down"
+  "mobile":
+    "focus": "44% 30%"
 - "path": "/images/hero/ftsk-hero-cave-3.webp"
   "alt": "Tágas barlangterem barlangászokkal"
   "mirror": "horizontal"
   "start":
     "focus": "52% 91%"
     "zoom": 1.25
+  "mobile":
+    "direction": "up"
+    "duration": 11
+    "focus": "45% 91%"
 - "path": "/images/hero/ftsk-hero-cave-4.webp"
   "alt": "Barlangászok egy szűk sziklakapun át nézve"
   "start":
     "focus": "40% 55%"
+  "mobile":
+    "direction": "down"
+    "focus": "55% 55%"
+  "tablet":
+    "direction": "down"
+    "focus": "10% 55%"
 - "path": "/images/hero/ftsk-hero-cave-5.webp"
   "alt": "Fiatal barlangász közelről, sisakkal és kötelekkel"
   "hide_below": "sm"

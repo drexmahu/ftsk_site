@@ -36,7 +36,7 @@
         {{ $mirrorX = -1.0 }}
         {{ $mirrorY = -1.0 }}
       {{ end }}
-      {{ $anim := partial "hero-animation.html" (dict "zoom" $startZoom "type" $animType "direction" $animDirection "amount" $animAmount) }}
+      {{ $anim := partial "hero-animation.html" (dict "zoom" $startZoom "type" $animType "direction" $animDirection "amount" $animAmount "focus" $startFocus "mirrorX" $mirrorX "mirrorY" $mirrorY) }}
 
       {{/* Per-breakpoint overrides (data/hero_images.yaml's `mobile`/`tablet` maps) are
            emitted as extra "-mobile"/"-tablet" suffixed custom properties alongside the
@@ -61,7 +61,7 @@
         {{ if isset . "amount" }}{{ $tierAmount = .amount }}{{ end }}
         {{ $tierDuration := $duration }}
         {{ with .duration }}{{ $tierDuration = . }}{{ end }}
-        {{ $tierAnim := partial "hero-animation.html" (dict "zoom" $tierZoom "type" $tierType "direction" $tierDirection "amount" $tierAmount) }}
+        {{ $tierAnim := partial "hero-animation.html" (dict "zoom" $tierZoom "type" $tierType "direction" $tierDirection "amount" $tierAmount "focus" $tierFocus "mirrorX" $mirrorX "mirrorY" $mirrorY) }}
         {{ $style = printf "%s --ftsk-hero-zoom-from-%s: %v; --ftsk-hero-zoom-to-%s: %v; --ftsk-hero-pan-x-from-%s: %v; --ftsk-hero-pan-x-to-%s: %v; --ftsk-hero-pan-y-from-%s: %v; --ftsk-hero-pan-y-to-%s: %v; --ftsk-hero-rotate-from-%s: %vdeg; --ftsk-hero-rotate-to-%s: %vdeg; --ftsk-hero-duration-%s: %vs; --ftsk-hero-focus-%s: %s;" $style $tier $tierAnim.zoomFrom $tier $tierAnim.zoomTo $tier $tierAnim.panXFrom $tier $tierAnim.panXTo $tier $tierAnim.panYFrom $tier $tierAnim.panYTo $tier $tierAnim.rotFrom $tier $tierAnim.rotTo $tier $tierDuration $tier $tierFocus }}
       {{ end }}
       {{ end }}

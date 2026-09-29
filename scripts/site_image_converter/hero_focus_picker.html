@@ -412,6 +412,24 @@
     mobile: { width: 390, height: 420, tier: 'mobile' },
   };
 
+  // Mirrors layouts/partials/hero-animation.html's own clamp exactly. Pan translates
+  // the whole (already-zoomed) img element around its transform-origin (the focus
+  // point) - if the focus sits close to the edge being panned toward, the translate
+  // pushes that edge inside the frame, exposing the background behind it (a "crop"
+  // gap). Returns the largest pan `amount` (%, same units as the amount field) that's
+  // still guaranteed to fully cover the frame given the start zoom, mirror sign, and
+  // how close the focus is to that edge.
+  function safePanAmountPct(focusPct, zoom, mirrorSign) {
+    var p = focusPct / 100;
+    var q = Math.max(zoom, 1);
+    if (mirrorSign < 0) {
+      var tMin = p / q + p - 1;
+      var tMax = p / q + p - 1 / q;
+      return Math.max(0, Math.min(-tMin, tMax)) * 100;
+    }
+    return (Math.min(p, 1 - p) * (q - 1) / q) * 100;
+  }
+
   dropZone.addEventListener('click', function () {
     fileInput.click();
   });
@@ -784,7 +802,7 @@
 
     // Mirrors layouts/partials/hero-animation.html exactly, so the preview here
     // matches the real site's math/timing.
-    function computeAnim(eff) {
+    function computeAnim(eff, mirrorX, mirrorY) {
       var zoomFrom = eff.zoom;
       var zoomTo = eff.zoom;
       var panXFrom = 0, panXTo = 0;
@@ -792,14 +810,19 @@
       var rotFrom = 0, rotTo = 0;
 
       if (eff.type === 'pan') {
+        var isHorizontal = eff.direction === 'left' || eff.direction === 'right';
+        var safeAmount = isHorizontal
+          ? safePanAmountPct(eff.focusX, eff.zoom, mirrorX)
+          : safePanAmountPct(eff.focusY, eff.zoom, mirrorY);
+        var amount = Math.min(eff.amount, safeAmount);
         if (eff.direction === 'left') {
-          panXFrom = eff.amount; panXTo = -eff.amount;
+          panXFrom = amount; panXTo = -amount;
         } else if (eff.direction === 'up') {
-          panYFrom = eff.amount; panYTo = -eff.amount;
+          panYFrom = amount; panYTo = -amount;
         } else if (eff.direction === 'down') {
-          panYFrom = -eff.amount; panYTo = eff.amount;
+          panYFrom = -amount; panYTo = amount;
         } else {
-          panXFrom = -eff.amount; panXTo = eff.amount;
+          panXFrom = -amount; panXTo = amount;
         }
       } else if (eff.type === 'zoom-in') {
         zoomTo = eff.zoom + eff.amount;
@@ -830,9 +853,9 @@
 
     function renderTransform() {
       var eff = effective();
-      var anim = computeAnim(eff);
       var mx = state.mirrorX ? -1 : 1;
       var my = state.mirrorY ? -1 : 1;
+      var anim = computeAnim(eff, mx, my);
       var zoom = anim.zoomFrom + (anim.zoomTo - anim.zoomFrom) * timeline;
       var panX = anim.panXFrom + (anim.panXTo - anim.panXFrom) * timeline;
       var panY = anim.panYFrom + (anim.panYTo - anim.panYFrom) * timeline;
@@ -1158,6 +1181,19 @@
   // (leaves #connectedPanel hidden) if no server is reachable, e.g. the file
   // was opened directly - the offline drag-drop mode above still works then.
 
+  // Duplicated from the offline-mode IIFE above (separate scope) - see its
+  // definition for the full explanation of what/why this clamps.
+  function safePanAmountPct(focusPct, zoom, mirrorSign) {
+    var p = focusPct / 100;
+    var q = Math.max(zoom, 1);
+    if (mirrorSign < 0) {
+      var tMin = p / q + p - 1;
+      var tMax = p / q + p - 1 / q;
+      return Math.max(0, Math.min(-tMin, tMax)) * 100;
+    }
+    return (Math.min(p, 1 - p) * (q - 1) / q) * 100;
+  }
+
   var connectedPanel = document.getElementById('connectedPanel');
   var connectedStatus = document.getElementById('connectedStatus');
   var connectedSelect = document.getElementById('connectedSelect');
@@ -1270,7 +1306,7 @@
   }
 
   // Matches layouts/partials/hero-animation.html's own math exactly.
-  function computeAnim(eff) {
+  function computeAnim(eff, mirrorX, mirrorY) {
     var zoomFrom = eff.zoom;
     var zoomTo = eff.zoom;
     var panXFrom = 0, panXTo = 0;
@@ -1278,14 +1314,19 @@
     var rotFrom = 0, rotTo = 0;
 
     if (eff.type === 'pan') {
+      var isHorizontal = eff.direction === 'left' || eff.direction === 'right';
+      var safeAmount = isHorizontal
+        ? safePanAmountPct(eff.focusX, eff.zoom, mirrorX)
+        : safePanAmountPct(eff.focusY, eff.zoom, mirrorY);
+      var amount = Math.min(eff.amount, safeAmount);
       if (eff.direction === 'left') {
-        panXFrom = eff.amount; panXTo = -eff.amount;
+        panXFrom = amount; panXTo = -amount;
       } else if (eff.direction === 'up') {
-        panYFrom = eff.amount; panYTo = -eff.amount;
+        panYFrom = amount; panYTo = -amount;
       } else if (eff.direction === 'down') {
-        panYFrom = -eff.amount; panYTo = eff.amount;
+        panYFrom = -amount; panYTo = amount;
       } else {
-        panXFrom = -eff.amount; panXTo = eff.amount;
+        panXFrom = -amount; panXTo = amount;
       }
     } else if (eff.type === 'zoom-in') {
       zoomTo = eff.zoom + eff.amount;
@@ -1634,13 +1675,13 @@
 
     function renderTransform() {
       var eff = effective();
-      var anim = computeAnim(eff);
+      var mx = state.mirror === 'horizontal' || state.mirror === 'both' ? -1 : 1;
+      var my = state.mirror === 'vertical' || state.mirror === 'both' ? -1 : 1;
+      var anim = computeAnim(eff, mx, my);
       var zoom = anim.zoomFrom + (anim.zoomTo - anim.zoomFrom) * timeline;
       var panX = anim.panXFrom + (anim.panXTo - anim.panXFrom) * timeline;
       var panY = anim.panYFrom + (anim.panYTo - anim.panYFrom) * timeline;
       var rot = anim.rotFrom + (anim.rotTo - anim.rotFrom) * timeline;
-      var mx = state.mirror === 'horizontal' || state.mirror === 'both' ? -1 : 1;
-      var my = state.mirror === 'vertical' || state.mirror === 'both' ? -1 : 1;
       img.style.transform =
         'scale(' + (zoom * mx) + ',' + (zoom * my) + ') translate(' + panX + '%,' + panY + '%) rotate(' + rot + 'deg)';
     }

@@ -102,7 +102,11 @@ def _diff_tier(tier_val, base_start, base_animation):
     """Keeps only tablet/mobile fields that actually differ from the entry's own
     base (desktop) values - mirrors hero_focus_picker.html's own diffTierLines()
     so an enabled-but-unchanged override doesn't bloat the saved file."""
-    if not tier_val or not tier_val.get("enabled"):
+    # NOTE: `enabled` is a picker-UI-only flag - it never gets written to the
+    # saved YAML (only the differing fields are), so entries reloaded from disk
+    # never have it. Don't require it here, or every *other* image's
+    # already-saved tablet/mobile override gets silently dropped on next save.
+    if not tier_val:
         return None
 
     base_zoom = base_start.get("zoom", DEFAULT_ZOOM)
