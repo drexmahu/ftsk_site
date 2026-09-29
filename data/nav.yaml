@@ -16,8 +16,8 @@ items:
     text: Túrabeszámolók
     enable_dropdown: false
     dropdown:
-  - link: /galeria/
-    text: Galéria
+  - link: /tanfolyamok/
+    text: Tanfolyamok
     enable_dropdown: false
     dropdown:
   - link: /tevekenysegeink/

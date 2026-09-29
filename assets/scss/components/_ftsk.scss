@@ -832,3 +832,212 @@ button.ftsk-turak-author {
 .ftsk-gallery-item:hover .ftsk-gallery-caption {
   opacity: 1;
 }
+
+// Tanfolyamok (courses) list + single pages - compact hero (same scale as
+// ".ftsk-turak-hero"), the "aktuális tanfolyam" badge, milestone stepper,
+// flyer image row and "Jelentkezem!" direct-contact section.
+.ftsk-tanfolyam-hero {
+  padding: $base-padding * 9 0 $base-padding * 4;
+  @include media-breakpoint-down-lg {
+    padding: $base-padding * 7 0 $base-padding * 3;
+  }
+  @include media-breakpoint-down-sm {
+    padding: $base-padding * 6 0 $base-padding * 2.5;
+  }
+}
+
+.ftsk-tanfolyam-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(190, 160, 112, 0.16);
+  color: $color-primary;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.ftsk-tanfolyam-milestones-wrap {
+  margin: $base-margin * 2 0 $base-margin * 3;
+}
+
+// Horizontal (vertical below md) milestone stepper - see
+// layouts/partials/tanfolyam-milestones.html.
+.ftsk-milestones {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  @include media-breakpoint-down-md {
+    flex-direction: column;
+    gap: 28px;
+  }
+}
+.ftsk-milestone {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  padding: 0 8px;
+  @include media-breakpoint-down-md {
+    flex-direction: row;
+    align-items: flex-start;
+    text-align: left;
+    padding: 0;
+  }
+  &:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    top: 17px;
+    left: calc(50% + 18px);
+    width: calc(100% - 36px);
+    height: 2px;
+    background: var(--border-subtle);
+    z-index: 0;
+    @include media-breakpoint-down-md {
+      top: 36px;
+      left: 17px;
+      width: 2px;
+      height: calc(100% + 20px);
+    }
+  }
+  &--done:not(:last-child)::after {
+    background: $color-primary;
+  }
+}
+.ftsk-milestone-dot {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg-surface);
+  border: 2px solid var(--border-subtle);
+  color: var(--text-muted);
+  font-size: 1.1rem;
+}
+.ftsk-milestone--done .ftsk-milestone-dot {
+  background: $color-primary;
+  border-color: $color-primary;
+  color: var(--bg-page);
+}
+.ftsk-milestone--current .ftsk-milestone-dot {
+  border-color: $color-primary;
+  color: $color-primary;
+  animation: ftsk-milestone-pulse 2s ease-in-out infinite;
+}
+@keyframes ftsk-milestone-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(190, 160, 112, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(190, 160, 112, 0);
+  }
+}
+.ftsk-milestone-label {
+  font-weight: 700;
+  color: var(--text-muted);
+}
+.ftsk-milestone--done .ftsk-milestone-label,
+.ftsk-milestone--current .ftsk-milestone-label {
+  color: var(--text-heading);
+}
+.ftsk-milestone-date {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.ftsk-milestone-estimated {
+  font-style: italic;
+}
+
+.ftsk-tanfolyam-flyers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: $base-margin * 2;
+  img {
+    width: 100%;
+    border-radius: 16px;
+    border: 1px solid var(--border-subtle);
+  }
+}
+
+.ftsk-tanfolyam-jelentkezem {
+  margin-top: $base-margin * 3;
+}
+.ftsk-tanfolyam-jelentkezem-header {
+  margin-bottom: $base-margin * 1.5;
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.6rem;
+    margin-bottom: $base-margin * 0.4;
+    i {
+      color: $color-primary;
+    }
+  }
+  p {
+    color: var(--text-muted);
+    margin: 0;
+  }
+}
+.ftsk-tanfolyam-contacts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+.ftsk-tanfolyam-contact-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 16px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+}
+.ftsk-tanfolyam-contact-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(190, 160, 112, 0.16);
+  color: $color-primary;
+  font-size: 1.4rem;
+}
+.ftsk-tanfolyam-contact-name {
+  font-weight: 700;
+  color: var(--text-heading);
+}
+.ftsk-tanfolyam-contact-role {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.ftsk-tanfolyam-contact-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-body);
+    font-size: 0.9rem;
+    &:hover {
+      color: $color-primary;
+    }
+  }
+}

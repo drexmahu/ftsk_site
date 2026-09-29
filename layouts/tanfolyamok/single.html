@@ -15,9 +15,21 @@
                         <li class="list-inline-item">
                            <p>{{ .ReadingTime }} <span>perc olvasás</span></p>
                         </li>
+                        {{ if .Params.current }}
+                        <li class="list-inline-item">
+                           <span class="ftsk-tanfolyam-badge"><i class="ph ph-star" aria-hidden="true"></i> Aktuális tanfolyam</span>
+                        </li>
+                        {{ end }}
                      </ul>
                   </div>
                </div>
+
+               {{ with .Params.milestones }}
+               <div class="ftsk-tanfolyam-milestones-wrap">
+                  {{ partial "tanfolyam-milestones.html" . }}
+               </div>
+               {{ end }}
+
                <div class="rounded-box mb-xxl-11 mb-8">
                   <img
                      src="{{ partial `url.html` .Params.featuredImg.image_path }}"
@@ -25,7 +37,32 @@
                      alt="featured-image"
                   />
                </div>
-               <div class="ftsk-prose" style="max-width: 900px; margin: 0 auto">{{.Content}}</div>
+
+               {{ with .Params.flyer_images }}
+               <div class="ftsk-tanfolyam-flyers">
+                  {{ range . }}
+                  <img src="{{ partial `url.html` .image_path }}" alt="Szórólap" loading="lazy" />
+                  {{ end }}
+               </div>
+               {{ end }}
+
+               <div class="ftsk-prose" style="max-width: 900px; margin: 0 auto">
+                  {{ .Content }}
+                  {{ with .Params.participants }}
+                  <h3>Résztvevők</h3>
+                  {{ partial "participant-cards.html" . }}
+                  {{ end }}
+               </div>
+
+               {{ with .Params.contacts }}
+               <div class="ftsk-tanfolyam-jelentkezem" style="max-width: 900px; margin: 0 auto">
+                  <div class="ftsk-tanfolyam-jelentkezem-header">
+                     <h2><i class="ph ph-hand-waving" aria-hidden="true"></i> Jelentkezem!</h2>
+                     <p>Vedd fel velünk a kapcsolatot közvetlenül telefonon vagy e-mailben.</p>
+                  </div>
+                  {{ partial "tanfolyam-contacts.html" . }}
+               </div>
+               {{ end }}
             </article>
          </div>
       </div>

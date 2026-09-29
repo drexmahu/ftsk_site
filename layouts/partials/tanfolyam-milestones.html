@@ -1,0 +1,49 @@
+{{/*
+  Horizontal milestone progress bar for the current course (see
+  content/tanfolyamok/tanfolyam-2027.md's `milestones:` front matter). Marks
+  the first milestone that's either dateless or still in the future as
+  "current" (gets the pulse animation); everything strictly before it (a real
+  past date) is "done"; everything after stays "upcoming".
+
+  Each milestone dict:
+    label     (required) - phase name, e.g. "Jelentkezés"
+    date      (optional) - blank/omitted means "not known yet"
+    estimated (optional) - true shows a "(becsült)" note next to the date
+
+  `.` = the milestones list.
+*/}}
+{{ $now := now }}
+{{ $foundCurrent := false }}
+<ol class="ftsk-milestones">
+  {{ range . }}
+  {{ $m := . }}
+  {{ $status := "upcoming" }}
+  {{ if not $foundCurrent }}
+    {{ $isFuture := true }}
+    {{ with $m.date }}
+      {{ if $now.After (time.AsTime .) }}
+        {{ $isFuture = false }}
+      {{ end }}
+    {{ end }}
+    {{ if $isFuture }}
+      {{ $status = "current" }}
+      {{ $foundCurrent = true }}
+    {{ else }}
+      {{ $status = "done" }}
+    {{ end }}
+  {{ end }}
+  <li class="ftsk-milestone ftsk-milestone--{{ $status }}">
+    <span class="ftsk-milestone-dot" aria-hidden="true">
+      {{ if eq $status "done" }}<i class="ph ph-check-bold" aria-hidden="true"></i>{{ end }}
+    </span>
+    <span class="ftsk-milestone-label">{{ $m.label }}</span>
+    <span class="ftsk-milestone-date">
+      {{ with $m.date }}
+        {{ time.AsTime . | time.Format ":date_medium" }}{{ if $m.estimated }} <span class="ftsk-milestone-estimated">(becsült)</span>{{ end }}
+      {{ else }}
+        <span class="ftsk-milestone-estimated">Dátum még nem ismert</span>
+      {{ end }}
+    </span>
+  </li>
+  {{ end }}
+</ol>

@@ -1,10 +1,36 @@
 ---
 date: 2026-09-01T00:00:00Z
 title: Alapfokú tanfolyam (2027)
+current: true
 thumbImg:
   image_path: /images/hero/ftsk-cave-hero.jpg
 featuredImg:
   image_path: /images/hero/ftsk-cave-hero.jpg
+# Optional extra promo image(s) shown alongside the milestone bar - leave the
+# list empty until a real flyer graphic is ready.
+flyer_images: []
+# The 4 fixed phases of a course. `date` blank = "not known yet" (e.g. Vizsga
+# usually isn't scheduled until much later) - still renders, just without a
+# date. `estimated: true` adds a "(becsült)" label next to a filled-in date.
+milestones:
+  - label: Jelentkezés
+    date: 2027-01-15
+    estimated: true
+  - label: Próba túrák
+    date: 2027-02-01
+    estimated: true
+  - label: Tanfolyam kezdése
+    date: 2027-03-01
+    estimated: true
+  - label: Vizsga
+    date:
+    estimated: true
+# Direct phone/email contacts for the "Jelentkezem!" section - replaces the
+# old generic link to the site's contact-us form.
+contacts:
+  - name: Gyovai Tamás
+    role: elnök
+    email: gyovai94@gmail.com
 seo:
   page_description: Jelentkezz az FTSK Barlangkutató Szakosztály 2027-es alapfokú barlangász tanfolyamára.
   canonical_url:
@@ -25,4 +51,3 @@ Addig is jelezd nálunk az érdeklődésed elérhetőségeinken, és elmondjuk a
 részleteket - a pontos jelentkezési határidőt és a tanfolyam díját is később
 tesszük közzé.
 
-[Érdeklődöm](/kapcsolat/)
