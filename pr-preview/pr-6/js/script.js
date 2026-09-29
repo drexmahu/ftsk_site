@@ -41,8 +41,10 @@ $(document).ready(function () {
       mainClass: 'mfp-fade',
    });
 
-   // Member tile popup
-   $('.ftsk-members-grid').on('click', '.ftsk-members-tile', function () {
+   // Member tile / author badge popup (member-tile.html on the Tagjaink page +
+   // participant cards, author-badge.html on the túrabeszámolók list) - both
+   // share the ".ftsk-member-trigger" class, so one delegate covers all of them.
+   $(document).on('click', '.ftsk-member-trigger', function () {
       var $tile = $(this);
       var name = $tile.data('name');
       var $modal = $('#ftsk-member-modal');
@@ -206,6 +208,8 @@ els.forEach(el => {
    if ($turakGrid.length) {
       var $turakCards = $turakGrid.find('.ftsk-turak-card');
       var $turakSearch = $('#ftsk-turak-search');
+      var $turakSuggestions = $('#ftsk-turak-suggestions');
+      var $turakFeatured = $('#ftsk-turak-featured');
       var $turakDecade = $('#ftsk-turak-decade');
       var $turakPills = $('.ftsk-turak-pill');
       var $turakCount = $('#ftsk-turak-count');
@@ -213,10 +217,59 @@ els.forEach(el => {
       var $turakResetButtons = $('#ftsk-turak-reset, #ftsk-turak-empty-reset');
       var activeCategories = [];
 
+      // Autocomplete-like tips: builds suggestions straight from the cards
+      // already in the DOM (title/author), no extra request needed.
+      function updateTurakSuggestions(term) {
+         if (!$turakSuggestions.length) {
+            return;
+         }
+         if (term.length < 2) {
+            $turakSuggestions.addClass('d-none').empty();
+            return;
+         }
+
+         var matches = [];
+         $turakCards.each(function () {
+            if (matches.length >= 6) {
+               return;
+            }
+            var $card = $(this);
+            var title = ($card.data('title') || '').toString();
+            var author = ($card.data('author') || '').toString();
+            if (title.toLowerCase().indexOf(term) !== -1 || author.toLowerCase().indexOf(term) !== -1) {
+               matches.push({ title: title, author: author, href: $card.data('href') });
+            }
+         });
+
+         $turakSuggestions.empty();
+         if (!matches.length) {
+            $turakSuggestions.addClass('d-none');
+            return;
+         }
+
+         matches.forEach(function (match) {
+            var $suggestion = $('<a>')
+               .addClass('ftsk-turak-suggestion')
+               .attr({ href: match.href, role: 'option' })
+               .append($('<span>').addClass('ftsk-turak-suggestion-title').text(match.title));
+            if (match.author) {
+               $suggestion.append($('<span>').addClass('ftsk-turak-suggestion-author').text(match.author));
+            }
+            $suggestion.appendTo($turakSuggestions);
+         });
+         $turakSuggestions.removeClass('d-none');
+      }
+
       function applyTurakFilters() {
          var term = $.trim($turakSearch.val()).toLowerCase();
          var decade = $turakDecade.val();
          var visible = 0;
+         var hasActiveFilter = term || decade || activeCategories.length > 0;
+
+         // Any active filter (search, decade or category) replaces the
+         // "newest" highlight with the matching results below rather than
+         // showing both at once.
+         $turakFeatured.toggleClass('d-none', hasActiveFilter);
 
          $turakCards.each(function () {
             var $card = $(this);
@@ -228,18 +281,38 @@ els.forEach(el => {
                cardCategories.some(function (c) {
                   return activeCategories.indexOf(c) !== -1;
                });
-            var isVisible = matchesSearch && matchesDecade && matchesCategory;
+            // The 2 "Legújabb" reports stay hidden from the grid below until a
+            // filter is active, so they aren't shown twice on the page at once.
+            var isFeaturedDuplicate = $card.data('featured') && !hasActiveFilter;
+            var isVisible = matchesSearch && matchesDecade && matchesCategory && !isFeaturedDuplicate;
             $card.toggleClass('is-hidden', !isVisible);
             if (isVisible) visible++;
          });
 
          $turakCount.text(visible + ' beszámoló található');
          $turakEmpty.toggleClass('d-none', visible !== 0);
-         var hasActiveFilter = term || decade || activeCategories.length > 0;
          $turakResetButtons.filter('#ftsk-turak-reset').toggleClass('d-none', !hasActiveFilter);
       }
 
-      $turakSearch.on('input', applyTurakFilters);
+      $turakSearch.on('input', function () {
+         var term = $.trim($turakSearch.val()).toLowerCase();
+         applyTurakFilters();
+         updateTurakSuggestions(term);
+      });
+      $turakSearch.on('focus', function () {
+         updateTurakSuggestions($.trim($turakSearch.val()).toLowerCase());
+      });
+      $turakSearch.on('keydown', function (e) {
+         if (e.key === 'Escape') {
+            $turakSuggestions.addClass('d-none');
+         }
+      });
+      $(document).on('click', function (e) {
+         if (!$(e.target).closest('.ftsk-turak-search').length) {
+            $turakSuggestions.addClass('d-none');
+         }
+      });
+
       $turakDecade.on('change', applyTurakFilters);
 
       $turakPills.on('click', function () {
@@ -276,6 +349,7 @@ els.forEach(el => {
          $turakPills.removeClass('is-active');
          $turakPills.filter('[data-category=""]').addClass('is-active');
          applyTurakFilters();
+         updateTurakSuggestions('');
       });
 
       applyTurakFilters();
