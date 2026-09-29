@@ -143,7 +143,9 @@ content_blocks:
       **Az egyesület hivatalos neve:** Ferencvárosi Természetbarátok Sportköre
       DELFIN Klub
 
+
       **Cím:** Budapest, XI. kerület, Bartók Béla út 19.
+
 
       **Elérhetőség:** [gyovai94@gmail.com](mailto:gyovai94@gmail.com) (Gyovai
       Tamás, elnök)
