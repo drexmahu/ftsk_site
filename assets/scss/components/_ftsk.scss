@@ -5,18 +5,42 @@
 **********/
 
 .ftsk-cta {
-  padding: $base-padding * 6 0;
+  padding: $base-padding * 3.5 0;
 }
 .ftsk-cta-card {
   position: relative;
-  max-width: 900px;
+  max-width: 960px;
   margin: 0 auto;
   text-align: center;
-  padding: $base-padding * 4.5 $base-padding * 3;
+  padding: $base-padding * 2.75 $base-padding * 3;
   border-radius: 28px;
   border: 1px solid var(--border-subtle);
   background: linear-gradient(135deg, rgba(190, 160, 112, 0.18), var(--bg-surface) 60%);
   box-shadow: 0 30px 60px var(--shadow-ambient);
+  @include media-breakpoint-down-sm {
+    padding: $base-padding * 2 $base-padding * 1.5;
+  }
+}
+// The generic ".section-header" (_root.scss) is sized for a full hero/landing
+// section (9.4rem top padding + a 4rem heading) - this CTA is a single tile
+// inside an already-padded page, not its own hero, so cut both way down to
+// something proportionate to the compact card around it (was making the
+// whole tile needlessly tall).
+.ftsk-cta .section-header {
+  padding: 0 0 $base-padding * 1.5;
+  h2 {
+    font-size: $base-font-size * 2.2;
+    line-height: 1.3;
+    margin-bottom: $base-margin * 0.7;
+    @include media-breakpoint-down-sm {
+      font-size: $base-font-size * 1.6;
+      line-height: 1.3;
+    }
+  }
+  p {
+    font-size: 1.05rem;
+    line-height: 1.6;
+  }
 }
 .ftsk-cta-eyebrow {
   display: inline-block;
