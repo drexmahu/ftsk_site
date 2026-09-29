@@ -17,7 +17,7 @@ sections:
         text: "Egyesületünk"
       - link: "/tagok"
         text: "Tagjaink"
-      - link: "/tevekenysegeink"
+      - link: "/egyesuletunk/#tevekenysegeink"
         text: "Tevékenységeink"
   -
     title: "Közösség"

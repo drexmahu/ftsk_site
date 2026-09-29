@@ -90,7 +90,10 @@
   &-form {
     position: relative;
     z-index: 1;
-    form {
+    // Was a literal <form>; now just a plain card wrapping the contact-tile
+    // list (see layouts/partials/tanfolyam-contacts.html reused here) - kept
+    // the exact same overlap/shadow/radius look, no more input styling.
+    .contact-form-card {
       border: 1px solid $color-secondary-dark;
       box-shadow: 0px 0px 80px rgba(150, 0, 0, 0.06);
       border-radius: 20px;
@@ -114,34 +117,6 @@
       h3 {
         font-size: $base-font-size * 1.9;
         margin-bottom: $base-margin * 3;
-      }
-      .label {
-        margin-bottom: $base-margin * 0.8;
-        font-weight: 600;
-        color: $color-text;
-      }
-      .form-control {
-        padding: 19px 20px;
-        font-size: $base-font-size * 0.9;
-        font-weight: 600;
-        color: $color-header;
-        background: $color-secondary-dark;
-        border: 1px solid $color-text-dark;
-        border-radius: 10px;
-        margin-bottom: $base-margin * 1.9;
-
-        &:focus {
-          background: $color-header-dark;
-          border: 1px solid $color-anchor;
-          outline: 0;
-          box-shadow: none;
-        }
-      }
-      textarea {
-        resize: none;
-      }
-      ::placeholder {
-        color: $color-cyan;
       }
     }
     .effect {

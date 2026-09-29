@@ -6,8 +6,18 @@ items:
     dropdown:
   - link: /egyesuletunk/
     text: Egyesületünk
-    enable_dropdown: false
+    enable_dropdown: true
     dropdown:
+      - dropdown_text: Egyesületünk
+        dropdown_link: /egyesuletunk/
+      - dropdown_text: Történetünk
+        dropdown_link: /egyesuletunk/#tortenetunk
+      - dropdown_text: Tevékenységeink
+        dropdown_link: /egyesuletunk/#tevekenysegeink
+      - dropdown_text: Közérdekű adatok
+        dropdown_link: /egyesuletunk/#kozerdeku-adatok
+      - dropdown_text: Beszámolóink
+        dropdown_link: /egyesuletunk/#beszamoloink
   - link: /tagok/
     text: Tagjaink
     enable_dropdown: false
@@ -18,10 +28,6 @@ items:
     dropdown:
   - link: /tanfolyamok/
     text: Tanfolyamok
-    enable_dropdown: false
-    dropdown:
-  - link: /tevekenysegeink/
-    text: Tevékenységeink
     enable_dropdown: false
     dropdown:
   - link: /linkek/

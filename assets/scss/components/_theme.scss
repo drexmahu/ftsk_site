@@ -120,7 +120,7 @@ html {
 .blog-post,
 .feature-item-banner .card-image,
 .works-banner,
-.contact-form form,
+.contact-form .contact-form-card,
 .navbar-nav .dropdown .dropdown-menu,
 .privacy-wrapper,
 .privacy .navbar {
@@ -166,23 +166,6 @@ html {
 
 .testimonial {
   background: var(--bg-page);
-}
-
-// Forms
-.contact-form form .form-control {
-  background: var(--input-bg);
-  border-color: var(--input-border);
-  color: var(--text-heading);
-}
-.contact-form form .form-control:focus {
-  background: var(--bg-surface-2);
-  border-color: $color-anchor;
-}
-.contact-form form ::placeholder {
-  color: var(--text-muted);
-}
-.contact-form form .label {
-  color: var(--text-body);
 }
 
 // A few headings/labels use $color-header directly, which also serves as a
