@@ -640,7 +640,13 @@ button.ftsk-turak-author {
 }
 
 .ftsk-members {
-  padding: $base-padding * 5 0;
+  padding: $base-padding * 9 0 $base-padding * 5;
+  @include media-breakpoint-down-lg {
+    padding-top: $base-padding * 7;
+  }
+  @include media-breakpoint-down-sm {
+    padding-top: $base-padding * 6;
+  }
 }
 .ftsk-members-group {
   margin-bottom: $base-margin * 3;
@@ -831,7 +837,13 @@ button.ftsk-turak-author {
 }
 
 .ftsk-gallery {
-  padding: $base-padding * 5 0 $base-padding * 8;
+  padding: $base-padding * 9 0 $base-padding * 8;
+  @include media-breakpoint-down-lg {
+    padding-top: $base-padding * 7;
+  }
+  @include media-breakpoint-down-sm {
+    padding-top: $base-padding * 6;
+  }
 }
 .ftsk-gallery-grid {
   display: grid;
