@@ -120,7 +120,10 @@
     overflow: hidden;
     border-radius: 10px;
     border: 1px solid var(--border);
-    background: #000;
+    /* Matches --bg-page, not pure black - the zoom-to-fit letterbox bars (aspect
+       mismatch between this wrapper and the simulated device size) would otherwise
+       read as a fake gap/seam that doesn't exist on the real site. */
+    background: var(--bg-page);
     margin-bottom: 16px;
     position: relative;
     display: flex;
@@ -233,6 +236,32 @@
     padding: 14px 32px;
     font-size: 16px;
   }
+  /* The real #mainnavigationBar is `position: fixed`, always overlaying the top of
+     the page - the photo/motif genuinely render underneath it, they don't start
+     below it. Without this, the preview shows photo content that's never actually
+     visible on the real site. Height/colors/border mirror _theme.scss's navbar
+     rule exactly (border-bottom is transparent at rest, matching the unscrolled
+     state - it only turns gold once `.sticky-nav` is added on scroll). */
+  .sim-navbar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 88px;
+    background: rgba(10, 17, 22, 0.96);
+    border-bottom: 1px solid transparent;
+    backdrop-filter: blur(12px);
+    z-index: 15;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    pointer-events: none;
+  }
+  .sim-hero[data-tier="mobile"] .sim-navbar { height: 73px; }
   .focus-marker {
     position: absolute;
     width: 16px;
@@ -584,10 +613,15 @@
       'Csatlakozz hozzánk barlangtúrákon, kutatásokon vagy a legújabb alapfokú tanfolyamunkon!</p>' +
       '<div class="sim-btn">Ismerd meg az egyesületet</div>';
 
+    var simNavbar = document.createElement('div');
+    simNavbar.className = 'sim-navbar';
+    simNavbar.textContent = 'navbar (fixed, overlays this)';
+
     simHero.appendChild(simMedia);
     simHero.appendChild(simContent);
     simHero.appendChild(marker);
     simHero.appendChild(hiddenNotice);
+    simHero.appendChild(simNavbar);
     deviceFrame.appendChild(simHero);
     deviceWrapper.appendChild(deviceFrame);
 
@@ -1441,10 +1475,14 @@
       '<p>Az FTSK Barlangkutató Szakosztály 1954 óta fedez fel, kutat és jár barlangokat itthon és külföldön. ' +
       'Csatlakozz hozzánk barlangtúrákon, kutatásokon vagy a legújabb alapfokú tanfolyamunkon!</p>' +
       '<div class="sim-btn">Ismerd meg az egyesületet</div>';
+    var simNavbar = document.createElement('div');
+    simNavbar.className = 'sim-navbar';
+    simNavbar.textContent = 'navbar (fixed, overlays this)';
     simHero.appendChild(simMedia);
     simHero.appendChild(simContent);
     simHero.appendChild(marker);
     simHero.appendChild(hiddenNotice);
+    simHero.appendChild(simNavbar);
     deviceFrame.appendChild(simHero);
     deviceWrapper.appendChild(deviceFrame);
     deviceWrapper.appendChild(expandBtn);
