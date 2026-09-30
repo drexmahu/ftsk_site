@@ -370,20 +370,28 @@
 // Bring the real cave edges in front of the hero photos without covering the text.
 // Y offset = navbar height minus the artwork's flat ceiling margin, same reasoning
 // as --motif-top-inset in _theme.scss, so the drips touch the navbar flush here too.
+// The top gradient fades from an OPAQUE color at 0px so the seam against the navbar
+// is a true match, not just a tint - pre-divided by this rule's own brightness(0.72)
+// filter (applied after compositing) so it renders back out as rgb(10, 17, 22),
+// the navbar's own background color, instead of coming out darker than intended.
 .hero-two-media-motif {
   position: absolute;
   inset: 0;
-  background-image: url($cave-hanging-url), url($cave-standing-url);
-  background-repeat: no-repeat, no-repeat;
-  background-position: center 74px, bottom center;
-  background-size: unquote("max(100%, 960px)") auto;
+  background-image:
+    linear-gradient(to bottom, rgb(14, 24, 31) 0, rgba(14, 24, 31, 0) 90px),
+    url($cave-hanging-url),
+    url($cave-standing-url);
+  background-repeat: no-repeat, no-repeat, no-repeat;
+  background-position: top, center 74px, bottom center;
+  background-size: 100% 100%, unquote("max(100%, 960px)") auto, unquote("max(100%, 960px)") auto;
   opacity: 0.9;
   filter: brightness(0.72);
   @include media-breakpoint-down-lg {
-    background-position: left 74px, bottom center;
+    background-position: top, left 74px, bottom center;
   }
   @include media-breakpoint-down-sm {
-    background-position: left 68px, bottom center;
-    background-size: 640px auto;
+    background-position: top, left 68px, bottom center;
+    background-size: 100% 100%, 640px auto, 640px auto;
   }
 }
+

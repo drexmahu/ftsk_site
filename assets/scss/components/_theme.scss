@@ -263,10 +263,16 @@ html {
 }
 
 // Navbar
+// border-bottom is transparent until scrolled (.sticky-nav, see static/js/script.js)
+// so the top-of-page state stays a seamless match with the cave motif underneath -
+// the gold accent line only earns its keep once the nav is a solid bar over content.
 #mainnavigationBar {
   background: rgba(10, 17, 22, 0.96);
-  border-bottom: 1px solid rgba(190, 160, 112, 0.22);
+  border-bottom: 1px solid transparent;
   backdrop-filter: blur(12px);
+  &.sticky-nav {
+    border-bottom-color: rgba(190, 160, 112, 0.22);
+  }
 }
 .navbar-nav .nav-link {
   color: var(--text-heading);

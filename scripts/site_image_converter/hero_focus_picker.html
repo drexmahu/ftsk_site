@@ -197,19 +197,23 @@
   .sim-motif {
     position: absolute;
     inset: 0;
-    background-image: url("../../static/images/motifs/hanging.svg"), url("../../static/images/motifs/standing.svg");
-    background-repeat: no-repeat, no-repeat;
-    /* Keep these Y offsets in sync with .hero-two-media-motif in _hero.scss. */
-    background-position: center 74px, bottom center;
-    background-size: max(100%, 960px) auto;
+    /* Keep this whole rule (including the top gradient) in sync with
+       .hero-two-media-motif in _hero.scss. */
+    background-image:
+      linear-gradient(to bottom, rgb(14, 24, 31) 0, rgba(14, 24, 31, 0) 90px),
+      url("../../static/images/motifs/hanging.svg"),
+      url("../../static/images/motifs/standing.svg");
+    background-repeat: no-repeat, no-repeat, no-repeat;
+    background-position: top, center 74px, bottom center;
+    background-size: 100% 100%, max(100%, 960px) auto, max(100%, 960px) auto;
     opacity: 0.9;
     filter: brightness(0.72);
     pointer-events: none;
   }
-  .sim-hero[data-tier="tablet"] .sim-motif { background-position: left 74px, bottom center; }
+  .sim-hero[data-tier="tablet"] .sim-motif { background-position: top, left 74px, bottom center; }
   .sim-hero[data-tier="mobile"] .sim-motif {
-    background-position: left 68px, bottom center;
-    background-size: 640px auto;
+    background-position: top, left 68px, bottom center;
+    background-size: 100% 100%, 640px auto, 640px auto;
   }
   .sim-content { position: relative; z-index: 1; color: var(--text); }
   .sim-hero[data-tier="desktop"] .sim-content { max-width: 50%; padding: 0 24px 0 140px; }
