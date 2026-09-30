@@ -1,0 +1,83 @@
+name: PR Preview Cleanup
+
+on:
+  pull_request_target:
+    branches: [main]
+    types: [closed]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "23 4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: read
+
+concurrency:
+  group: pr-preview-cleanup
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Pages branch
+        uses: actions/checkout@v7
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+
+      - name: Find open PRs targeting main
+        id: open-prs
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const pullRequests = await github.paginate(github.rest.pulls.list, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open",
+              base: "main",
+              per_page: 100,
+            });
+            core.setOutput("numbers", pullRequests.map((pullRequest) => pullRequest.number).join(" "));
+
+      - name: Remove previews for closed PRs
+        env:
+          OPEN_PR_NUMBERS: ${{ steps.open-prs.outputs.numbers }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          removed=false
+
+          for preview_dir in pr-preview/pr-*; do
+            [[ -d "$preview_dir" ]] || continue
+            pr_number=${preview_dir##*/pr-}
+            [[ "$pr_number" =~ ^[0-9]+$ ]] || continue
+
+            if [[ " $OPEN_PR_NUMBERS " != *" $pr_number "* ]]; then
+              git rm -r -- "$preview_dir"
+              removed=true
+            fi
+          done
+
+          if [[ "$removed" != true ]]; then
+            echo "No closed PR previews to remove."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Remove previews for closed PRs"
+
+          for attempt in {1..5}; do
+            if git push origin HEAD:gh-pages; then
+              exit 0
+            fi
+            git fetch origin gh-pages
+            git rebase origin/gh-pages
+          done
+
+          echo "Could not push the PR preview cleanup after 5 attempts." >&2
+          exit 1

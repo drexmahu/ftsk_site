@@ -1,0 +1,17 @@
+{{/*
+  Wraps every markdown image (![alt](path "caption")) in a <figure> with an
+  optional caption below it, and makes it open full-size in the shared
+  lightbox (see the ".ftsk-prose" magnificPopup binding in static/js/script.js).
+  The optional Markdown "title" (the quoted text after the path) becomes the
+  visible caption - leave it off for an uncaptioned image.
+  Runs .Destination through url.html like every other stored path in this repo,
+  so images keep working under a GitHub Pages/staging subpath, not just at the
+  production domain root (see docs/CONTENT_GUIDE.md).
+*/}}
+{{ $src := partial "url.html" .Destination }}
+<figure class="ftsk-article-figure">
+  <a href="{{ $src }}" class="ftsk-article-figure-link"{{ with .Title }} title="{{ . }}"{{ end }}>
+    <img src="{{ $src }}" alt="{{ .Text }}" loading="lazy" />
+  </a>
+  {{ with .Title }}<figcaption>{{ . }}</figcaption>{{ end }}
+</figure>

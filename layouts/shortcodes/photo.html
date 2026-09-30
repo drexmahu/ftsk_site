@@ -1,0 +1,10 @@
+{{/* A single photo inside a {{< gallery >}} block - see layouts/shortcodes/gallery.html. */}}
+{{ $src := partial "url.html" (.Get "src") }}
+<a
+  href="{{ $src }}"
+  class="ftsk-gallery-item ftsk-article-figure-link"
+  {{ with .Get "caption" }}title="{{ . }}"{{ end }}
+>
+  <img src="{{ $src }}" alt="{{ .Get "alt" }}" loading="lazy" />
+  {{ with .Get "caption" }}<span class="ftsk-gallery-caption">{{ . }}</span>{{ end }}
+</a>

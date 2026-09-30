@@ -1,1 +1,201 @@
-{{ define "main" }} {{ partial "blog-list" . }} {{ end }}
+{{ define "main" }}
+{{ $pages := (where site.RegularPages "Section" "turak").ByDate.Reverse }}
+{{ $categories := index hugo.Data "blog-tags" }}
+
+{{/* Distinct decades present in the archive, newest first - drives the decade filter.
+     $pages is already newest-first, so appending only first-seen decades keeps that order
+     without needing a generic sort (Hugo's sort/reverse funcs choke on plain int slices). */}}
+{{ $decades := slice }}
+{{ range $pages }}
+  {{ $decade := sub .Date.Year (mod .Date.Year 10) }}
+  {{ if not (in $decades $decade) }}
+    {{ $decades = $decades | append $decade }}
+  {{ end }}
+{{ end }}
+
+{{/* The full, day-by-day written reports (as opposed to the "legacy-" stubs that just link an old PDF). */}}
+{{ $featured := slice }}
+{{ range $pages }}
+  {{ if not (strings.HasPrefix .File.BaseFileName "legacy-") }}
+    {{ $featured = $featured | append . }}
+  {{ end }}
+{{ end }}
+
+{{/* Permalinks of the 2 reports already shown in "Legújabb" - the small-card
+     grid below skips them by default (see script.js) to avoid showing the
+     exact same 2 reports twice on the page; a search/filter still reveals
+     them there like any other matching result. */}}
+{{ $featuredLinks := slice }}
+{{ range first 2 $featured }}
+  {{ $featuredLinks = $featuredLinks | append .RelPermalink }}
+{{ end }}
+
+<section class="blog-hero ftsk-turak-hero ftsk-hero-top-motif position-relative">
+   <div class="container">
+      <div class="row">
+         <div class="col-xl-6 col-lg-8 col-md-10 mx-auto">
+            <div class="blog-hero-content">
+               <h1 class="blog-hero-title">{{ .Title }}</h1>
+               <p>{{ .Params.description }}</p>
+            </div>
+         </div>
+      </div>
+   </div>
+</section>
+
+<section class="ftsk-turak-toolbar">
+   <div class="container">
+      <div class="ftsk-turak-toolbar-row">
+         <div class="ftsk-turak-search">
+            <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
+            <input
+               type="search"
+               id="ftsk-turak-search"
+               placeholder="Keresés cím vagy szerző szerint…"
+               aria-label="Beszámolók keresése"
+               autocomplete="off"
+            />
+            <div
+               class="ftsk-turak-search-suggestions d-none"
+               id="ftsk-turak-suggestions"
+               role="listbox"
+               aria-label="Javaslatok"
+            ></div>
+         </div>
+         <div class="ftsk-turak-decade">
+            <i class="ph ph-calendar-blank" aria-hidden="true"></i>
+            <select id="ftsk-turak-decade" aria-label="Szűrés évtized szerint">
+               <option value="">Összes évtized</option>
+               {{ range $decades }}
+               <option value="{{ . }}">{{ . }}-as évek</option>
+               {{ end }}
+            </select>
+         </div>
+      </div>
+      <div class="ftsk-turak-pills" role="group" aria-label="Szűrés kategória szerint">
+         <button type="button" class="ftsk-turak-pill is-active" data-category="">
+            <i class="ph ph-funnel" aria-hidden="true"></i> Összes
+         </button>
+         {{ range $categories }}
+         <button type="button" class="ftsk-turak-pill tag-{{ . | urlize }}" data-category="{{ . | urlize }}">
+            {{ . }}
+         </button>
+         {{ end }}
+      </div>
+      <div class="ftsk-turak-toolbar-status">
+         <p id="ftsk-turak-count"></p>
+         <button type="button" id="ftsk-turak-reset" class="ftsk-turak-reset d-none">
+            <i class="ph ph-x" aria-hidden="true"></i> Szűrők törlése
+         </button>
+      </div>
+   </div>
+</section>
+
+{{ if gt (len $featured) 0 }}
+<section class="ftsk-turak-featured" id="ftsk-turak-featured">
+   <div class="container">
+      <div class="section-header text-start">
+         <h2><i class="ph ph-compass" aria-hidden="true"></i> Legújabb</h2>
+         <p>A legfrissebb túrabeszámolóink.</p>
+      </div>
+      <div class="row">
+         {{ range first 2 $featured }}
+         <div class="col-lg-6 mb-4">
+            <article class="ftsk-turak-featured-card">
+               <a href="{{ .RelPermalink }}" class="ftsk-turak-featured-thumb">
+                  <img src="{{ partial `url.html` .Params.thumbImg.image_path }}" alt="{{ .Title }}" loading="lazy" />
+               </a>
+               <div class="ftsk-turak-featured-content">
+                  <div class="blog-post-tag">
+                     {{ range .Params.categories }}
+                     {{ $href := print (absURL "categories/") (urlize .) }}
+                     <a href="{{ $href }}" class="tag-{{ . | urlize }}">{{ . | humanize }}</a>
+                     {{ end }}
+                  </div>
+                  <h3><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
+                  <p class="ftsk-turak-featured-excerpt">{{ .Summary | plainify | truncate 170 }}</p>
+                  <div class="ftsk-turak-featured-meta">
+                     <span><i class="ph ph-calendar" aria-hidden="true"></i>{{ .Date | time.Format ":date_long" }}</span>
+                     {{ with .Params.author }}
+                     {{ partial "author-badge.html" . }}
+                     {{ end }}
+                     {{ with .Params.participants }}
+                     <span><i class="ph ph-users" aria-hidden="true"></i>{{ len . }} résztvevő</span>
+                     {{ end }}
+                  </div>
+                  <a href="{{ .RelPermalink }}" class="btn btn-secondary ftsk-turak-featured-cta">
+                     Teljes beszámoló <i class="ph ph-arrow-right" aria-hidden="true"></i>
+                  </a>
+               </div>
+            </article>
+         </div>
+         {{ end }}
+      </div>
+   </div>
+</section>
+{{ end }}
+
+<section class="blog blog-two">
+   <div class="container">
+      <div class="ftsk-turak-archive-header">
+         <h2><i class="ph ph-archive" aria-hidden="true"></i> Összes beszámoló</h2>
+      </div>
+      <div class="row" id="ftsk-turak-grid">
+         {{ range $pages }}
+         {{ $isLegacy := strings.HasPrefix .File.BaseFileName "legacy-" }}
+         {{ $decade := sub .Date.Year (mod .Date.Year 10) }}
+         {{ $catSlugs := slice }}
+         {{ range .Params.categories }}
+         {{ $catSlugs = $catSlugs | append (. | urlize) }}
+         {{ end }}
+         {{ $author := .Params.author | default "" }}
+         {{ $searchText := printf "%s %s" .Title $author | lower }}
+         <div
+            class="col-lg-4 col-md-6 mb-4 ftsk-turak-card"
+            data-categories="{{ delimit $catSlugs " " }}"
+            data-decade="{{ $decade }}"
+            data-search="{{ $searchText }}"
+            data-title="{{ .Title }}"
+            data-author="{{ $author }}"
+            data-href="{{ .RelPermalink }}"
+            data-featured="{{ in $featuredLinks .RelPermalink }}"
+         >
+            <article class="blog-post{{ if $isLegacy }} ftsk-turak-card-legacy{{ end }}">
+               <div class="blog-post-thumb">
+                  <a href="{{ .RelPermalink }}">
+                     <img src="{{ partial `url.html` .Params.thumbImg.image_path }}" alt="blog-thumb" loading="lazy" />
+                  </a>
+                  {{ if $isLegacy }}
+                  <span class="ftsk-turak-badge"><i class="ph ph-archive" aria-hidden="true"></i> Archív</span>
+                  {{ end }}
+               </div>
+               <div class="blog-post-content">
+                  <div class="blog-post-tag">
+                     {{ range .Params.categories }}
+                     {{ $href := print (absURL "categories/") (urlize .) }}
+                     <a href="{{ $href }}" class="tag-{{ . | urlize }}">{{ . | humanize }}</a>
+                     {{ end }}
+                  </div>
+                  <div class="blog-post-title">
+                     <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+                  </div>
+                  <div class="blog-post-footer">
+                     <span class="blog-post-date">{{ .Date | time.Format ":date_long" }}</span>
+                     {{ with $author }}
+                     {{ partial "author-badge.html" . }}
+                     {{ end }}
+                  </div>
+               </div>
+            </article>
+         </div>
+         {{ end }}
+      </div>
+      <div class="ftsk-turak-empty d-none" id="ftsk-turak-empty">
+         <i class="ph ph-compass" aria-hidden="true"></i>
+         <p>Nincs a szűrésnek megfelelő beszámoló.</p>
+         <button type="button" class="btn btn-secondary" id="ftsk-turak-empty-reset">Szűrők törlése</button>
+      </div>
+   </div>
+</section>
+{{ end }}
+

@@ -13,8 +13,7 @@ content_blocks:
     title_suffix:
     description: >-
       Válogatás túráinkról és közösségi életünkből. Kattints egy képre a
-      nagyobb nézethez! Ez egy kezdő válogatás - hamarosan friss tagi
-      fotókkal bővítjük.
+      nagyobb nézethez!
     images:
       - image_path: /images/hero/ftsk-cave-hero.jpg
         caption: Barlangi bejárat

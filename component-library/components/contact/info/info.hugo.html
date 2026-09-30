@@ -1,0 +1,39 @@
+{{/*
+  Replaces the old (non-functional, no real submit backend) contact <form>
+  with the Klubhelyiség address + a reusable list of direct phone/email
+  contact tiles - same ".ftsk-tanfolyam-contact-card" design already used by
+  the tanfolyamok "Jelentkezem!" section (layouts/partials/
+  tanfolyam-contacts.html), just reused here. Keeps the exact same
+  overlapping-card layout/aesthetic as before (".contact-form-card" carries
+  the same box-shadow/border-radius/negative-margin overlap look the old
+  <form> card had).
+
+  Address + contacts both live in the ONE card now (previously the address
+  had its own separate column/section) - plain block flow, so the card just
+  grows taller on its own if the contacts list gets long later, no fixed
+  height/overlap math to worry about.
+*/}}
+<section class="contact">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-6 ms-auto">
+        <div class="contact-form">
+          <div class="contact-form-card">
+            {{ with .address }}
+            <div class="contact-form-card-address">
+              <h3>{{ .heading }}</h3>
+              <p>{{ .address }}</p>
+            </div>
+            <hr class="contact-form-card-sep" />
+            {{ end }}
+            {{ with .heading }}<h3>{{ . }}</h3>{{ end }}
+            {{ with .contacts }}{{ partial "tanfolyam-contacts.html" . }}{{ end }}
+          </div>
+          <div class="effect">
+            <img src="{{ relURL `images/contact/effects.png` }}" alt="effects" loading="lazy" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

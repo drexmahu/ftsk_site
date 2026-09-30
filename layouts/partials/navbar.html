@@ -9,80 +9,6 @@
             <a class="navbar-brand" href="{{ relURL `` }}">
                 <img src="{{ partial `url.html` .logo }}" alt="Nav-Logo" />
             </a>
-            <button
-            class="navbar-toggler"
-            type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#navbarSupportedContent"
-            aria-controls="navbarSupportedContent"
-            aria-expanded="false"
-            aria-label="Toggle navigation"
-         >
-            <span class="navbar-toggler-default">
-               <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-               >
-                  <line
-                     x1="3.5"
-                     y1="5.5"
-                     x2="21.5"
-                     y2="5.5"
-                     stroke="#292D32"
-                     stroke-width="3"
-                     stroke-linecap="round"
-                     stroke-linejoin="round"
-                  />
-                  <line
-                     x1="4.5"
-                     y1="12.5"
-                     x2="21.5"
-                     y2="12.5"
-                     stroke="#292D32"
-                     stroke-width="3"
-                     stroke-linecap="round"
-                     stroke-linejoin="round"
-                  />
-                  <line
-                     x1="11.5"
-                     y1="19.5"
-                     x2="21.5"
-                     y2="19.5"
-                     stroke="#292D32"
-                     stroke-width="3"
-                     stroke-linecap="round"
-                     stroke-linejoin="round"
-                  />
-               </svg>
-            </span>
-            <span class="navbar-toggler-toggled">
-               <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 28 28"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-               >
-                  <path
-                     d="M21.5 6.5L6.5 21.5"
-                     stroke="#404152"
-                     stroke-width="3"
-                     stroke-linecap="round"
-                     stroke-linejoin="round"
-                  />
-                  <path
-                     d="M21.5 21.5L6.5 6.5"
-                     stroke="#404152"
-                     stroke-width="3"
-                     stroke-linecap="round"
-                     stroke-linejoin="round"
-                  />
-               </svg>
-            </span>
-         </button>
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul class="navbar-nav mx-auto mb-20 mb-xl-0">
                     {{ range .items }}
@@ -113,17 +39,119 @@
                     {{ end }}
                 </ul>
             </div> 
-            {{ if .enable_nav_btn }}
-                {{ with hugo.Data.tanfolyam }}
-                    {{ if .active }}
-                        <div class="d-none d-xl-block">
-                            <div class="nav-item">
-                                <a href="{{ partial `url.html` .url }}" class="btn btn-sm btn-links">{{ .nav_text }}</a>
-                            </div>
+            <div class="ftsk-navbar-end">
+                <button
+                class="navbar-toggler"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#navbarSupportedContent"
+                aria-controls="navbarSupportedContent"
+                aria-expanded="false"
+                aria-label="Toggle navigation"
+             >
+                <span class="navbar-toggler-default">
+                   <svg
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                   >
+                      <line
+                         x1="3.5"
+                         y1="5.5"
+                         x2="21.5"
+                         y2="5.5"
+                         stroke="#292D32"
+                         stroke-width="3"
+                         stroke-linecap="round"
+                         stroke-linejoin="round"
+                      />
+                      <line
+                         x1="4.5"
+                         y1="12.5"
+                         x2="21.5"
+                         y2="12.5"
+                         stroke="#292D32"
+                         stroke-width="3"
+                         stroke-linecap="round"
+                         stroke-linejoin="round"
+                      />
+                      <line
+                         x1="11.5"
+                         y1="19.5"
+                         x2="21.5"
+                         y2="19.5"
+                         stroke="#292D32"
+                         stroke-width="3"
+                         stroke-linecap="round"
+                         stroke-linejoin="round"
+                      />
+                   </svg>
+                </span>
+                <span class="navbar-toggler-toggled">
+                   <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 28 28"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                   >
+                      <path
+                         d="M21.5 6.5L6.5 21.5"
+                         stroke="#404152"
+                         stroke-width="3"
+                         stroke-linecap="round"
+                         stroke-linejoin="round"
+                      />
+                      <path
+                         d="M21.5 21.5L6.5 6.5"
+                         stroke="#404152"
+                         stroke-width="3"
+                         stroke-linecap="round"
+                         stroke-linejoin="round"
+                      />
+                   </svg>
+                </span>
+             </button>
+                <div class="ftsk-nav-search">
+                    <button
+                        type="button"
+                        class="ftsk-nav-search-toggle"
+                        id="ftskSearchToggle"
+                        aria-expanded="false"
+                        aria-controls="ftskSearchPanel"
+                        aria-label="Keresés a teljes oldalon"
+                    >
+                        <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
+                    </button>
+                    <div class="ftsk-nav-search-panel d-none" id="ftskSearchPanel">
+                        <div class="ftsk-nav-search-field">
+                            <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
+                            <input
+                                type="search"
+                                id="ftskSearchInput"
+                                placeholder="Keresés a teljes oldalon…"
+                                aria-label="Keresés a teljes oldalon"
+                                autocomplete="off"
+                            />
                         </div>
+                        <div class="ftsk-nav-search-results d-none" id="ftskSearchResults" role="listbox" aria-label="Találatok"></div>
+                        <p class="ftsk-nav-search-empty d-none" id="ftskSearchEmpty">Nincs találat.</p>
+                    </div>
+                </div>
+                {{ if .enable_nav_btn }}
+                    {{ with hugo.Data.tanfolyam }}
+                        {{ if .active }}
+                            <div class="d-none d-xl-block">
+                                <div class="nav-item">
+                                    <a href="{{ partial `url.html` .url }}" class="btn btn-sm btn-links">{{ .nav_text }}</a>
+                                </div>
+                            </div>
+                        {{ end }}
                     {{ end }}
                 {{ end }}
-            {{ end }}
+            </div>
         </div>
     </nav>
 </header>

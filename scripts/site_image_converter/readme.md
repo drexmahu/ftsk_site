@@ -40,14 +40,23 @@ ratio kept, no crop.
 ## Picking the homepage hero crop/zoom/pan
 
 The homepage hero (`data/hero_images.yaml`) crops each photo with CSS
-`object-fit: cover` and Ken-Burns-pans/zooms it slowly - for some photos the
-interesting part isn't centered, or the default motion isn't quite right, so
-double-click `hero_focus_picker.html` (opens directly in your browser, no
-server needed) to preview the real crop/animation for each converted
-`.webp`: click on the photo to set its focus point, use the play/pause
-button and the zoom start/end, pan amount and duration sliders to fine-tune
-the motion, then copy the generated lines straight into
-`data/hero_images.yaml`.
+`object-fit: cover` and Ken-Burns-pans/zooms it slowly. Double-click
+`run_hero_picker.bat` to start the local hero picker: it opens
+`hero_focus_picker.html` in your browser, already loaded with the site's real
+hero photos and their real settings from `data/hero_images.yaml`. Use the
+dropdown to pick which photo you're editing, click on the photo to set its
+focus point, use the sliders to fine-tune the animation, then **Mentés**
+(save) writes straight back to `data/hero_images.yaml` - no copy-pasting.
+**"+ Új fotó hozzáadása"** lets you add a brand new hero photo: pick a file and
+it's automatically converted to `.webp` into `static/images/hero/` and added
+to the config with sensible defaults, ready to fine-tune. **"Kép törlése"**
+removes the currently selected photo from both the config and
+`static/images/hero/`.
+
+If you open `hero_focus_picker.html` directly (double-click the file, no
+server running), it falls back to the older offline mode: drag and drop any
+local photos to preview crops/animations and copy a YAML snippet to paste into
+`data/hero_images.yaml` by hand.
 
 ## Troubleshooting
 

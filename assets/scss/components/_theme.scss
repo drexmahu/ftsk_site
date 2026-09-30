@@ -51,8 +51,7 @@ html {
   border-radius: 8px;
 }
 
-// Sections that were light-toned by default now follow the page background, with a
-// subtle cave-silhouette motif (stalactites/stalagmites + a warm headlamp glow)
+// Preserve the real silhouette proportions across tall sections and compact screens.
 .hero,
 .hero-two,
 .about-hero-one,
@@ -69,10 +68,25 @@ html {
 .error,
 .works {
   background-color: var(--bg-page);
-  background-image: url($cave-silhouette-url);
+  background-image: linear-gradient(to bottom, rgba(10, 17, 22, 0.48), rgba(10, 17, 22, 0.18)), url($cave-hanging-url), url($cave-standing-url);
   background-repeat: no-repeat;
-  background-position: bottom center;
-  background-size: cover;
+  background-position: center, center var(--motif-top-inset, 0px), bottom center;
+  background-size: 100% 100%, unquote("max(100%, 960px)") auto, unquote("max(100%, 960px)") auto;
+}
+
+.hero,
+.hero-two,
+.about-hero-one,
+.about-hero-two,
+.contact-hero,
+.feature-hero,
+.feature-hero-two,
+.privacy-hero,
+.blog-hero,
+.error {
+  // 88px = navbar height, minus ~14px to crop the artwork's flat ceiling
+  // margin behind the navbar so the actual hanging drips touch it flush.
+  --motif-top-inset: 74px;
 }
 
 // The CTA card ("Új tanfolyam" on the front page etc.) is its own bordered/shadowed
@@ -88,18 +102,97 @@ html {
 // (stalactite) half, same "too short to ever crop the full motif" reasoning as .cta.
 .ftsk-section-header {
   background-color: var(--bg-page);
-  background-image: url($cave-silhouette-top-url);
+  background-image: linear-gradient(to bottom, rgba(10, 17, 22, 0.48), rgba(10, 17, 22, 0.18)), url($cave-hanging-url);
   background-repeat: no-repeat;
-  background-position: top center;
-  background-size: cover;
+  background-position: center, top center;
+  background-size: 100% 100%, unquote("max(100%, 960px)") auto;
+}
+
+// Reusable modifier for any hero-ish section that's too short to crop the
+// full motif nicely (stalactites AND stalagmites) - just the top (hanging
+// stalactite) half, same reasoning as .ftsk-section-header above. Add
+// alongside .blog-hero etc. (later in source = wins at equal specificity).
+.ftsk-hero-top-motif {
+  // 88px = navbar height, minus ~14px to crop the artwork's flat ceiling
+  // margin behind the navbar so the actual hanging drips touch it flush.
+  --motif-top-inset: 74px;
+  background-color: var(--bg-page);
+  background-image: linear-gradient(to bottom, rgba(10, 17, 22, 0.48), rgba(10, 17, 22, 0.18)), url($cave-hanging-url);
+  background-repeat: no-repeat;
+  background-position: center, center var(--motif-top-inset, 0px);
+  background-size: 100% 100%, unquote("max(100%, 960px)") auto;
 }
 
 .footer {
   background-color: var(--bg-surface);
-  background-image: url($cave-silhouette-url);
+  background-image: linear-gradient(to bottom, rgba(10, 17, 22, 0.48), rgba(10, 17, 22, 0.18)), url($cave-hanging-url), url($cave-standing-url);
   background-repeat: no-repeat;
-  background-position: top center;
-  background-size: cover;
+  background-position: center, top center, bottom center;
+  background-size: 100% 100%, unquote("max(100%, 960px)") auto, unquote("max(100%, 960px)") auto;
+}
+
+@include media-breakpoint-down-lg {
+  .hero,
+  .hero-two,
+  .about-hero-one,
+  .about-hero-two,
+  .contact-hero,
+  .feature-hero,
+  .feature-hero-two,
+  .pricing-inner,
+  .pricing-inner-two,
+  .privacy-hero,
+  .blog-hero,
+  .blog-related,
+  .feature-bg,
+  .error,
+  .works,
+  .footer {
+    background-position: center, left var(--motif-top-inset, 0px), bottom center;
+  }
+  .ftsk-section-header,
+  .ftsk-hero-top-motif {
+    background-position: center, left var(--motif-top-inset, 0px);
+  }
+}
+
+@include media-breakpoint-down-sm {
+  .hero,
+  .hero-two,
+  .about-hero-one,
+  .about-hero-two,
+  .contact-hero,
+  .feature-hero,
+  .feature-hero-two,
+  .privacy-hero,
+  .blog-hero,
+  .error,
+  .ftsk-hero-top-motif {
+    // 73px = navbar height at this breakpoint, minus ~5px for the same crop.
+    --motif-top-inset: 68px;
+  }
+  .hero,
+  .hero-two,
+  .about-hero-one,
+  .about-hero-two,
+  .contact-hero,
+  .feature-hero,
+  .feature-hero-two,
+  .pricing-inner,
+  .pricing-inner-two,
+  .privacy-hero,
+  .blog-hero,
+  .blog-related,
+  .feature-bg,
+  .error,
+  .works,
+  .footer {
+    background-size: 100% 100%, 640px auto, 640px auto;
+  }
+  .ftsk-section-header,
+  .ftsk-hero-top-motif {
+    background-size: 100% 100%, 640px auto;
+  }
 }
 
 // Card / panel surfaces
@@ -111,7 +204,7 @@ html {
 .blog-post,
 .feature-item-banner .card-image,
 .works-banner,
-.contact-form form,
+.contact-form .contact-form-card,
 .navbar-nav .dropdown .dropdown-menu,
 .privacy-wrapper,
 .privacy .navbar {
@@ -159,23 +252,6 @@ html {
   background: var(--bg-page);
 }
 
-// Forms
-.contact-form form .form-control {
-  background: var(--input-bg);
-  border-color: var(--input-border);
-  color: var(--text-heading);
-}
-.contact-form form .form-control:focus {
-  background: var(--bg-surface-2);
-  border-color: $color-anchor;
-}
-.contact-form form ::placeholder {
-  color: var(--text-muted);
-}
-.contact-form form .label {
-  color: var(--text-body);
-}
-
 // A few headings/labels use $color-header directly, which also serves as a
 // background elsewhere so it can't be re-themed globally - override explicitly.
 .team-member-details h3,
@@ -187,6 +263,20 @@ html {
 }
 
 // Navbar
+// border-bottom is transparent until scrolled (.sticky-nav, see static/js/script.js)
+// so the top-of-page state stays a seamless match with the cave motif underneath -
+// the gold accent line only earns its keep once the nav is a solid bar over content.
+#mainnavigationBar {
+  background: rgba(10, 17, 22, 0.96);
+  border-bottom: 1px solid transparent;
+  backdrop-filter: blur(12px);
+  &.sticky-nav {
+    border-bottom-color: rgba(190, 160, 112, 0.22);
+  }
+}
+.navbar-nav .nav-link {
+  color: var(--text-heading);
+}
 .bg-nav,
 .bg-nav.sticky-nav,
 .sticky-nav {
@@ -194,8 +284,9 @@ html {
   box-shadow: 0px 4px 30px var(--shadow-ambient);
 }
 @include media-breakpoint-down-xl {
-  .navbar {
-    background: var(--bg-page);
+  #mainnavigationBar .navbar-collapse.show {
+    max-height: calc(100dvh - 84px);
+    overflow-y: auto;
   }
 }
 #mainnavigationBar .navbar-toggler line,
