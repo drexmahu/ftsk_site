@@ -84,7 +84,9 @@ html {
 .privacy-hero,
 .blog-hero,
 .error {
-  --motif-top-inset: 88px;
+  // 88px = navbar height, minus ~14px to crop the artwork's flat ceiling
+  // margin behind the navbar so the actual hanging drips touch it flush.
+  --motif-top-inset: 74px;
 }
 
 // The CTA card ("Új tanfolyam" on the front page etc.) is its own bordered/shadowed
@@ -111,7 +113,9 @@ html {
 // stalactite) half, same reasoning as .ftsk-section-header above. Add
 // alongside .blog-hero etc. (later in source = wins at equal specificity).
 .ftsk-hero-top-motif {
-  --motif-top-inset: 88px;
+  // 88px = navbar height, minus ~14px to crop the artwork's flat ceiling
+  // margin behind the navbar so the actual hanging drips touch it flush.
+  --motif-top-inset: 74px;
   background-color: var(--bg-page);
   background-image: linear-gradient(to bottom, rgba(10, 17, 22, 0.48), rgba(10, 17, 22, 0.18)), url($cave-hanging-url);
   background-repeat: no-repeat;
@@ -164,7 +168,8 @@ html {
   .blog-hero,
   .error,
   .ftsk-hero-top-motif {
-    --motif-top-inset: 73px;
+    // 73px = navbar height at this breakpoint, minus ~5px for the same crop.
+    --motif-top-inset: 68px;
   }
   .hero,
   .hero-two,

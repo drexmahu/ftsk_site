@@ -199,15 +199,16 @@
     inset: 0;
     background-image: url("../../static/images/motifs/hanging.svg"), url("../../static/images/motifs/standing.svg");
     background-repeat: no-repeat, no-repeat;
-    background-position: center 100px, bottom center;
+    /* Keep these Y offsets in sync with .hero-two-media-motif in _hero.scss. */
+    background-position: center 74px, bottom center;
     background-size: max(100%, 960px) auto;
     opacity: 0.9;
     filter: brightness(0.72);
     pointer-events: none;
   }
-  .sim-hero[data-tier="tablet"] .sim-motif { background-position: left 100px, bottom center; }
+  .sim-hero[data-tier="tablet"] .sim-motif { background-position: left 74px, bottom center; }
   .sim-hero[data-tier="mobile"] .sim-motif {
-    background-position: left 84px, bottom center;
+    background-position: left 68px, bottom center;
     background-size: 640px auto;
   }
   .sim-content { position: relative; z-index: 1; color: var(--text); }
