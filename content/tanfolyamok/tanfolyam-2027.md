@@ -1,5 +1,5 @@
 ---
-date: 2026-09-01T00:00:00Z
+date: 2026-10-02T00:00:00Z
 title: Alapfokú tanfolyam (2027)
 current: true
 thumbImg:
@@ -13,14 +13,17 @@ flyer_images: []
 # usually isn't scheduled until much later) - still renders, just without a
 # date. `estimated: true` adds a "(becsült)" label next to a filled-in date.
 milestones:
-  - label: Jelentkezés
-    date: 2027-01-15
+  - label: Jelentkezés kezdete
+    date: 2026-09-22
     estimated: true
-  - label: Próba túrák
-    date: 2027-02-01
+  - label: Első nyílt próba túra
+    date: 2026-12-01
+    estimated: true
+  - label: Utolsó próba túra, jelentkezés vége
+    date: 2027-12-20
     estimated: true
   - label: Tanfolyam kezdése
-    date: 2027-03-01
+    date: 2027-02-18
     estimated: true
   - label: Vizsga
     date:

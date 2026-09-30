@@ -583,6 +583,10 @@ button.ftsk-turak-author {
   }
   @include media-breakpoint-down-sm {
     padding: $base-padding * 6 0 $base-padding * 2.5;
+    .blog-hero-title {
+      font-size: 2rem;
+      line-height: 1.25;
+    }
   }
 }
 
@@ -924,24 +928,99 @@ button.ftsk-turak-author {
     text-align: left;
     padding: 0;
   }
-  &:not(:last-child)::after {
-    content: "";
-    position: absolute;
-    top: 17px;
-    left: calc(50% + 18px);
-    width: calc(100% - 36px);
-    height: 2px;
-    background: var(--border-subtle);
-    z-index: 0;
-    @include media-breakpoint-down-md {
-      top: 36px;
-      left: 17px;
-      width: 2px;
-      height: calc(100% + 20px);
-    }
+}
+// Connector to the next milestone; `--p` (0-1) and `--i` (index) come from the
+// template. Segments fill one after another, each taking $seg * --p.
+$ftsk-milestone-seg: 0.5s;
+.ftsk-milestone-line {
+  position: absolute;
+  top: 17px;
+  left: calc(50% + 18px);
+  width: calc(100% - 36px);
+  height: 2px;
+  background: var(--border-subtle);
+  z-index: 0;
+  @include media-breakpoint-down-md {
+    top: 36px;
+    left: 17px;
+    width: 2px;
+    height: calc(100% + 20px);
   }
-  &--done:not(:last-child)::after {
-    background: $color-primary;
+}
+.ftsk-milestone-fill,
+.ftsk-milestone-now {
+  position: absolute;
+  animation-delay: calc(var(--i) * #{$ftsk-milestone-seg});
+  animation-duration: calc(var(--p) * #{$ftsk-milestone-seg});
+  animation-timing-function: linear;
+  animation-fill-mode: both;
+}
+.ftsk-milestone-fill {
+  top: 0;
+  left: 0;
+  width: calc(var(--p) * 100%);
+  height: 100%;
+  background: $color-primary;
+  animation-name: ftsk-milestone-fill-x;
+  @include media-breakpoint-down-md {
+    width: 100%;
+    height: calc(var(--p) * 100%);
+    animation-name: ftsk-milestone-fill-y;
+  }
+}
+.ftsk-milestone-now {
+  top: 50%;
+  left: calc(var(--p) * 100%);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: $color-primary;
+  border: 2px solid var(--bg-surface);
+  transform: translate(-50%, -50%);
+  animation-name: ftsk-milestone-now-x, ftsk-milestone-pulse;
+  animation-duration: calc(var(--p) * #{$ftsk-milestone-seg}), 2s;
+  animation-delay: calc(var(--i) * #{$ftsk-milestone-seg}),
+    calc((var(--i) + var(--p)) * #{$ftsk-milestone-seg});
+  animation-timing-function: linear, ease-in-out;
+  animation-iteration-count: 1, infinite;
+  @include media-breakpoint-down-md {
+    top: calc(var(--p) * 100%);
+    left: 50%;
+    animation-name: ftsk-milestone-now-y, ftsk-milestone-pulse;
+  }
+}
+@keyframes ftsk-milestone-fill-x {
+  from {
+    width: 0;
+  }
+}
+@keyframes ftsk-milestone-fill-y {
+  from {
+    height: 0;
+  }
+}
+@keyframes ftsk-milestone-now-x {
+  from {
+    left: 0;
+    opacity: 0;
+  }
+  1% {
+    opacity: 1;
+  }
+}
+@keyframes ftsk-milestone-now-y {
+  from {
+    top: 0;
+    opacity: 0;
+  }
+  1% {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ftsk-milestone-fill,
+  .ftsk-milestone-now {
+    animation: none;
   }
 }
 .ftsk-milestone-dot {
@@ -966,8 +1045,13 @@ button.ftsk-turak-author {
 }
 .ftsk-milestone--current .ftsk-milestone-dot {
   border-color: $color-primary;
-  color: $color-primary;
-  animation: ftsk-milestone-pulse 2s ease-in-out infinite;
+  &::after {
+    content: "";
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: $color-primary;
+  }
 }
 @keyframes ftsk-milestone-pulse {
   0%,

@@ -179,7 +179,7 @@
 //
 // Stacking (back to front, all within .hero-two's own stacking context):
 // .hero-two's own bg -> .hero-two-shape (legacy decorative blob) -> .hero-two-media
-// (photos, then the left-to-right readability fade, then the cave-silhouette motif
+// (photos, then the left-to-right readability fade, then the real cave silhouettes
 // redrawn on top so it reads as being in front of the photos) -> the real text/content.
 .hero-two-media {
   position: absolute;
@@ -367,14 +367,21 @@
   }
 }
 
-// Redraws the same cave-silhouette drip motif used as .hero-two's own background, as a
-// foreground layer over the photos - the "dropstone" shapes read as being in front.
+// Bring the real cave edges in front of the hero photos without covering the text.
 .hero-two-media-motif {
   position: absolute;
   inset: 0;
-  background-image: url($cave-silhouette-url);
-  background-repeat: no-repeat;
-  background-position: bottom center;
-  background-size: cover;
+  background-image: url($cave-hanging-url), url($cave-standing-url);
+  background-repeat: no-repeat, no-repeat;
+  background-position: center 100px, bottom center;
+  background-size: unquote("max(100%, 960px)") auto;
   opacity: 0.9;
+  filter: brightness(0.72);
+  @include media-breakpoint-down-lg {
+    background-position: left 100px, bottom center;
+  }
+  @include media-breakpoint-down-sm {
+    background-position: left 84px, bottom center;
+    background-size: 640px auto;
+  }
 }
