@@ -7,9 +7,9 @@
   flex-wrap: wrap; // allow us to do the line break for collapsing content
   align-items: center;
   justify-content: space-between; // space out brand from logo
-  padding-top: 1.5rem;
+  padding-top: 0.5rem;
   padding-right: 3.5rem; // default: null
-  padding-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
   padding-left: 3.5rem; // default: null
   background-color: none;
   z-index: 1000;
@@ -50,7 +50,7 @@
 @include media-breakpoint-down-xl {
   .navbar {
      margin: $base-margin * 0;
-     padding: 1.5rem;
+     padding: 0.5rem 1.5rem;
      border-radius: 0;
      width: 100%;
      // width: calc(100% - 32px) !important;
@@ -59,7 +59,7 @@
 }
 @include media-breakpoint-down-sm {
   .navbar {
-     padding: 1rem 0;
+     padding: 0.4rem 0;
   }
 }
 
@@ -71,7 +71,7 @@
   width: 155px;
 
   img {
-   max-height: 52px;
+   max-height: 72px;
    max-width: 155px;
  }
 }
@@ -79,6 +79,10 @@
 @include media-breakpoint-down-sm {
   .navbar-brand {
      flex: 1;
+
+     img {
+        max-height: 60px;
+     }
   }
 }
 

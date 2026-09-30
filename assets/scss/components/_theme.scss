@@ -84,7 +84,7 @@ html {
 .privacy-hero,
 .blog-hero,
 .error {
-  --motif-top-inset: 100px;
+  --motif-top-inset: 88px;
 }
 
 // The CTA card ("Új tanfolyam" on the front page etc.) is its own bordered/shadowed
@@ -111,7 +111,7 @@ html {
 // stalactite) half, same reasoning as .ftsk-section-header above. Add
 // alongside .blog-hero etc. (later in source = wins at equal specificity).
 .ftsk-hero-top-motif {
-  --motif-top-inset: 100px;
+  --motif-top-inset: 88px;
   background-color: var(--bg-page);
   background-image: linear-gradient(to bottom, rgba(10, 17, 22, 0.48), rgba(10, 17, 22, 0.18)), url($cave-hanging-url);
   background-repeat: no-repeat;
@@ -164,7 +164,7 @@ html {
   .blog-hero,
   .error,
   .ftsk-hero-top-motif {
-    --motif-top-inset: 84px;
+    --motif-top-inset: 73px;
   }
   .hero,
   .hero-two,
