@@ -201,12 +201,48 @@ els.forEach(el => {
       }
    }
 
-   // Túrabeszámolók (turak) list page - client-side filter toolbar (see
-   // layouts/turak/list.html). Everything lives in the DOM already (no
-   // pagination), this just toggles ".is-hidden" on cards that don't match.
+   function createArchivePager($grid, $controls) {
+      var $cards = $grid.children();
+      var $matches = $cards;
+      var currentPage = 1;
+      var $size = $controls.find('select');
+      var $status = $controls.find('.ftsk-archive-page-status');
+      var $previous = $controls.find('[data-page-step="-1"]');
+      var $next = $controls.find('[data-page-step="1"]');
+
+      function render() {
+         var pageSize = $size.val() === 'all' ? Math.max(1, $matches.length) : Number($size.val());
+         var pageCount = Math.max(1, Math.ceil($matches.length / pageSize));
+         currentPage = Math.min(currentPage, pageCount);
+         var start = (currentPage - 1) * pageSize;
+         $cards.addClass('is-hidden');
+         $matches.slice(start, start + pageSize).removeClass('is-hidden');
+         $status.text($matches.length ? (start + 1) + '–' + Math.min(start + pageSize, $matches.length) + ' / ' + $matches.length + ' · ' + currentPage + ' / ' + pageCount : '0 / 0');
+         $previous.prop('disabled', currentPage === 1);
+         $next.prop('disabled', currentPage === pageCount);
+      }
+
+      $size.on('change', function () {
+         currentPage = 1;
+         render();
+      });
+      $controls.find('[data-page-step]').on('click', function () {
+         currentPage += Number($(this).attr('data-page-step'));
+         render();
+         $grid[0].scrollIntoView({ block: 'start' });
+      });
+
+      return function ($filtered) {
+         $matches = $filtered;
+         currentPage = 1;
+         render();
+      };
+   }
+
    var $turakGrid = $('#ftsk-turak-grid');
    if ($turakGrid.length) {
       var $turakCards = $turakGrid.find('.ftsk-turak-card');
+      var paginateTurak = createArchivePager($turakGrid, $('#ftsk-turak-pager'));
       var $turakSearch = $('#ftsk-turak-search');
       var $turakSuggestions = $('#ftsk-turak-suggestions');
       var $turakFeatured = $('#ftsk-turak-featured');
@@ -263,7 +299,6 @@ els.forEach(el => {
       function applyTurakFilters() {
          var term = $.trim($turakSearch.val()).toLowerCase();
          var decade = $turakDecade.val();
-         var visible = 0;
          var hasActiveFilter = term || decade || activeCategories.length > 0;
 
          // Any active filter (search, decade or category) replaces the
@@ -271,7 +306,7 @@ els.forEach(el => {
          // showing both at once.
          $turakFeatured.toggleClass('d-none', hasActiveFilter);
 
-         $turakCards.each(function () {
+         var $matches = $turakCards.filter(function () {
             var $card = $(this);
             var cardCategories = ($card.data('categories') || '').toString().split(' ');
             var matchesSearch = !term || ($card.data('search') || '').toString().indexOf(term) !== -1;
@@ -284,13 +319,12 @@ els.forEach(el => {
             // The 2 "Legújabb" reports stay hidden from the grid below until a
             // filter is active, so they aren't shown twice on the page at once.
             var isFeaturedDuplicate = $card.data('featured') && !hasActiveFilter;
-            var isVisible = matchesSearch && matchesDecade && matchesCategory && !isFeaturedDuplicate;
-            $card.toggleClass('is-hidden', !isVisible);
-            if (isVisible) visible++;
+            return matchesSearch && matchesDecade && matchesCategory && !isFeaturedDuplicate;
          });
 
-         $turakCount.text(visible + ' beszámoló található');
-         $turakEmpty.toggleClass('d-none', visible !== 0);
+         paginateTurak($matches);
+         $turakCount.text($matches.length + ' beszámoló található');
+         $turakEmpty.toggleClass('d-none', $matches.length !== 0);
          $turakResetButtons.filter('#ftsk-turak-reset').toggleClass('d-none', !hasActiveFilter);
       }
 
@@ -353,6 +387,37 @@ els.forEach(el => {
       });
 
       applyTurakFilters();
+   }
+
+   var $courseGrid = $('#ftsk-course-grid');
+   if ($courseGrid.length) {
+      var $courseCards = $courseGrid.children();
+      var $courseSearch = $('#ftsk-course-search');
+      var $courseYear = $('#ftsk-course-year');
+      var $courseReset = $('#ftsk-course-reset');
+      var paginateCourses = createArchivePager($courseGrid, $('#ftsk-course-pager'));
+
+      function applyCourseFilters() {
+         var term = $.trim($courseSearch.val()).toLowerCase();
+         var year = $courseYear.val();
+         var $matches = $courseCards.filter(function () {
+            return (!term || $(this).attr('data-search').indexOf(term) !== -1) &&
+               (!year || $(this).attr('data-year') === year);
+         });
+         paginateCourses($matches);
+         $('#ftsk-course-count').text($matches.length + ' tanfolyam található');
+         $('#ftsk-course-empty').toggleClass('d-none', $matches.length !== 0);
+         $courseReset.toggleClass('d-none', !term && !year);
+      }
+
+      $courseSearch.on('input', applyCourseFilters);
+      $courseYear.on('change', applyCourseFilters);
+      $courseReset.on('click', function () {
+         $courseSearch.val('');
+         $courseYear.val('');
+         applyCourseFilters();
+      });
+      applyCourseFilters();
    }
 
    // Sitewide search (navbar search box, see layouts/partials/navbar.html) -
