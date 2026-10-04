@@ -171,11 +171,13 @@
             if (!slide.image.naturalWidth) return;
             var config = settings(slide.config, tier);
             var active = slide.element.classList.contains('is-active') && slide.element.offsetWidth > 0;
-            var running = active && !reduced.matches && !document.hidden && inView && config.type !== 'none';
+            var opacity = Number(window.getComputedStyle(slide.element).opacity);
+            var visible = active || (slide.element.offsetWidth > 0 && opacity > 0.001);
+            var running = visible && !reduced.matches && !document.hidden && inView && config.type !== 'none';
             if (running && slide.last !== null) slide.elapsed += Math.min(100, timestamp - slide.last) / 1000;
             slide.last = running ? timestamp : null;
-            var progress = reduced.matches ? 0 : (slide.elapsed / config.duration) % 2;
-            if (progress > 1) progress = 2 - progress;
+            if (!visible || reduced.matches) slide.elapsed = 0;
+            var progress = reduced.matches ? 0 : clamp(slide.elapsed / config.duration, 0, 1);
             var movement = motion(config, progress);
             var result = frame(Object.assign({}, dimensions, config, movement, {
                imageWidth: slide.image.naturalWidth,
