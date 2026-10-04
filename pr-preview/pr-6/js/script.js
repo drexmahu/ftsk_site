@@ -81,10 +81,11 @@ $(document).ready(function () {
    });
 
    // Hero banner slideshow: slow Ken Burns crossfade, looping circularly.
-   // The pan animation itself is pure CSS (see .ftsk-hero-slide in
-   // _hero.scss) - this just swaps which slide has the "is-active" class.
+   // Shared POI framing handles motion; CSS handles crossfades while this
+   // controller swaps which slide has the "is-active" class.
    $('.ftsk-hero-slideshow').each(function () {
       var $slides = $(this).find('.ftsk-hero-slide');
+      if (window.FTSKHeroFraming) window.FTSKHeroFraming.attach(this);
       if ($slides.length < 2) {
          return;
       }
@@ -110,6 +111,16 @@ $(document).ready(function () {
 
       var reduceMotion =
          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      window.addEventListener('resize', function () {
+         if ($slides.eq(current).is(':visible')) return;
+         var $visible = $slides.filter(':visible').first();
+         if ($visible.length) {
+            $slides.removeClass('is-active');
+            $visible.addClass('is-active');
+            current = $slides.index($visible);
+         }
+      });
 
       setInterval(
          function () {
@@ -451,7 +462,9 @@ els.forEach(el => {
 
       function loadSearchIndex() {
          if (!searchIndexPromise) {
-            searchIndexPromise = $.getJSON('/searchindex.json')
+            searchIndexPromise = $.when(window.FTSK404Ready).then(function () {
+               return $.getJSON($searchToggle.attr('data-search-index'));
+            })
                .done(function (data) {
                   searchIndex = data || [];
                })
