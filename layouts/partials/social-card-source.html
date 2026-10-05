@@ -1,0 +1,36 @@
+{{ $page := . }}
+{{ $srcPath := "" }}
+{{ with $page.Params.seo.featured_image }}
+  {{ $srcPath = . }}
+{{ else }}
+  {{ if and $page.IsPage (in (slice "turak" "tanfolyamok") $page.Section) }}
+    {{ with $page.Params.featuredImg.image_path }}{{ $srcPath = . }}{{ end }}
+  {{ end }}
+{{ end }}
+
+{{ if not $srcPath }}
+  {{ $candidates := slice }}
+  {{ range hugo.Data.hero_images.images }}
+    {{ $path := .path }}
+    {{ with resources.Get ($path | strings.TrimPrefix "/") }}
+      {{ if in (slice "jpeg" "png" "webp" "gif" "tiff" "bmp") .MediaType.SubType }}
+        {{/* Allow integer-pixel rounding of 3:2 exports such as 1600x1067. */}}
+        {{ if ge .Width (math.Floor (mul (float .Height) 1.5)) }}
+          {{ $candidates = $candidates | append $path }}
+        {{ end }}
+      {{ else }}
+        {{ warnf "Social card: hero image %s is not a processable raster image" $path }}
+      {{ end }}
+    {{ else }}
+      {{ errorf "Social card: hero image %s was not found" $path }}
+    {{ end }}
+  {{ end }}
+  {{ if $candidates }}
+    {{ $srcPath = index (shuffle $candidates) 0 }}
+  {{ else }}
+    {{ warnf "Social card for %s: no hero image has an aspect ratio >= 1.5; using data/meta.yaml image" $page.RelPermalink }}
+    {{ $srcPath = hugo.Data.meta.image }}
+  {{ end }}
+{{ end }}
+
+{{ return $srcPath }}

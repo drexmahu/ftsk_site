@@ -17,6 +17,66 @@ Ez a párja a
 fájlnak, ami alapján a Copilot code review ellenőrzi az új/módosított
 cikkeket ehhez a struktúrához képest.
 
+## Böngészős szerkesztés
+
+Indítsd el a `scripts/run_workbench.bat` alkalmazást, majd nyisd meg a
+**Pages & posts** részt a <http://127.0.0.1:8879/#content> címen.
+
+- A kereshető könyvtárból nyiss meg egy cikket, vagy a **New** gombbal válassz
+  egy fenntartott mintát. Az új oldal mentésig nem kerül a lemezre.
+  A **Hide page library / Show page library** gombbal a könyvtár elrejthető,
+  így a szerkesztő a teljes munkaterületet használja. A böngésző megjegyzi
+  ezt a választást; rejtett könyvtár mellett a **New page** gomb is elérhető.
+- A **Write**, **Page details**, **SEO & sharing**, **Course & FAQ** és **Placement** fülek
+  kezelik a történetet, képeket, résztvevőket, keresési adatokat, tanfolyami
+  mezőket és a fájl/URL elhelyezését. Az egyéb oldalak és tetszőleges YAML
+  mezők a **Full source** fülön szerkeszthetők. Az alkalmazás nem WYSIWYG szerkesztő;
+  a Markdown és shortcode-ok forrásként maradnak meg.
+- Az **Images & PDF** fülön meglévő képet választhatsz, vagy az eredetit
+  WebP-vé konvertálhatod. A cél szabadon megadható a `static/images/` alatt,
+  például `turak/2026-expedicio/photos`; nem kell a `hero` mappát használnod.
+  Egy képhez külön fájlnév is megadható. Az ütköző nevek számozott utótagot
+  kapnak, meglévő fájl nem íródik felül. A kijelölt fotóból külön beállítható
+  a bélyegkép, fő kép és `seo.featured_image` felülbírálás.
+- Képenként adj meg valódi alt leírást és szükség esetén képaláírást.
+  A **Write** eszköztár **Image / Gallery / Text & photo / PDF** gombjai
+  közvetlenül a megfelelő beillesztőhöz vezetnek, a kurzorpozíció megőrzésével.
+  A **FAQ** gomb a frontmatterben ad hozzá kérdés-válasz sort; ez külön
+  FAQ szakaszként jelenik meg, nem a Markdown adott sorában.
+  A beillesztő image/media/gallery vagy egyszerű Markdown kódot készít az
+  utolsó kurzorpozícióra. PDF is feltölthető a `static/pdfs/` választott
+  almappájába, és shortcode-ként beilleszthető. A **Syntax help** példákat
+  és ezeket a fenntartott útmutatókat is megnyitja.
+  A **Markdown & syntax help** külön, bezárható ablakban is elérhető:
+  kereshető Markdown- és shortcode-példák, valamint **Copy syntax** gombok
+  segítik a másolást. Az ablak nem írja át a vázlatot; Escape bezárja.
+  A benne lévő építőgombok ugyanazt a konvertálási és elhelyezési munkafolyamatot
+  nyitják meg, mint az eszköztár.
+- A **Validate** a metaadatokat ellenőrzi; a **Render preview** a valódi
+  Hugo sablonokat és shortcode-okat is. A még nem mentett forrás külön
+  pillanatképből épül, külön helyi, csak olvasható címen. Mobil/tablet/asztali
+  szélesség és social kártya is ellenőrizhető. A link csak az alkalmazás
+  futásáig él, és a legrégebbi előnézetek három sikeres render után elévülnek.
+  A preview a draft/jövőbeli/lejárt tartalmat is megmutatja, no-index módban.
+- A **Save page** vagy Ctrl+S kifejezett mentés. Külső fájlmódosításnál
+  ütközést jelez, nem írja felül a másik szerkesztő munkáját.
+  A böngésző az utolsó nem mentett vázlat visszaállítását is felajánlja.
+  Fájlmozgatáskor a képek, PDF-ek és bejövő linkek nem változnak:
+  ezeket kézzel ellenőrizd, és szükség esetén adj meg `aliases` átirányítást.
+- A **Delete** megerősítéséhez a teljes tartalomútvonalat kell beírni.
+  A hivatkozott helyi `/images/` és `/pdfs/` fájlok egyenként kijelölhetők;
+  a másutt is használt képeket/PDF-eket védi az alkalmazás. A relatív
+  bundle-fájlokat nem törli automatikusan. Nincs külön archívum: visszaállítás
+  kézzel Gitből történik. A Git által nem követett fájlok és nem mentett
+  szövegek így nem állíthatók vissza.
+
+Az ismeretlen frontmatter mezők megmaradnak, a nem változtatott forrásrészek
+és megjegyzések változatlanok. A módosított YAML mezők formázása normalizálódik.
+YAML aliasok és ismétlődő kulcsok nem támogatottak. Komponensoldalakon a
+`content_blocks` vezérli a látványt, nem feltétlenül a Markdown törzs.
+Nincs automatikus commit vagy publikálás; élesítés előtt futtasd a
+**Build & checks** ellenőrzéseit és ellenőrizd a `draft` beállítást.
+
 ## 1. Front matter
 
 A front matter a fájl eleji, két `---` sor közötti YAML blokk. A cím,
@@ -77,15 +137,34 @@ nem jelenik meg szerzői sor. Ez nem változtatja meg a résztvevők listáját.
 
 ### Közösségi megosztások előnézeti képe
 
-A túrabeszámolók előnézeti fotóját a `featuredImg.image_path` mező adja,
-ugyanaz a kép, mint a cikk nagy bannere. Minden más oldal (a túralista és
-a tanfolyamok is) a `data/hero_images.yaml` `images` listájából kap egy
-véletlenszerűen választott fotót, oldalanként, az oldal generálásakor.
-A `seo.featured_image` mező nem írja felül ezt a kiválasztást.
+A túrabeszámolók és tanfolyami cikkek előnézeti fotóját alapértelmezésben
+a `featuredImg.image_path` mező adja, ugyanaz a kép, mint a cikk nagy bannere.
+Ha más fotót szeretnél a megosztáshoz, add meg a cikk front matterében:
+
+```yaml
+seo:
+  featured_image: /images/turak/<slug>/megosztas.webp
+```
+
+Ez csak a közösségi kártya alapfotóját cseréli, nem a cikk fejlécét vagy
+listaképét. A képet tedd a `static/images/` alá; a megadott útvonalból hagyd
+el a `static` részt. Az üres vagy hiányzó `seo.featured_image` az alapképet
+használja. Külső URL és SVG helyett helyi JPG, PNG vagy WebP fotót adj meg;
+hibás vagy hiányzó megadott kép esetén a build jelzi a hibát.
+
+A többi oldal (főoldal, túra- és tanfolyamlista, egyesületi oldalak) a
+`data/hero_images.yaml` `images` listájából kap véletlenszerű fotót, oldalanként,
+az oldal generálásakor. Csak legalább **1,5:1 szélesség/magasság arányú** képek
+kerülnek ebbe a választásba, az egész pixeles méretek kerekítését megengedve
+(például 1600x1067 megfelel). Álló és közel négyzetes fotót nem választ.
+Ez a szűrés nem vonatkozik a cikk saját vagy kézzel felülírt fotójára;
+azok középre vágva kerülnek az 1200x630-as kártyára.
 
 A fotóra továbbra is rákerül a cím, az FTSK-logó és a sötét átmenet;
 az Open Graph és Twitter ugyanazt az 1200x630-as képet használja.
-Hiányzó fotó esetén a `data/meta.yaml` `image` mezője a tartalék.
+Ha nincs cikkfotó, megfelelő diavetítés-fotót választ a rendszer.
+Ha nincs megfelelő diavetítés-fotó sem, figyelmeztetés mellett a
+`data/meta.yaml` `image` mezője a tartalék.
 A véletlen választás csak új buildnél változhat, nem minden megosztáskor.
 Publikálás után a közösségi platformok gyorsítótára miatt szükség lehet
 az előnézet újralekérésére (például a Facebook Sharing Debuggerben).
@@ -370,4 +449,3 @@ beszámoló pedig egy régi PDF-ben él. Ezeket a fájlneve is megkülönböztet
 - Ha egy régi cikk nem PDF-re, hanem valamilyen más régi oldalra (pl. `.htm`)
   hivatkozik, azt nem kell letölteni/beágyazni - elég csak a `legacy-`
   fájlnév-előtagot alkalmazni rá.
-

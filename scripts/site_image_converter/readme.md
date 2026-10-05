@@ -20,6 +20,12 @@ support, then double-click `install_dependencies.bat`.
 
 ## Use
 
+For the integrated browser alternative, run `scripts/run_workbench.bat` from
+the repository root and choose **Site photos** or **Hero slideshow**. It uses
+the same conversion and framing tools, with protected output names and a
+shared preview/check dashboard. See [Site Workbench](../../docs/TECHNICAL_ENVIRONMENT.md#site-workbench).
+The standalone GUI/CLI below remains available.
+
 1. Double-click `run_gui.bat`.
 2. Pick your **input folder** (original photos). The **output folder**
    defaults to this site's `static/images/hero/` folder (created

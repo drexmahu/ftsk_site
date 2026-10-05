@@ -16,6 +16,13 @@ support, then double-click `install_dependencies.bat`.
 
 ## Use
 
+For the integrated browser alternative, run `scripts/run_workbench.bat` from
+the repository root and choose **Member portraits**. Upload a batch, position
+each face crop and explicitly confirm before exporting. It uses this same
+converter, with protected output names and keyboard-accessible crop controls.
+See [Site Workbench](../../docs/TECHNICAL_ENVIRONMENT.md#site-workbench).
+The standalone GUI below remains available.
+
 1. Double-click `run_gui.bat`.
 2. Pick your **input folder** (original photos). The **output folder**
    defaults to this site's `static/images/members/` folder (created
@@ -78,5 +85,4 @@ Copy the generated files into `static/images/members/` in the repo.
 - **Missing module errors** - rerun `install_dependencies.bat`.
 - The manual crop tool requires only Pillow and Python/Tk; OpenCV and NumPy
   are no longer required. Existing installations are not removed automatically.
-
 

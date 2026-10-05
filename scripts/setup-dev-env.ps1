@@ -357,8 +357,10 @@ try {
                 Invoke-Tool $script:pythonExe @('scripts/verify_members.py')
                 Invoke-Tool $script:pythonExe @('scripts/verify_site_links.py', '--root', $temporary, '--base-url', 'https://www.ftsk.hu/')
                 Invoke-Tool (Find-Tool 'node.exe') @('scripts/site_image_converter/test_hero_framing.js')
+                Invoke-Tool $script:pythonExe @('-m', 'unittest', 'discover', '-s', 'scripts', '-p', 'test_social*.py')
+                Invoke-Tool $script:pythonExe @('-m', 'unittest', 'discover', '-s', 'scripts', '-p', 'test_*workbench.py')
             } finally { if (Test-Path -LiteralPath $temporary) { Remove-Item -LiteralPath $temporary -Recurse -Force } }
-            'Site build, roster, internal links and hero framing verified.'
+            'Site build, roster, internal links, hero framing, social cards and browser content/image workbench verified.'
         }
     }
 
@@ -375,7 +377,7 @@ try {
     } elseif ($CheckOnly) {
         Write-Host 'All inspected components are ready; no installation changes were made.' -ForegroundColor Green
     } else {
-        Write-Host 'Next: restart VS Code/your terminal, then ./scripts/dev-server.ps1. Python CLI: ./.venv/Scripts/Activate.ps1.' -ForegroundColor Green
+        Write-Host 'Next: restart VS Code/your terminal, then ./scripts/run_workbench.bat (browser tools) or ./scripts/dev-server.ps1. Python CLI: ./.venv/Scripts/Activate.ps1.' -ForegroundColor Green
     }
 } catch {
     Write-Host "`n$($_.Exception.Message)" -ForegroundColor Red

@@ -108,6 +108,16 @@
     @include media-breakpoint-down-sm {
       padding: $base-padding * 5.5 0 $base-padding * 5;
     }
+    @include media-breakpoint-up-lg {
+      display: flex;
+      align-items: center;
+      min-height: unquote("clamp(560px, 100vh, 1080px)");
+      min-height: unquote("clamp(560px, 100svh, 1080px)");
+    }
+    @include media-breakpoint-up-xl {
+      min-height: unquote("clamp(640px, 100vh, 1080px)");
+      min-height: unquote("clamp(640px, 100svh, 1080px)");
+    }
     &-shape {
       position: absolute;
       top: 0;
@@ -284,24 +294,24 @@
 // is a true match, not just a tint - pre-divided by this rule's own brightness(0.72)
 // filter (applied after compositing) so it renders back out as rgb(10, 17, 22),
 // the navbar's own background color, instead of coming out darker than intended.
+// The bottom fade seals the photo edge and blends the cave floor into the page.
 .hero-two-media-motif {
   position: absolute;
   inset: 0;
   background-image:
     linear-gradient(to bottom, rgb(14, 24, 31) 0, rgba(14, 24, 31, 0) 90px),
+    linear-gradient(to top, rgb(14, 24, 31) 0, rgba(14, 24, 31, 0) 48px),
     url($hero-cave-hanging-url),
     url($hero-cave-standing-url);
-  background-repeat: no-repeat, no-repeat, no-repeat;
-  background-position: top, center 74px, bottom center;
-  background-size: 100% 100%, unquote("max(100%, 960px)") auto, unquote("max(100%, 960px)") auto;
-  opacity: 0.9;
+  background-repeat: no-repeat;
+  background-position: top, bottom, center 74px, bottom center;
+  background-size: 100% 100%, 100% 100%, unquote("max(100%, 960px)") auto, unquote("max(100%, 960px)") auto;
   filter: brightness(0.72);
   @include media-breakpoint-down-lg {
-    background-position: top, left 74px, bottom center;
+    background-position: top, bottom, left 74px, bottom center;
   }
   @include media-breakpoint-down-sm {
-    background-position: top, left 68px, bottom center;
-    background-size: 100% 100%, 640px auto, 640px auto;
+    background-position: top, bottom, left 68px, bottom center;
+    background-size: 100% 100%, 100% 100%, 640px auto, 640px auto;
   }
 }
-

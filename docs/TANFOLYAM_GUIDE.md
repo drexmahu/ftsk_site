@@ -19,6 +19,13 @@ A képek, egymás melletti szöveg/fotó és szerzői kártya használatát a
 A cikk `current` mezője tehát **nem** kapcsolja ki a főoldali hirdetést és a
 menügombot - azt a `data/tanfolyam.yaml` `active` mezője teszi.
 
+A böngészős **Pages & posts** szerkesztőben a **Course & FAQ** fülön
+állíthatók a `current`, `milestones`, `contacts`, `flyer_images` és FAQ mezők;
+a sorok hozzáadhatók, sorrendezhetők és törölhetők. A főoldali/menu `active`
+kapcsolót ez a szerkesztő nem módosítja. A flyerhez a médiatárból is
+választható kép, és a nem mentett tanfolyam valódi Hugo-előnézetben
+ellenőrizhető. Részletek: [böngészős szerkesztés](CONTENT_GUIDE.md#böngészős-szerkesztés).
+
 ## 1. `data/tanfolyam.yaml` - főoldali hirdetés + menügomb
 
 ```yaml
@@ -62,6 +69,7 @@ milestones:                         # opcionális - az idővonal a cikk tetején
 contacts: []                       # valós kapcsolattartók nélkül nincs "Jelentkezem!" szakasz
 seo:
   page_description: ""             # rövid, tényszerű összefoglaló
+  featured_image: ""               # opcionális másik helyi fotó a közösségi kártyához
   open_graph_type: article
   no_index: false
 draft: true                         # ellenőrzés után false
@@ -71,6 +79,8 @@ draft: true                         # ellenőrzés után false
 - Egyszerre **csak egy** publikált cikkben legyen `current: true`.
   Az első ilyen cikket emeli ki az oldal; további `current: true` cikkek
   nem kerülnek az archívumba sem, ezért a régi cikket állítsd `false`-ra.
+- A `current: true` cikk alatt nincs "Korábbi tanfolyamaink" ajánló.
+  A többi tanfolyami cikk alatt az ajánló továbbra is megjelenik.
 - A `date` a meghirdetés dátuma legyen, ne a jövőbeli tanfolyamkezdés.
   Normál buildben a jövőbeli dátumú vagy `draft: true` cikk nem jelenik meg.
   Az archívum évszűrője a `date` évére szűr, nem a címben szereplő évre.
@@ -89,8 +99,9 @@ draft: true                         # ellenőrzés után false
   Markdownnal formázhatók; a [cikkírási útmutató](CONTENT_GUIDE.md#gyik-lenyitható-kérdések-és-válaszok)
   teljes példát ad. Csak egyeztetett jelentkezési adatokat és feltételeket írj bele.
 - Saját fotóhoz `thumbImg` és `featuredImg` állítható. A tanfolyam
-  közösségi előnézete ettől függetlenül a főoldali diavetítésből választ
-  fotót, és a `seo.featured_image` nem írja felül.
+  közösségi előnézete alapértelmezésben a `featuredImg.image_path` fotót
+  használja; a `seo.featured_image` mezőben más helyi fotó is megadható.
+  Ez nem változtatja meg a fejlécet vagy a listaképet.
 
 ## 3. Főoldali hirdetés szövege - `content/_index.md`
 

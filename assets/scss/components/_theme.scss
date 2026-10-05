@@ -63,7 +63,6 @@ html {
 .pricing-inner-two,
 .privacy-hero,
 .blog-hero,
-.blog-related,
 .feature-bg,
 .error,
 .works {
@@ -118,7 +117,8 @@ html {
 
 // Plain section-header blocks (e.g. "Mivel foglalkozunk?") - just the top
 // (stalactite) half, same "too short to ever crop the full motif" reasoning as .cta.
-.ftsk-section-header {
+.ftsk-section-header,
+.blog-related {
   background-color: var(--bg-page);
   background-image: linear-gradient(to bottom, rgba(10, 17, 22, 0.48), rgba(10, 17, 22, 0.18)), url($cave-hanging-url);
   background-repeat: no-repeat;
@@ -161,7 +161,6 @@ html {
   .pricing-inner-two,
   .privacy-hero,
   .blog-hero,
-  .blog-related,
   .feature-bg,
   .error,
   .works,
@@ -169,6 +168,7 @@ html {
     background-position: center, left var(--motif-top-inset, 0px), bottom center;
   }
   .ftsk-section-header,
+  .blog-related,
   .ftsk-hero-top-motif {
     background-position: center, left var(--motif-top-inset, 0px);
   }
@@ -200,7 +200,6 @@ html {
   .pricing-inner-two,
   .privacy-hero,
   .blog-hero,
-  .blog-related,
   .feature-bg,
   .error,
   .works,
@@ -208,6 +207,7 @@ html {
     background-size: 100% 100%, 640px auto, 640px auto;
   }
   .ftsk-section-header,
+  .blog-related,
   .ftsk-hero-top-motif {
     background-size: 100% 100%, 640px auto;
   }
