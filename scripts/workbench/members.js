@@ -2,6 +2,7 @@
 
 const memberState = { catalog: null, original: null, editing: false, dirty: false, busy: false, loading: false };
 const memberFields = ["name", "nickname", "role", "bio", "image", "modal_image"];
+let portraitDeletionPlan = null;
 
 function acceptMemberCatalog(catalog) {
   memberState.catalog = catalog;
@@ -33,6 +34,13 @@ function memberControls() {
   $("#member-new").disabled = busy || !memberState.catalog;
   $("#member-refresh").disabled = busy;
   document.querySelectorAll("#member-list button").forEach(button => { button.disabled = busy; });
+  document.querySelectorAll("#member-audit button, #member-audit input").forEach(control => { control.disabled = busy; });
+  $("#member-files-confirm").disabled = busy;
+  $("#member-files-cancel").disabled = memberState.busy;
+  document.querySelectorAll("#member-files-review input").forEach(input => {
+    const file = portraitDeletionPlan?.files.find(file => file.url === input.value);
+    input.disabled = busy || Boolean(file?.references.length);
+  });
 }
 
 function discardMember() {
@@ -136,7 +144,6 @@ function renderMemberAudit() {
   panel.replaceChildren();
   for (const [title, items] of [
     ["Missing or invalid member images", audit.missing_images.map(item => `${item.name} / ${item.field}: ${item.url} — ${item.error}`)],
-    ["Portrait files not assigned to the roster (kept on disk)", audit.unassigned_portraits],
     ["Participant names without a current roster match (may be guests)", audit.unmatched_participants.map(item => `${item.path}: ${item.name}`)],
     ["Author names without a current roster match", audit.unmatched_authors.map(item => `${item.path}: ${item.name}`)],
     ["Data / reference scan warnings", audit.warnings],
@@ -146,6 +153,108 @@ function renderMemberAudit() {
     if (!items.length) list.append(node("li", "None."));
     else for (const item of items) list.append(node("li", item));
     panel.append(list);
+  }
+  panel.append(node("h3", `Loose portraits not assigned to the roster (${audit.unassigned_portraits.length})`));
+  const actions = node("div", "", "actions");
+  const selectAll = node("button", "Select all", "secondary");
+  selectAll.type = "button";
+  selectAll.addEventListener("click", () => {
+    panel.querySelectorAll(".loose-portrait-select").forEach(input => { input.checked = true; });
+  });
+  const review = node("button", "Review & delete selected", "secondary");
+  review.type = "button";
+  review.addEventListener("click", () => action(() => reviewPortraitDeletion(
+    Array.from(panel.querySelectorAll(".loose-portrait-select:checked"), input => input.value))));
+  actions.append(selectAll, review);
+  if (audit.unassigned_portraits.length) panel.append(actions);
+  const list = node("ul", "", "loose-portraits");
+  for (const url of audit.unassigned_portraits) {
+    const row = node("li", "");
+    const label = node("label", "", "loose-portrait-label");
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.className = "loose-portrait-select";
+    checkbox.value = url;
+    const image = document.createElement("img");
+    image.src = url;
+    image.alt = "";
+    image.loading = "lazy";
+    label.append(checkbox, image, node("span", url));
+    const button = node("button", "Delete…", "secondary");
+    button.type = "button";
+    button.addEventListener("click", () => action(() => reviewPortraitDeletion([url])));
+    row.append(label, button);
+    list.append(row);
+  }
+  if (!audit.unassigned_portraits.length) list.append(node("li", "None."));
+  panel.append(list);
+  memberControls();
+}
+
+function checkPortraitDraft(urls) {
+  if (memberState.editing && ["image", "modal_image"].some(field => urls.includes($(`#member-${field}`).value.trim()))) {
+    throw new Error("A selected portrait is assigned to the open member draft. Save the member, or remove/discard that image assignment before deleting it.");
+  }
+}
+
+async function reviewPortraitDeletion(urls) {
+  if (memberState.busy || state.busy || memberState.loading) return;
+  if (!urls.length) throw new Error("Select at least one loose portrait file.");
+  checkPortraitDraft(urls);
+  memberState.busy = true;
+  memberControls();
+  try {
+    portraitDeletionPlan = await api("/api/workbench/members/portrait-delete-plan", {
+      method: "POST", payload: { revision: memberState.catalog.revision, urls },
+    });
+    const container = $("#member-files-review");
+    container.replaceChildren();
+    $("#member-files-error").hidden = true;
+    for (const file of portraitDeletionPlan.files) {
+      const row = node("div", "", "portrait-delete-review");
+      const label = node("label", "", "loose-portrait-label");
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.value = file.url;
+      checkbox.disabled = file.references.length > 0;
+      checkbox.checked = !checkbox.disabled;
+      label.append(checkbox, node("span", `${file.url} (${Math.ceil(file.bytes / 1024)} KiB)`));
+      row.append(label, node("p", file.references.length ?
+        `Deletion blocked — referenced by: ${file.references.join(", ")}` :
+        "No saved site references found.", "hint"));
+      container.append(row);
+    }
+    $("#member-files-dialog").showModal();
+  } finally {
+    memberState.busy = false;
+    memberControls();
+  }
+}
+
+async function deleteLoosePortraits() {
+  if (memberState.busy || state.busy || memberState.loading) return;
+  const urls = Array.from($("#member-files-review").querySelectorAll("input:checked:not(:disabled)"), input => input.value);
+  if (!urls.length) throw new Error("No deletable files are checked. Referenced files cannot be deleted here.");
+  checkPortraitDraft(urls);
+  const files = portraitDeletionPlan.files.filter(file => urls.includes(file.url));
+  if (!confirm(`Permanently delete ${files.length} portrait file(s)? This cannot be undone for untracked files.`)) return;
+  memberState.busy = true;
+  memberControls();
+  $("#member-files-error").hidden = true;
+  try {
+    const result = await api("/api/workbench/members/portrait-delete", {
+      method: "POST", payload: { revision: portraitDeletionPlan.revision, files, confirm: true },
+    });
+    acceptMemberCatalog(result.catalog);
+    renderMembers();
+    renderPortraitChoices();
+    renderMemberAudit();
+    $("#member-files-dialog").close();
+    portraitDeletionPlan = null;
+    notify(`Deleted ${result.deleted.length} loose portrait file(s). Member details and reports were not changed.`);
+  } finally {
+    memberState.busy = false;
+    memberControls();
   }
 }
 
@@ -238,6 +347,19 @@ $("#member-refresh").addEventListener("click", () => action(() => loadMembers(tr
 $("#member-new").addEventListener("click", () => openMember(0));
 $("#member-cancel").addEventListener("click", () => { if (discardMember()) closeMember(); });
 $("#member-delete").addEventListener("click", () => action(deleteMember));
+$("#member-files-confirm").addEventListener("click", () => action(async () => {
+  try {
+    await deleteLoosePortraits();
+  } catch (error) {
+    $("#member-files-error").textContent = error.message;
+    $("#member-files-error").hidden = false;
+    throw error;
+  }
+}));
+$("#member-files-cancel").addEventListener("click", () => $("#member-files-dialog").close());
+$("#member-files-dialog").addEventListener("cancel", event => {
+  if (memberState.busy) event.preventDefault();
+});
 $("#member-form").addEventListener("submit", event => { event.preventDefault(); action(saveMember); });
 $("#member-form").addEventListener("input", () => {
   memberState.dirty = true;

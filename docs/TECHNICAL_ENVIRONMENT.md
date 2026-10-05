@@ -161,7 +161,15 @@ framework, npm build or Python dependencies are required.
   The roster checks show matching report references, missing/invalid images,
   unmatched participant/author names and portrait files not assigned to any
   member. Unmatched names can be guests and unassigned files may be used elsewhere;
-  these checks do not perform cleanup. Saves preserve the YAML header and all
+  these checks do not perform automatic cleanup. In **Loose portraits**, select
+  individual files or a batch and choose **Review & delete selected**. The review
+  blocks files referenced by saved site sources (including relative basename
+  references); deletion rechecks references, the roster revision and file hashes.
+  An open member draft's assigned images are also blocked in the UI. Check other
+  unsaved drafts manually before confirming permanent deletion. Only checked
+  files under `static/images/members/` are removed; thumbnail/full files are
+  separate selections, and untracked files cannot be recovered with Git.
+  Saves preserve the YAML header and all
   unrelated data values, but normalize YAML formatting.
 - **Hero slideshow:** embeds the existing connected POI/motion editor. Explicit
   Save updates `data/hero_images.yaml`. In workbench mode, Remove only removes

@@ -442,9 +442,14 @@ class ContentService:
 
     def references(self, url: str, exclude: str = "") -> list[str]:
         result = []
-        for folder, patterns in (("content", ("*.md",)), ("data", ("*.yaml", "*.yml")),
-                                 ("assets", ("*.scss", "*.css", "*.js")), ("static", ("*.js", "*.css")),
-                                 ("layouts", ("*.html",))):
+        needle = unquote(url).casefold()
+        for folder, patterns in (("content", ("*.md", "*.html")),
+                                 ("data", ("*.yaml", "*.yml", "*.json", "*.toml")),
+                                 ("assets", ("*.scss", "*.css", "*.js", "*.json")),
+                                 ("static", ("*.js", "*.css", "*.html", "*.json")),
+                                 ("layouts", ("*.html",)),
+                                 ("component-library", ("*.html", "*.yaml", "*.yml", "*.json")),
+                                 ("config", ("*.toml", "*.yaml", "*.yml", "*.json"))):
             base = self.root / folder
             for pattern in patterns:
                 for file in base.rglob(pattern):
@@ -453,8 +458,13 @@ class ContentService:
                     if relative == "content/" + exclude:
                         continue
                     text = unquote(file.read_text(encoding="utf-8"))
-                    if unquote(url) in text:
+                    if needle in text.casefold():
                         result.append(relative)
+        for pattern in ("*.toml", "*.yaml", "*.yml", "*.json"):
+            for file in self.root.glob(pattern):
+                self.guard(self.root, file.name)
+                if needle in unquote(file.read_text(encoding="utf-8")).casefold():
+                    result.append(file.name)
         return sorted(set(result))
 
     def deletion_plan(self, relative: str, expected: str) -> dict:

@@ -43,6 +43,115 @@ class MemberFixture(Fixture):
 
 
 class MemberTests(MemberFixture):
+    def deletion_plan(self, urls=None):
+        return self.app.members.portrait_deletion_plan({
+            "revision": self.app.members.catalog()["revision"],
+            "urls": urls or ["/images/members/unused_thumb.webp", "/images/members/unused_full.webp"],
+        })
+
+    def test_loose_portrait_plan_and_confirmed_batch_delete(self):
+        raw = self.roster.read_bytes()
+        plan = self.deletion_plan()
+        self.assertTrue(all(not file["references"] for file in plan["files"]))
+        result = self.app.members.delete_portraits({**plan, "confirm": True})
+        self.assertEqual(len(result["deleted"]), 2)
+        self.assertEqual(result["catalog"]["audit"]["unassigned_portraits"], [])
+        self.assertEqual(len(result["catalog"]["portraits"]), 2)
+        self.assertEqual(self.roster.read_bytes(), raw)
+        self.assertEqual(self.report.read_bytes(), self.report_bytes)
+        for url in result["deleted"]:
+            self.assertFalse((self.root / "static" / url.lstrip("/")).exists())
+
+    def test_referenced_loose_image_is_blocked_including_relative_and_config_references(self):
+        for relative in ("content/page.md", "data/custom.json", "assets/test.scss",
+                         "static/script.js", "layouts/custom.html",
+                         "component-library/components/custom.html", "config/_default/params.toml",
+                         "hugo.toml"):
+            with self.subTest(relative=relative):
+                file = self.root / relative
+                file.parent.mkdir(parents=True, exist_ok=True)
+                file.write_text('image = "images/members/unused_thumb.webp"', encoding="utf-8")
+                plan = self.deletion_plan()
+                self.assertIn(relative, plan["files"][0]["references"])
+                with self.assertRaises(ConflictError):
+                    self.app.members.delete_portraits({**plan, "confirm": True})
+                self.assertTrue((self.root / "static" / "images" / "members" / "unused_full.webp").exists())
+                file.unlink()
+
+    def test_assigned_portraits_cannot_be_deleted(self):
+        plan = self.deletion_plan(["/images/members/alice_thumb.webp"])
+        self.assertIn("data/members.yaml", plan["files"][0]["references"])
+        with self.assertRaises(ConflictError):
+            self.app.members.delete_portraits({**plan, "confirm": True})
+
+    def test_reference_scan_is_case_insensitive(self):
+        self.report.write_text(self.report.read_text(encoding="utf-8") +
+                               "\n![Photo](/images/members/UNUSED_THUMB.webp)\n", encoding="utf-8")
+        plan = self.deletion_plan()
+        self.assertIn("content/turak/test.md", plan["files"][0]["references"])
+        with self.assertRaises(ConflictError):
+            self.app.members.delete_portraits({**plan, "confirm": True})
+
+    def test_new_reference_since_review_blocks_entire_batch(self):
+        plan = self.deletion_plan()
+        self.report.write_text(self.report.read_text(encoding="utf-8") +
+                               "\n![Photo](/images/members/unused_full.webp)\n", encoding="utf-8")
+        with self.assertRaises(ConflictError):
+            self.app.members.delete_portraits({**plan, "confirm": True})
+        self.assertTrue((self.root / "static" / "images" / "members" / "unused_thumb.webp").exists())
+
+    def test_changed_missing_or_stale_file_blocks_deletion(self):
+        plan = self.deletion_plan()
+        path = self.root / "static" / "images" / "members" / "unused_full.webp"
+        path.write_bytes(b"external edit")
+        with self.assertRaises(ConflictError):
+            self.app.members.delete_portraits({**plan, "confirm": True})
+        plan = self.deletion_plan()
+        path.unlink()
+        with self.assertRaises(ConflictError):
+            self.app.members.delete_portraits({**plan, "confirm": True})
+        self.assertTrue((self.root / "static" / "images" / "members" / "unused_thumb.webp").exists())
+        plan = self.deletion_plan(["/images/members/unused_thumb.webp"])
+        self.roster.write_bytes(self.roster.read_bytes() + b"\n# changed\n")
+        with self.assertRaises(ConflictError):
+            self.app.members.delete_portraits({**plan, "confirm": True})
+
+    def test_portrait_deletion_validation_and_confirmation(self):
+        for urls in ([], ["bad"], [True], ["/images/hero/one.webp"],
+                     ["/images/members/../../hero/one.webp"],
+                     ["/images/members/unused_thumb.webp"] * 2):
+            with self.subTest(urls=urls), self.assertRaises(ValueError):
+                self.app.members.portrait_deletion_plan({
+                    "revision": self.app.members.catalog()["revision"], "urls": urls,
+                })
+        plan = self.deletion_plan()
+        with self.assertRaises(ContentError):
+            self.app.members.delete_portraits(plan)
+        self.assertEqual(len(self.app.members.catalog()["portraits"]), 4)
+
+    def test_failed_batch_move_rolls_back_all_files(self):
+        from pathlib import Path
+        plan = self.deletion_plan()
+        replace = Path.replace
+
+        def fail_second(path, target):
+            if path.name == "unused_full.webp":
+                raise OSError("Fixture move failure")
+            return replace(path, target)
+
+        with patch.object(Path, "replace", fail_second):
+            with self.assertRaises(OSError):
+                self.app.members.delete_portraits({**plan, "confirm": True})
+        self.assertEqual(len(self.app.members.catalog()["portraits"]), 4)
+        self.assertEqual(list(self.app.scratch.glob("delete-portraits-*")), [])
+
+    def test_reference_scan_failure_never_deletes_files(self):
+        plan = self.deletion_plan()
+        with patch.object(self.app.content, "references", side_effect=OSError("Cannot read site sources")):
+            with self.assertRaises(OSError):
+                self.app.members.delete_portraits({**plan, "confirm": True})
+        self.assertEqual(len(self.app.members.catalog()["portraits"]), 4)
+
     def test_catalog_matches_site_and_exposes_orphans(self):
         catalog = self.app.members.catalog()
         alice = catalog["groups"][0]["members"][0]
@@ -263,3 +372,16 @@ class MemberHTTPTests(MemberFixture):
         self.assertEqual(self.request("/api/workbench/members/save", {
             **self.payload(), "member": {"name": "Alice"},
         })[0], 400)
+
+    def test_portrait_deletion_api_guards_and_confirm(self):
+        payload = {"revision": self.app.members.catalog()["revision"],
+                   "urls": ["/images/members/unused_thumb.webp"]}
+        self.assertEqual(self.request("/api/workbench/members/portrait-delete-plan", payload, token=False)[0], 403)
+        status, plan = self.request("/api/workbench/members/portrait-delete-plan", payload)
+        self.assertEqual(status, 200)
+        self.assertEqual(self.request("/api/workbench/members/portrait-delete", {**plan, "confirm": True}, token=False)[0], 403)
+        self.assertEqual(self.request("/api/workbench/members/portrait-delete", plan)[0], 400)
+        status, result = self.request("/api/workbench/members/portrait-delete", {**plan, "confirm": True})
+        self.assertEqual(status, 200)
+        self.assertEqual(result["deleted"], payload["urls"])
+        self.assertEqual(self.request("/api/workbench/members/portrait-delete", {**plan, "confirm": True})[0], 409)

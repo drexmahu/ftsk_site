@@ -144,6 +144,63 @@ class MemberService:
             raise ConflictError("The roster changed outside this editor. Reload before saving/deleting; your draft has not been written.")
         return path, raw, roster_data(raw)
 
+    def loose_image(self, url: object) -> Path:
+        if not isinstance(url, str) or not url.startswith("/images/members/"):
+            raise ContentError("Only portrait files under /images/members/ can be deleted here.")
+        path = self.image_path(url)
+        if not path.is_file():
+            raise ConflictError(f"Portrait is missing or was removed. Reload the checks: {url}")
+        return path
+
+    def portrait_deletion_plan(self, payload: dict) -> dict:
+        with self.app.lock:
+            self.checked(payload.get("revision"))
+            urls = payload.get("urls")
+            if (not isinstance(urls, list) or not urls or len(urls) > 1000
+                    or any(not isinstance(url, str) for url in urls) or len(set(urls)) != len(urls)):
+                raise ContentError("Select between 1 and 1000 distinct portrait URLs.")
+            files = []
+            for url in urls:
+                path = self.loose_image(url)
+                # Basename matching also catches relative paths and is deliberately conservative.
+                references = self.app.content.references(path.name)
+                raw = path.read_bytes()
+                files.append({"url": url, "bytes": len(raw), "revision": revision(raw),
+                              "references": references})
+            return {"revision": payload["revision"], "files": files}
+
+    def delete_portraits(self, payload: dict) -> dict:
+        with self.app.lock:
+            if payload.get("confirm") is not True:
+                raise ContentError("Confirm permanent deletion of the selected portrait files.")
+            files = payload.get("files")
+            if not isinstance(files, list) or not files or any(not isinstance(file, dict) for file in files):
+                raise ContentError("Select portrait files from the deletion review.")
+            plan = self.portrait_deletion_plan({
+                "revision": payload.get("revision"), "urls": [file.get("url") for file in files],
+            })
+            paths = []
+            for requested, current in zip(files, plan["files"]):
+                if current["references"]:
+                    raise ConflictError(f"Portrait is referenced and cannot be deleted: {current['url']} — "
+                                        + ", ".join(current["references"]))
+                if requested.get("revision") != current["revision"]:
+                    raise ConflictError(f"Portrait changed since the deletion review: {current['url']}")
+                paths.append(self.loose_image(current["url"]))
+            self.checked(payload["revision"])
+            with tempfile.TemporaryDirectory(dir=self.app.scratch, prefix="delete-portraits-") as staging:
+                moved = []
+                try:
+                    for index, path in enumerate(paths):
+                        temporary = Path(staging) / str(index)
+                        path.replace(temporary)
+                        moved.append((path, temporary))
+                except OSError:
+                    for path, temporary in reversed(moved):
+                        temporary.replace(path)
+                    raise
+            return {"deleted": [file["url"] for file in plan["files"]], "catalog": self.catalog()}
+
     def locate(self, data: dict, original: object) -> tuple[int, int]:
         if not isinstance(original, dict):
             raise ContentError("Choose a member from the current roster.")
