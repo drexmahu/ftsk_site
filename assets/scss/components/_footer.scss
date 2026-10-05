@@ -98,6 +98,33 @@
       }
     }
   }
+  .footer-wrapper .footer-logo .footer-additional-text {
+    margin-top: -($base-margin * 1.5);
+    margin-bottom: $base-margin * 2.5;
+    color: #b8c2cb;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+
+    p {
+      color: inherit;
+      font-size: inherit;
+      font-weight: 400;
+      margin-bottom: 0;
+    }
+
+    a {
+      margin-bottom: 0;
+      color: inherit;
+      text-decoration: underline;
+      text-underline-offset: 0.2em;
+
+      &:hover,
+      &:focus-visible {
+        color: $color-white;
+      }
+    }
+  }
   &-widget {
     margin-left: 80px;
     @include media-breakpoint-down-xxxl {

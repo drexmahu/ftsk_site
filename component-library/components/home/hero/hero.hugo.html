@@ -37,18 +37,18 @@
 
   <div class="container-fluid">
     <div class="row align-items-center">
-      <div class="col-lg-6">
+      <div class="col-lg-6 col-xl-7">
         <div class="hero-two-content">
-          <h1 class="mb-4">{{.title}}</h1>
-          <p class="mb-7 w-xxl-80">{{.description | markdownify}}</p>
-          <div class="">
-            {{with .link}}
-            <a href="{{ partial `url.html` .url }}" class="btn btn-primary btn-lg"> {{.text}} </a>
-            {{end}}
+          <div class="hero-two-brand">
+            <img class="hero-two-logo" src="{{ partial `url.html` hugo.Data.nav.logo }}" alt="FTSK Barlangkutató Szakosztály" />
+          </div>
+          <div class="hero-two-copy">
+            <h1 class="mb-4">{{.title}}</h1>
+            <p class="hero-two-description">{{.description | markdownify}}</p>
           </div>
         </div>
       </div>
-      <div class="col-lg-6">
+      <div class="col-lg-6 col-xl-5">
         <div class="hero-two-banner"></div>
       </div>
     </div>

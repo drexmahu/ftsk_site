@@ -14,9 +14,6 @@ content_blocks:
       description: >-
          Az FTSK Barlangkutató Szakosztály 1954 óta fedez fel, kutat és jár
          barlangokat itthon és külföldön.
-      link:
-         text: Ismerd meg az egyesületet
-         url: /egyesuletunk/
    -
       _bookshop_name: global/cta
       data_gated: tanfolyam
@@ -35,10 +32,22 @@ content_blocks:
       title: "Mivel "
       title_suffix: foglalkozunk?
       description: >-
-         Szakosztályunk fő tevékenysége a barlangkutatás és a barlangi
-         túrázás, emellett alapfokú tanfolyamokkal segítjük az új barlangászok
-         bevonzását és képzését, alkalmanként pedig kanyoning túrákon is részt
-         veszünk.
+         Közös barlangtúráinkon itthon és külföldön fedezzük fel a föld alatti
+         világot. Emellett barlangkutatással, az új barlangászok képzésével és
+         alkalmanként kanyoninggal is foglalkozunk - mindezt egy nyitott,
+         összetartó közösségben.
+   -
+      _bookshop_name: global/feature
+      image_path: /images/gallery/ftsk-gallery-1.jpg
+      title: Barlangtúrázás
+      description: >-
+         Rendszeresen szervezünk barlangtúrákat itthon és külföldön - Szlovéniában,
+         Olaszországban, Ausztriában és a Pireneusokban is jártunk már. Túráinkról
+         részletes beszámolókat is olvashatsz.
+      btn:
+         link: /turak/
+         text: Túrabeszámolók
+      reversed: false
    -
       _bookshop_name: global/feature
       image_path: /images/gallery/ftsk-gallery-2.png
@@ -51,29 +60,39 @@ content_blocks:
       btn:
          link: /egyesuletunk/
          text: Történetünk
+      reversed: true
+   -
+      _bookshop_name: global/feature
+      image_path: /images/gallery/ftsk-gallery-1.jpg
+      title: Oktatás
+      description: >-
+         Alapfokú barlangász tanfolyamainkkal segítjük az új barlangászok
+         elindulását. Az elméleti és gyakorlati képzésen a barlangjárás
+         alapjaival ismerkedhetsz meg, és közösségünkhöz is csatlakozhatsz.
+      btn:
+         link: /tanfolyamok/
+         text: Tanfolyamaink
       reversed: false
    -
       _bookshop_name: global/feature
       image_path: /images/gallery/ftsk-gallery-3.webp
-      title: Barlangtúrázás
+      title: Kanyoning
       description: >-
-         Rendszeresen szervezünk barlangtúrákat itthon és külföldön - Szlovéniában,
-         Olaszországban, Ausztriában és a Pireneusokban is jártunk már. Túráinkról
-         részletes beszámolókat is olvashatsz.
+         Alkalmanként kanyoning túrákat is szervezünk. A sport iránt
+         lelkesedő tagjaink CanyonMonkeys néven külön csoportot alapítottak,
+         amely ma Magyar Kanyoning Sportegyesület néven működik.
       btn:
-         link: /turak/
-         text: Túrabeszámolók
+         link: /turak/legacy-predelica-kanyontura-2010/
+         text: Kanyontúra-beszámoló
       reversed: true
    -
       _bookshop_name: global/feature
-      image_path: /images/gallery/ftsk-gallery-3.webp
-      title: Oktatás és kanyoning
+      image_path: /images/turak/2026-kanin-expedicio/01-csapat-a-ducatonal.webp
+      title: Közösség
       description: >-
-         Alapfokú barlangász tanfolyamainkkal új tagokat képzünk, alkalmanként
-         pedig kanyoning túrákon is részt veszünk - ebből nőtte ki magát a
-         mai Magyar Kanyoning Sportegyesület is.
+         A közös túrák mellett a társasági élet is fontos nekünk.
       btn:
-         link: /tanfolyamok/
-         text: Tanfolyamaink
+         link: /kapcsolat/
+         text: Csatlakozz hozzánk
       reversed: false
 ---

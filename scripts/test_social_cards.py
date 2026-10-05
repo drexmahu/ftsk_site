@@ -1,6 +1,8 @@
 """Exercise the real Hugo social-card partials with controlled image fixtures."""
 
 import json
+import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -24,7 +26,7 @@ class SocialCardSelectionTests(unittest.TestCase):
         for directory in ("layouts/partials", "layouts/_default", "content/turak",
                           "content/tanfolyamok", "assets/images/og", "data"):
             (self.root / directory).mkdir(parents=True, exist_ok=True)
-        for name in ("social-card-source.html", "social-card.html", "absurl.html"):
+        for name in ("social-card-source.html", "social-card.html", "absurl.html", "meta.html"):
             shutil.copyfile(REPO_ROOT / "layouts" / "partials" / name,
                             self.root / "layouts" / "partials" / name)
         (self.root / "hugo.toml").write_text(
@@ -143,6 +145,45 @@ class SocialCardSelectionTests(unittest.TestCase):
         self.page("tanfolyamok/invalid.md", "Invalid override", override="/images/vector.svg")
         _, log = self.build(succeeds=False)
         self.assertIn("must be a local processable raster image", log)
+
+    def test_card_image_does_not_repeat_the_page_title(self):
+        self.page("turak/one.md", "First report", featured="/images/featured.png")
+        self.page("turak/two.md", "A completely different report title",
+                  featured="/images/featured.png")
+        self.build()
+        rows = json.loads((self.root / "public" / "index.html").read_text(encoding="utf-8"))
+        images = {row["title"]: row["image"] for row in rows}
+        self.assertEqual(images["First report"], images["A completely different report title"])
+
+    def test_social_url_follows_build_url_independently_of_canonical(self):
+        template = '{{ partial "meta.html" . }}'
+        (self.root / "layouts" / "index.html").write_text(template, encoding="utf-8")
+        (self.root / "layouts" / "_default" / "single.html").write_text(
+            template, encoding="utf-8",
+        )
+        self.page("turak/report.md", "Report", featured="/images/featured.png")
+        for base in ("https://example.com/preview/pr-42/", "http://localhost:1313/",
+                     "https://production.example/"):
+            with self.subTest(base=base):
+                env = dict(os.environ, HUGO_CANONICAL_BASE_URL="https://production.example/")
+                result = subprocess.run(
+                    [self.hugo, "--source", str(self.root), "--destination",
+                     str(self.root / "public"), "--baseURL", base],
+                    capture_output=True, text=True, encoding="utf-8", timeout=60, env=env,
+                )
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                for path in ("", "turak/report/"):
+                    source = (self.root / "public" / path / "index.html").read_text(
+                        encoding="utf-8",
+                    )
+                    self.assertIn(f'<meta property="og:url" content="{base}{path}"', source)
+                    self.assertIn(
+                        f'<link rel="canonical" href="https://production.example/{path}"',
+                        source,
+                    )
+                    image = re.search(r'<meta property="og:image" content="([^"]+)"', source)
+                    self.assertIsNotNone(image)
+                    self.assertTrue(image.group(1).startswith(base + "images/"))
 
 
 if __name__ == "__main__":

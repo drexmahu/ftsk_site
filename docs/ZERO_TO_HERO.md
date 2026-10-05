@@ -508,6 +508,15 @@ Ez technikai védelem, nem meghívás arra, hogy ismeretlen scriptet tegyünk ci
 Egy tagadat vagy menübeállítás több oldalt érinthet.
 A hero-dia eltávolítása a Workbenchben nem törli a fotófájlt.
 
+A **Members & portraits** felületen tagot hozzáadhatsz, módosíthatsz vagy
+törölhetsz, és ugyanitt választhatsz vagy konvertálhatsz hozzá portrét.
+A konvertált portrépár az éppen nyitott vázlatba kerül: a tagadatok és a
+képhivatkozások mentéséhez külön kattints a **Save member** gombra.
+Az átnevezés és törlés megőrzi a régi beszámolók neveit és a képfájlokat.
+A **Roster & image checks** a hiányzó képeket, a taglistához nem rendelt
+portrékat és a nem illeszkedő résztvevő-/szerzőneveket teszi láthatóvá;
+ezek között vendégek és más oldalon használt képek is lehetnek.
+
 A tanfolyam `current` mezője és a főoldali/menu-hirdetés `active` kapcsolója
 **nem ugyanaz**. A második a `data/tanfolyam.yaml` fájlban van.
 Lásd a [tanfolyami útmutatót](TANFOLYAM_GUIDE.md).

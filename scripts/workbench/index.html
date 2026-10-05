@@ -8,6 +8,8 @@
   <link rel="stylesheet" href="/workbench/content.css">
   <script src="/workbench/app.js" defer></script>
   <script src="/workbench/content.js" defer></script>
+  <script src="/workbench/members.js" defer></script>
+  <link rel="stylesheet" href="/workbench/members.css">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to workspace</a>
@@ -19,7 +21,7 @@
       <a href="#content" data-view="content"><span aria-hidden="true">✎</span> Pages &amp; posts</a>
       <p class="nav-label">Images &amp; presentation</p>
       <a href="#photos" data-view="photos"><span aria-hidden="true">02</span> Site photos</a>
-      <a href="#portraits" data-view="portraits"><span aria-hidden="true">03</span> Member portraits</a>
+      <a href="#portraits" data-view="portraits"><span aria-hidden="true">03</span> Members &amp; portraits</a>
       <a href="#hero" data-view="hero"><span aria-hidden="true">04</span> Hero slideshow</a>
       <a href="#social" data-view="social"><span aria-hidden="true">05</span> Social previews</a>
       <p class="nav-label">Development</p>
@@ -44,7 +46,7 @@
         <div class="tool-grid">
           <a class="tool-card" href="#content"><span class="card-number">CONTENT STUDIO</span><h2>Pages &amp; posts</h2><p>Create and edit trip reports, PDF archives and courses. Metadata, photos, shortcodes and real unsaved Hugo previews.</p><span class="card-link">Open content studio →</span></a>
           <a class="tool-card" href="#photos"><span class="card-number">01</span><h2>Site photos</h2><p>Batch WebP conversion. Keep proportions, reduce file size, choose a site image folder.</p><span class="card-link">Prepare photos →</span></a>
-          <a class="tool-card" href="#portraits"><span class="card-number">02</span><h2>Member portraits</h2><p>Choose each face crop manually. Export the square avatar and full-size modal photo together.</p><span class="card-link">Choose face crops →</span></a>
+          <a class="tool-card" href="#portraits"><span class="card-number">02</span><h2>Members &amp; portraits</h2><p>Add, edit and remove roster entries. Choose portraits and face crops in the same workspace.</p><span class="card-link">Manage members →</span></a>
           <a class="tool-card" href="#hero"><span class="card-number">03</span><h2>Hero slideshow</h2><p>Subject placement, motion, mirroring and responsive framing in the existing live editor.</p><span class="card-link">Compose the hero →</span></a>
           <a class="tool-card" href="#social"><span class="card-number">04</span><h2>Social previews</h2><p>Inspect the actual share image and metadata from a local or public page. Export an offline preview.</p><span class="card-link">Check a shared link →</span></a>
         </div>
@@ -59,7 +61,34 @@
         <div id="photo-results" class="panel" hidden><h2>Converted files</h2><div class="results"></div></div>
       </section>
       <section data-panel="portraits" hidden>
-        <div class="page-heading"><p class="eyebrow">Images / Face crop</p><h1>Member portraits</h1><p>Pick the face yourself—no automatic crop. Each conversion creates a square thumbnail and an uncropped full image.</p></div>
+        <div class="page-heading"><p class="eyebrow">Roster / Details &amp; face crop</p><h1>Members &amp; portraits</h1><p>Edit the member roster and portraits together. Reports and existing image files are never renamed or deleted here.</p></div>
+        <div class="member-layout">
+          <div class="panel">
+            <div class="section-heading"><h2>Member roster</h2><button id="member-refresh" class="secondary" type="button">Reload</button></div>
+            <label>Search members<input id="member-search" type="search" placeholder="Name, nickname or role"></label>
+            <button id="member-new" type="button">Add member</button>
+            <div id="member-list" class="queue" aria-label="Member roster"></div>
+          </div>
+          <form id="member-form" class="panel" hidden>
+            <div class="section-heading"><h2 id="member-heading">Edit member</h2><span id="member-draft" class="badge">Saved</span></div>
+            <fieldset id="member-fields">
+              <label>Group<select id="member-group" required></select></label>
+              <div class="field-pair"><label>Name<input id="member-name" required maxlength="500"></label><label>Nickname<input id="member-nickname" maxlength="500"></label></div>
+              <label>Role<input id="member-role" maxlength="500" placeholder="For example: túravezető"></label>
+              <label>Biography (Markdown)<textarea id="member-bio" rows="4" maxlength="10000"></textarea></label>
+              <div class="member-image-preview"><img id="member-avatar" alt="Member thumbnail" hidden><img id="member-full" alt="Member full portrait" hidden></div>
+              <label>Existing portrait pair<select id="member-portrait-choice"><option value="">Choose a portrait</option></select></label>
+              <div class="actions"><button id="member-use-portrait" class="secondary" type="button">Use portrait pair</button><button id="member-clear-images" class="secondary" type="button">Remove image assignments</button></div>
+              <label>Thumbnail URL<input id="member-image" maxlength="500" placeholder="/images/members/name_thumb.webp"></label>
+              <label>Full-image URL<input id="member-modal_image" maxlength="500" placeholder="/images/members/name_full.webp"></label>
+              <p class="hint">Or upload a photo below, choose the crop and convert. The resulting pair fills this draft automatically; Save member persists the assignments.</p>
+              <div id="member-references" class="hint"></div>
+              <div class="actions"><button id="member-save" type="submit">Save member</button><button id="member-cancel" class="secondary" type="button">Close / discard draft</button><button id="member-delete" class="secondary" type="button">Delete member</button></div>
+            </fieldset>
+          </form>
+        </div>
+        <details class="panel member-audit"><summary id="member-audit-summary">Roster &amp; image checks</summary><div id="member-audit"></div><p class="hint">Unmatched participants may be guests, not deleted members. Unassigned portraits may still be used by other content. These are informational checks; nothing is automatically removed.</p></details>
+        <div class="section-heading"><h2>Portrait crop &amp; export</h2><span id="portrait-member-target" class="hint">Standalone export: select or add a member above to assign a portrait.</span></div>
         <div class="panel"><label class="dropzone" for="portrait-files"><strong>Select or drop portraits</strong><span>Each photo is cropped separately · EXIF orientation is corrected</span><input id="portrait-files" type="file" accept="image/jpeg,image/png,image/webp" multiple></label><div id="portrait-queue" class="queue"></div></div>
         <div id="crop-panel" class="panel" hidden>
           <div class="section-heading"><div><p class="eyebrow">Manual selection</p><h2 id="crop-name">Choose face crop</h2></div><button class="secondary" id="skip-portrait">Skip photo</button></div>
@@ -67,7 +96,7 @@
           <div class="crop-settings"><label>Output folder<input id="portrait-folder" value="members"></label><label>Avatar (px)<input id="portrait-thumb" type="number" min="64" max="1200" value="400"></label><label>Full max width<input id="portrait-width" type="number" min="64" max="6000" value="1400"></label><label>Full max height<input id="portrait-height" type="number" min="64" max="6000" value="1400"></label><label>Quality<input id="portrait-quality" type="number" min="1" max="100" value="85"></label></div>
           <div class="actions"><button id="convert-portrait">Confirm crop &amp; convert</button><span class="hint">Review the avatar before confirming. No files are written until you confirm.</span></div>
         </div>
-        <div id="portrait-results" class="panel" hidden><h2>Portrait files</h2><div class="results"></div><p class="hint">Copy the thumbnail URL into image and the full URL into modal_image in the member data. Member editing comes later.</p></div>
+        <div id="portrait-results" class="panel" hidden><h2>Portrait files</h2><div class="results"></div><p class="hint">When a member draft is open, converted images are assigned to that draft. Save member to persist. Standalone exports remain available without a roster assignment.</p></div>
       </section>
       <section data-panel="hero" hidden>
         <div class="page-heading"><p class="eyebrow">Presentation / Motion &amp; framing</p><h1>Hero slideshow</h1><p>The existing editor, connected to the real site. Save writes data/hero_images.yaml. Removing a slide here keeps its image file for other pages.</p></div>
@@ -86,7 +115,7 @@
           <button class="check-card" data-job="build"><strong>Build site</strong><span>Hugo build with drafts and future content.</span></button>
           <button class="check-card" data-job="links"><strong>Check links &amp; assets</strong><span>Fresh build, then verify internal links and image paths.</span></button>
           <button class="check-card" data-job="members"><strong>Check members</strong><span>Verify member and participant references.</span></button>
-          <button class="check-card" data-job="regressions"><strong>Tool regressions</strong><span>Hero framing, navigation, social cards and portrait crop tests.</span></button>
+          <button class="check-card" data-job="regressions"><strong>Tool regressions</strong><span>Hero framing, navigation, social cards, portrait crops, and content/member editing tests.</span></button>
         </div>
         <div class="panel"><div class="section-heading"><h2>Activity log</h2><span id="job-state" class="badge">Idle</span></div><pre id="job-log" aria-live="off">Choose a check above. One job runs at a time.</pre></div>
       </section>
@@ -157,7 +186,7 @@
       <dialog id="delete-page-dialog"><div class="section-heading"><h2>Delete page &amp; chosen assets</h2><button class="secondary" data-close-dialog>Cancel</button></div><p class="notice error">This permanently removes selected files from the checkout. Git can recover tracked versions only—not untracked files or unsaved edits. Nothing is deleted by default except the confirmed Markdown page.</p><p id="delete-page-path"></p><div id="delete-assets" class="deletion-assets"></div><p id="delete-incoming" class="hint"></p><label>Type the full Markdown path to confirm<input id="delete-confirm"></label><button id="confirm-delete-page" class="danger">Delete selected files</button></dialog>
       <section data-panel="help" hidden>
         <div class="page-heading"><p class="eyebrow">How it fits together</p><h1>A simple workflow</h1><p>This workspace combines the existing tools and a file-backed content studio. It does not configure production credentials or deploy the site.</p></div>
-        <div class="panel prose"><h2>1. Prepare the photos</h2><p>Use Site photos for article, gallery and hero photos. Set the output folder under static/images/. Existing files are preserved; duplicate names get a numeric suffix. Copy the resulting /images/... URL where needed.</p><h2>2. Select member faces</h2><p>Upload portraits, choose each face crop, inspect the circular preview and confirm. Skipping never writes output. The crop uses original EXIF-corrected coordinates, not the smaller browser preview.</p><h2>3. Compose the hero</h2><p>Use the connected Hero slideshow editor for subject points, motion and per-device composition. Save explicitly. Remove takes an image out of the slideshow without deleting its file. Refresh the actual site preview to inspect the result.</p><h2>4. Check a shared link</h2><p>Paste a local or public URL into Social previews. Images and metadata come from the served HTML, not guesses. Export embeds images into an HTML snapshot you can share. Platform caches and cropping can differ.</p><h2>5. Verify before publishing</h2><p>Run Build &amp; checks. Logs report errors rather than pretending success. There is no production deploy button here; use the existing reviewed deployment workflow.</p><h2>Local and explicit</h2><p>The server listens only on your machine. Uploaded originals are temporary and are removed on shutdown. Converted images and saved hero configuration persist in this checkout. Restarting loses queued originals, not exported images. Changes are not automatically committed.</p><h2>Setup</h2><p>Run scripts/setup-dev-env.ps1 once, then scripts/run_workbench.bat. Stop the workbench with Ctrl+C in its terminal. Standalone tools and their launchers still work.</p></div>
+        <div class="panel prose"><h2>1. Prepare the photos</h2><p>Use Site photos for article, gallery and hero photos. Set the output folder under static/images/. Existing files are preserved; duplicate names get a numeric suffix. Copy the resulting /images/... URL where needed.</p><h2>2. Manage members &amp; portraits</h2><p>Select a member or Add member, edit their details and group, and choose an existing portrait pair or upload a photo below. Choose each face crop, inspect the circular preview and convert. Conversion fills the open member draft; Save member writes its details and image assignments together. Exported files remain even if you discard the draft. Delete member removes only the roster entry; historical report names and image files remain. Review Roster &amp; image checks for missing images, unmatched names and unassigned portraits. Guests and files used elsewhere are not automatically errors. If an external edit causes a conflict, copy your draft before Reload. Skipping a photo never writes output. The crop uses original EXIF-corrected coordinates, not the smaller browser preview.</p><h2>3. Compose the hero</h2><p>Use the connected Hero slideshow editor for subject points, motion and per-device composition. Save explicitly. Remove takes an image out of the slideshow without deleting its file. Refresh the actual site preview to inspect the result.</p><h2>4. Check a shared link</h2><p>Paste a local or public URL into Social previews. Images and metadata come from the served HTML, not guesses. Export embeds images into an HTML snapshot you can share. Platform caches and cropping can differ.</p><h2>5. Verify before publishing</h2><p>Run Build &amp; checks. Logs report errors rather than pretending success. There is no production deploy button here; use the existing reviewed deployment workflow.</p><h2>Local and explicit</h2><p>The server listens only on your machine. Uploaded originals are temporary and are removed on shutdown. Converted images, saved members and hero configuration persist in this checkout. Restarting loses queued originals, not exported images. Changes are not automatically committed.</p><h2>Setup</h2><p>Run scripts/setup-dev-env.ps1 once, then scripts/run_workbench.bat. Stop the workbench with Ctrl+C in its terminal. Standalone tools and their launchers still work.</p></div>
       </section>
     </main>
     <footer class="workspace-footer">FTSK Site Workbench <span>Local files. Explicit saves. No automatic publishing.</span></footer>

@@ -19,6 +19,22 @@ cikkeket ehhez a struktúrához képest.
 
 ## Böngészős szerkesztés
 
+A **Members & portraits** felületen a taglistát és a portrékat együtt
+szerkesztheted. Válassz egy tagot, vagy kattints az **Add member** gombra.
+A csoport, név, becenév, tisztség és bemutatkozás mellett meglévő portrépárt
+is hozzárendelhetsz. Feltöltött kép kivágása és konvertálása az éppen nyitott
+tagvázlat képmezőit tölti ki; a tagadatok és a képhivatkozások csak a
+**Save member** gombbal mentődnek. A konvertált képfájlok már a konvertáláskor
+megmaradnak, akkor is, ha később elveted a vázlatot.
+
+A tag átnevezése vagy törlése nem módosítja a régi túrabeszámolók neveit,
+és nem töröl képfájlokat. A **Roster & image checks** listázza a hiányzó
+képeket, a taglistához nem rendelt portrékat és a taglistában nem szereplő
+résztvevőket/szerzőket. Egy résztvevő lehet vendég, egy kép pedig más oldalon
+is használatban lehet: ezek tájékoztató ellenőrzések, nem automatikus
+törlési javaslatok. Külső fájlmódosítás esetén a mentés ütközést jelez;
+újratöltés előtt másold ki a megőrzendő vázlatadatokat.
+
 Indítsd el a `scripts/run_workbench.bat` alkalmazást, majd nyisd meg a
 **Pages & posts** részt a <http://127.0.0.1:8879/#content> címen.
 
@@ -446,6 +462,10 @@ beszámoló pedig egy régi PDF-ben él. Ezeket a fájlneve is megkülönböztet
 - Ne írd meg kézzel a beágyazás HTML-jét/CSS-ét - a `layouts/shortcodes/pdf.html`
   és a hozzá tartozó `.ftsk-pdf-embed` stílus (lásd
   `assets/scss/components/_ftsk.scss`) intézi ezt.
+- A túrabeszámolók PDF-nézete asztali képernyőn legfeljebb 1200 px széles,
+  és a képernyőmagasság 85%-át használja (600–1100 px között). A cikk szövege
+  továbbra is a keskenyebb olvasási sávban marad; mobilon a PDF a szövegsávhoz
+  igazodik.
 - Ha egy régi cikk nem PDF-re, hanem valamilyen más régi oldalra (pl. `.htm`)
   hivatkozik, azt nem kell letölteni/beágyazni - elég csak a `legacy-`
   fájlnév-előtagot alkalmazni rá.

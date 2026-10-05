@@ -321,6 +321,22 @@
   }
 }
 
+@media (min-width: 992px) {
+  .ftsk-trip-report-content .ftsk-pdf-embed {
+    position: relative;
+    left: 50%;
+    width: calc(100vw - 3rem);
+    max-width: 1200px;
+    transform: translateX(-50%);
+
+    iframe {
+      height: 85vh;
+      min-height: 600px;
+      max-height: 1100px;
+    }
+  }
+}
+
 // Túrabeszámolók (turak) list page - featured reports, filter toolbar and archive
 // badges (see layouts/turak/list.html). Filtering itself is client-side (see
 // the "#ftsk-turak-grid" binding in static/js/script.js) - .is-hidden just

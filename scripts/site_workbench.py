@@ -28,6 +28,7 @@ import yaml
 
 import social_preview
 from content_workbench import ContentService, ContentError, ConflictError
+from member_workbench import MemberService
 from membership_image_converter import membership_image_converter as portraits
 from site_image_converter import hero_config_server as hero
 from site_image_converter import site_image_converter as photos
@@ -83,6 +84,7 @@ class Workbench:
         self.preview_port = 1313
         self.closed = False
         self.content = ContentService(self, safe_path)
+        self.members = MemberService(self, safe_path)
         self.render_server: WorkbenchServer | None = None
         self.render_thread: threading.Thread | None = None
         self.render_origin = ""
@@ -443,9 +445,7 @@ class Workbench:
                                   "scripts/membership_image_converter", "-p", "test_manual_crop.py"],
                                  "Manual portrait crop")
                 self.run_command([sys.executable, "-m", "unittest", "discover", "-s", "scripts",
-                                  "-p", "test_site_workbench.py"], "Site workbench")
-                self.run_command([sys.executable, "-m", "unittest", "discover", "-s", "scripts",
-                                  "-p", "test_content_workbench.py"], "Content editor")
+                                  "-p", "test_*workbench.py"], "Site, content and member workbench")
             with self.lock:
                 self.job.update(state="passed", exit_code=0)
         except (ToolError, ContentError, OSError, subprocess.SubprocessError) as exc:
@@ -604,6 +604,9 @@ class Handler(BaseHTTPRequestHandler):
         elif route == "/api/workbench/content/catalog":
             with app.lock:
                 self.json(200, app.content.catalog())
+        elif route == "/api/workbench/members":
+            with app.lock:
+                self.json(200, app.members.catalog())
         elif route == "/api/workbench/content/page":
             with app.lock:
                 self.json(200, app.content.read(parse_qs(parsed.query).get("path", [""])[0]))
@@ -683,6 +686,10 @@ class Handler(BaseHTTPRequestHandler):
                 result = app.stage(filename, raw) if route.endswith("uploads") else app.add_hero(filename, raw)
             elif method == "POST" and route in ("/api/workbench/convert", "/api/workbench/portrait"):
                 result = app.convert(self.payload(), portrait=route.endswith("portrait"))
+            elif method == "POST" and route == "/api/workbench/members/save":
+                result = app.members.save(self.payload())
+            elif method == "POST" and route == "/api/workbench/members/delete":
+                result = app.members.delete(self.payload())
             elif method == "POST" and route == "/api/workbench/preview/start":
                 result = app.start_preview()
             elif method == "POST" and route == "/api/workbench/preview/stop":

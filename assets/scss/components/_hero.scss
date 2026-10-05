@@ -182,6 +182,71 @@
   }
 }
 
+.hero-two-brand {
+  display: none;
+}
+
+.hero-two-content .hero-two-description {
+  margin-bottom: 0;
+  max-width: 48ch;
+  font-size: 1.25rem;
+  line-height: 1.6;
+  text-wrap: pretty;
+
+  @include media-breakpoint-down-lg {
+    margin-inline: auto;
+  }
+}
+
+@include media-breakpoint-up-xl {
+  .hero-two-content {
+    display: grid;
+    grid-template-columns: unquote("clamp(220px, 18vw, 340px)") minmax(0, 1fr);
+    align-items: center;
+    column-gap: unquote("clamp(24px, 2vw, 40px)");
+    padding-left: unquote("clamp(24px, 3vw, 64px)");
+  }
+
+  .hero-two-brand {
+    display: block;
+    position: relative;
+    width: unquote("clamp(220px, 18vw, 340px)");
+    aspect-ratio: 1;
+    overflow: hidden;
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  // Remove the portrait asset's transparent top/bottom padding from the layout.
+  .hero-two-logo {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    display: block;
+    width: 100%;
+    height: auto;
+    transform: translateY(-50%);
+  }
+
+  .hero-two-copy {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+
+    > h1 {
+      margin-bottom: 0 !important;
+      font-size: unquote("clamp(40px, 3.3vw, 60px)");
+      line-height: 1.2;
+      max-width: 13ch;
+      text-wrap: balance;
+    }
+
+    > .hero-two-description {
+      margin-top: 1.5rem;
+    }
+  }
+}
+
 // Homepage hero: photos fill the whole section as a background layer (weighted to
 // the right, since the left holds the text), slowly Ken-Burns-panning and crossfading
 // on a loop. Toggled by static/js/script.js (swaps "is-active" between slides on a

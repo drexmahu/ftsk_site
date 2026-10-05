@@ -2,7 +2,7 @@
 
 const $ = selector => document.querySelector(selector);
 const state = { token: "", photos: [], portraits: [], activePortrait: null, crop: null, image: null, busy: false, preview: null, initialized: false, jobState: "idle" };
-const viewNames = { overview: "Overview", content: "Pages & posts", photos: "Site photos", portraits: "Member portraits", hero: "Hero slideshow", social: "Social previews", checks: "Build & checks", help: "Help & workflow" };
+const viewNames = { overview: "Overview", content: "Pages & posts", photos: "Site photos", portraits: "Members & portraits", hero: "Hero slideshow", social: "Social previews", checks: "Build & checks", help: "Help & workflow" };
 
 function notify(message, kind = "") {
   const element = $("#message");
@@ -100,6 +100,7 @@ function setBusy(busy) {
   document.querySelectorAll("#crop-panel input, #reset-crop").forEach(input => { input.disabled = busy; });
   queueView("photos");
   queueView("portraits");
+  window.dispatchEvent(new Event("workbench-busy"));
 }
 
 async function upload(files, kind) {
@@ -271,6 +272,7 @@ async function nextPortrait() {
 
 async function convertPortrait() {
   if (state.busy) return;
+  if (window.memberEditor?.busy) throw new Error("Wait for the member operation to finish.");
   if (!state.activePortrait) throw new Error("Choose a portrait first.");
   const thumb = $("#portrait-thumb");
   if (!thumb.reportValidity()) throw new Error("Check thumbnail size.");
@@ -279,10 +281,14 @@ async function convertPortrait() {
   try {
     const result = await api("/api/workbench/portrait", { method: "POST", payload });
     showResults("portrait", result);
+    window.memberEditor?.exported(result);
+    const assigned = window.memberEditor?.editing;
+    if (assigned) window.memberEditor.attach(result);
     state.portraits = state.portraits.filter(entry => entry.id !== payload.id);
     await api(`/api/workbench/uploads/${payload.id}`, { method: "DELETE" });
     await nextPortrait();
-    notify("Portrait exported. Copy the thumbnail and full-image URLs below.");
+    notify(assigned ? "Portrait exported and assigned to the open member draft. Save member to persist the assignments." :
+      "Portrait exported. Select a member and use the existing portrait pair, or copy the URLs below.");
   } finally { setBusy(false); }
 }
 
