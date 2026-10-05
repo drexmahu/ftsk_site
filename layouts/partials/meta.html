@@ -5,39 +5,36 @@
   content="width=device-width, initial-scale=1, maximum-scale=5"
 />
 <!-- Page description for SEO -->
-{{ if .Params.seo.page_description }}
-    <meta name="description" content="{{ .Params.seo.page_description }}">
-    <meta property="og:description" content="{{ .Params.seo.page_description }}" />
-{{ else }}
-    <meta name="description" content="{{ hugo.Data.meta.description }}">
-    <meta property="og:description" content="{{ hugo.Data.meta.description }}" />
-{{ end }}
+{{ $description := .Params.seo.page_description | default hugo.Data.meta.description }}
+<meta name="description" content="{{ $description }}">
+<meta property="og:description" content="{{ $description }}" />
+<meta name="twitter:description" content="{{ $description }}" />
 
 <!-- Meta tags for open graph and twitter -->
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:site" content="{{ hugo.Data.meta.twitter_site }}" />
+{{ with hugo.Data.meta.twitter_site }}<meta name="twitter:site" content="{{ . }}" />{{ end }}
 {{ $socialCard := partial "social-card.html" . }}
 {{ if .IsHome }}
-    <meta name="og:title" content="{{ hugo.Data.meta.site_title }}" />
+    <meta property="og:title" content="{{ hugo.Data.meta.site_title }}" />
     <meta property="og:type" content="website" />
-    <meta name="og:image" content="{{ $socialCard }}" />
-    <meta name="twitter:creator" content="{{ hugo.Data.meta.twitter_site }}" />
+    <meta property="og:image" content="{{ $socialCard }}" />
+    {{ with hugo.Data.meta.twitter_site }}<meta name="twitter:creator" content="{{ . }}" />{{ end }}
     <meta name="twitter:title" content="{{ hugo.Data.meta.site_title }}" />
     <meta name="twitter:image" content="{{ $socialCard }}" />
 {{ else }}
-    <meta name="og:title" content="{{ .Title }}" />
+    <meta property="og:title" content="{{ .Title }}" />
     <meta name="twitter:title" content="{{ .Title }}" />
     {{ with .Params.seo.open_graph_type }}
     <meta property="og:type" content="{{ . }}" />
     {{ else }}
     <meta property="og:type" content="website" />
     {{ end }}
-    <meta name="og:image" content="{{ $socialCard }}" />
+    <meta property="og:image" content="{{ $socialCard }}" />
     <meta name="twitter:image" content="{{ $socialCard }}" />
     {{ with .Params.seo.author_twitter_handle }}  
     <meta name="twitter:creator" content="{{ . }}" />
     {{ else }}
-    <meta name="twitter:creator" content="{{ .Site.Params.twitter_site }}" />
+    {{ with hugo.Data.meta.twitter_site }}<meta name="twitter:creator" content="{{ . }}" />{{ end }}
     {{ end }}
 {{ end }}
 
@@ -60,3 +57,4 @@
         {{ end }}
 {{ end }}
 <link rel="canonical" href="{{ $canonical }}" />
+<meta property="og:url" content="{{ $canonical }}" />

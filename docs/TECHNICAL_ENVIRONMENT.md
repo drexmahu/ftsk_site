@@ -53,7 +53,7 @@ with a nonzero exit status but does not install them.
 | Python | Working 64-bit Python >= 3.10 with Tk and venv, otherwise user-scoped Python 3.12 from WinGet. |
 | Python tool libraries | Project `.venv`: Pillow, PyYAML and Paramiko, from [`scripts/requirements-dev.txt`](../scripts/requirements-dev.txt). Member portrait crops are selected manually with Tk. |
 | Bookshop/npm | `npm ci` when a lockfile exists, otherwise `npm install`. A valid tree with an unchanged setup fingerprint is reused. |
-| Smoke checks | Builds to a temporary folder, verifies members/internal links, and runs hero-framing regressions. |
+| Smoke checks | Builds to a temporary folder, verifies members/internal links, and runs hero-framing and social preview/card-selection regressions. |
 
 Portable archives are verified using their publisher's SHA-256 manifests.
 The installer never invokes elevation or changes machine PATH. WinGet must
@@ -112,6 +112,185 @@ destination output, so old pages and fingerprinted assets do not survive
 startup. Only generated directories are purged; content/static source files
 are never deleted. Stop another Hugo server first if it is using those
 directories. Calling `hugo server` directly bypasses the startup purge.
+
+## Site Workbench
+
+One local browser application brings together the existing tools:
+
+```powershell
+.\scripts\run_workbench.bat
+# Without opening a browser automatically:
+.\.venv\Scripts\python.exe scripts\site_workbench.py --no-browser --port 8879
+```
+
+Open <http://127.0.0.1:8879/>. The launcher uses the project `.venv`; the
+environment installer already supplies Pillow and PyYAML. No additional
+framework, npm build or Python dependencies are required.
+
+- **Pages & posts:** search/filter the content library; create drafts from the
+  maintained trip, archived-PDF and course templates; edit Markdown, frontmatter,
+  SEO, participant/FAQ cards and course milestones/contacts/flyers. Other
+  Markdown pages are editable in source mode, including component-driven pages.
+  Placement supports nested folders, leaf bundles, slug/URL overrides, aliases,
+  publishing and expiry dates. Unknown frontmatter fields remain available in
+  source mode; unchanged source, comments and newline conventions are preserved.
+  The media tab connects conversion, existing-image selection, image metadata,
+  image/media/gallery/Markdown insertion, and PDF upload/insertion.
+- **Site photos:** upload/drop a batch, choose maximum dimensions and quality,
+  and export WebP into any named/nested folder under `static/images/`. General
+  photos default to `gallery`, not `hero`; conversion does not automatically
+  add slideshow entries. No upscaling or cropping. The content studio also
+  supports an optional filename stem for a single conversion.
+- **Member portraits:** position a square crop on each EXIF-corrected original,
+  inspect the circular avatar preview, and explicitly confirm. Exports the
+  thumbnail and uncropped full image through the existing converter.
+- **Hero slideshow:** embeds the existing connected POI/motion editor. Explicit
+  Save updates `data/hero_images.yaml`. In workbench mode, Remove only removes
+  the slideshow entry; its file remains available for posts and social cards.
+  The standalone hero launcher's existing deletion behavior is unchanged.
+- **Social previews:** inspect localhost or public HTTP(S) pages and export a
+  self-contained HTML snapshot with embedded preview images.
+- **Build & checks:** temporary Hugo build, internal links/assets, member
+  references, and existing hero/navigation/social/crop/workbench regressions.
+  One job runs at a time; failures and command output remain visible.
+
+The preview controls reuse a server already responding on port 1313. Otherwise
+they start Hugo directly with drafts/future content, render-to-memory and no
+startup purge. Stop and Ctrl+C only terminate processes owned by this workbench,
+not a separately launched server. Builds use temporary destinations rather
+than replacing `public/`; Hugo may still update its normal resource cache.
+
+Original uploads are temporary (30 MiB / 25 MP each; 100 queued maximum).
+Converted images, uploaded PDFs, saved pages and explicitly saved hero settings
+persist in this checkout. A content preview builds an isolated unsaved snapshot
+with real Hugo templates; it does not save the page or replace `public/`.
+It runs on a separate read-only loopback origin so authored scripts cannot
+access the editor API. Local styles, images and PDFs are served there; Google
+Fonts remain permitted for faithful rendering. Only the latest three successful
+snapshots are kept, and preview links expire when the workbench stops.
+Preview builds include drafts/future/expired pages and force preview no-index
+behavior; use the normal build to check production publication settings.
+Component pages may render their `content_blocks` instead of the Markdown body.
+The browser offers restoration of the latest unsaved draft and warns on exit.
+Revision checks reject external-file conflicts without overwriting them.
+Moves change only Markdown, not assets or incoming links; add aliases/update
+links yourself. Deletion requires the exact content path and lets you select
+linked local `/images/` and `/pdfs/` assets individually. Shared assets are
+protected; relative bundle assets are not automatically deleted. Recovery is
+manual through Git, which cannot restore untracked files or unsaved edits.
+
+Existing output names are protected and receive numeric suffixes instead of
+being overwritten. Relative output folders cannot traverse outside
+`static/images/`, and linked/reparse-point paths are rejected. The server binds
+only to loopback and requires same-origin, token-authenticated writes.
+Do not expose it through a public tunnel: it edits local site files.
+
+Member-data editing, deployment, environment installation and the separate
+Bookshop component editor are not embedded. Existing standalone tools continue
+to work. Use Ctrl+C in the launch terminal to stop and clear staged originals.
+No automatic commits or publishing occur.
+
+Tests (disposable site fixtures; no real image/config edits):
+
+```powershell
+.\.venv\Scripts\python.exe -m unittest discover -s scripts -p 'test_*workbench.py'
+```
+
+The environment installer's smoke verification includes these tests.
+
+## Social sharing preview
+
+Start Hugo separately, then open the local Python viewer:
+
+```powershell
+.\scripts\run_social_preview.bat "http://localhost:1313/tanfolyamok/tanfolyam-2027/"
+# Or use the configured Python interpreter:
+python scripts\social_preview.py "https://www.ftsk.hu/"
+python scripts\social_preview.py --no-browser --port 8878
+```
+
+The viewer uses Python >= 3.10 and Pillow (already in
+[`scripts/requirements-dev.txt`](../scripts/requirements-dev.txt)). It binds only
+to `127.0.0.1`, opens the browser, and accepts a dev-server or public URL in its
+form. It fetches the actual HTML, follows redirects, resolves relative image URLs
+and `<base>` tags, decodes the images, and shows approximate Open Graph and
+X/Twitter cards plus raw metadata and explicit warnings. It never executes the
+target page's JavaScript. Response sizes, image pixel counts and network waits
+are limited; inaccessible or unsupported images are reported, not hidden.
+
+A preview can be bookmarked as
+`http://127.0.0.1:8878/?url=http%3A%2F%2Flocalhost%3A1313%2F`.
+That link only works on the machine running the viewer. To share an offline
+preview, export HTML with embedded images:
+
+```powershell
+python scripts\social_preview.py "http://localhost:1313/" --output "$env:TEMP\ftsk-social-preview.html"
+python -m unittest discover -s scripts -p test_social_preview.py
+```
+
+The tool does not upload pages/images to a third-party service. Only the supplied
+page URL and its declared image URLs are requested. Treat the generated HTML as
+a snapshot; rerender after editing or rebuilding.
+
+Social platforms cannot fetch localhost URLs. A real share needs a public build
+whose image URLs are also publicly accessible. Platform caching, robots rules,
+authentication, crawler-specific responses, cropping and text truncation can
+differ from this approximation. The viewer checks served metadata/assets, not
+whether a particular platform has refreshed its cache.
+
+Hugo generates 1200x630 branded images in
+[`layouts/partials/social-card.html`](../layouts/partials/social-card.html):
+trip and course posts default to `featuredImg.image_path`;
+`seo.featured_image` overrides the source with another local raster image.
+Other pages randomly choose a homepage slideshow photo at build time.
+Random selection only includes source images with width/height >= 1.5, allowing
+integer-pixel rounding of 3:2 exports (for example, 1600x1067);
+no suitable image produces a warning and uses `data/meta.yaml`'s default image.
+Invalid explicit paths fail the build instead of silently selecting a random photo.
+Open Graph and Twitter use the same generated image, but a
+new build may choose a different non-post photo. Canonical and `og:url` identify
+the production page even in local/PR builds; image URLs follow the build base URL.
+
+The environment installer already installs Pillow from the existing requirements;
+no extra package is needed. Its verification stage now also runs
+`python -m unittest discover -s scripts -p "test_social*.py"` (offline fixtures,
+including real Hugo builds). The social viewer's launcher prefers the project
+`.venv`, just like the existing image tools.
+
+## Responsive layout
+
+The site uses a centered canvas capped at **1920px**, with dark outer gutters on
+ultrawide displays. A subtle blue-gray ambient glow softens the canvas edges only
+above 1920px, without overlays or changes to layout dimensions.
+The cap is shared by the page and its fixed navigation in
+[`assets/scss/_container.scss`](../assets/scss/_container.scss), controlled by
+`$site-max-width` in [`assets/scss/_variables.scss`](../assets/scss/_variables.scss).
+This keeps hero photos and cave motifs from stretching indefinitely. Existing
+content containers retain their narrower Bootstrap-style limits (up to 1320px).
+No layout rules change below 1920px; at 1920px the cap adds no outer margin.
+Viewport-based overlays (member modals and image lightboxes) remain full-screen.
+
+The homepage hero's cave silhouette layer is opaque, so animated photos cannot
+bleed through the rock. A 48px bottom fade blends its floor into the page color;
+the standing SVG stays bottom-aligned at every breakpoint.
+
+At desktop widths (992px and above), the homepage hero follows the screen height
+using `100svh` (`100vh` fallback), capped at 1080px and retaining its existing
+560px/640px minimums on short screens. The cap prevents tall desktop displays and
+wide portrait tablets from stretching the hero indefinitely. Content is vertically
+centered within the padded section and can expand the hero beyond 1080px if needed
+instead of being clipped. Below 992px (including narrower portrait tablets), the
+existing content-sized layout is unchanged.
+
+Related-card sections below archived courses and trip reports use only the hanging
+cave motif, without standing rocks. Their card rows use Bootstrap's `gy-4` vertical
+gutter so stacked cards remain separated on phones and tablets.
+
+When changing the cap, compare layouts before/after at 375px and on both sides of
+the 576, 768, 992, 1200, 1400 and 1700px breakpoints, plus 1920px. Check the
+homepage, archives, course detail, members, privacy and 404 pages. At 2560px,
+3440px and 3840px, verify that the page, hero, footer and fixed navigation are
+1920px wide and share equal left/right gutters, including after scrolling.
 
 ## CI/CD pipeline (`.github/workflows/`)
 

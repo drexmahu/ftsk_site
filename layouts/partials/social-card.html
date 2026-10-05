@@ -1,10 +1,9 @@
 {{/*
   Builds an on-brand "social card" OG/Twitter preview image for any page: the
-  tour report's hero photo, or a random homepage slideshow photo for other
+  post's selected or featured photo, or a suitable random slideshow photo for other
   pages, composited with a dark gradient scrim, the FTSK crest and
   the page title - so a shared link looks intentional, not just a raw photo.
-  Returns an absolute image URL (falls back to the plain site default image on
-  any missing/unprocessable source, so a bad photo never breaks the build).
+  Returns an absolute image URL. Invalid configured images fail the build.
 
   Requires static/images/* to also be mounted at assets/images/* (see the
   extra [[module.mounts]] entry in config.toml) so these already-published
@@ -14,18 +13,12 @@
 {{ $fallback := partial "absurl.html" hugo.Data.meta.image }}
 {{ $result := $fallback }}
 
-{{ $srcPath := "" }}
-{{ if and $page.IsPage (eq $page.Section "turak") }}
-  {{ with $page.Params.featuredImg.image_path }}{{ $srcPath = . }}{{ end }}
-{{ else }}
-  {{ with hugo.Data.hero_images.images }}
-    {{ $slide := index (shuffle .) 0 }}
-    {{ $srcPath = $slide.path }}
-  {{ end }}
-{{ end }}
-{{ if not $srcPath }}{{ $srcPath = hugo.Data.meta.image }}{{ end }}
+{{ $srcPath := partial "social-card-source.html" $page }}
 
 {{ with resources.Get ($srcPath | strings.TrimPrefix "/") }}
+  {{ if not (in (slice "jpeg" "png" "webp" "gif" "tiff" "bmp") .MediaType.SubType) }}
+    {{ errorf "Social card for %s: %s must be a local processable raster image" $page.RelPermalink $srcPath }}
+  {{ else }}
   {{ $img := . }}
   {{ with resources.Get "images/og/gradient.png" }}
     {{ $gradient := . }}
@@ -47,8 +40,15 @@
 
       {{ $composited := $img.Fill "1200x630 center" | images.Filter $gradientFilter | images.Filter $logoFilter | images.Filter $titleFilter | images.Filter $siteFilter }}
       {{ $result = $composited.Permalink }}
+    {{ else }}
+      {{ errorf "Social card: images/ftsk-logo.png was not found" }}
     {{ end }}
+  {{ else }}
+    {{ errorf "Social card: images/og/gradient.png was not found" }}
   {{ end }}
+  {{ end }}
+{{ else }}
+  {{ errorf "Social card for %s: image %s was not found (use a path under static/images/)" $page.RelPermalink $srcPath }}
 {{ end }}
 
 {{ return $result }}

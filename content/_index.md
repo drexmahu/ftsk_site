@@ -13,8 +13,7 @@ content_blocks:
       title: Barlangászat, kutatás, közösség
       description: >-
          Az FTSK Barlangkutató Szakosztály 1954 óta fedez fel, kutat és jár
-         barlangokat itthon és külföldön. Csatlakozz hozzánk barlangtúrákon,
-         kutatásokon vagy a legújabb alapfokú tanfolyamunkon!
+         barlangokat itthon és külföldön.
       link:
          text: Ismerd meg az egyesületet
          url: /egyesuletunk/
@@ -25,12 +24,12 @@ content_blocks:
       title: "Jelentkezz a "
       title_suffix: "2027-es alapfokú barlangász tanfolyamunkra!"
       description: >-
-         A tanfolyam részletes leírása hamarosan érkezik. Addig is jelezd
-         nálunk az érdeklődésed elérhetőségeinken, és elmondjuk a részleteket.
+         Jelentkezés 2026. október 15-től, próbatúrák 2026. december 2-től.
+         A tanfolyam 2027 februárjának második hetében indul; díja 70 000 Ft.
       link:
          text: Bővebben
          url: /tanfolyamok/tanfolyam-2027/
-      note: A pontos jelentkezési határidőt és a tanfolyam díját később tesszük közzé.
+      note: Zeusz és Drex szervezésében, egyesületi közösségünk részeként.
    -
       _bookshop_name: global/header
       title: "Mivel "

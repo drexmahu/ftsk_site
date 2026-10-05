@@ -4,6 +4,13 @@ Válaszd ki a megfelelő típust, majd másold a teljes kódblokkot egy új
 Markdown fájlba a megadott mappában. A minták nem publikált cikkek;
 mindegyik `draft: true` értékkel indul.
 
+A böngészős munkafelületen (**Pages & posts → New**) ugyanezek a fenntartott
+kódblokkok töltődnek be, nincs külön másolatuk az alkalmazásban.
+Választható célmappa és leaf bundle (`slug/index.md`); a PDF-es minta
+`legacy-` fájlnevet használ, és nem bundle-ként hozható létre.
+A forrás, metaadatok, képek és még nem mentett Hugo-előnézet lépéseit a
+[böngészős szerkesztési útmutató](CONTENT_GUIDE.md#böngészős-szerkesztés) írja le.
+
 | Cikktípus | Új fájl helye | Minta |
 | --- | --- | --- |
 | Túra, kutatás, expedíció, kanyoning, szemétszedés | `content/turak/<slug>.md` | [Szöveges túrabeszámoló](#szöveges-túrabeszámoló) |
@@ -69,6 +76,7 @@ featuredImg:
   image_path: /images/hero/ftsk-hero-cave-4.webp
 seo:
   page_description: ""
+  featured_image: "" # opcionális másik helyi fotó a közösségi kártyához
   open_graph_type: article
   no_index: false
 draft: true
@@ -111,7 +119,8 @@ KITÖLTENDŐ: Rövid összegzés, eredmények és köszönetnyilvánítás.
 
 A `További képek` részt és a galériát töröld, ha nincs hozzá valódi fotó.
 A fejléc nagy képe (`featuredImg.image_path`) lesz a közösségi előnézet
-alapfotója is; erre automatikusan kerül a cím és az FTSK-logó.
+alapfotója is; a `seo.featured_image` mezőben más helyi fotó adható meg.
+Erre automatikusan kerül a cím és az FTSK-logó.
 
 ## PDF-es túrabeszámoló
 
@@ -134,6 +143,7 @@ featuredImg:
   image_path: /images/hero/ftsk-hero-cave-4.webp
 seo:
   page_description: ""
+  featured_image: "" # opcionális másik helyi fotó a közösségi kártyához
   open_graph_type: article
   no_index: false
 draft: true
@@ -193,6 +203,7 @@ faq:
       KITÖLTENDŐ: Mit biztosít az egyesület, és mit kell hozni?
 seo:
   page_description: ""
+  featured_image: "" # opcionális másik helyi fotó a közösségi kártyához
   open_graph_type: article
   no_index: false
 draft: true
@@ -253,8 +264,8 @@ flyer_images:
 ```
 
 A szórólapok a fejléc nagy képe után jelennek meg. A tanfolyam közösségi
-előnézetéhez a főoldali diavetítésből választ a rendszer fotót, nem a
-szórólapból vagy a cikk fejlécéből.
+előnézetéhez a cikk `featuredImg.image_path` fotóját használja a rendszer,
+vagy a külön megadott `seo.featured_image` fotót; nem a szórólapot.
 
 ## Tanfolyami beszámoló
 
@@ -276,6 +287,7 @@ featuredImg:
   image_path: /images/hero/ftsk-hero-cave-4.webp
 seo:
   page_description: ""
+  featured_image: "" # opcionális másik helyi fotó a közösségi kártyához
   open_graph_type: article
   no_index: false
 draft: true
