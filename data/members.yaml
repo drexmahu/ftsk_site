@@ -38,6 +38,7 @@ groups:
   - label: Rendes tagok
     members:
       - name: Ábrahám Gábor
+        nickname: Nasa
       - name: Bacsó Gábor
         role: túravezető
         image: /images/members/bacso_gabor_thumb.webp
@@ -128,6 +129,7 @@ groups:
         modal_image: /images/members/sas_dorottya_full.webp
       - name: Soltész Árpád
       - name: Szieberth Dénes
+        nickname: Dínó
       - name: Tóth Ábris
         image: /images/members/Toth_Abris_thumb.webp
         modal_image: /images/members/Toth_Abris_full.webp
