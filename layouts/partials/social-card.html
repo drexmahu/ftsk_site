@@ -1,8 +1,8 @@
 {{/*
   Builds an on-brand "social card" OG/Twitter preview image for any page: the
   post's selected or featured photo, or a suitable random slideshow photo for other
-  pages, composited with a dark gradient scrim, the FTSK crest and
-  the page title - so a shared link looks intentional, not just a raw photo.
+  pages, composited with a dark gradient scrim, the FTSK crest and wordmark.
+  Page titles remain in metadata rather than being repeated on the image.
   Returns an absolute image URL. Invalid configured images fail the build.
 
   Requires static/images/* to also be mounted at assets/images/* (see the
@@ -25,20 +25,15 @@
     {{ with resources.Get "images/ftsk-logo.png" }}
       {{ $logo := .Resize "0x100" }}
 
-      {{ $titleSize := 54 }}
-      {{ if gt (len $page.Title) 22 }}{{ $titleSize = 42 }}{{ end }}
-      {{ if gt (len $page.Title) 34 }}{{ $titleSize = 34 }}{{ end }}
-
       {{ $logoX := 60 }}
       {{ $logoY := 490 }}
       {{ $textX := 150 }}
 
       {{ $gradientFilter := images.Overlay $gradient 0 0 }}
       {{ $logoFilter := images.Overlay $logo $logoX $logoY }}
-      {{ $titleFilter := images.Text $page.Title (dict "x" $textX "y" 470 "size" $titleSize "color" "f2ede1" "aligny" "bottom") }}
       {{ $siteFilter := images.Text "FTSK" (dict "x" $textX "y" (add $logoY 50) "size" 22 "color" "bea070" "aligny" "center") }}
 
-      {{ $composited := $img.Fill "1200x630 center" | images.Filter $gradientFilter | images.Filter $logoFilter | images.Filter $titleFilter | images.Filter $siteFilter }}
+      {{ $composited := $img.Fill "1200x630 center" | images.Filter $gradientFilter | images.Filter $logoFilter | images.Filter $siteFilter }}
       {{ $result = $composited.Permalink }}
     {{ else }}
       {{ errorf "Social card: images/ftsk-logo.png was not found" }}

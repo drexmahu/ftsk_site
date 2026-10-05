@@ -2,6 +2,7 @@
 logo: /images/ftsk-logo.png
 logo_url: /
 copyright: "FTSK Barlangkutató Szakosztály. Minden jog fenntartva."
+additional_text: "A tárhelyet a [Web Works Hungary](http://wwh.hu/) biztosítja."
 social:
   - link: "https://www.facebook.com/ftskbarlang"
     icon: "ph-facebook-logo"

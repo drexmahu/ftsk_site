@@ -93,6 +93,13 @@ In VS Code use **Python: Select Interpreter** and choose `.venv/Scripts/python.e
 if the editor has not selected it automatically. Tool binaries, virtual
 environments and reports are gitignored.
 
+## Footer note
+
+Set `additional_text` in [`data/footer.yaml`](../data/footer.yaml) to display
+an optional, subdued note directly below the footer's last-update date.
+Markdown links are supported.
+Leave it empty or remove the field to hide the note.
+
 ## Local build & hosting
 
 ```powershell
@@ -141,9 +148,21 @@ framework, npm build or Python dependencies are required.
   photos default to `gallery`, not `hero`; conversion does not automatically
   add slideshow entries. No upscaling or cropping. The content studio also
   supports an optional filename stem for a single conversion.
-- **Member portraits:** position a square crop on each EXIF-corrected original,
-  inspect the circular avatar preview, and explicitly confirm. Exports the
-  thumbnail and uncropped full image through the existing converter.
+- **Members & portraits:** search the roster, add/edit members (group, name,
+  nickname, role, biography and image URLs), or delete a roster entry. Choose an
+  existing portrait pair, or position a square crop on an uploaded EXIF-corrected
+  original and explicitly convert it. Conversion fills the open member draft;
+  **Save member** atomically writes details and assignments to `data/members.yaml`.
+  Without an open draft, conversion remains a standalone export. Exported files
+  persist even when a draft is discarded. Renaming/deleting members never
+  rewrites historical report names or removes images. Empty groups are retained
+  so new members can be added to them. Stale roster revisions are rejected;
+  copy your draft before Reload if someone edited the file externally.
+  The roster checks show matching report references, missing/invalid images,
+  unmatched participant/author names and portrait files not assigned to any
+  member. Unmatched names can be guests and unassigned files may be used elsewhere;
+  these checks do not perform cleanup. Saves preserve the YAML header and all
+  unrelated data values, but normalize YAML formatting.
 - **Hero slideshow:** embeds the existing connected POI/motion editor. Explicit
   Save updates `data/hero_images.yaml`. In workbench mode, Remove only removes
   the slideshow entry; its file remains available for posts and social cards.
@@ -248,8 +267,11 @@ integer-pixel rounding of 3:2 exports (for example, 1600x1067);
 no suitable image produces a warning and uses `data/meta.yaml`'s default image.
 Invalid explicit paths fail the build instead of silently selecting a random photo.
 Open Graph and Twitter use the same generated image, but a
-new build may choose a different non-post photo. Canonical and `og:url` identify
-the production page even in local/PR builds; image URLs follow the build base URL.
+new build may choose a different non-post photo. Images contain only the FTSK
+crest and wordmark, not the page title; the title remains in Open Graph/Twitter
+metadata for the card's text area. `og:url` uses the page's Hugo permalink,
+and image URLs follow the build base URL, including local/staging/PR prefixes.
+SEO canonical links continue to identify the production page even in local/PR builds.
 
 The environment installer already installs Pillow from the existing requirements;
 no extra package is needed. Its verification stage now also runs
@@ -281,6 +303,22 @@ wide portrait tablets from stretching the hero indefinitely. Content is vertical
 centered within the padded section and can expand the hero beyond 1080px if needed
 instead of being clipped. Below 992px (including narrower portrait tablets), the
 existing content-sized layout is unchanged.
+
+At 1200px and above, the homepage hero displays the navigation's FTSK logo
+to the left of its heading and description, vertically centered on the combined
+text group. The logo is
+220–340px wide; the slideshow and its framing remain unchanged. Below 1200px,
+the extra logo is hidden and the original tablet/mobile composition is retained.
+Desktop heading type scales from 40–60px with balanced wrapping. The description
+is left-aligned directly beneath the heading in the same text column, with a
+`48ch` maximum width, 20px type (at the default root size), 1.6 line height,
+and a 1.5rem gap above it.
+Below 992px, it remains centered. The hero has no CTA button on any screen size;
+navigation links remain available in the header.
+The logo's transparent top/bottom padding is cropped in a square, unadorned
+frame to avoid an oversized gap below the brand row. The heading has a compact
+line length. The description uses `text-wrap: pretty` where supported, falling
+back to ordinary wrapping in other browsers.
 
 Related-card sections below archived courses and trip reports use only the hanging
 cave motif, without standing rocks. Their card rows use Bootstrap's `gy-4` vertical

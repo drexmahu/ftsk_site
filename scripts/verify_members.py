@@ -51,8 +51,8 @@ def load_members(problems):
             continue
 
         group_members = group.get("members")
-        if not isinstance(group_members, list) or not group_members:
-            fail(problems, f"{MEMBERS_PATH}: group {label!r} has no `members`")
+        if not isinstance(group_members, list):
+            fail(problems, f"{MEMBERS_PATH}: group {label!r} `members` must be a list (which may be empty)")
             continue
 
         for entry in group_members:

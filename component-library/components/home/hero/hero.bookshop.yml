@@ -11,9 +11,6 @@ spec:
 blueprint:
   title: FTSK Barlangkutató Szakosztály
   description: Rövid bemutatkozó szöveg az egyesület főoldalához.
-  link:
-    text: "Try Free"
-    url: "/#"
 
 # Overrides any fields in the blueprint when viewing this component in the component browser
 preview:

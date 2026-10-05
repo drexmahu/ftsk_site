@@ -24,6 +24,9 @@
               Utolsó frissítés: {{ $buildDate | time.Format ":date_long" }}
               {{ with $buildNumber }} · Build #{{ . }}{{ end }}
             </p>
+            {{ with .additional_text }}
+            <div class="footer-additional-text">{{ . | markdownify }}</div>
+            {{ end }}
           </div>
           <div class="social-icon">
             <ul class="list-unstyled">

@@ -264,13 +264,17 @@
     $("#image-folders").replaceChildren(...studio.catalog.folders.map(folder => {
       const option = document.createElement("option"); option.value = folder; return option;
     }));
-    $("#member-names").replaceChildren(...studio.catalog.members.map(name => {
-      const option = document.createElement("option"); option.value = name; return option;
-    }));
+    renderMemberNames();
     $("#new-page-template").replaceChildren(...studio.catalog.templates.map(template => {
       const option = node("option", template.name); option.value = template.id; return option;
     }));
     renderLibrary();
+  }
+
+  function renderMemberNames() {
+    $("#member-names").replaceChildren(...studio.catalog.members.map(name => {
+      const option = document.createElement("option"); option.value = name; return option;
+    }));
   }
 
   function renderLibrary() {
@@ -965,6 +969,11 @@
   window.addEventListener("workbench-status", event => {
     if (state.token && !studio.initialized) run(initialize);
     previewStatus(event.detail);
+  });
+  window.addEventListener("workbench-members-changed", event => {
+    if (!studio.catalog) return;
+    studio.catalog.members = event.detail.members;
+    renderMemberNames();
   });
   syntaxHelp();
 })();
