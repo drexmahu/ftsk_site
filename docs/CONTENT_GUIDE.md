@@ -35,6 +35,14 @@ is használatban lehet: ezek tájékoztató ellenőrzések, nem automatikus
 törlési javaslatok. Külső fájlmódosítás esetén a mentés ütközést jelez;
 újratöltés előtt másold ki a megőrzendő vázlatadatokat.
 
+A **Loose portraits** listában egyenként vagy kijelölt csoportként törölheted
+a felesleges portréfájlokat a **Review & delete selected** gombbal.
+Az előnézet megmutatja a mentett hivatkozásokat, és ezekkel rendelkező fájlt
+nem enged törölni. Csak a külön megerősített, kipipált fájlok törlődnek;
+a bélyegkép és a teljes portré külön fájl. A még nem mentett cikkvázlatokat
+is ellenőrizd: az alkalmazás csak a mentett oldalak hivatkozásait tudja
+átvizsgálni. A nem verziókezelt fájlokat a Git nem tudja visszaállítani.
+
 Indítsd el a `scripts/run_workbench.bat` alkalmazást, majd nyisd meg a
 **Pages & posts** részt a <http://127.0.0.1:8879/#content> címen.
 

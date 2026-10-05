@@ -690,6 +690,10 @@ class Handler(BaseHTTPRequestHandler):
                 result = app.members.save(self.payload())
             elif method == "POST" and route == "/api/workbench/members/delete":
                 result = app.members.delete(self.payload())
+            elif method == "POST" and route == "/api/workbench/members/portrait-delete-plan":
+                result = app.members.portrait_deletion_plan(self.payload())
+            elif method == "POST" and route == "/api/workbench/members/portrait-delete":
+                result = app.members.delete_portraits(self.payload())
             elif method == "POST" and route == "/api/workbench/preview/start":
                 result = app.start_preview()
             elif method == "POST" and route == "/api/workbench/preview/stop":
