@@ -86,7 +86,7 @@ jobs:
           python-version: "3.13"
 
       - name: Install portrait test dependencies
-        run: python -m pip install --quiet Pillow
+        run: python -m pip install --quiet Pillow pillow-heif
 
       - name: Test installer and launchers with Windows PowerShell 5.1
         shell: powershell
