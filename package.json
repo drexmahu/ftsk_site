@@ -1,20 +1,16 @@
 {
   "name": "ftsk-site",
   "version": "1.0.0",
-  "description": "Source for the FTSK Barlangkutató Szakosztály website (Hugo + Bookshop component library)",
-  "main": "index.js",
+  "description": "Source for the FTSK Barlangkutató Szakosztály website (Hugo with native reusable sections)",
   "engines": {
     "node": ">=18.0.0"
   },
   "scripts": {
-    "start": "run-p hugo-server",
-    "dev": "run-p hugo-server bookshop",
-    "init": "npx @bookshop/init@latest",
+    "start": "npm run hugo-server",
+    "dev": "npm run hugo-server",
     "hugo-server": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/dev-server.ps1",
     "build": "hugo --source ./ --destination public --baseURL /",
-    "bookshop": "npx @bookshop/browser@latest",
-    "bookshop-update": "npx @bookshop/up@latest",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node scripts/test_404_navigation.js && node scripts/test_people_workbench.js && node scripts/site_image_converter/test_hero_framing.js && node scripts/test_history_archive.js"
   },
   "repository": {
     "type": "git",
@@ -22,13 +18,5 @@
   },
   "keywords": [],
   "author": "",
-  "license": "MIT",
-  "dependencies": {
-    "@bookshop/browser": "^3.1.2",
-    "@bookshop/generate": "^3.20.0",
-    "@bookshop/hugo-engine": "^3.1.2"
-  },
-  "devDependencies": {
-    "npm-run-all": "^4.1.5"
-  }
+  "license": "SEE LICENSE IN LICENSE.md"
 }

@@ -17,7 +17,6 @@ content_blocks:
       address: Budapest, XI. kerület, Bartók Béla út 19.
     heading: Kapcsolattartóink
     contacts:
-      - name: Gyovai Tamás
+      - person: gyovai-tamas
         role: elnök
-        email: gyovai94@gmail.com
 ---

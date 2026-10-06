@@ -1,0 +1,29 @@
+{{ $index := partialCached "people-index.html" . "registry" }}
+{{ $person := dict }}
+{{ $legacy := "" }}
+{{ $role := "" }}
+{{ $exempt := false }}
+{{ if reflect.IsMap . }}
+  {{ with .person }}
+    {{ $person = index $index.people . | default dict }}
+    {{ if not $person }}{{ errorf "Unknown person ID: %s" . }}{{ end }}
+  {{ else }}
+    {{ $legacy = .name | default "" }}
+  {{ end }}
+  {{ $resolvedRole := partial "assignment-role.html" . }}
+  {{ $role = $resolvedRole.role }}
+  {{ $exempt = $resolvedRole.exempt_from_guest }}
+{{ else }}
+  {{ $legacy = . }}
+{{ end }}
+{{ if $legacy }}
+  {{ $key := lower (trim (replaceRE `\s*\([^)]*\)\s*$` "" $legacy) " ") }}
+  {{ with index $index.names $key }}
+    {{ $person = index $index.people . }}
+  {{ end }}
+{{ end }}
+{{ $result := dict "name" $legacy "group" "" "role" $role "exempt_from_guest" $exempt }}
+{{ if $person }}
+  {{ $result = merge $person (dict "group" "" "role" $role "exempt_from_guest" $exempt) }}
+{{ end }}
+{{ return $result }}

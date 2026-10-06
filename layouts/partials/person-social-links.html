@@ -1,0 +1,39 @@
+{{ $person := . }}
+{{ with .social_links }}
+<div class="ftsk-contact-social-links" aria-label="{{ $person.name }}">
+  {{ range . }}
+    {{ if not (reflect.IsMap .) }}
+      {{ $link := . }}
+      {{ $url := urls.Parse $link }}
+      {{ if or (not (in (slice "http" "https") $url.Scheme)) (not $url.Host) $url.User (gt (len (findRE `[\s<>"\\]` $link)) 0) }}
+        {{ errorf "%s: invalid social link %q; use a complete HTTP(S) URL without credentials or whitespace" $person.name $link }}
+      {{ else }}
+        {{ $host := lower $url.Hostname }}
+        {{ $platform := $host }}
+        {{ $icon := "link" }}
+        {{ range slice
+          (dict "hosts" (slice "facebook.com" "fb.com" "fb.me") "name" "Facebook" "icon" "facebook-logo")
+          (dict "hosts" (slice "instagram.com") "name" "Instagram" "icon" "instagram-logo")
+          (dict "hosts" (slice "linkedin.com") "name" "LinkedIn" "icon" "linkedin-logo")
+          (dict "hosts" (slice "youtube.com" "youtu.be") "name" "YouTube" "icon" "youtube-logo")
+          (dict "hosts" (slice "github.com") "name" "GitHub" "icon" "github-logo")
+          (dict "hosts" (slice "twitter.com" "x.com") "name" "X / Twitter" "icon" "twitter-logo")
+          (dict "hosts" (slice "t.me" "telegram.me") "name" "Telegram" "icon" "telegram-logo")
+          (dict "hosts" (slice "discord.com" "discord.gg") "name" "Discord" "icon" "discord-logo")
+        }}
+          {{ $definition := . }}
+          {{ range .hosts }}
+            {{ if or (eq $host .) (strings.HasSuffix $host (printf ".%s" .)) }}
+              {{ $platform = $definition.name }}{{ $icon = $definition.icon }}
+            {{ end }}
+          {{ end }}
+        {{ end }}
+        {{ $label := printf "%s: %s" $person.name $platform }}
+        <a class="ftsk-contact-social-link" href="{{ $link }}" target="_blank" rel="noopener noreferrer" aria-label="{{ $label }}" title="{{ $label }}"><i class="ph ph-{{ $icon }}" aria-hidden="true"></i></a>
+      {{ end }}
+    {{ else }}
+      {{ errorf "%s: social_links entries must be web addresses, not mappings" $person.name }}
+    {{ end }}
+  {{ end }}
+</div>
+{{ end }}

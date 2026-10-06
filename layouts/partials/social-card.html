@@ -13,6 +13,24 @@
 {{ $fallback := partial "absurl.html" hugo.Data.meta.image }}
 {{ $result := $fallback }}
 
+{{ with $page.Params.seo.social_image }}
+  {{ $path := . }}
+  {{ $resourcePath := $path | strings.TrimPrefix "/" }}
+  {{ if or (not (strings.HasPrefix $resourcePath "images/")) (in $resourcePath "..") (in $resourcePath "\\") (in $resourcePath "?") (in $resourcePath "#") }}
+    {{ errorf "Social image for %s: %s must be a local path under static/images/" $page.RelPermalink $path }}
+  {{ else }}
+  {{ with resources.Get $resourcePath }}
+    {{ if not (in (slice "jpeg" "png" "webp") .MediaType.SubType) }}
+      {{ errorf "Social image for %s: %s must be a local JPG, PNG or WebP image" $page.RelPermalink $path }}
+    {{ else }}
+      {{ return .Permalink }}
+    {{ end }}
+  {{ else }}
+    {{ errorf "Social image for %s: image %s was not found (use a path under static/images/)" $page.RelPermalink $path }}
+  {{ end }}
+  {{ end }}
+{{ end }}
+
 {{ $srcPath := partial "social-card-source.html" $page }}
 
 {{ with resources.Get ($srcPath | strings.TrimPrefix "/") }}

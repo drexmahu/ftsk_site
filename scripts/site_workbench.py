@@ -29,6 +29,8 @@ import yaml
 import social_preview
 from content_workbench import ContentService, ContentError, ConflictError
 from member_workbench import MemberService
+from participant_roles import RoleService
+from git_workbench import GitService
 from membership_image_converter import membership_image_converter as portraits
 from site_image_converter import hero_config_server as hero
 from site_image_converter import site_image_converter as photos
@@ -85,10 +87,12 @@ class Workbench:
         self.closed = False
         self.content = ContentService(self, safe_path)
         self.members = MemberService(self, safe_path)
+        self.roles = RoleService(self, safe_path)
         self.render_server: WorkbenchServer | None = None
         self.render_thread: threading.Thread | None = None
         self.render_origin = ""
         self.workbench_port = 0
+        self.git = GitService(self)
 
     def hugo_executable(self) -> str:
         version = (self.root / ".hugo-version").read_text(encoding="utf-8").strip()
@@ -102,7 +106,7 @@ class Workbench:
         if not raw or len(raw) > MAX_UPLOAD:
             raise ToolError("Choose a non-empty image up to 30 MiB.")
         if Path(filename).suffix.lower() not in photos.SUPPORTED_EXTENSIONS:
-            raise ToolError("Supported uploads: JPG, PNG and WebP.")
+            raise ToolError("Supported uploads: JPG, PNG, WebP, HEIF and HEIC.")
         with self.lock:
             if len(self.uploads) >= 100:
                 raise ToolError("Upload queue is full. Remove some queued photos first.")
@@ -114,7 +118,9 @@ class Workbench:
                             raise ToolError("Photo exceeds 25 million pixels. Resize the original first.")
                         image = ImageOps.exif_transpose(source).convert("RGB")
                         image.load()
-            except (UnidentifiedImageError, OSError, Image.DecompressionBombError,
+            except ToolError:
+                raise
+            except (UnidentifiedImageError, OSError, ValueError, EOFError, Image.DecompressionBombError,
                     Image.DecompressionBombWarning) as exc:
                 raise ToolError(f"Cannot decode image: {exc}") from exc
             identifier = secrets.token_hex(12)
@@ -395,6 +401,8 @@ class Workbench:
         if action not in ("build", "links", "members", "regressions"):
             raise ToolError("Unknown build/check action.")
         with self.lock:
+            if self.git.busy:
+                raise ToolError("Wait for the Git operation to finish before starting checks.")
             if self.closed or self.job["state"] == "running":
                 raise ToolError("A check is already running or the workspace is shutting down.")
             self.job = {"state": "running", "action": action, "log": "", "exit_code": None}
@@ -404,6 +412,8 @@ class Workbench:
 
     def start_content_preview(self, payload: dict, origin: str) -> dict:
         with self.lock:
+            if self.git.busy:
+                raise ToolError("Wait for the Git operation to finish before rendering.")
             if self.closed or self.job["state"] == "running":
                 raise ToolError("Wait for the current build/check to finish.")
             _, info = self.content.prepare_preview(payload, origin)
@@ -432,20 +442,23 @@ class Workbench:
                              "--base-url", "https://www.ftsk.hu/"], "Internal links and assets",
                         )
             elif action == "members":
-                self.run_command([sys.executable, "scripts/verify_members.py"], "Members and participants")
+                self.run_command([sys.executable, "scripts/verify_members.py"], "People, membership and page assignments")
             else:
                 node = shutil.which("node")
                 if not node:
                     raise ToolError("Node.js not found. Run the environment installer.")
                 self.run_command([node, "scripts/site_image_converter/test_hero_framing.js"], "Hero framing")
                 self.run_command([node, "scripts/test_404_navigation.js"], "404 navigation")
+                self.run_command([node, "scripts/test_people_workbench.js"], "People assignment controls")
                 self.run_command([sys.executable, "-m", "unittest", "discover", "-s", "scripts",
                                   "-p", "test_social*.py"], "Social previews and image selection")
                 self.run_command([sys.executable, "-m", "unittest", "discover", "-s",
                                   "scripts/membership_image_converter", "-p", "test_manual_crop.py"],
                                  "Manual portrait crop")
                 self.run_command([sys.executable, "-m", "unittest", "discover", "-s", "scripts",
-                                  "-p", "test_*workbench.py"], "Site, content and member workbench")
+                                  "-p", "test_*workbench.py"], "Site, content and people workbench")
+                self.run_command([sys.executable, "-m", "unittest", "discover", "-s", "scripts",
+                                  "-p", "test_people*.py"], "People migration and rendering")
             with self.lock:
                 self.job.update(state="passed", exit_code=0)
         except (ToolError, ContentError, OSError, subprocess.SubprocessError) as exc:
@@ -478,6 +491,8 @@ class Workbench:
                 process.wait(timeout=5)
         if self.job_thread:
             self.job_thread.join(timeout=10)
+        if self.git.thread:
+            self.git.thread.join(timeout=180)
         self.temporary.cleanup()
 
 
@@ -499,7 +514,7 @@ class WorkbenchServer(ThreadingHTTPServer):
 class Handler(BaseHTTPRequestHandler):
     server: WorkbenchServer
 
-    def reject(self, message: str, mutation: bool) -> bool:
+    def reject(self, message: str, mutation: bool, status: int = 403) -> bool:
         length = self.headers.get("Content-Length", "")
         if mutation and length.isdigit() and 0 < int(length) <= MAX_UPLOAD:
             self.connection.settimeout(2)
@@ -507,7 +522,7 @@ class Handler(BaseHTTPRequestHandler):
                 self.rfile.read(int(length))
             except OSError as exc:
                 LOGGER.warning("Rejected request body interrupted: %s", exc)
-        self.json(403, {"error": message})
+        self.json(status, {"error": message})
         return False
 
     def guard(self, mutation: bool = False) -> bool:
@@ -600,7 +615,10 @@ class Handler(BaseHTTPRequestHandler):
             with app.lock:
                 self.json(200, {"token": app.token, "preview": app.preview_status(), "job": dict(app.job),
                                 "uploads": list(app.uploads.values()), "python": sys.executable,
-                                "contentPreview": dict(app.content.preview)})
+                                "contentPreview": dict(app.content.preview), "git": app.git.snapshot()})
+        elif route == "/api/workbench/git":
+            with app.lock:
+                self.json(200, app.git.snapshot())
         elif route == "/api/workbench/content/catalog":
             with app.lock:
                 self.json(200, app.content.catalog())
@@ -614,8 +632,9 @@ class Handler(BaseHTTPRequestHandler):
             with app.lock:
                 self.json(200, {**app.content.preview, "job": dict(app.job)})
         elif route == "/api/workbench/assets":
+            query = parse_qs(parsed.query)
             with app.lock:
-                self.json(200, app.content.assets(parse_qs(parsed.query).get("folder", [""])[0]))
+                self.json(200, app.content.assets(query.get("folder", [""])[0], query.get("kind", ["images"])[0]))
         elif route == "/api/workbench/content/help":
             document = parse_qs(parsed.query).get("document", ["CONTENT_GUIDE.md"])[0]
             if document not in ("CONTENT_GUIDE.md", "BLOGPOST_TEMPLATES.md", "TANFOLYAM_GUIDE.md"):
@@ -671,6 +690,31 @@ class Handler(BaseHTTPRequestHandler):
         self.mutate("DELETE")
 
     def mutate(self, method: str) -> None:
+        if self.server.render_only or not self.guard(mutation=True):
+            if self.server.render_only:
+                self.reject("The isolated preview server is read-only.", mutation=True)
+            return
+        app = self.server.app
+        with app.lock:
+            route = urlsplit(self.path).path
+            read_only_actions = {
+                "/api/workbench/preview/start", "/api/workbench/preview/stop",
+                "/api/workbench/content/validate", "/api/workbench/content/compose",
+                "/api/workbench/content/preview", "/api/workbench/jobs",
+                "/api/workbench/content/page-media", "/api/workbench/content/remove-reference",
+            }
+            try:
+                if not route.startswith("/api/workbench/git/") and route not in read_only_actions:
+                    app.git.assert_editable()
+                    expected_branch = self.headers.get("X-Workbench-Branch")
+                    if expected_branch and expected_branch != app.git.snapshot()["branch"]:
+                        raise ConflictError("The working branch changed. Reload before writing an old draft.")
+                self.mutate_operation(method)
+            except ConflictError as exc:
+                LOGGER.warning("Blocked write: %s", exc)
+                self.reject(str(exc), mutation=True, status=409)
+
+    def mutate_operation(self, method: str) -> None:
         if self.server.render_only:
             self.reject("The isolated preview server is read-only.", mutation=True)
             return
@@ -680,7 +724,13 @@ class Handler(BaseHTTPRequestHandler):
             app = self.server.app
             parsed = urlsplit(self.path)
             route = parsed.path
-            if method == "POST" and route in ("/api/workbench/uploads", "/api/upload"):
+            if method == "POST" and route == "/api/workbench/git/action":
+                result = app.git.start(self.payload())
+            elif method == "POST" and route == "/api/workbench/git/review":
+                result = app.git.review(self.payload())
+            elif method == "POST" and route == "/api/workbench/git/conflict":
+                result = app.git.conflict(self.payload())
+            elif method == "POST" and route in ("/api/workbench/uploads", "/api/upload"):
                 filename = unquote(self.headers.get("X-Filename", "photo.jpg"))
                 raw = self.body()
                 result = app.stage(filename, raw) if route.endswith("uploads") else app.add_hero(filename, raw)
@@ -688,8 +738,24 @@ class Handler(BaseHTTPRequestHandler):
                 result = app.convert(self.payload(), portrait=route.endswith("portrait"))
             elif method == "POST" and route == "/api/workbench/members/save":
                 result = app.members.save(self.payload())
+            elif method == "POST" and route == "/api/workbench/members/category-save":
+                result = app.members.save_category(self.payload())
+            elif method == "POST" and route == "/api/workbench/members/category-delete":
+                result = app.members.delete_category(self.payload())
+            elif method == "POST" and route == "/api/workbench/members/role-save":
+                result = app.roles.mutate(self.payload())
+            elif method == "POST" and route == "/api/workbench/members/role-delete":
+                result = app.roles.mutate(self.payload(), delete=True)
             elif method == "POST" and route == "/api/workbench/members/delete":
                 result = app.members.delete(self.payload())
+            elif method == "POST" and route == "/api/workbench/members/merge-plan":
+                result = app.members.merge_plan(self.payload())
+            elif method == "POST" and route == "/api/workbench/members/merge":
+                result = app.members.merge(self.payload())
+            elif method == "POST" and route == "/api/workbench/members/rename-plan":
+                result = app.members.rename_plan(self.payload())
+            elif method == "POST" and route == "/api/workbench/members/rename":
+                result = app.members.rename(self.payload())
             elif method == "POST" and route == "/api/workbench/members/portrait-delete-plan":
                 result = app.members.portrait_deletion_plan(self.payload())
             elif method == "POST" and route == "/api/workbench/members/portrait-delete":
@@ -714,9 +780,21 @@ class Handler(BaseHTTPRequestHandler):
                           "metadata": parse_frontmatter(frontmatter)}
             elif method == "POST" and route == "/api/workbench/content/pdf":
                 filename = unquote(self.headers.get("X-Filename", "document.pdf"))
-                folder = unquote(self.headers.get("X-Folder", ""))
+                relative = unquote(self.headers.get("X-Content-Path", ""))
+                folder = unquote(self.headers["X-Folder"]) if "X-Folder" in self.headers else None
                 with app.lock:
-                    result = app.content.upload_pdf(filename, folder, self.body())
+                    result = app.content.upload_page_pdf(relative, filename, self.body(), folder)
+            elif method == "POST" and route == "/api/workbench/content/convert":
+                result = app.content.convert_page_images(self.payload())
+            elif method == "POST" and route == "/api/workbench/content/page-media":
+                payload = self.payload()
+                result = app.content.page_media(payload.get("source"), payload.get("folder", ""), payload.get("pdf_folder", ""))
+            elif method == "POST" and route == "/api/workbench/content/remove-reference":
+                from content_workbench import remove_asset_reference
+                payload = self.payload()
+                result = remove_asset_reference(payload.get("source"), payload.get("url"))
+            elif method == "POST" and route == "/api/workbench/content/delete-asset":
+                result = app.content.delete_asset(self.payload())
             elif method == "POST" and route == "/api/workbench/content/preview":
                 result = app.start_content_preview(self.payload(), app.render_origin)
             elif method == "POST" and route == "/api/workbench/content/save":

@@ -1,3 +1,4 @@
 Pillow
+pillow-heif
 PyYAML
 -r deploy_requirements.txt

@@ -428,7 +428,7 @@
         <button id="connectedAddBtn">+ Add new photo</button>
         <button id="connectedDeleteBtn" class="danger">Delete photo</button>
       </div>
-      <input type="file" id="connectedFileInput" accept="image/*" hidden />
+      <input type="file" id="connectedFileInput" accept="image/*,.heif,.heic" hidden />
     </div>
     <div id="connectedEditorMount"></div>
   </div>
@@ -1353,6 +1353,7 @@
     connectedEditorMount.innerHTML = '';
     activeEditor = null;
     var state = entryToState(entry);
+    var savedEntry = JSON.stringify(stateToEntry(state));
 
     var card = document.createElement('div');
     card.className = 'card';
@@ -1855,6 +1856,7 @@
         })
         .then(function (data) {
           config = data;
+          savedEntry = JSON.stringify(updated[idx]);
           populateSelect();
           saveNote.textContent = 'Saved!';
           saveNote.classList.add('is-success');
@@ -1869,6 +1871,11 @@
     refreshAll();
 
     activeEditor = {
+      draft: function () {
+        var edited = stateToEntry(state);
+        if (JSON.stringify(edited) === savedEntry) return null;
+        return { images: config.images.map(function (item) { return item.path === state.path ? edited : item; }) };
+      },
       refreshViewport: fitDeviceFrame,
       setPlaying: setPlaying,
       cleanup: function () {
@@ -1886,6 +1893,14 @@
     });
     if (entry) renderEditor(entry);
   }
+
+  window.addEventListener('workbench-hero-draft', function (event) {
+    var draft = activeEditor && activeEditor.draft();
+    event.detail.source = draft ? JSON.stringify(draft, null, 2) : '';
+  });
+  window.addEventListener('workbench-hero-discard', function () {
+    if (config && currentPath) loadEditorFor(currentPath);
+  });
 
   connectedSelect.addEventListener('change', function () {
     loadEditorFor(connectedSelect.value);

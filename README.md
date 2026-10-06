@@ -1,9 +1,9 @@
 # FTSK Barlangkutató Szakosztály - website
 
 Az [ftsk.hu](https://www.ftsk.hu) weboldal forráskódja: egy [Hugo](https://gohugo.io/)
-statikus webhely, ami a [Bookshop](https://github.com/cloudcannon/bookshop)
-komponenskönyvtár motort használja (`component-library/`) az újrafelhasználható
-oldalrészekhez.
+statikus webhely natív, újrafelhasználható Hugo-részsablonokkal
+(`layouts/partials/sections/`). A build nem igényel Bookshopot, Go-t vagy
+telepített npm-csomagokat.
 
 ## Kezdőknek: nulláról magabiztos szerkesztőig
 
@@ -21,10 +21,15 @@ A teljes beállítási útmutatóért (szükséges eszközök, rögzített verzi
 paraméterek) lásd a [docs/TECHNICAL_ENVIRONMENT.md](docs/TECHNICAL_ENVIRONMENT.md)
 fájlt. Gyors indítás Windows alatt:
 
+Windows 10/11-en kattints duplán a [setup-dev-env.bat](setup-dev-env.bat)
+fájlra a főmappában. Telepít vagy javít, és a végén nyitva hagyja az ablakot,
+hogy a hibák olvashatók legyenek. Utána indítsd a
+[site_editor.bat](site_editor.bat) fájlt dupla kattintással a főmappában.
+
 ```powershell
-./scripts/setup-dev-env.ps1   # egyszeri: telepíti a rögzített Hugo verziót, ellenőrzi a Go/Node-ot, npm install
+./scripts/setup-dev-env.ps1   # egyszeri: rögzített Hugo, Node és Python-eszközök
 ./scripts/dev-server.ps1      # hugo server a http://localhost:1313/ címen
-./scripts/run_workbench.bat   # cikkek, frontmatter, képek, portrék, hero, előnézetek, ellenőrzések egy böngészőben
+./site_editor.bat             # cikkek, frontmatter, képek, portrék, hero, előnézetek, ellenőrzések egy böngészőben
 ```
 
 Az egységes **Site Workbench** a [http://127.0.0.1:8879/](http://127.0.0.1:8879/)
@@ -32,8 +37,14 @@ címen nyílik meg. A meglévő eszközöket és a cikkek/frontmatter szerkeszt�
 fogja össze; nem commitol és nem publikál automatikusan.
 Részletek: [böngészős munkafelület](docs/TECHNICAL_ENVIRONMENT.md#site-workbench).
 
-Az opcionális Bookshop élő komponens-böngészőhöz a dev szerver mellett:
-`npm run bookshop` (alapértelmezetten [http://localhost:30775/](http://localhost:30775/)).
+A `npm start` és `npm run dev` ugyanezt a Hugo fejlesztői szervert indítja.
+A JavaScript-ellenőrzések Node-ot használnak, külső npm-csomagok nélkül.
+Futtatásuk: `npm test`.
+
+A `public/`, `resources/_gen/`, `node_modules/` és `__pycache__/` mappák
+generált kimenetek vagy gyorsítótárak, nem forrásfájlok. Leállított helyi
+szerverek mellett törölhetők; a következő build újra létrehozza a szükségeseket.
+A `.venv/` a helyi Python-eszközök környezete, ezt normál takarításkor őrizd meg.
 
 ## Tartalom írása
 

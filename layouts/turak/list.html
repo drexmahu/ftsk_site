@@ -103,7 +103,7 @@
          <div class="col-lg-6 mb-4">
             <article class="ftsk-turak-featured-card">
                <a href="{{ .RelPermalink }}" class="ftsk-turak-featured-thumb">
-                  <img src="{{ partial `url.html` .Params.thumbImg.image_path }}" alt="{{ .Title }}" loading="lazy" />
+                  {{ if .Params.thumbImg.image_path }}<img src="{{ partial `url.html` .Params.thumbImg.image_path }}" alt="{{ .Title }}" loading="lazy" />{{ end }}
                </a>
                <div class="ftsk-turak-featured-content">
                   <div class="blog-post-tag">
@@ -116,10 +116,10 @@
                   <p class="ftsk-turak-featured-excerpt">{{ .Summary | plainify | truncate 170 }}</p>
                   <div class="ftsk-turak-featured-meta">
                      <span><i class="ph ph-calendar" aria-hidden="true"></i>{{ .Date | time.Format ":date_long" }}</span>
-                     {{ with .Params.author }}
+                     {{ with (partial "page-author.html" .) }}
                      {{ partial "author-badge.html" . }}
                      {{ end }}
-                     {{ with .Params.participants }}
+                     {{ with (partial "page-participants.html" .) }}
                      <span><i class="ph ph-users" aria-hidden="true"></i>{{ len . }} résztvevő</span>
                      {{ end }}
                   </div>
@@ -148,7 +148,12 @@
          {{ range .Params.categories }}
          {{ $catSlugs = $catSlugs | append (. | urlize) }}
          {{ end }}
-         {{ $author := .Params.author | default "" }}
+         {{ $author := "" }}
+         {{ with (partial "page-author.html" .) }}
+           {{ $person := partial "person.html" . }}
+           {{ $author = $person.name }}
+           {{ with $person.nickname }}{{ $author = printf "%s (%s)" $author . }}{{ end }}
+         {{ end }}
          {{ $searchText := printf "%s %s %d" .Title $author .Date.Year | lower }}
          <div
             class="col-lg-4 col-md-6 mb-4 ftsk-turak-card"
@@ -163,7 +168,7 @@
             <article class="blog-post{{ if $isLegacy }} ftsk-turak-card-legacy{{ end }}">
                <div class="blog-post-thumb">
                   <a href="{{ .RelPermalink }}">
-                     <img src="{{ partial `url.html` .Params.thumbImg.image_path }}" alt="blog-thumb" loading="lazy" />
+                     {{ if .Params.thumbImg.image_path }}<img src="{{ partial `url.html` .Params.thumbImg.image_path }}" alt="blog-thumb" loading="lazy" />{{ end }}
                   </a>
                   {{ if $isLegacy }}
                   <span class="ftsk-turak-badge"><i class="ph ph-archive" aria-hidden="true"></i> Archív</span>
@@ -199,4 +204,3 @@
    </div>
 </section>
 {{ end }}
-

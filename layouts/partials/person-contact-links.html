@@ -1,0 +1,9 @@
+<div class="ftsk-tanfolyam-contact-links">
+  {{ with .phone }}
+  <a href="tel:{{ replaceRE `[^0-9+]` "" . }}"><i class="ph ph-phone" aria-hidden="true"></i> {{ . }}</a>
+  {{ end }}
+  {{ with .email }}
+  <a href="mailto:{{ . }}"><i class="ph ph-envelope-simple" aria-hidden="true"></i> {{ . }}</a>
+  {{ end }}
+  {{ partial "person-social-links.html" . }}
+</div>

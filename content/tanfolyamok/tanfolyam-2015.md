@@ -1,51 +1,70 @@
 ---
 date: 2015-02-25T00:00:00Z
 title: Alapfokú tanfolyam (2015)
-participants:
-  - Borhi Anita
-  - Fercsik Gábor
-  - Juhász Kata
-  - Kakuk Mária
-  - Kovács Imre
-  - Lempochner Lili
-  - Márton Anna
-  - Pataki László
-  - Prakfalvi András
-  - Rehány Nikolett
-  - Szabó Dominika
-  - Szökő Csaba
-  - Tóth Mónika
-  - Töltl Erzsébet
-  - Varga Boglárka
-  - Varga László
+participants: []
 thumbImg:
-  image_path: /images/hero/ftsk-cave-hero.jpg
+  image_path: /images/tanfolyamok/tanfolyam-2015/ftsk-tanfolyam-2015-thumb.webp
 featuredImg:
-  image_path: /images/hero/ftsk-cave-hero.jpg
+  width: 40
+  image_path: ''
 seo:
   page_description: Az FTSK Barlangkutató Szakosztály 2015-ös alapfokú barlangász tanfolyama.
-  canonical_url:
-  featured_image:
-  author_twitter_handle:
+  canonical_url: null
+  featured_image: null
+  author_twitter_handle: null
   open_graph_type: article
   no_index: false
+  social_image: /images/tanfolyamok/tanfolyam-2015/ftsk-tanfolyam-2015-thumb.webp
 draft: false
+participant_ids:
+- borhi-anita
+- fercsik-gabor
+- juhasz-kata
+- kakuk-maria
+- kovacs-imre
+- lempochner-lili
+- marton-anna
+- pataki-laszlo
+- prakfalvi-andras
+- rehany-nikolett
+- szabo-dominika
+- szoko-csaba
+- toth-monika
+- toltl-erzsebet
+- varga-boglarka
+- varga-laszlo
+contacts:
+- role: ''
+  person: gyovai-tamas
+- role: ''
+  person: kalotai-zsofia
+flyer_images:
+- image_path: /images/tanfolyamok/tanfolyam-2015/ftsk-tanfolyam-2015-1.webp
 ---
-A tanfolyam ideje alatt elsajátíthatod a barlangászattal kapcsolatos
-technikákat (kötéltechnika, barlangi térképezés, barlangkutatás),
-megismerheted Magyarország karsztvidékeit, nagyobb barlangjait. A tanfolyam
-felkészít az [MKBT Oktatási Szakosztály](http://oktatas.barlang.hu/index.php/dokumentumtar/kovetelmenyek/1-osz-barlangasz-alapfoku-vizsgaszabalyzat)
-hivatalos központi vizsgájára.
+## Az FTSK alapfokú barlangász tanfolyamot indít
 
-**Időtartam:** 2015. február 25-től 2015. június végéig
+A tanfolyam ideje alatt elsajátíthatod a barlangászattal kapcsolatos technikákat (kötéltechnika, barlangi térképezés, barlangkutatás), megismerheted Magyarország karsztvidékeit, nagyobb barlangjait.
 
-**A tanfolyam díja:** 35 000 Ft, amely fedezte a féléves egyesületi tagsági
-díjat, illetve a tanfolyam idejére szóló felszerelés (sisak, fejlámpa,
-kötéltechnikai felszerelés) bérlését.
+A tanfolyam felkészít az MKBT Oktatás Nonprofit KFT hivatalos központi vizsgájára.
 
-A tanfolyam első túráin és előadásain ingyenesen részt lehetett venni, hogy a
-jelentkezők eldönthessék, szeretnének-e maradni.
+A vizsgára felkészüléshez használható jegyzetek itt találhatóak
 
-Az elméleti oktatások szerdánként este 7-től zajlottak a Bartók Béla úti
-klubhelyiségben, a tanfolyam túrái pedig hétvégenként, valamint általában
-keddenként esti edzőtúrák voltak Budapesten.
+Idõtartam: 2015. február 25-tõl - 2015. június végéig
+
+A tanfolyam díja: 35.000 Ft
+
+A tanfolyam díja fedezi a féléves egyesületi tagság díját, illetve a tanfolyam ideje alatti felszerelés bérlését (sisak, fejlámpa, kötéltechnikai felszerelés).
+
+Elméleti oktatások (szerdánként este 7-tõl): Budapest, XI. Bartók Béla út 19. (DELFIN feliratú kaputelefon, pincehelyiség)
+
+A tanfolyam túrái hétvégenként lesznek, valamint általában keddenként edzõtúrázunk este 7-tõl.
+
+A tanfolyam elsõ túráin és elõadásain ingyen részt lehet venni, hogy eldönthesd szeretnél-e maradni.
+
+Ezek az alkalmak ingyenesek:
+
+- Február 25. – Ismerkedés és praktikus felszerelések elõadás (klubhelység)
+- Február 28. és Március 1. – 1-1 barlangtúra Budapesten
+- Március 4. – Alapfelszerelések és a barlangi bivak elõadás (klubhelység)
+
+Március 7-8. – Túra Aggtelek környéki barlangokba (Meteor, Vass Imre, Kossuth barlangok)

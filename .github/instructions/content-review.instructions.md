@@ -30,7 +30,7 @@ typos, grammar mistakes, unclear antecedents, or structural gaps.
   wrong `-ba/-be` vs `-ban/-ben`, comma splices).
 - Consistent tense within a paragraph/day.
 - Consistent nicknames/name spelling for the same person across the article
-  (cross-check against the `participants:` front matter list).
+  (cross-check `participant_ids:` against the shared `data/people.yaml` profiles).
 
 **Comprehension**
 - Any sentence/paragraph that's genuinely hard to follow (not just informal -
@@ -41,13 +41,13 @@ typos, grammar mistakes, unclear antecedents, or structural gaps.
 - Missing transitions where a day jumps ahead without any cue.
 
 **Formatting** (per [docs/CONTENT_GUIDE.md](../../docs/CONTENT_GUIDE.md))
-- Front matter present and complete: `date`, `title`, `categories`, `author`,
+- Front matter present and complete: `date`, `title`, `categories`, `author_id`,
   `thumbImg`/`featuredImg` (with a real image, not the generic fallback,
   when article-specific photos exist), `seo`, `draft`.
 - Body uses `## N. nap – <dátum> (<hét napja>)` day headings, in order, with no
   gaps or repeats.
-- Closing `## Zárszó` section present. Participants belong in the `participants:`
-  front matter field (rendered automatically as member cards), not a
+- Closing `## Zárszó` section present. Participants belong in the `participant_ids:`
+  front matter field (rendered automatically as person cards), not a
   hand-written "Résztvevők" heading/list in the body.
 - Embedded images use standard Markdown image syntax with a quoted caption
   title (`![alt](path "caption")`) and live under

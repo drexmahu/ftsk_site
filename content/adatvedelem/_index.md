@@ -25,8 +25,12 @@ privacy:
     heading: Jogaid és elérhetőségünk
     texts:
       - value: "Bármikor kérheted a rólad tárolt adatok módosítását vagy
-        törlését - ehhez keress minket a gyovai94@gmail.com e-mail címen."
+        törlését - ehhez keress minket az alábbi kapcsolattartónknál."
       - value: "Az egyesület a mindenkor hatályos adatvédelmi jogszabályok
         (GDPR) szerint jár el a tagjai és az érdeklődők személyes adatainak
         kezelése során."
+contacts:
+  - person: gyovai-tamas
+    roles:
+      - elnok
 ---

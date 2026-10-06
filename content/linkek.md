@@ -16,6 +16,8 @@ content_blocks:
     title_suffix:
     description:
     items:
+      - text: "Barlangos Történelem"
+        url: /barlangos-tortenelem/
       - text: "Magyar Karszt- és Barlangkutató Társulat"
         url: https://www.barlang.hu/
       - text: "Magyar Barlangi Mentőszolgálat"

@@ -3,10 +3,11 @@ date: 2018-06-01T00:00:00Z
 title: Gortani kutatás (2018)
 categories:
   - Kutatás
-author: Zsólyomi Zsófia
+author: ''
 thumbImg:
   image_path: /images/hero/ftsk-cave-hero.jpg
 featuredImg:
+  width: 40
   image_path: /images/hero/ftsk-cave-hero.jpg
 seo:
   page_description: 
@@ -16,6 +17,7 @@ seo:
   open_graph_type: article
   no_index: false
 draft: false
+author_id: zsolyomi-zsofia
 ---
 Idei kutatóutunk ismét a Gortani-fennsíkra vezetett, ahol tovább folytattuk a
 térképezési és feltáró munkát.

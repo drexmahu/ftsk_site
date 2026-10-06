@@ -3,10 +3,11 @@ date: 2010-08-01T00:00:00Z
 title: Predelica kanyontúra és a szabályok (2010)
 categories:
   - Kanyoning
-author: Zsólyomi Zsolt (Frédi)
+author: ''
 thumbImg:
   image_path: /images/hero/ftsk-cave-hero.jpg
 featuredImg:
+  width: 40
   image_path: /images/hero/ftsk-cave-hero.jpg
 seo:
   page_description: 
@@ -16,6 +17,7 @@ seo:
   open_graph_type: article
   no_index: false
 draft: false
+author_id: zsolyomi-zsolt
 ---
 Kanyoning túránk a Predelica-szurdokba vezetett - ebben a beszámolóban a
 kanyoning alapvető biztonsági szabályairól is írtunk.

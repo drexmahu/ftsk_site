@@ -1,8 +1,10 @@
 from pathlib import Path
 from PIL import Image, ImageOps
+from pillow_heif import register_heif_opener
 
+register_heif_opener()
 
-SUPPORTED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
+SUPPORTED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".heif", ".heic"}
 
 # scripts/membership_image_converter/ -> repo root -> static/images/members
 DEFAULT_OUTPUT_FOLDER = Path(__file__).resolve().parents[2] / "static" / "images" / "members"

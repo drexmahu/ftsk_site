@@ -249,7 +249,7 @@
          ul {
             margin-bottom: 0;
             li {
-               list-style: decimal;
+               list-style: inherit;
                &::marker {
                   font-size: $base-font-size * 1.6;
                }

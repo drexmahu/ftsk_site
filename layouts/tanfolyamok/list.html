@@ -27,7 +27,7 @@
          <div class="col-lg-8 mx-auto">
             <article class="ftsk-turak-featured-card">
                <a href="{{ .RelPermalink }}" class="ftsk-turak-featured-thumb">
-                  <img src="{{ partial `url.html` .Params.thumbImg.image_path }}" alt="{{ .Title }}" loading="lazy" />
+                  {{ if .Params.thumbImg.image_path }}<img src="{{ partial `url.html` .Params.thumbImg.image_path }}" alt="{{ .Title }}" loading="lazy" />{{ end }}
                </a>
                <div class="ftsk-turak-featured-content">
                   <h3><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
@@ -82,16 +82,16 @@
             <article class="blog-post">
                <div class="blog-post-thumb">
                   <a href="{{ .RelPermalink }}">
-                     <img src="{{ partial `url.html` .Params.thumbImg.image_path }}" alt="blog-thumb" loading="lazy" />
+                     {{ if .Params.thumbImg.image_path }}<img src="{{ partial `url.html` .Params.thumbImg.image_path }}" alt="blog-thumb" loading="lazy" />{{ end }}
                   </a>
                </div>
                <div class="blog-post-content">
                   <div class="blog-post-title">
-                     <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+                     <a href="{{ .RelPermalink }}">{{ .Title }} {{ partial "course-closed-label.html" . }}</a>
                   </div>
                   <div class="blog-post-footer">
                      <span class="blog-post-date">{{ .Date | time.Format ":date_long" }}</span>
-                     {{ with .Params.participants }}
+                     {{ with (partial "page-participants.html" .) }}
                      <span class="ftsk-turak-author"><i class="ph ph-users" aria-hidden="true"></i> {{ len . }} fő</span>
                      {{ end }}
                   </div>

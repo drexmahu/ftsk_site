@@ -1,29 +1,11 @@
-{{/*
-  "Jelentkezem!" direct contact list for the current course (see
-  content/tanfolyamok/tanfolyam-2027.md's `contacts:` front matter) - phone/
-  email contacts instead of routing through the site's contact-us form.
-
-  Each dict: name (required), role (optional), phone (optional), email (optional).
-  `.` = the contacts list.
-*/}}
+{{/* Shared contact assignments: registry person + page-specific role.
+     Legacy inline details remain readable until migrated to the registry. */}}
 <div class="ftsk-tanfolyam-contacts">
   {{ range . }}
+  {{ $person := partial "person.html" . }}
   <div class="ftsk-tanfolyam-contact-card">
-    <div class="ftsk-tanfolyam-contact-avatar">
-      <i class="ph ph-user" aria-hidden="true"></i>
-    </div>
-    <div class="ftsk-tanfolyam-contact-body">
-      <div class="ftsk-tanfolyam-contact-name">{{ .name }}</div>
-      {{ with .role }}<div class="ftsk-tanfolyam-contact-role">{{ . }}</div>{{ end }}
-      <div class="ftsk-tanfolyam-contact-links">
-        {{ with .phone }}
-        <a href="tel:{{ replaceRE `[^0-9+]` "" . }}"><i class="ph ph-phone" aria-hidden="true"></i> {{ . }}</a>
-        {{ end }}
-        {{ with .email }}
-        <a href="mailto:{{ . }}"><i class="ph ph-envelope-simple" aria-hidden="true"></i> {{ . }}</a>
-        {{ end }}
-      </div>
-    </div>
+    {{ partial "member-tile.html" (merge $person (dict "contact_card" true)) }}
+    {{ partial "person-contact-links.html" (merge (dict "phone" (.phone | default "") "email" (.email | default "")) $person) }}
   </div>
   {{ end }}
 </div>

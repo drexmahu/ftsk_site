@@ -1,18 +1,22 @@
 {{ define "main" }}
 
-<section class="blog-details ftsk-hero-top-motif">
+<section class="blog-details ftsk-tanfolyam-details ftsk-hero-top-motif">
    <div class="container">
       <div class="row">
          <div class="col-lg-12">
             <article class="blog-single">
+               <header class="ftsk-course-heading">
                <div class="inner-blog-details">
-                  <h2 class="w-xxl-70 w-xl-80 w-100">{{.Params.title}}</h2>
+                  <h2>{{.Params.title}}</h2>
+                  {{ if not .Params.current }}
+                  <p class="ftsk-course-closed-note">A tanfolyam lezárult.</p>
+                  {{ end }}
                   <div class="inner-blog-details-meta">
                      <ul class="list-unstyled">
                         <li class="list-inline-item">
                            <p>{{.Date | time.Format ":date_long"}}</p>
                         </li>
-                        {{ with .Params.author }}
+                        {{ with (partial "page-author.html" .) }}
                         <li class="list-inline-item">
                            {{ partial "author-badge.html" . }}
                         </li>
@@ -28,6 +32,8 @@
                      </ul>
                   </div>
                </div>
+               {{ partial "course-flyers.html" . }}
+               </header>
 
                {{ with .Params.milestones }}
                <div class="ftsk-tanfolyam-milestones-wrap">
@@ -35,37 +41,23 @@
                </div>
                {{ end }}
 
-               <div class="rounded-box mb-xxl-11 mb-8">
-                  <img
-                     src="{{ partial `url.html` .Params.featuredImg.image_path }}"
-                     class="w-100"
-                     alt="featured-image"
-                  />
-               </div>
+               {{ partial "featured-image.html" . }}
 
-               {{ with .Params.flyer_images }}
-               <div class="ftsk-tanfolyam-flyers">
-                  {{ range . }}
-                  <img src="{{ partial `url.html` .image_path }}" alt="Szórólap" loading="lazy" />
-                  {{ end }}
-               </div>
-               {{ end }}
-
-               <div class="ftsk-prose" style="max-width: 900px; margin: 0 auto">
+               <div class="ftsk-prose ftsk-tanfolyam-body" style="max-width: 900px; margin: 0 auto">
                   {{ .Content }}
                </div>
 
                {{ partial "article-faq.html" . }}
 
-               {{ with .Params.participants }}
+               {{ with (partial "page-participants.html" .) }}
                <div class="ftsk-prose" style="max-width: 900px; margin: 0 auto">
                   <h3>Résztvevők</h3>
-                  {{ partial "participant-cards.html" . }}
+                  {{ partial "participant-cards.html" (dict "participants" . "section" "tanfolyamok") }}
                </div>
                {{ end }}
 
                {{ with .Params.contacts }}
-               <div class="ftsk-tanfolyam-jelentkezem" style="max-width: 900px; margin: 0 auto">
+               <div class="ftsk-tanfolyam-jelentkezem">
                   <div class="ftsk-tanfolyam-jelentkezem-header">
                      <h2><i class="ph ph-hand-waving" aria-hidden="true"></i> Jelentkezem!</h2>
                      <p>Vedd fel velünk a kapcsolatot közvetlenül telefonon vagy e-mailben.</p>
@@ -95,12 +87,12 @@
             <article class="blog-post">
                <div class="blog-post-thumb">
                   <a href="{{.Permalink | relURL}}">
-                     <img src="{{ partial `url.html` .Params.thumbImg.image_path }}" alt="blog-thum" />
+                     {{ if .Params.thumbImg.image_path }}<img src="{{ partial `url.html` .Params.thumbImg.image_path }}" alt="blog-thum" />{{ end }}
                   </a>
                </div>
                <div class="blog-post-content">
                   <div class="blog-post-title">
-                     <a href="{{.Permalink | relURL}}">{{.Params.title}}</a>
+                     <a href="{{.Permalink | relURL}}">{{.Params.title}} {{ partial "course-closed-label.html" . }}</a>
                   </div>
                </div>
             </article>

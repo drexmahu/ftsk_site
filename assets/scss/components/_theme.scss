@@ -27,6 +27,18 @@ body {
   color: var(--text-body);
 }
 
+body.ftsk-inner-page {
+  background-image: linear-gradient(to bottom, #030810 0%, #071019 45%, var(--bg-page) 100%);
+  background-repeat: no-repeat;
+  background-size: 100% clamp(560px, 85vh, 900px);
+
+  // Share one continuous backdrop rather than restarting the fade in each section.
+  > section {
+    --cave-wash: linear-gradient(transparent, transparent);
+    background-color: transparent;
+  }
+}
+
 h1, h2, h3, h4, h5, h6 {
   color: var(--text-heading);
 }
@@ -67,7 +79,7 @@ html {
 .error,
 .works {
   background-color: var(--bg-page);
-  background-image: linear-gradient(to bottom, rgba(10, 17, 22, 0.48), rgba(10, 17, 22, 0.18)), url($cave-hanging-url), url($cave-standing-url);
+  background-image: var(--cave-wash, linear-gradient(to bottom, rgba(10, 17, 22, 0.48), rgba(10, 17, 22, 0.18))), url($cave-hanging-url), url($cave-standing-url);
   background-repeat: no-repeat;
   background-position: center, center var(--motif-top-inset, 0px), bottom center;
   background-size: 100% 100%, unquote("max(100%, 960px)") auto, unquote("max(100%, 960px)") auto;
@@ -120,7 +132,7 @@ html {
 .ftsk-section-header,
 .blog-related {
   background-color: var(--bg-page);
-  background-image: linear-gradient(to bottom, rgba(10, 17, 22, 0.48), rgba(10, 17, 22, 0.18)), url($cave-hanging-url);
+  background-image: var(--cave-wash, linear-gradient(to bottom, rgba(10, 17, 22, 0.48), rgba(10, 17, 22, 0.18))), url($cave-hanging-url);
   background-repeat: no-repeat;
   background-position: center, top center;
   background-size: 100% 100%, unquote("max(100%, 960px)") auto;
@@ -135,7 +147,7 @@ html {
   // margin behind the navbar so the actual hanging drips touch it flush.
   --motif-top-inset: 74px;
   background-color: var(--bg-page);
-  background-image: linear-gradient(to bottom, rgba(10, 17, 22, 0.48), rgba(10, 17, 22, 0.18)), url($cave-hanging-url);
+  background-image: var(--cave-wash, linear-gradient(to bottom, rgba(10, 17, 22, 0.48), rgba(10, 17, 22, 0.18))), url($cave-hanging-url);
   background-repeat: no-repeat;
   background-position: center, center var(--motif-top-inset, 0px);
   background-size: 100% 100%, unquote("max(100%, 960px)") auto;

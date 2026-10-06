@@ -48,8 +48,8 @@ echo Updating pip...
 if errorlevel 1 goto :install_failed
 
 echo.
-echo Installing Pillow...
-"%PYTHON_CMD%" -m pip install Pillow
+echo Installing Pillow and HEIF support...
+"%PYTHON_CMD%" -m pip install Pillow pillow-heif
 if errorlevel 1 goto :install_failed
 
 echo.

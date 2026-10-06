@@ -22,8 +22,10 @@ MAX_SOURCE = 2 * 1024 * 1024
 GUIDED = {"turak", "tanfolyamok"}
 FIELDS = {
     "title", "date", "publishDate", "expiryDate", "draft", "author", "participants",
+    "author_id", "participant_ids",
     "categories", "article_image_width", "thumbImg", "featuredImg", "seo", "current",
     "milestones", "contacts", "flyer_images", "faq", "slug", "url", "aliases",
+    "content_blocks",
 }
 
 
@@ -60,6 +62,109 @@ FrontmatterLoader.add_constructor("tag:yaml.org,2002:map", unique_mapping)
 
 def revision(raw: bytes) -> str:
     return hashlib.sha256(raw).hexdigest()
+
+
+def local_asset_urls(source: str) -> list[str]:
+    frontmatter, body, _ = split_source(source)
+    urls = set()
+
+    def collect(value):
+        if isinstance(value, dict):
+            for item in value.values():
+                collect(item)
+        elif isinstance(value, list):
+            for item in value:
+                collect(item)
+        elif isinstance(value, str):
+            if value.startswith(("/images/", "/pdfs/")) and "\n" not in value and "\r" not in value:
+                urls.add(quote(unquote(urlsplit(value).path), safe="/"))
+                return
+            urls.update(quote(unquote(urlsplit(match.rstrip(",;")).path), safe="/") for match in re.findall(r"/(?:images|pdfs)/[^\s\"'<>()[\]{}]+", value))
+
+    collect(parse_frontmatter(frontmatter))
+    collect(body)
+    return sorted(urls)
+
+
+def remove_asset_reference(source: str, url: str) -> dict:
+    if not isinstance(url, str) or not url.startswith(("/images/", "/pdfs/")):
+        raise ContentError("Choose a local image or PDF to remove from the page.")
+    frontmatter, body, newline = split_source(source)
+    meta = parse_frontmatter(frontmatter)
+    changes = {}
+    removed = []
+    def same(value):
+        return isinstance(value, str) and urlsplit(unquote(value)).path == unquote(url)
+
+    protected = {}
+    marker = secrets.token_hex(16)
+
+    def protect(match):
+        key = f"FTSKCODE{marker}_{len(protected)}"
+        protected[key] = match.group(0)
+        return key
+
+    body = re.sub(r"(?m)^ {0,3}(`{3,}|~{3,})[^\r\n]*(?:\r?\n|\Z)[\s\S]*?(?:^ {0,3}\1[ \t]*(?:\r?\n|\Z)|\Z)", protect, body)
+    body = re.sub(r"(`+)[^\r\n]*?\1", protect, body)
+    for key, field in (("thumbImg", "image_path"), ("featuredImg", "image_path"), ("seo", "featured_image"),
+                       ("seo", "social_image")):
+        value = changes.get(key, meta.get(key))
+        if isinstance(value, dict) and same(value.get(field)):
+            updated = copy.deepcopy(value)
+            del updated[field]
+            changes[key] = updated
+            removed.append(f"{key}.{field}")
+    flyers = meta.get("flyer_images")
+    if isinstance(flyers, list):
+        updated = [item for item in flyers if not (isinstance(item, dict) and same(item.get("image_path")))]
+        if len(updated) != len(flyers):
+            changes["flyer_images"] = updated
+            removed.append("Course flyer entries")
+
+    def shortcode(match):
+        text = match.group(0)
+        if not same(shortcode_src(text)):
+            return text
+        removed.append("Story image / PDF shortcode")
+        return ""
+
+    def shortcode_src(text):
+        for attribute in re.finditer(r'''\b([\w-]+)\s*=\s*("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|[^\s{}<>%]+)''', text):
+            if attribute.group(1) == "src":
+                value = attribute.group(2)
+                return value[1:-1] if value.startswith(('"', "'")) else value
+        return None
+
+    body = re.sub(r"{{[<%]\s*(?:image|photo|pdf)\b[^{}]*?[>%]}}", shortcode, body, flags=re.S)
+
+    def media(match):
+        if re.search(r"{{<\s*media\b", match.group(2)):
+            return match.group(0)
+        if not same(shortcode_src(match.group(1))):
+            return match.group(0)
+        removed.append("Text & photo layout (story text kept)")
+        return match.group(2)
+
+    body = re.sub(r"({{<\s*media\b.*?>}})(.*?){{<\s*/media\s*>}}", media, body, flags=re.S)
+
+    def markdown(match):
+        if not same(match.group(1)):
+            return match.group(0)
+        removed.append("Markdown image / PDF link")
+        return ""
+
+    # Complex Markdown/HTML and arbitrary component YAML are left for source review.
+    body = re.sub(r'(?<!\\)!\[[^\]\r\n]*\]\(\s*(/[^\s()]+)(?:\s+["\'][^"\']*["\'])?\s*\)', markdown, body)
+    if url.startswith("/pdfs/"):
+        body = re.sub(r'(?<![!\\])\[[^\]\r\n]*\]\(\s*(/[^\s()]+)(?:\s+["\'][^"\']*["\'])?\s*\)', markdown, body)
+    for key, value in protected.items():
+        body = body.replace(key, value)
+    updated_source = patched_source(source, changes)
+    _, original_body, _ = split_source(updated_source)
+    updated_source = updated_source[:len(updated_source) - len(original_body)] + body if original_body else updated_source + body
+    return {"source": updated_source, "removed": removed,
+            "remaining": unquote(url).casefold() in unquote(updated_source).casefold(),
+            "newline": newline}
 
 
 def split_source(source: str) -> tuple[str, str, str]:
@@ -120,6 +225,8 @@ def patched_source(source: str, changes: dict) -> str:
     assert isinstance(tree, MappingNode)
     blocks = {}
     def semantic_end(node):
+        if isinstance(node, (MappingNode, SequenceNode)) and node.flow_style:
+            return node.end_mark.index
         if isinstance(node, MappingNode) and node.value:
             return semantic_end(node.value[-1][1])
         if isinstance(node, SequenceNode) and node.value:
@@ -165,6 +272,27 @@ class ContentService:
             raise ContentError("Use a path under content/, e.g. turak/2026-trip.md or turak/trip/index.md. No spaces, dots or traversal in names.")
         return self.guard(self.root / "content", relative)
 
+    def media_folder(self, relative: str) -> str:
+        self.path(relative)
+        folder = relative.removesuffix(".md")
+        if folder.endswith("/index"):
+            folder = folder.removesuffix("/index")
+        if folder.endswith("/_index"):
+            folder = folder.removesuffix("/_index")
+        return folder
+
+    def convert_page_images(self, payload: dict) -> dict:
+        folder = self.media_folder(payload.get("path", ""))
+        if "folder" in payload and payload["folder"] != folder:
+            raise ContentError("New page images must use the page-owned folder. Borrow existing files through the library.")
+        return self.app.convert({**payload, "folder": folder})
+
+    def upload_page_pdf(self, relative: str, filename: str, raw: bytes, folder: str | None = None) -> dict:
+        owned = self.media_folder(relative)
+        if folder is not None and folder != owned:
+            raise ContentError("New page PDFs must use the page-owned folder. Borrow existing PDFs through the library.")
+        return self.upload_pdf(filename, owned, raw)
+
     def read(self, relative: str) -> dict:
         file = self.path(relative)
         if not file.is_file():
@@ -200,16 +328,11 @@ class ContentService:
 
     def catalog(self) -> dict:
         tags_file = self.root / "data" / "blog-tags.yaml"
-        members_file = self.root / "data" / "members.yaml"
         tags = yaml.safe_load(tags_file.read_text(encoding="utf-8")) if tags_file.exists() else []
-        members_data = yaml.safe_load(members_file.read_text(encoding="utf-8")) if members_file.exists() else {}
-        members = []
-        for group in (members_data or {}).get("groups", []):
-            for member in group.get("members", []):
-                name = member["name"]
-                if member.get("nickname"):
-                    name += f' ({member["nickname"]})'
-                members.append(name)
+        member_catalog = self.app.members.catalog()
+        people = member_catalog["people"]
+        members = [person["name"] + (f' ({person["nickname"]})' if person.get("nickname") else "")
+                   for person in people]
         folders = {"gallery", "turak", "tanfolyamok"}
         base = self.root / "static" / "images"
         if base.exists():
@@ -217,7 +340,8 @@ class ContentService:
                 if folder.is_dir():
                     self.guard(base, folder.relative_to(base).as_posix())
                     folders.add(folder.relative_to(base).as_posix())
-        return {"pages": self.pages(), "categories": tags, "members": members,
+        return {"pages": self.pages(), "categories": tags, "members": members, "people": people,
+                "role_catalog": member_catalog["role_catalog"],
                 "folders": sorted(folders), "templates": [
                     {"id": "trip", "name": "Trip / research / expedition", "section": "turak"},
                     {"id": "pdf", "name": "Archived PDF report (legacy- filename)", "section": "turak"},
@@ -254,6 +378,25 @@ class ContentService:
         frontmatter, body, newline = split_source(source)
         meta = parse_frontmatter(frontmatter)
         warnings = []
+        from people_registry import contact_lists, page_references, person_index, resolve_legacy
+        registry = self.app.members.read()[2]
+        roles = self.app.roles.read()[2]
+        page_references(meta, person_index(registry), roles)
+        from participant_roles import assignment_roles
+        for entry in meta.get("participant_ids", []):
+            if isinstance(entry, dict) and entry.get("role"):
+                if not assignment_roles(entry, roles):
+                    warnings.append(f"Unconfigured legacy participant role: {entry['role']}. Choose global roles in the page editor.")
+        if meta.get("author") or meta.get("participants") or any(
+                contact.get("name") for _, contacts in contact_lists(meta) for contact in contacts):
+            warnings.append("Legacy name-only assignments remain. Choose people by permanent ID; names alone do not create identities.")
+        if any(contact.get("person") and (contact.get("email") or contact.get("phone"))
+               for _, contacts in contact_lists(meta) for contact in contacts):
+            warnings.append("Legacy page-level contact details remain. Move email and phone to the person profile; contact cards prefer registry details.")
+        for name in ([meta["author"]] if isinstance(meta.get("author"), str) and meta["author"] else []) + (
+                meta.get("participants", []) if isinstance(meta.get("participants", []), list) else []):
+            if isinstance(name, str) and resolve_legacy(registry, name) is None:
+                warnings.append(f"Unresolved person: {name}. Review the People & portraits matching hints; no identity was guessed.")
         if not isinstance(meta.get("title"), str) or not meta["title"].strip():
             raise ContentError("A non-empty title is required.")
         for key in ("draft", "current"):
@@ -279,22 +422,29 @@ class ContentService:
             value = meta.get(key)
             if value is not None and not isinstance(value, dict):
                 raise ContentError(f"{key} must be a mapping.")
+        width = (meta.get("featuredImg") or {}).get("width")
+        if width is not None and (
+                isinstance(width, bool) or not isinstance(width, (int, float)) or not 10 <= width <= 100):
+            raise ContentError("featuredImg.width must be a number from 10 to 100.")
         seo = meta.get("seo") or {}
         if "no_index" in seo and not isinstance(seo["no_index"], bool):
             raise ContentError("seo.no_index must be true or false.")
-        for key in ("page_description", "canonical_url", "featured_image", "author_twitter_handle", "open_graph_type"):
+        for key in ("page_description", "canonical_url", "featured_image", "author_twitter_handle", "open_graph_type",
+                    "social_title", "social_description", "social_image"):
             if seo.get(key) is not None and not isinstance(seo[key], str):
                 raise ContentError(f"seo.{key} must be text.")
         for url in ((meta.get("thumbImg") or {}).get("image_path"), (meta.get("featuredImg") or {}).get("image_path"),
-                    seo.get("featured_image")):
+                    seo.get("featured_image"), seo.get("social_image")):
             if url:
                 self.asset_path(url)
+        if seo.get("social_image") and self.asset_path(seo["social_image"]).suffix.lower() not in (".jpg", ".jpeg", ".png", ".webp"):
+            raise ContentError("seo.social_image must be a local JPG, PNG or WebP image.")
         for key in ("faq", "milestones", "contacts", "flyer_images"):
             items = meta.get(key, [])
             if not isinstance(items, list) or not all(isinstance(item, dict) for item in items):
                 raise ContentError(f"{key} must be a list of mappings.")
             for item in items:
-                required = {"faq": ("question", "answer"), "milestones": ("label",), "contacts": ("name",),
+                required = {"faq": ("question", "answer"), "milestones": ("label",), "contacts": (),
                             "flyer_images": ("image_path",)}[key]
                 for field in required:
                     if not isinstance(item.get(field), str) or not item[field].strip():
@@ -399,8 +549,10 @@ class ContentService:
             raise ContentError("This asset type is not supported.")
         return path
 
-    def assets(self, folder: str = "") -> dict:
-        base = self.root / "static" / "images"
+    def assets(self, folder: str = "", kind: str = "images") -> dict:
+        if kind not in ("images", "pdfs"):
+            raise ContentError("Choose an images or pdfs library.")
+        base = self.root / "static" / kind
         target = self.guard(base, folder) if folder else base
         if not target.is_dir():
             return {"folder": folder, "files": [], "folders": []}
@@ -411,8 +563,8 @@ class ContentService:
             self.guard(base, relative)
             if path.is_dir():
                 folders.append(relative)
-            elif path.suffix.lower() in (".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg"):
-                files.append({"url": "/images/" + quote(relative, safe="/"), "name": path.name, "bytes": path.stat().st_size})
+            elif path.suffix.lower() in ((".pdf",) if kind == "pdfs" else (".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg")):
+                files.append({"url": f"/{kind}/" + quote(relative, safe="/"), "name": path.name, "bytes": path.stat().st_size})
         return {"folder": folder, "folders": folders, "files": files}
 
     def upload_pdf(self, filename: str, folder: str, raw: bytes) -> dict:
@@ -441,14 +593,16 @@ class ContentService:
         return {"url": "/pdfs/" + quote(f"{folder}/{name}.pdf", safe="/"), "bytes": len(raw)}
 
     def references(self, url: str, exclude: str = "") -> list[str]:
-        result = []
-        needle = unquote(url).casefold()
+        return self.asset_references([url], exclude)[url]
+
+    def asset_references(self, urls: list[str], exclude: str = "") -> dict[str, list[str]]:
+        result = {url: [] for url in urls}
+        needles = {url: unquote(url).casefold() for url in urls}
         for folder, patterns in (("content", ("*.md", "*.html")),
                                  ("data", ("*.yaml", "*.yml", "*.json", "*.toml")),
                                  ("assets", ("*.scss", "*.css", "*.js", "*.json")),
                                  ("static", ("*.js", "*.css", "*.html", "*.json")),
                                  ("layouts", ("*.html",)),
-                                 ("component-library", ("*.html", "*.yaml", "*.yml", "*.json")),
                                  ("config", ("*.toml", "*.yaml", "*.yml", "*.json"))):
             base = self.root / folder
             for pattern in patterns:
@@ -457,15 +611,53 @@ class ContentService:
                     self.guard(base, file.relative_to(base).as_posix())
                     if relative == "content/" + exclude:
                         continue
-                    text = unquote(file.read_text(encoding="utf-8"))
-                    if needle in text.casefold():
-                        result.append(relative)
+                    text = unquote(file.read_text(encoding="utf-8")).casefold()
+                    for url, needle in needles.items():
+                        if needle in text:
+                            result[url].append(relative)
         for pattern in ("*.toml", "*.yaml", "*.yml", "*.json"):
             for file in self.root.glob(pattern):
                 self.guard(self.root, file.name)
-                if needle in unquote(file.read_text(encoding="utf-8")).casefold():
-                    result.append(file.name)
-        return sorted(set(result))
+                text = unquote(file.read_text(encoding="utf-8")).casefold()
+                for url, needle in needles.items():
+                    if needle in text:
+                        result[url].append(file.name)
+        return {url: sorted(set(files)) for url, files in result.items()}
+
+    def page_media(self, source: str, folder: str, pdf_folder: str) -> dict:
+        linked = local_asset_urls(source)
+        images = self.assets(folder)
+        pdfs = self.assets(pdf_folder, "pdfs")
+        urls = sorted(set(linked) | {item["url"] for item in images["files"] + pdfs["files"]})
+        references = self.asset_references(urls)
+        files = []
+        for url in urls:
+            item = {"url": url, "linked": url in linked, "references": references[url],
+                    "name": unquote(url.rsplit("/", 1)[-1]), "kind": "pdfs" if url.startswith("/pdfs/") else "images"}
+            try:
+                path = self.asset_path(url)
+                item.update(bytes=path.stat().st_size, revision=revision(path.read_bytes()), missing=False)
+            except ContentError as exc:
+                item.update(missing=True, error=str(exc))
+            files.append(item)
+        return {"files": files, "image_folders": images["folders"], "pdf_folders": pdfs["folders"]}
+
+    def delete_asset(self, payload: dict) -> dict:
+        url = payload.get("url")
+        path = self.asset_path(url)
+        if payload.get("confirm") != url:
+            raise ContentError("Type the complete asset URL to confirm permanent file deletion.")
+        source = payload.get("source")
+        split_source(source)
+        if unquote(url).casefold() in unquote(source).casefold():
+            raise ConflictError("The open page draft still uses this file. Remove its references first.")
+        references = self.references(url)
+        if references:
+            raise ConflictError(f"File is still used by: {', '.join(references)}. Remove and save those references first.")
+        if payload.get("revision") != revision(path.read_bytes()):
+            raise ConflictError("This file changed since the review. Refresh Page media and review it again.")
+        path.unlink()
+        return {"deleted": url}
 
     def deletion_plan(self, relative: str, expected: str) -> dict:
         file = self.check_revision(relative, expected)

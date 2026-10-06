@@ -19,21 +19,203 @@ cikkeket ehhez a struktúrához képest.
 
 ## Böngészős szerkesztés
 
-A **Members & portraits** felületen a taglistát és a portrékat együtt
-szerkesztheted. Válassz egy tagot, vagy kattints az **Add member** gombra.
-A csoport, név, becenév, tisztség és bemutatkozás mellett meglévő portrépárt
-is hozzárendelhetsz. Feltöltött kép kivágása és konvertálása az éppen nyitott
-tagvázlat képmezőit tölti ki; a tagadatok és a képhivatkozások csak a
-**Save member** gombbal mentődnek. A konvertált képfájlok már a konvertáláskor
-megmaradnak, akkor is, ha később elveted a vázlatot.
+A **People & portraits** felületen minden személy egyetlen, tartós
+azonosítót kap a `data/people.yaml` fájlban. Először keress rá a névre,
+becenévre vagy korábbi névalakra; csak utána válaszd az **Add person** gombot.
+A név, bemutatkozás és portrépár közös minden cikkben. A megjelenített név
+lehet a megszokott kedves névalak (például Kalotai Zsófi); az ID nem változik
+átnevezéskor. Az **Aliases** korábbi névalakokat őriz, nem új személyeket.
+Csak azonos, megerősített személyhez tartozó neveket adj meg aliasként, ne
+bizonytalan jelölteket. Az ütközési figyelmeztetés megmutatja az érintett
+személyt és azt, hogy név, becenév, alias vagy ID egyezik. Azonos keresztnév
+önmagában nem ütközés. Hibás meglévő alias esetén másold ki a nem mentett
+vázlatod adatait, nyisd meg a jelzett személyt, töröld a hibás aliast és ments,
+majd térj vissza az új személyhez. A tisztázási jelölőnégyzet nem írja felül
+az ütközésvédelmet.
 
-A tag átnevezése vagy törlése nem módosítja a régi túrabeszámolók neveit,
-és nem töröl képfájlokat. A **Roster & image checks** listázza a hiányzó
-képeket, a taglistához nem rendelt portrékat és a taglistában nem szereplő
-résztvevőket/szerzőket. Egy résztvevő lehet vendég, egy kép pedig más oldalon
-is használatban lehet: ezek tájékoztató ellenőrzések, nem automatikus
-törlési javaslatok. Külső fájlmódosítás esetén a mentés ütközést jelez;
-újratöltés előtt másold ki a megőrzendő vázlatadatokat.
+Mentett ID-t a normál **Save person** nem módosít. Ha mégis szükséges,
+a **Change person ID with reference review** részben adj meg egy új, még nem
+használt ID-t, majd válaszd a **Review ID change** gombot. Kézzel ellenőrizd
+a régi és új ID-t, a tagságot és minden felsorolt cikk érintett mezőit.
+Csak a **Confirm reviewed ID change** és a külön megerősítés után frissül
+a személy ID-ja, a tagsági hozzárendelés, valamint a mentett szerzői,
+résztvevői és kapcsolattartói ID-hivatkozások. A nevek, fotók, szerepek és
+régi név alapú hivatkozások nem változnak. Ütköző ID, hibás ellenőrzés vagy
+az előnézet óta módosult fájl esetén új ellenőrzés szükséges; kezelt írási
+hibánál a módosítások visszaállnak. Ez több fájlt érintő művelet, nem adatbázis-
+tranzakció: folyamatleállás ellen a Git-előzmény biztosít helyreállítási alapot.
+A nem mentett cikkvázlatok érintetlenek maradnak; az érintett mentett cikket
+töltsd újra, vagy a vázlat régi ID-jait kézzel cseréld ki mentés előtt.
+
+A tagság külön hozzárendelés. A **Not a current member** állapot vendégnek,
+korábbi tagnak és tanulónak is megfelelő: ettől még lehet szerző, résztvevő
+vagy kapcsolattartó. A **Remove membership** csak a Tagjaink listából veszi ki,
+a régi cikkek és fotók megmaradnak. Véglegesen csak tagság és mentett
+cikkhivatkozás nélküli személy törölhető. Tanfolyami részvétel nem ad tagságot.
+
+A személy szerkesztője külön, görgethető párbeszédablakban nyílik meg, így a
+névsor a teljes rendelkezésre álló szélességet használja. A bezárás és az
+Escape nem dobja el kérdés nélkül a nem mentett változásokat.
+A tanfolyamra vagy történeti oldalra navigálás megőrzi a személyvázlatot:
+visszatérve a **Resume person editor** gombbal folytathatod. A képkivágó is
+ugyanebben az ablakban elérhető; személy nélküli exporthoz válaszd a
+**Standalone portrait export** gombot.
+A szerkesztő **Profile** részében a név és bemutatkozás azonnal elérhető;
+az aliasok, kontaktadatok, portrépárok és veszélyes identitásműveletek külön
+lenyitható részekbe kerültek. A **Save person** gomb görgetéskor is elérhető.
+A korábbi történet a **Participation & contribution history** részben található.
+
+A **Groups & categories** külön kezeli a nyilvános tagságot és a munkafelület
+kategóriáit. Egy személy több tanfolyami és egyéni kategóriához tartozhat,
+miközben a meglévő aktuális tagsági besorolása változatlan marad.
+A **Group / category** szűrő tagsági, tanfolyami és egyéni csoportok szerint
+szűkíti a névsort; a kereső a kategórianeveket is megtalálja.
+
+Minden tanfolyami cikkből automatikus **Tanfolyami résztvevők** csoport készül.
+A mentett `participant_ids` listában szereplő minden személy bekerül:
+a szerep nélküli résztvevő, a tanuló, az oktató és a segítő is.
+A cikkben megadott szerepek változatlanul, külön adatokként megmaradnak;
+a csoport nem minősít senkit tanulónak és nem ad tagságot.
+A tanfolyami jelvény kattintható: a kapcsolódó oldal résztvevőit nyitja meg.
+A cím és hozzárendelés a mentett oldalból származik; nincs második másolat a
+személyadatokban. Vázlatos tanfolyamok is szerepelnek, külön jelzéssel.
+Szerepváltás, új oldal vagy oldaltörlés után töltsd újra a személynévsort.
+
+A **Manage roles — membership, courses & trips** részben a meglévő tagsági
+szerepekből származó közös választékot kezelheted: létrehozás, névmódosítás,
+törlés. A kezdeti szerepek: elnök, kutatásvezető, elnökségi tag, pénztáros,
+túravezető, raktáros. Nincsenek előre kitalált oktatói vagy tanulói szerepek.
+A `tanfolyami résztvevő` automatikus alapértelmezés szintén itt
+kezelhető. A **Use this role automatically** kapcsoló alatt a jelenlegi
+tagság és a mentett tanfolyami részvétel feltételeit választhatod:
+**Any**, igen vagy nem. Legalább egy feltétel szükséges; mindegyiknek
+teljesülnie kell. Átfedő szabályokat a rendszer nem enged menteni.
+A név és a feltételek adatként tárolódnak, nem HTML/JavaScript-felsorolásként.
+A cikkszerkesztő **Manage global participant roles** gombja ide vezet;
+a nyitott cikkvázlat közben megmarad. A szerep neve megjelenik a nyilvános
+kártyán is. A stabil ID új szerepnél automatikusan készül, mentés után
+nem változtatható. Átnevezéskor a régi név történeti aliasként megmarad.
+Ehhez nem kell HTML-t vagy JavaScriptet szerkeszteni.
+
+A személy **Membership roles — choose any number** részében ugyanezekből
+a szerepekből többet is választhatsz. A tagsági szerepek a `data/people.yaml`
+csoportbejegyzéseiben listaként szerepelnek, például:
+
+```yaml
+- person: gyovai-tamas
+  roles: [elnok, kutatasvezeto]
+```
+
+A szerepek sorrendje megmarad; a nyilvános kártyán továbbra is
+`elnök, kutatásvezető` jelenik meg, változatlan megjelenéssel.
+A **Save person** a tagsági hozzárendeléseket menti. A tagság törlése a
+tagsági szerepeket is leveszi, a személy és a cikkeken megadott szerepei megmaradnak.
+
+A cikkben az **Add a role** mező gépelés közben felajánlja a közös szerepeket.
+Egy személyhez több szerepet is választhatsz; a jelvényre kattintva
+eltávolíthatod az adott szerepet. A hozzárendelések csak a cikk mentésekor
+mentődnek, és csak arra a tanfolyamra vagy túrára érvényesek.
+A személy általános kategóriái, tagsága és a kontaktkártyák szabad szöveges
+feladatai ettől külön maradnak.
+
+A szerepszerkesztő felsorolja a szerepet használó tagokat és mentett oldalakat.
+Használt szerep nem törölhető: előbb távolítsd el a kapcsolódó tagokon vagy oldalakon,
+majd töltsd újra a névsort. Ellenőrzési hiba esetén a törlés szintén tiltott,
+az ok látható. Az üres szerep törlése külön megerősítést kér; a nem mentett
+cikkvázlatokat nem írja át. A szerepvázlat Git-műveleteket blokkol,
+a főoldal vázlatletöltés/elvetés gombjai ezt is kezelik.
+A régi `role: szöveg` értékek továbbra is olvashatók. Ismeretlen történeti
+szerepet a szerkesztő külön jelez, nem alakít át találgatással; kiválasztás
+vagy törlés után az új listaformátum kerül mentésre.
+
+A névsor **Manage custom categories** részében új kategóriát hozhatsz létre,
+vagy egy meglévő megjelenített nevét módosíthatod. Az ID mentés után állandó.
+Előbb mentsd vagy vesd el az aktuális személyvázlatot. A személy **Custom
+categories** jelölőnégyzeteivel több kategóriát választhatsz; ezeket a
+**Save person** menti. A tárolás a `data/people.yaml` opcionális `categories`
+listájában történik (`id`, `label`, `people`), csak személy-ID-hivatkozásokkal.
+Kategóriát csak üresen, külön megerősítéssel törölhetsz. A személy ID-cseréje
+frissíti ezeket a hivatkozásokat; összevonáskor a kategóriák egyesülnek,
+használaton kívüli személy törlésekor a kategóriakapcsolatai is megszűnnek.
+Ezek a kategóriák nem jelennek meg a nyilvános Tagjaink oldalon, nem adnak
+tagságot, és nem módosítják a vendégjelölést.
+
+Az email és telefon a közös személyrekord **Contact email / Contact phone**
+mezőiben szerkeszthető. Csak egyeztetett, publikálható elérhetőségeket adj meg.
+A normál tag- és résztvevőkártya, valamint a profilablak nem jeleníti meg
+ezeket. Csak a kapcsolatkártya tartalmaz email- és telefonlinket.
+A **Pages & posts → People & contacts** fülön kereshető személyválasztóval
+állíthatod be a tanfolyam és a globális Kapcsolat oldal kapcsolattartóit,
+sorrendjüket és oldalankénti szerepüket. A jelvény képpel vagy monogrammal
+jelenik meg; rákattintva a személy szerkesztője nyílik meg.
+A nyilvános kapcsolatkártya képe és neve a közös profilablakot nyitja.
+A cikkben csak `person` és opcionális `role` szükséges; a globális oldalon
+ugyanez a `contact/info` komponens `contacts` listájában van.
+Az ilyen oldalak `content_blocks` listáját natív Hugo-részsablonok jelenítik meg
+a `layouts/partials/sections/` mappából. A `_bookshop_name` a szakasztípus
+megőrzött YAML-kulcsa (például `contact/info`), nem Bookshop-függőség.
+A listák sorrendjét és meglévő mezőit nem kell átírni. Ismeretlen szakasztípus
+vagy hibás lista esetén a build kifejezett hibával leáll.
+Régi, cikkbe írt elérhetőségek átmenetileg olvashatók, de az új hozzárendelések
+nem másolják őket: a munkafelület figyelmeztet, és a közös rekord adatai
+elsőbbséget kapnak. A beágyazott kapcsolatok is részei a hivatkozásvédelemnek,
+az ID-változtatásnak és az identitás-összevonásnak.
+
+A személy szerkesztőjének **Membership & participation** nézete külön mutatja
+a tagság típusát és tisztségét, a tanfolyami részvételeket, az expedíciókat
+és túrákat, valamint a szerzői és kapcsolattartói hozzájárulásokat.
+A cikkcímek kattinthatók; mellettük dátum és az adott esemény szerepe látható.
+A **Search contribution history** mező mindhárom listát szűri cím, dátum,
+szerep és cikkútvonal alapján, kis- és nagybetűtől, illetve ékezettől függetlenül.
+Több keresőszó esetén mindegyiknek illeszkednie kell. A kategóriák címe
+az illeszkedő és az összes hozzárendelés számát mutatja; üres találatnál
+egyértelmű jelzés jelenik meg. A hosszú listák külön görgethetők, a tagsági
+összefoglaló, kereső és kategóriacímek nem görgetődnek velük.
+A **Clear search** visszaállítja a teljes történetet. Keresés nem módosítja
+a személyvázlatot vagy a cikkeket; másik személy megnyitásakor törlődik.
+Kézi eseményszerep nélkül a globális automatikus szabályok érvényesek.
+Alapból a tagság nélküli, mentett tanfolyamon szereplő személy
+**tanfolyami résztvevő**; a tagság nélküli, tanfolyamon sem szereplő személy
+nem kap automatikus szerepfeliratot. A **vendég** csak kézzel választható:
+a tagság hiánya nem jelenti, hogy az adott túrán az illető vendég.
+A mai tagok nem kapják meg a tagság nélküli tanfolyami jelölést.
+A tanfolyami részvételbe a vázlatos, jövőbeli és névalapú tanfolyamok is
+beleszámítanak, de puszta szerzőség vagy kapcsolattartás nem.
+A nyilvános résztvevői kártyák ugyanezeket az adatvezérelt jelöléseket használják.
+Az adott cikkben megadott kézi `roles` vagy történeti `role` mindig felülírja
+az automatikus jelölést ezen az oldalon, a mai tagságtól függetlenül.
+Üres szereplistánál ismét az automatikus szabály érvényes.
+Ez nem ír új hozzárendeléseket a személyadatokba és nem ad tagságot.
+Automatikus szerep törléséhez előbb kapcsold ki és mentsd a szabályát;
+a mentett kézi hozzárendeléseket külön is el kell távolítani.
+
+Feltöltés és konvertálás a nyitott személyvázlat képmezőit tölti ki;
+a hozzárendelést a **Save person** menti. A konvertált fájl vázlat elvetésekor
+is megmarad. Ugyanazt a portrépárt használd a különböző tanfolyamokon és túrákon,
+ne másold át évente. Külső fájlmódosításnál a mentés ütközést jelez.
+
+Portré cseréjekor a sikeres **Save person** után az alkalmazás felajánlja a
+régi fájlok törlési előnézetét. A régi képek addig megmaradnak, amíg a törlést
+külön meg nem erősíted; sikertelen mentés vagy elvetett vázlat nem törli őket.
+Az előnézet letiltja a más személy vagy mentett tartalom által használt fájlokat,
+és megmutatja a hivatkozásokat. Csak a kipipált, szabad fájlok törölhetők.
+Ha elhalasztod a törlést, később a **Loose portraits** listából folytathatod.
+
+A **Permanently delete person** mellett látható, miért nem engedélyezett a
+törlés: aktuális tagság, mentett oldalhivatkozások, hiányos ellenőrzés vagy
+folyamatban lévő művelet. A tagság eltávolítását előbb menteni kell.
+Történelmi közreműködésnél őrizd meg a személyt, ne töröld a cikkek kreditjeit.
+Szabad identitás törlése eltávolítja az egyéni kategóriakapcsolatokat is,
+de a portréfájlokat megőrzi.
+
+A **Needs clarification** szűrő a kézzel tisztázandó identitásokat mutatja.
+Az ellenőrzések a régi, nem illeszkedő nevekhez lehetséges személyeket ajánlanak,
+de nem rendelnek automatikusan senkit. Ha két rekord bizonyítottan ugyanaz a
+személy, a **Merge identities** előnézetében válaszd ki a megtartandó rekordot.
+A cél kitöltött profilmezői elsőbbséget kapnak; az üres mezők a forrásból
+töltődnek, a korábbi nevek aliasokká válnak. A cikkek ID-hivatkozásai is frissülnek.
+Eltérő résztvevői szerepek esetén előbb tisztázd az adott cikket. A nem mentett
+cikkvázlatokat külön ellenőrizd; összevonás nem írja át őket.
 
 A **Loose portraits** listában egyenként vagy kijelölt csoportként törölheted
 a felesleges portréfájlokat a **Review & delete selected** gombbal.
@@ -43,7 +225,123 @@ a bélyegkép és a teljes portré külön fájl. A még nem mentett cikkvázlat
 is ellenőrizd: az alkalmazás csak a mentett oldalak hivatkozásait tudja
 átvizsgálni. A nem verziókezelt fájlokat a Git nem tudja visszaállítani.
 
-Indítsd el a `scripts/run_workbench.bat` alkalmazást, majd nyisd meg a
+### Git és munkaváltozatok a Workbenchben
+
+Indításkor a **Git & workspace** főoldal segít kiválasztani a munkaváltozatot
+(branch). A fejléc mindig kiemelten mutatja, melyiken dolgozol. A `main` és
+`master` védett: a szerkesztési menük le vannak tiltva, és a szerver sem enged
+tartalmat, személyt vagy képet módosítani ezeken. Leválasztott állapotban,
+Git-hiba vagy folyamatban lévő Git-művelet alatt is zárolva marad a szerkesztés.
+
+1. **Fetch server updates:** lekéri a GitHub legújabb ismert ágait és
+   checkpointjait. Nem változtatja meg a fájljaidat. A kijelzett szerverállapot
+   nem élő: az utolsó sikeres lekérés ideje látható.
+2. Válassz meglévő munkaváltozatot, vagy a **Create branch from this checkout**
+   gombbal hozz létre újat, például `tanfolyam-2027-frissites`.
+   A létrehozás az éppen kiválasztott ág aktuális állapotából indul.
+   Új munkához előbb a tiszta `main` ágon futtasd az **Update this branch**
+   műveletet: ez csak a szerverrel megegyező előzményre léptethet előre,
+   a szerkesztési menük továbbra is zárolva maradnak.
+   A `main` ágon már elmentett, de nem commitolt változásokat az új ág megőrzi.
+   Másik meglévő ágra váltás előtt a fájlokat commitolni kell.
+3. A szerkesztők **Save** gombjai lemezre mentenek, nem a GitHubra.
+   A **Review changed files & commit** ablakban válaszd ki a megosztani kívánt
+   fájlokat, nézd át a változásokat, és írd le röviden, mit változtattál.
+   A **Select all** minden felsorolt fájlt kijelöl, a **Select none** törli
+   a kijelöléseket. A számláló mutatja, hány fájlt választottál.
+   Kijelölésváltás után újra át kell nézni a kiválasztott változásokat.
+   Az áttekintés fájlonként **Before / After** nézetet mutat: az előző
+   checkpoint és a most mentett változat látható, a hozzáadott és törölt
+   szöveg külön jelöléssel. A képek régi és új változata is megjelenik,
+   ha a méretük engedi. A túl nagy vagy nem megjeleníthető fájloknál
+   figyelmeztetés kér külön ellenőrzést. A nyers Git-kimenet csak a
+   lenyitható **Technical details (optional)** részben szerepel.
+   A nagy ablak bal oldalán fájlnévre vagy mappára kereshetsz; a keresés
+   csak elrejti a nem illő sorokat, a kijelöléseket nem változtatja meg.
+   A **Select all / Select none** a teljes listára hat, a rejtett sorokra is.
+   Jobbra egyszerre egy kiválasztott fájl látható: **Previous file / Next file**
+   gombokkal vagy a **Jump to a selected file** listával léphetsz közöttük.
+   A leírás és a létrehozás/megszakítás gombjai görgetéskor is elérhetők.
+   A **What changed? (required)** mezőbe saját szavaiddal írt, nem üres
+   leírás kötelező; enélkül nem hozható létre checkpoint.
+   A checkpoint egy helyi Git-commit. Nem kijelölt fájl nem kerül bele.
+   Ellenőrizd, hogy nincs benne jelszó, token vagy magánadat.
+   A már stage-elt fájlátnevezéseket a korlátozott commitfelület nem kezeli:
+   ezek átnézéséhez és commitjához kérd a karbantartó segítségét.
+4. **Send checkpoints to GitHub:** külön megerősítés után normál push küldi
+   a commitokat a munkaváltozat szerveroldali ágára. Nem egyesít a `main` ággal,
+   és nem használ force-push-t. Az automatikus CI/deploy viselkedését
+   továbbra is a repository beállításai határozzák meg.
+5. **Update this branch · pull with rebase:** fetch után a szerveroldali
+   változatokra helyezi a még helyi commitokat. A külön **Rebase onto selected
+   base** másik kiválasztott alapágra helyezi a nem publikált commitokat.
+   Előbb fetch-elj, ha a legfrissebb szerveralapot akarod használni.
+   Alapértelmezésben csak nem publikált történetet ír át, nem merge-el és nem stash-el.
+
+Ha közben a `main` továbbhalad, a már megosztott munkaváltozatod is követheti:
+
+1. Commitold a mentett változásokat, mentsd/elvetés előtt töltsd le a nyitott
+   vázlatokat, majd **Fetch server updates**.
+2. Válaszd az `origin/main` alapágat (nem a régi helyi `main`-t), és jelöld be
+   **Allow my published working branch to follow updated main, with a recovery backup**.
+   Csak a saját, ugyanilyen nevű `origin/<munkaváltozat>` ágat követő ág használható.
+   Ha másvalaki commitjai hiányoznak a helyi ágból, előbb pull/rebase szükséges.
+3. **Rebase onto selected base:** nézd át és erősítsd meg. A szerver újraellenőrzése
+   után, még az átírás ELŐTT a `.workbench-backups/<azonosító>/` mappába kerül
+   `history.bundle`, `commits.patch`, `changes.patch`, `recovery.json` és `RESTORE.txt`.
+   A bundle az eredeti teljes történetet, a patch-ek a commitokat és a bináris
+   fájlokra is alkalmazható különbséget őrzik. Sikertelen mentés esetén nincs rebase.
+4. Ütközésnél a szokásos feloldás/folytatás vagy **Abort rebase** használható.
+   Abort után az eredeti ág áll vissza, de a helyreállítási backup megmarad.
+5. Sikeres rebase után **Publish rebased branch · force with lease**:
+   külön ellenőrizd az ágat, a backupot és a rögzített szervercommitot,
+   majd a megerősítéshez írd be a munkaváltozat pontos nevét.
+   Ez kizárólag ezt az ágat helyettesíti, és csak akkor, ha a szerver még a rebase
+   előtt rögzített commiton áll. A `main`/`master` soha nem írható át.
+
+A lease szándékosan nem frissül újabb fetch hatására. Ha közben valaki más
+frissítette vagy törölte az ágat, a push elutasításra kerül; ne próbáld felülírni.
+Kérd a karbantartót a két történet egyeztetésére. A függő leased publikálás alatt
+újabb pull/rebase nem indulhat, hogy a régi szervertörténet ne kerüljön vissza
+és a rögzített védelem ne vesszen el. Commit, fetch és ágváltás továbbra is lehetséges.
+A rebase és backupállapot újraindítás után is megmarad.
+
+A backup Git-ignorált; régebbi checkoutnál a Workbench a helyi Git-kizárásba is
+felveszi a mappát. Nem tölti fel és nem törli automatikusan. Bizalmas adatokat is
+tartalmazhat, ezért ne add Githez és ne oszd meg ellenőrzés nélkül.
+A **Local rebase recovery backup** rész mutatja az elérési utat.
+A `RESTORE.txt` biztonságos, ÚJ helyreállítási ág létrehozásához ad parancsot az
+eredeti refből vagy bundle-ből. Ez nem reseteli a jelenlegi munkát; kézi visszaállítást
+karbantartóval végezz. A patch kiegészítő mentés, nem a teljes történet helyettesítője.
+
+Ágváltás és történetmódosítás előtt mentsd vagy töltsd le és vesd el a nyitott
+szerkesztővázlatokat. Az alkalmazás nem dobja el őket magától. Sikeres ágváltás,
+pull és rebase után az oldal újratöltődik, hogy az új ág fájljait használd.
+Ha más program változtatja meg az ágat vagy a commitot, a Workbench zárol,
+és újratöltést kér; előbb készíts másolatot a nem mentett vázlatodról.
+
+A főoldal **Recover an unsaved editor draft before switching branches** részében zárolt ágon is
+letöltheted a nyitott cikk-, személy- és hero-vázlatot. Ellenőrizd a letöltött
+Markdown/JSON fájlt, mielőtt a **Discard unsaved editor drafts** gombbal,
+külön megerősítés után elveted a böngészős vázlatokat. Ez a cikk automatikus
+böngészős mentését is törli, de nem módosít mentett fájlt, commitot vagy
+feltöltési sort. Folyamatban lévő szerkesztési, képfeldolgozási, Git- vagy
+letöltési művelet alatt a vázlatmentés és elvetés nem használható.
+A személy- és hero-vázlat JSON-másolat kézi visszaállítási alap, nem automatikus import.
+
+Rebase-ütközésnél a szerkesztés zárolva marad. A Git főoldal megmutatja az
+ütköző fájlokat. Szöveges fájlnál a **Review conflict** ablakban állítsd össze
+a végleges tartalmat és távolítsd el az ütközésjelölőket, majd fogadd el.
+Ezután **Continue rebase** folytatja a műveletet. Ha bizonytalan vagy,
+**Abort rebase** visszaállítja a rebase előtti állapotot, elvetve az ezen belüli
+ütközésfeloldásokat. Bináris, törölt vagy túl nagy fájl ütközésénél kérd a
+karbantartó segítségét. A hibák és a Git részletes naplója megmaradnak a felületen.
+
+A GitHub-hitelesítést és a commit-szerző nevét/emailjét a karbantartó egyszer
+beállítja a Gitben. A Workbench nem kér és nem tárol GitHub-jelszót vagy tokent.
+Sikertelen hálózati műveletnél nem jelzi azt, hogy a munkaváltozat szinkronban van.
+
+Indítsd el a főmappában lévő `site_editor.bat` alkalmazást, majd nyisd meg a
 **Pages & posts** részt a <http://127.0.0.1:8879/#content> címen.
 
 - A kereshető könyvtárból nyiss meg egy cikket, vagy a **New** gombbal válassz
@@ -51,25 +349,98 @@ Indítsd el a `scripts/run_workbench.bat` alkalmazást, majd nyisd meg a
   A **Hide page library / Show page library** gombbal a könyvtár elrejthető,
   így a szerkesztő a teljes munkaterületet használja. A böngésző megjegyzi
   ezt a választást; rejtett könyvtár mellett a **New page** gomb is elérhető.
-- A **Write**, **Page details**, **SEO & sharing**, **Course & FAQ** és **Placement** fülek
+- Az **Edit content** rész **Story**, **Page details**, **People & contacts**,
+  **SEO & sharing** és **Course & FAQ** fülei
   kezelik a történetet, képeket, résztvevőket, keresési adatokat, tanfolyami
-  mezőket és a fájl/URL elhelyezését. Az egyéb oldalak és tetszőleges YAML
+  mezőket. A külön **Page tools** rész az egész oldal eszközeit tartalmazza:
+  **Files & usage** (Page media), **Add images & PDFs**, **File & URL** és
+  **Full source**. Ezek saját munkapanelt nyitnak, nem tartalmi fülek.
+  **Back to content editing** az előző tartalmi szakaszhoz tér vissza.
+  A szerkesztősáv **Preview page**, **Validate** és **Save page** gombjai az egész
+  oldalra vonatkoznak; az előnézet külön munkapanelben jelenik meg.
+  Az egyéb oldalak és tetszőleges YAML
   mezők a **Full source** fülön szerkeszthetők. Az alkalmazás nem WYSIWYG szerkesztő;
   a Markdown és shortcode-ok forrásként maradnak meg.
-- Az **Images & PDF** fülön meglévő képet választhatsz, vagy az eredetit
-  WebP-vé konvertálhatod. A cél szabadon megadható a `static/images/` alatt,
-  például `turak/2026-expedicio/photos`; nem kell a `hero` mappát használnod.
+- A **Page tools → Add images & PDFs** eszközben meglévő képet választhatsz, vagy az eredetit
+  WebP-vé konvertálhatod.
+  JPG, PNG, WebP és HEIF/HEIC eredetik is használhatók a fotó- és
+  portrékonvertálóban. Többképes HEIF-ből az elsődleges kép készül el;
+  a kimenet 8 bites WebP, nem őriz HDR-t, mozgást vagy mélységtérképet.
+  Új fájl csak az oldal saját mappájába kerülhet:
+  `turak/2026-expedicio.md` esetén `static/images/turak/2026-expedicio/`.
+  A `slug/index.md` és `slug.md` azonos célmappát használ; PDF-eknél
+  ugyanez a szabály a `static/pdfs/` alatt. A szerver is kikényszeríti ezt,
+  nem csak a csak-olvasható célmező.
   Egy képhez külön fájlnév is megadható. Az ütköző nevek számozott utótagot
   kapnak, meglévő fájl nem íródik felül. A kijelölt fotóból külön beállítható
   a bélyegkép, fő kép és `seo.featured_image` felülbírálás.
+  A konvertálás mellett folyamatjelző mutatja a feldolgozott képek számát és
+  az aktuális lépést (feltöltés, konvertálás, takarítás). Egyetlen kép vagy portré
+  feldolgozásakor határozatlan folyamatjelző látszik: a szerver nem közöl
+  képen belüli százalékot. A Site photos és a portrékonvertáló is jelzi a
+  folyamat végét és az esetleges hibákat.
+- A képmezők **Choose image…** gombja közvetlen fájlválasztót nyit:
+  bélyegképre kattintva a kép az adott mezőbe kerül, URL-másolás nélkül.
+  A választó az oldal saját mappájából indul. **Borrow existing file…**
+  esetén más mappákból kölcsönözhetsz meglévő fájlt: csak hivatkozás készül,
+  nincs másolás vagy áthelyezés. **This page's own files** visszavált.
+  Új fájlhoz **Upload new file to page folder…**,
+  majd konvertálás után **Use for …**. A kézi URL-mező továbbra is használható.
+  Ez a túrabeszámolók és a régi/új tanfolyamok képmezőire egyaránt érvényes.
+  A **Course & FAQ → Course flyers → + Add → Choose image…** szórólapot rendel
+  hozzá; az **Add images & PDFs** kijelölt képén az **Add course flyer** is használható.
+  A szórólapok a címsávban, enyhén elforgatott és egymást átfedő kártyákként
+  jelennek meg, nem cserélik le a fő vagy közösségi képet.
+  A kártyák mérete a darabszámhoz igazodik: egy szórólap nagyobb, kettő
+  közepes, három vagy több kisebb; sok kártya további sorokba rendeződik.
+  Kattintásra az eredeti kép
+  a nagy képnézegetőben nyílik meg. Több szórólap között ott lapozni is lehet.
+  A 2019-es és 2022-es tanfolyam közös GYIK PDF-je a
+  `static/pdfs/tanfolyamok/shared/` könyvtárból kölcsönzött dokumentum;
+  a 2024-es GYIK a saját `static/pdfs/tanfolyamok/tanfolyam-2024/` mappában van.
+  A nem aktuális tanfolyamok kártyáján halk „(lezárult)” jelzés, az oldalon
+  a cím alatt „A tanfolyam lezárult.” szöveg jelenik meg. Ezt a `current`
+  mező vezérli; az aktuális tanfolyamokon nincs lezárult jelzés.
+  A **PDF reports → Choose / borrow existing PDF…** a meglévő PDF-eket listázza,
+  és a választott fájlt kitölti a beillesztőben. Ezután **Insert PDF shortcode**.
+  A hozzárendelés vázlat; a **Save page** rögzíti, míg a feltöltött fájl már
+  a konvertálás/feltöltés során lemezre kerül.
+- A **Page tools → Files & usage** (Page media) eszköz közvetlenül megmutatja az
+  oldalhoz hivatkozott képeket/PDF-eket és a kapcsolt mappák többi fájlját.
+  Az új képek és PDF-ek kötelező célmappája az oldal útvonalából készül,
+  nem egy meglévő kép helyéből. Egy közösen használt hero kép nem teszi a
+  hero mappát az oldal feltöltési céljává. A célmappa nem módosítható.
+  A **Browse page's own images** ezt a konvertálási célmappát nyitja meg.
+  Több mappában tárolt hivatkozott fájlokat a **Page media** együtt is mutatja.
+  **Remove from page…** után előbb nézd át a javasolt forrást, majd
+  **Apply to draft · keep file**: a megszokott képmezőket, szórólapokat és
+  image/photo/pdf shortcode-okat, Markdown-képeket/PDF-linkeket eltávolítja;
+  media blokknál a szöveg megmarad. Egyedi HTML, komponens-YAML és kódpéldák
+  esetén **Find in source** segít; ezek nem törlődnek találgatással.
+  **Save page** után a már nem használt fájl külön törölhető a
+  **Delete file permanently…** gombbal, a teljes URL begépelése után.
+  Mentett oldalakban/beállításokban vagy a nyitott vázlatban használt fájl nem
+  törölhető; a törlés előtt a hivatkozások és a fájlverzió újra ellenőrződnek.
+  Más böngészőablakok nem mentett vázlatait külön ellenőrizd.
+  A fájltörlés nem törli az oldalt. Nem követett feltöltést a Git sem tud visszaállítani.
+- Szerző, résztvevő és kapcsolattartó keresésekor a találatok gépelés közben
+  automatikusan megjelennek, portréval vagy monogrammal, névvel és tartós ID-val.
+  A keresés az aliasokat és beceneveket is figyeli; a tagságszűrő megmarad.
+  Kattints egy találatra, vagy válaszd ki a fel/le nyíllal és Enterrel.
+  Gépelés önmagában nem rendel hozzá személyt. Escape bezárja a találatlistát.
+  Már felvett résztvevőt a hozzáadó mező nem ajánl fel újra.
+  Hasonló kereshető ajánlások segítik a tagság, kategória, meglévő portrépár,
+  összevonási cél, oldalsablon és képmappa kiválasztását is. Az eseményszerep
+  ajánlásai nem kötelezőek: saját szöveg továbbra is megadható. A mentett
+  oldalkategóriákhoz külön kereshető hozzáadó mező tartozik.
 - Képenként adj meg valódi alt leírást és szükség esetén képaláírást.
-  A **Write** eszköztár **Image / Gallery / Text & photo / PDF** gombjai
+  A **Story** eszköztár **Image / Gallery / Text & photo / PDF** gombjai
   közvetlenül a megfelelő beillesztőhöz vezetnek, a kurzorpozíció megőrzésével.
   A **FAQ** gomb a frontmatterben ad hozzá kérdés-válasz sort; ez külön
   FAQ szakaszként jelenik meg, nem a Markdown adott sorában.
   A beillesztő image/media/gallery vagy egyszerű Markdown kódot készít az
   utolsó kurzorpozícióra. PDF is feltölthető a `static/pdfs/` választott
-  almappájába, és shortcode-ként beilleszthető. A **Syntax help** példákat
+  saját oldalmappájába, és shortcode-ként beilleszthető. A **Syntax help** példákat
   és ezeket a fenntartott útmutatókat is megnyitja.
   A **Markdown & syntax help** külön, bezárható ablakban is elérhető:
   kereshető Markdown- és shortcode-példák, valamint **Copy syntax** gombok
@@ -115,14 +486,13 @@ date: 2026-08-14T00:00:00Z # az esemény kezdő dátuma, ez alapján rendeződik
 title: Kanin expedíció (2026) # "Név (évszám)", ahogy a meglévő bejegyzéseknél is
 categories:
   - Expedíció # egy a következők közül: Túra, Kutatás, Expedíció, Kanyoning, Szemétszedés (lásd data/blog-tags.yaml)
-author: "" # ki írta - hagyd üresen, ha nem tudod biztosan, ne találgass
-participants: # opcionális - lásd a "Résztvevők" szakaszt lentebb
-  - Első Név
-  - Második Név (Becenév)
+author_id: "" # a valódi szerző ID-ja; ne találgass
+participant_ids: [] # a People felületen kiválasztott személyazonosítók
 thumbImg:
   image_path: /images/turak/<slug>/01-....webp # a lista/kapcsolódó cikkek kártyáin jelenik meg
 featuredImg:
   image_path: /images/turak/<slug>/01-....webp # a cikk oldalán a nagy banner képe
+  width: 40 # csak a cikk bannerének szélessége: 10–100%; elhagyva 100%
 seo:
   page_description:
   canonical_url:
@@ -135,7 +505,7 @@ draft: true # szerkesztés alatt true; ellenőrzés után false
 ```
 
 A `<slug>` a cikk fájlneve `.md` kiterjesztés nélkül (pl. `2026-kanin-expedicio`).
-Az `author` mezőt inkább hagyd üresen, mint hogy találgass - egy rosszul
+Az `author_id` mezőt inkább hagyd üresen, mint hogy találgass - egy rosszul
 tulajdonított beszámoló rosszabb, mint egy üres mező.
 
 ### Dátum, draft és megjelenés
@@ -152,14 +522,33 @@ tulajdonított beszámoló rosszabb, mint egy üres mező.
 - Publikálás előtt ellenőrizd a címet, dátumot, képeket és helyőrzőket,
   majd legyen `draft: false`. Az üres opcionális mezők vagy listák elhagyhatók.
 
-A `tanfolyamok` cikkeiben is megadható az `author: "Teljes Név"` mező.
-Mindkét cikkoldal fejlécében a szerző neve a tag előnézeti kártyáját nyitja
-meg, ha a név szerepel a `data/members.yaml` listájában. A név vagy becenév
-pontos egyezése szükséges; a zárójeles becenév nem akadályozza az egyezést.
-Ismeretlen szerző egyszerű szövegként jelenik meg, hiányzó szerző esetén
-nem jelenik meg szerzői sor. Ez nem változtatja meg a résztvevők listáját.
+A `tanfolyamok` cikkeiben is az `author_id` mező választ szerzőt.
+Mindkét cikkoldal és a túraarchívum keresője a közös személyrekord aktuális
+nevét használja, tagságtól függetlenül. A szerzői kártya ugyanazt a fotót és
+bemutatkozást nyitja meg. Hiányzó szerzőnél nincs szerzői sor.
+A régi `author` szöveg átmenetileg támogatott (például nem tisztázott közös
+szerzőség), de ne keverd kitöltött `author_id`-val. Az ellenőrző ezt jelzi.
 
 ### Közösségi megosztások előnézeti képe
+
+A **SEO & sharing** fülön a megosztás külön címe, leírása és kész képe is
+beállítható. Az **Exact social preview image** képválasztó meglévő képet is
+kölcsönözhet, vagy új képet tölthet fel az oldal saját mappájába.
+
+```yaml
+seo:
+  social_title: Rövid cím a megosztáshoz
+  social_description: Külön leírás a közösségi kártyához.
+  social_image: /images/turak/<slug>/kesz-kartya.webp
+```
+
+A `social_image` változatlanul kerül az Open Graph és Twitter metaadatokba:
+nincs vágás, ráírás vagy logó. Helyi JPG, PNG vagy WebP használható;
+1200×630 ajánlott. A platform maga még vághatja a képet. A `social_title`
+nem változtatja a cikk címét, a `social_description` nem változtatja a kereső
+`page_description` mezőjét. Üres értékeknél az eredeti alapértékek érvényesek.
+Az **Preview page → Inspect this draft's social card** az el nem mentett
+változat valódi megosztási metaadatait és képét mutatja.
 
 A túrabeszámolók és tanfolyami cikkek előnézeti fotóját alapértelmezésben
 a `featuredImg.image_path` mező adja, ugyanaz a kép, mint a cikk nagy bannere.
@@ -170,11 +559,13 @@ seo:
   featured_image: /images/turak/<slug>/megosztas.webp
 ```
 
-Ez csak a közösségi kártya alapfotóját cseréli, nem a cikk fejlécét vagy
+Ez csak a generált közösségi kártya alapfotóját cseréli, nem a cikk fejlécét vagy
 listaképét. A képet tedd a `static/images/` alá; a megadott útvonalból hagyd
 el a `static` részt. Az üres vagy hiányzó `seo.featured_image` az alapképet
 használja. Külső URL és SVG helyett helyi JPG, PNG vagy WebP fotót adj meg;
 hibás vagy hiányzó megadott kép esetén a build jelzi a hibát.
+Ha a `social_image` is ki van töltve, az elsőbbséget élvez a generált kártyával
+és annak `featured_image` alapfotójával szemben.
 
 A többi oldal (főoldal, túra- és tanfolyamlista, egyesületi oldalak) a
 `data/hero_images.yaml` `images` listájából kap véletlenszerű fotót, oldalanként,
@@ -184,7 +575,8 @@ kerülnek ebbe a választásba, az egész pixeles méretek kerekítését megeng
 Ez a szűrés nem vonatkozik a cikk saját vagy kézzel felülírt fotójára;
 azok középre vágva kerülnek az 1200x630-as kártyára.
 
-A fotóra továbbra is rákerül a cím, az FTSK-logó és a sötét átmenet;
+A generált fotóra az FTSK-logó, márkanév és a sötét átmenet kerül;
+az oldal címe csak a megosztási metaadatokban jelenik meg.
 az Open Graph és Twitter ugyanazt az 1200x630-as képet használja.
 Ha nincs cikkfotó, megfelelő diavetítés-fotót választ a rendszer.
 Ha nincs megfelelő diavetítés-fotó sem, figyelmeztetés mellett a
@@ -228,33 +620,38 @@ tagolva, nem pedig egyetlen összefüggő szövegfalként:
 
 ## 3. Résztvevők
 
-A résztvevőket a front matterben soroljuk fel, nem a szövegben - egy egyszerű
-névlista, soronként egy név, ahogy természetesen olvasható (ha úgy szokás
-hivatkozni rá, tüntesd fel a "(Becenév)" toldalékot):
+A résztvevőket a cikk **Page details** részében válaszd ki a kereshető
+személylistából. Minden túra és minden tanfolyam saját listával rendelkezik;
+a hozzárendelés nem módosítja a tagságot. A szerkesztőben a résztvevő neve
+mellett a közös portré bélyegképe látható, fotó nélkül pedig a név kezdőbetűi
+jelennek meg. A sorrend és az eseményen betöltött
+szerep itt állítható, nem a személy általános profiljában:
+
+A fotóra, monogramra vagy névre kattintva a személy szerkesztője nyílik meg.
+A megnyitott cikk nem mentett vázlata megmarad; a **Pages & posts** menüvel
+visszatérhetsz hozzá. A személy szerkesztésekor egy másik nem mentett
+személyvázlat elvetéséhez külön megerősítés kell.
 
 ```yaml
-participants:
-  - Kámvás Linda
-  - Kun Imre (Bástya)
-  - Ács Réka
+participant_ids:
+  - kamvas-linda
+  - person: kun-imre
+    roles: [turavezeto, kutatasvezeto]
+  - acs-reka
 ```
 
-A cikk oldala ezekből automatikusan kattintható tagkártyákat generál a
-szöveg alatt (`layouts/partials/participant-cards.html`), a neveket a
-`data/members.yaml` hiteles taglistájához illesztve. Ha van találat, bekerül
-a személy valódi fotója/tisztsége/bemutatkozása; ha nincs találat, egyszerű
-monogramos csempe jelenik meg - ez elvárt, nem minden résztvevő egyesületi
-tag. Ne írj kézzel "Résztvevők" címet/listát a szövegbe - a sablon
-automatikusan hozzáadja a címet és a kártyarácsot, amint a `participants:`
-mező ki van töltve.
+A sablon automatikusan hozzáadja a Résztvevők címet és a közös profilokból
+készülő kártyákat. Fotó nélküli személy monogramot kap. A résztvevői szerep
+csak az adott eseményre vonatkozik, nem veszi át a mai egyesületi tisztséget.
+Ne ismételd meg kézzel ezt a listát a törzsszövegben. A régi `participants`
+névlista átmenetileg olvasható; új hozzárendeléshez ID-t használj.
 
 Push előtt futtasd le helyben a `python scripts/verify_members.py` parancsot
-(ehhez kell a `pip install PyYAML`), hogy ellenőrizd a `data/members.yaml`-t
-és minden cikk `participants:` listáját. Ez kiszűri például a duplikált
-tagneveket és beceneveket, a rossz mezőben maradt zárójeles beceneveket,
-az ismeretlen tagmezőket (elgépeléseket), valamint az üres vagy duplikált
-`participants:` bejegyzéseket. Ugyanez az ellenőrzés fut a CI-ban is minden
-pull requestnél.
+(ehhez kell a `pip install PyYAML`), hogy ellenőrizd a `data/people.yaml`-t
+és minden cikk szerző-, résztvevő- és kapcsolattartó-hivatkozását. A duplikált
+ID, név vagy alias, hibás tagság, hiányzó fotó és ismeretlen ID hibát okoz.
+A tisztázandó személyek és régi szöveges nevek tájékoztató jelzések.
+Ugyanez fut a CI-ban is minden pull requestnél.
 
 ## 4. Képek
 
@@ -343,6 +740,12 @@ A számokhoz ne írj `%` jelet vagy `px` egységet. A `width` csak a
 megjelenítési méretet változtatja meg: a képarány megmarad, és kattintásra
 továbbra is a teljes fotó nyílik meg a cikk közös lightboxában. A front
 matter beállítása nem méretezi át a fejléc bannerét vagy a galéria rácsát.
+A banner külön állítható a **Page details → Card & banner photos →
+Featured image width (%)** mezővel (`featuredImg.width`, 10–100%).
+Üresen vagy elhagyva 100%; a meglévő tanfolyamok és túrabeszámolók 40%-ot
+használnak. A kép középre igazodik és megtartja az arányait, telefonon is.
+Ez nem változtatja meg a szövegközi képeket, listakártyákat vagy közösségi
+előnézeteket, és nem méretezi át a képfájlt.
 Az `article_image_width` is 10–100 közötti szám; a hagyományos Markdown
 képek 768 px alatt teljes szélességűek. A méret a cikk szövegoszlopához
 viszonyított, nem a teljes képernyőhöz. Más oldalakon (például az egyesület
@@ -403,7 +806,7 @@ rácsba a `gallery`/`photo` shortcode-okkal:
 - Ne írd meg kézzel a rács HTML-jét/CSS-ét - a `layouts/shortcodes/gallery.html`
   és a `layouts/shortcodes/photo.html` ugyanazt a `.ftsk-gallery-grid`/
   `.ftsk-gallery-item` stílust használja, mint a
-  `component-library/components/global/gallery` (a Galéria oldal).
+  `layouts/partials/sections/global/gallery.html` (a Galéria oldal).
 
 ## GYIK: lenyitható kérdések és válaszok
 

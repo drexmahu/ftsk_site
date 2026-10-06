@@ -220,7 +220,7 @@ A következő build újra létrehozhatja: kézi javításod elveszne.
 flowchart LR
     A["Markdown: történet"] --> H["Hugo"]
     B["YAML: nevek és metaadatok"] --> H
-    C["Sablonok és Bookshop komponensek"] --> H
+    C["Sablonok és natív Hugo oldalszakaszok"] --> H
     D["CSS / SCSS és JavaScript"] --> H
     E["Fotók és PDF-ek"] --> H
     H --> F["Elkészült HTML és kiegészítő fájlok"]
@@ -290,8 +290,7 @@ Nem kell mindegyikben szakértőnek lenned; először elég tudni, melyik mire v
 | Python | Helyi eszközök, konverziók, ellenőrzések, SFTP-publikáló | A Workbench szerverét is ez futtatja |
 | Pillow | Python képfeldolgozó könyvtár | Képkonvertálás és portrévágás |
 | PyYAML | YAML-adatok olvasása és írása Pythonban | A szerkesztő metaadatait kezeli |
-| Node.js + npm | JavaScript-eszközök futtatása és csomagkezelése | Főleg Bookshophoz és egyes ellenőrzésekhez |
-| Go | A Hugo modulfüggőségeinek feloldását segítő eszköz | Nem kell Go-programot írnod |
+| Node.js + npm | JavaScript-eszközök futtatása | Ellenőrzések és opcionális indítóparancsok; nincs npm-csomagfüggőség |
 | Git | Helyi verziókövetés | Branch, commit, rebase |
 | GitHub | Közös repository, PR, review, Actions | Itt dolgozik együtt a csapat |
 | GitHub Actions | Automatikus feladatok futtatása | Itt látod a CI/build/deploy eredményét |
@@ -310,7 +309,7 @@ Nem kell mindegyikben szakértőnek lenned; először elég tudni, melyik mire v
 | `static/pdfs/` | PDF-beszámolók | Feltöltés és hivatkozás |
 | `static/FTSK/` | Megőrzött régi dokumentumok | Régi linkek kompatibilitása |
 | `layouts/` | Hugo-sablonok, shortcode-ok | Technikai megjelenítési logika |
-| `component-library/` | Bookshop komponensek | Újrafelhasználható oldalszakaszok |
+| `layouts/partials/sections/` | Natív Hugo-részsablonok | Újrafelhasználható oldalszakaszok |
 | `assets/` | Feldolgozott stílusok és egyéb build-erőforrások | Dizájn/technikai módosítás |
 | `scripts/` | Eszközök, launcherek, ellenőrzések | Workbench és fejlesztői segítség |
 | `.github/workflows/` | CI/CD feladatleírások | Automatizálás, karbantartói terület |
@@ -327,9 +326,9 @@ Egy új eszközverzió megváltoztathatja a feldolgozást.
 
 - A Hugo verziójának közös kiindulópontja a [`.hugo-version`](../.hugo-version).
   GitHub-változóval a workflow-ban felülírható.
-- A JavaScript csomagokat a [`package.json`](../package.json) írja le,
-  a [`package-lock.json`](../package-lock.json) rögzíti a feloldott függőségeket.
-- A Hugo modulokat a [`go.mod`](../go.mod) és [`go.sum`](../go.sum) követi.
+- A [`package.json`](../package.json) a Node-verziót és indítóparancsokat írja le;
+  a [`package-lock.json`](../package-lock.json) nem tartalmaz külső csomagokat.
+- A Hugo minden sablont helyben olvas: nincs Bookshop-, Go- vagy külső modulfüggőség.
 - A Python csomagok telepítését a beállító script és a kapcsolódó
   requirements-fájlok kezelik.
 
@@ -376,6 +375,12 @@ de ettől még nem lesz push-jogosultságod.
 A [részletes technikai útmutató](TECHNICAL_ENVIRONMENT.md) az irányadó.
 Windows alatt a repo gyökerében:
 
+Dupla kattintással indítható a [setup-dev-env.bat](../setup-dev-env.bat).
+Ez csak az adott folyamatban engedélyezi a PowerShell telepítő futását;
+nem változtatja meg a gép biztonsági beállításait. A végén az ablak nyitva marad.
+Hiba esetén a `.tools/setup.log` és `.tools/setup-report.json` segít a
+karbantartónak. A sikeres lépéseket az újrafuttatás nem telepíti újra.
+
 ```powershell
 .\scripts\setup-dev-env.ps1
 ```
@@ -390,7 +395,7 @@ A repository letöltése nem ugyanaz, mint a futtatási környezet telepítése.
 ### Két külön helyi böngészős cím
 
 ```powershell
-.\scripts\run_workbench.bat
+.\site_editor.bat
 ```
 
 A Workbench alapcíme: <http://127.0.0.1:8879/>.
@@ -508,14 +513,15 @@ Ez technikai védelem, nem meghívás arra, hogy ismeretlen scriptet tegyünk ci
 Egy tagadat vagy menübeállítás több oldalt érinthet.
 A hero-dia eltávolítása a Workbenchben nem törli a fotófájlt.
 
-A **Members & portraits** felületen tagot hozzáadhatsz, módosíthatsz vagy
-törölhetsz, és ugyanitt választhatsz vagy konvertálhatsz hozzá portrét.
-A konvertált portrépár az éppen nyitott vázlatba kerül: a tagadatok és a
-képhivatkozások mentéséhez külön kattints a **Save member** gombra.
-Az átnevezés és törlés megőrzi a régi beszámolók neveit és a képfájlokat.
-A **Roster & image checks** a hiányzó képeket, a taglistához nem rendelt
-portrékat és a nem illeszkedő résztvevő-/szerzőneveket teszi láthatóvá;
-ezek között vendégek és más oldalon használt képek is lehetnek.
+A **People & portraits** felületen előbb keress rá a személyre, csak utána
+hozz létre új rekordot. Mindenki egy tartós ID-t és közös portrépárt kap;
+a **Save person** menti a profiladatokat. A tagság külön választható:
+a **Remove membership** megőrzi a régi cikkeket és a fotókat. Vendég vagy
+tanuló tagság nélkül is kiválasztható bármely cikkhez, de csak az adott
+túra vagy tanfolyam saját résztvevőlistáján jelenik meg. A **Needs clarification**
+szűrő segíti a kézi tisztázást; a **Merge identities** bizonyított egyezésnél
+egyesíti a másolatokat, előnézet és megerősítés után. Ismeretlen nevet
+nem kapcsolunk automatikusan másik személyhez.
 
 A tanfolyam `current` mezője és a főoldali/menu-hirdetés `active` kapcsolója
 **nem ugyanaz**. A második a `data/tanfolyam.yaml` fájlban van.
@@ -593,8 +599,8 @@ hogy útvonalukat ideírod; előbb helyezd el őket, vagy válassz létező saj�
 title: "Gyakorló túrabeszámoló"
 date: 2026-10-05
 draft: true
-author: ""
-participants: []
+author_id: ""
+participant_ids: []
 categories:
   - Túra
 article_image_width: 85
@@ -1520,13 +1526,12 @@ A fájlokra mutató linkeken mindig ellenőrizhető az aktuális megvalósítás
 
 A [build-site action](../.github/actions/build-site/action.yml):
 
-1. Beállítja a Hugo modulokhoz szükséges Go-t.
-2. Feloldja a Hugo verzióját.
-3. Telepíti a Hugo Extendedet.
-4. Beállítja a build dátumát, számát és URL-paramétereit.
-5. Biztonsági ellenőrzés után üres kimeneti mappát készít.
-6. Felépíti a webhelyet.
-7. A tényleges build base URL-jére ellenőrzi a belső linkeket/asseteket.
+1. Feloldja a Hugo verzióját.
+2. Telepíti a Hugo Extendedet.
+3. Beállítja a build dátumát, számát és URL-paramétereit.
+4. Biztonsági ellenőrzés után üres kimeneti mappát készít.
+5. Felépíti a webhelyet.
+6. A tényleges build base URL-jére ellenőrzi a belső linkeket/asseteket.
 
 Az üres kimenet azért fontos, hogy egy már törölt cikk régi HTML-fájlja
 ne maradjon véletlenül a publikált eredményben.

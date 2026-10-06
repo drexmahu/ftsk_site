@@ -1,20 +1,29 @@
 "use strict";
 
 const $ = selector => document.querySelector(selector);
-const state = { token: "", photos: [], portraits: [], activePortrait: null, crop: null, image: null, busy: false, preview: null, initialized: false, jobState: "idle" };
-const viewNames = { overview: "Overview", content: "Pages & posts", photos: "Site photos", portraits: "Members & portraits", hero: "Hero slideshow", social: "Social previews", checks: "Build & checks", help: "Help & workflow" };
+const state = { token: "", git: null, photos: [], portraits: [], activePortrait: null, crop: null, image: null, busy: false, preview: null, initialized: false, jobState: "idle" };
+const viewNames = { overview: "Git · Start here", content: "Pages & posts", photos: "Site photos", portraits: "People & portraits", hero: "Hero slideshow", social: "Social previews", checks: "Build & checks", help: "Help & workflow" };
 
 function notify(message, kind = "") {
   const element = $("#message");
   element.textContent = message;
   element.className = `notice ${kind}`;
   element.hidden = !message;
+  if ($("#person-editor-dialog")?.open) {
+    const notice = $("#person-dialog-notice");
+    notice.textContent = message;
+    notice.className = `notice ${kind}`;
+    notice.hidden = !message;
+  }
 }
 
-async function api(path, { method = "GET", payload, raw, filename } = {}) {
+async function api(path, { method = "GET", payload, raw, filename, folder, contentPath } = {}) {
   const headers = {};
   if (method !== "GET") headers["X-Workbench-Token"] = state.token;
+  if (method !== "GET" && state.git?.branch) headers["X-Workbench-Branch"] = state.git.branch;
   if (filename) headers["X-Filename"] = encodeURIComponent(filename);
+  if (folder !== undefined) headers["X-Folder"] = encodeURIComponent(folder);
+  if (contentPath !== undefined) headers["X-Content-Path"] = encodeURIComponent(contentPath);
   if (payload) headers["Content-Type"] = "application/json";
   const response = await fetch(path, { method, headers, body: raw || (payload ? JSON.stringify(payload) : undefined) });
   let result;
@@ -32,6 +41,7 @@ async function action(operation) {
 function navigate() {
   let view = location.hash.slice(1) || "overview";
   if (!viewNames[view]) view = "overview";
+  if (["content", "photos", "portraits", "hero"].includes(view) && !state.git?.editable) view = "overview";
   document.querySelectorAll("[data-panel]").forEach(panel => { panel.hidden = panel.dataset.panel !== view; });
   document.querySelectorAll("[data-view]").forEach(link => {
     const active = link.dataset.view === view;
@@ -56,6 +66,15 @@ function node(tag, text, className = "") {
   element.textContent = text;
   element.className = className;
   return element;
+}
+
+function downloadWorkbenchDraft(filename, source, type = "text/plain;charset=utf-8") {
+  const url = URL.createObjectURL(new Blob([source], { type }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 function queueView(kind) {
@@ -157,6 +176,43 @@ function showResults(prefix, result) {
   }
 }
 
+function conversionProgress(buttonId, total) {
+  const button = document.getElementById(buttonId);
+  let panel = document.getElementById(`${buttonId}-progress`);
+  if (!panel) {
+    panel = node("div", "", "conversion-progress");
+    panel.id = `${buttonId}-progress`;
+    const label = node("p", "", "hint");
+    label.id = `${panel.id}-label`;
+    label.setAttribute("role", "status");
+    label.setAttribute("aria-live", "polite");
+    const bar = document.createElement("progress");
+    bar.setAttribute("aria-labelledby", label.id);
+    panel.append(label, bar);
+    button.insertAdjacentElement("afterend", panel);
+  }
+  const label = panel.querySelector("p");
+  const bar = panel.querySelector("progress");
+  panel.classList.remove("error");
+  panel.setAttribute("aria-busy", "true");
+  bar.max = total;
+  bar.removeAttribute("value");
+  const update = (completed, message) => {
+    label.textContent = `${completed}/${total} processed · ${message}`;
+    if (total > 1) bar.value = completed;
+  };
+  update(0, "Preparing conversion…");
+  return {
+    update,
+    finish(message, failed = false) {
+      panel.setAttribute("aria-busy", "false");
+      panel.classList.toggle("error", failed);
+      bar.value = failed ? Number(bar.value) : total;
+      label.textContent = message;
+    },
+  };
+}
+
 async function convertPhotos() {
   if (state.busy) return;
   if (!state.photos.length) throw new Error("Choose photos to convert first.");
@@ -165,8 +221,11 @@ async function convertPhotos() {
   setBusy(true);
   const failures = [];
   let completed = 0;
+  const progress = conversionProgress("convert-photos", entries.length);
+  let finished = false;
   try {
     for (const [index, entry] of entries.entries()) {
+      progress.update(index, `Converting ${entry.name}…`);
       notify(`Converting ${index + 1}/${entries.length}: ${entry.name}`, "busy");
       try {
         const result = await api("/api/workbench/convert", { method: "POST", payload: { ...settings, id: entry.id } });
@@ -175,9 +234,15 @@ async function convertPhotos() {
         state.photos = state.photos.filter(item => item.id !== entry.id);
         await api(`/api/workbench/uploads/${entry.id}`, { method: "DELETE" });
       } catch (error) { failures.push(`${entry.name}: ${error.message}`); }
+      progress.update(index + 1, `${completed} converted${failures.length ? ` · ${failures.length} errors` : ""}`);
     }
     notify(`Converted ${completed}/${entries.length} photos.${failures.length ? `\n${failures.join("\n")}` : " Copy the resulting URLs below."}`, failures.length ? "error" : "");
-  } finally { setBusy(false); }
+    progress.finish(`Converted ${completed}/${entries.length} photos.${failures.length ? " Some operations failed; see errors above." : " Ready to use."}`, failures.length > 0);
+    finished = true;
+  } finally {
+    if (!finished) progress.finish("Conversion interrupted. See the error message for details.", true);
+    setBusy(false);
+  }
 }
 
 function clearCrop() {
@@ -278,8 +343,12 @@ async function convertPortrait() {
   if (!thumb.reportValidity()) throw new Error("Check thumbnail size.");
   const payload = { ...options("portrait"), thumb: Number(thumb.value), id: state.activePortrait.id, crop: cropBox() };
   setBusy(true);
+  const progress = conversionProgress("convert-portrait", 1);
+  let finished = false;
   try {
+    progress.update(0, "Converting portrait and thumbnail…");
     const result = await api("/api/workbench/portrait", { method: "POST", payload });
+    progress.update(0, "Portrait exported; assigning files and cleaning up…");
     showResults("portrait", result);
     window.memberEditor?.exported(result);
     const assigned = window.memberEditor?.editing;
@@ -289,11 +358,17 @@ async function convertPortrait() {
     await nextPortrait();
     notify(assigned ? "Portrait exported and assigned to the open member draft. Save member to persist the assignments." :
       "Portrait exported. Select a member and use the existing portrait pair, or copy the URLs below.");
-  } finally { setBusy(false); }
+    progress.finish("Portrait and thumbnail converted. Ready to use.");
+    finished = true;
+  } finally {
+    if (!finished) progress.finish("Portrait operation failed. Check the error and any exported files below.", true);
+    setBusy(false);
+  }
 }
 
 function updateStatus(status) {
   state.token = status.token;
+  if (window.updateGitState) window.updateGitState(status.git);
   if (!state.initialized) {
     for (const entry of status.uploads) {
       const kind = sessionStorage.getItem(`workbench-${entry.id}`) === "portraits" ? "portraits" : "photos";
@@ -309,11 +384,6 @@ function updateStatus(status) {
   $("#preview-state").textContent = label;
   $("#preview-state").className = `badge ${preview.responsive ? "running" : ""}`;
   $("#open-site").href = preview.url;
-  $("#preview-title").textContent = label;
-  $("#preview-description").textContent = preview.responsive ?
-    `Your site is available at ${preview.url}${preview.owned ? " This workspace owns the server." : " This server was started elsewhere and will be left alone."}` :
-    preview.owned ? "Waiting for Hugo to finish building. Check the preview log if startup fails." :
-      "Start Hugo here, or connect to a dev server already running on port 1313.";
   document.querySelectorAll('[data-action="stop-preview"]').forEach(button => { button.disabled = !preview.owned; });
   document.querySelectorAll('[data-action="start-preview"]').forEach(button => { button.disabled = preview.owned || status.job.state === "running"; });
   $("#preview-log").textContent = preview.log || "No owned server log.";
@@ -334,6 +404,7 @@ async function poll() {
     updateStatus(await api("/api/workbench/status"));
     if ($("#message").dataset.disconnected) { notify(""); delete $("#message").dataset.disconnected; }
   } catch (error) {
+    if (window.updateGitState) window.updateGitState(null);
     notify(`Workspace disconnected: ${error.message}`, "error");
     $("#message").dataset.disconnected = "true";
   } finally { setTimeout(poll, 2000); }
@@ -405,7 +476,7 @@ document.querySelectorAll("[data-action]").forEach(button => button.addEventList
   const starting = button.dataset.action === "start-preview";
   await api(`/api/workbench/preview/${starting ? "start" : "stop"}`, { method: "POST" });
   updateStatus(await api("/api/workbench/status"));
-  notify(starting ? "Connected / starting preview. Status and logs update automatically." : "Owned preview stopped. External servers were left alone.");
+  if (!starting) notify("Owned preview stopped. External servers were left alone.");
 })));
 document.querySelectorAll("[data-job]").forEach(button => button.addEventListener("click", () => action(async () => {
   await api("/api/workbench/jobs", { method: "POST", payload: { action: button.dataset.job } });

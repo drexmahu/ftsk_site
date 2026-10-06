@@ -1,0 +1,31 @@
+{{ $people := dict }}
+{{ $names := dict }}
+{{ range hugo.Data.people.people }}
+  {{ if and (isset . "show_profile_contacts") (ne (printf "%T" .show_profile_contacts) "bool") }}
+    {{ errorf "%s: show_profile_contacts must be true or false" .id }}
+  {{ end }}
+  {{ if isset $people .id }}{{ errorf "Duplicate person ID: %s" .id }}{{ end }}
+  {{ $people = merge $people (dict .id .) }}
+  {{ $person := . }}
+  {{ range (slice .name (.nickname | default "") | collections.Append (.aliases | default slice)) }}
+    {{ $key := lower (trim (replaceRE `\s*\([^)]*\)\s*$` "" .) " ") }}
+    {{ if $key }}
+      {{ with index $names $key }}
+        {{ if ne . $person.id }}{{ errorf "Ambiguous person name/alias: %s" $key }}{{ end }}
+      {{ end }}
+      {{ $names = merge $names (dict $key $person.id) }}
+    {{ end }}
+  {{ end }}
+{{ end }}
+{{ $memberships := dict }}
+{{ range hugo.Data.people.groups }}
+  {{ $group := .label }}
+  {{ range .members }}
+    {{ if not (isset $people .person) }}{{ errorf "Unknown membership person ID: %s" .person }}{{ end }}
+    {{ if isset $memberships .person }}{{ errorf "Duplicate membership: %s" .person }}{{ end }}
+    {{ $resolvedRole := partial "assignment-role.html" . }}
+    {{ $memberships = merge $memberships (dict .person (dict "group" $group "role" $resolvedRole.role "roles" (.roles | default slice))) }}
+  {{ end }}
+{{ end }}
+{{ $coursePeople := partial "course-people.html" (dict "directory" "content/tanfolyamok" "names" $names "registry" $people) }}
+{{ return (dict "people" $people "names" $names "memberships" $memberships "course_people" $coursePeople) }}

@@ -1,0 +1,24 @@
+{{ $role := .role | default "" }}
+{{ $exempt := false }}
+{{ $catalog := partialCached "participant-roles.html" . "roles" }}
+{{ if isset . "roles" }}
+  {{ if isset . "role" }}{{ errorf "Use roles or legacy role, not both" }}{{ end }}
+  {{ if not (reflect.IsSlice .roles) }}{{ errorf "Roles must be a list of global role IDs" }}{{ end }}
+  {{ $labels := slice }}
+  {{ $seen := slice }}
+  {{ range .roles }}
+    {{ if in $seen . }}{{ errorf "Duplicate participant role ID: %s" . }}{{ end }}
+    {{ $seen = $seen | append . }}
+    {{ $definition := index $catalog.roles . }}
+    {{ if not $definition }}{{ errorf "Unknown participant role ID: %s" . }}{{ end }}
+    {{ $labels = $labels | append $definition.label }}
+    {{ $exempt = or $exempt ($definition.exempt_from_guest | default false) }}
+  {{ end }}
+  {{ $role = delimit $labels ", " }}
+{{ else if and $role (.participant_assignment | default false) }}
+  {{ with index $catalog.names (lower (trim $role " ")) }}
+    {{ $role = .label }}
+    {{ $exempt = .exempt_from_guest | default false }}
+  {{ end }}
+{{ end }}
+{{ return (dict "role" $role "exempt_from_guest" $exempt) }}

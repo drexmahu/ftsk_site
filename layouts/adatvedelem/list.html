@@ -49,6 +49,7 @@
               </div>
             </div>
             {{ end }} {{ end }}
+            {{ with $.Params.contacts }}{{ partial "tanfolyam-contacts.html" . }}{{ end }}
           </div>
         </div>
         <div class="col-lg-4">

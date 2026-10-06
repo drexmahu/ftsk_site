@@ -3,20 +3,12 @@ date: 2026-03-15T00:00:00Z
 title: Gortani expedíció (2026)
 categories:
   - Expedíció
-author: "Kámvás Linda"
-participants:
-  - Kámvás Linda
-  - Borsos-Szabó Bálint (Zeusz)
-  - Zsuzsi
-  - Györgyi
-  - Tóth Attila
-  - Németh Zsolt (Kutya)
-  - Kiss Tímea
-  - Németh Bence
-  - Irene
+author: ''
+participants: []
 thumbImg:
   image_path: /images/turak/2026-gortani-expedicio/01-csapat-a-sziklafalnal.webp
 featuredImg:
+  width: 60
   image_path: /images/turak/2026-gortani-expedicio/01-csapat-a-sziklafalnal.webp
 seo:
   page_description:
@@ -26,6 +18,16 @@ seo:
   open_graph_type: article
   no_index: false
 draft: false
+author_id: kamvas-linda
+participant_ids:
+- kamvas-linda
+- borsos-szabo-balint
+- kolumban-zsuzsi
+- geblyo-gyorgyi
+- toth-attila
+- nemeth-zsolt
+- kiss-timea
+- stieber-bence
 ---
 
 Majd megyek a Gortaniba, ha nagy leszek…Meghagyom a helyet azoknak, akikre tényleg szükség van…. Mondogattam magamnak minden alkalommal, amikor kiírták a listára, hogy indulna egy csapat. Aztán hirtelen rogyásig megpakolva, az FTSK klubban gyülekező barlangászok között találtam magam az indulás előestéjén. Zeusz egy óriási zöldségtállal koronázta meg a számomra aggodalmakkal teli estét.
@@ -33,8 +35,6 @@ Majd megyek a Gortaniba, ha nagy leszek…Meghagyom a helyet azoknak, akikre té
 ## 1. nap – 2026. március 15. (vasárnap)
 
 Hajnalban már mindenki útra kész volt: Zsuzsi, Györgyi, Ati, Zeusz és Én.  Elég nagy luxus volt a 105-ös buszban ilyen kevesen utazni. A felvonóba kecsesen szökkentünk be a bagekkel, hátizsákokkal és ikeás szatyrokkal, ami kívülről biztos viccesen hatott.
-
-![A csapat a sziklafalnál, indulás előtt](/images/turak/2026-gortani-expedicio/01-csapat-a-sziklafalnal.webp "Zsuzsi, Györgyi, Ati, Zeusz és a csapat többi tagja")
 
 Mire felértünk a Gilbertihez már egészen megnyugodtam, sőt a rengeteg síelő és a nagy nyüzsgés teljesen lázba hozott.
 

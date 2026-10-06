@@ -3,10 +3,11 @@ date: 2025-04-01T00:00:00Z
 title: Tavaszi szlovén túra (2025)
 categories:
   - Túra
-author: Turi László
+author: ''
 thumbImg:
   image_path: /images/hero/ftsk-cave-hero.jpg
 featuredImg:
+  width: 40
   image_path: /images/hero/ftsk-cave-hero.jpg
 seo:
   page_description: 
@@ -16,6 +17,7 @@ seo:
   open_graph_type: article
   no_index: false
 draft: false
+author_id: turi-laszlo
 ---
 Tavaszi barlangtúránk célja idén is Szlovénia karsztvidéke volt, ahol több napon
 át jártuk a helyi barlangokat csapatunkkal.

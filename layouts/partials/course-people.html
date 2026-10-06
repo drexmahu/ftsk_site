@@ -1,0 +1,34 @@
+{{ $people := dict }}
+{{ $names := .names }}
+{{ $registry := .registry }}
+{{ range os.ReadDir .directory }}
+  {{ $path := printf "%s/%s" $.directory .Name }}
+  {{ if .IsDir }}
+    {{ $people = merge $people (partial "course-people.html" (dict "directory" $path "names" $names "registry" $registry)) }}
+  {{ else if and (strings.HasSuffix .Name ".md") (ne .Name "_index.md") }}
+    {{ $source := replace (os.ReadFile $path) "\r\n" "\n" }}
+    {{ if not (strings.HasPrefix $source "---\n") }}{{ errorf "Course needs YAML front matter: %s" $path }}{{ end }}
+    {{ $parts := split $source "\n---" }}
+    {{ if lt (len $parts) 2 }}{{ errorf "Course front matter is not closed: %s" $path }}{{ end }}
+    {{ $meta := transform.Unmarshal (strings.TrimPrefix "---\n" (index $parts 0)) }}
+    {{ if and $meta.participant_ids $meta.participants }}{{ errorf "Course uses participant_ids or legacy participants, not both: %s" $path }}{{ end }}
+    {{ $entries := $meta.participant_ids | default ($meta.participants | default slice) }}
+    {{ if not (reflect.IsSlice $entries) }}{{ errorf "Course participants must be a list: %s" $path }}{{ end }}
+    {{ range $entries }}
+      {{ $id := "" }}
+      {{ if reflect.IsMap . }}
+        {{ $id = .person | default "" }}
+      {{ else if $meta.participant_ids }}
+        {{ $id = . }}
+      {{ else }}
+        {{ $key := lower (trim (replaceRE `\s*\([^)]*\)\s*$` "" .) " ") }}
+        {{ $id = index $names $key | default "" }}
+      {{ end }}
+      {{ if $id }}
+        {{ if not (isset $registry $id) }}{{ errorf "Unknown course participant ID: %s in %s" $id $path }}{{ end }}
+        {{ $people = merge $people (dict $id true) }}
+      {{ end }}
+    {{ end }}
+  {{ end }}
+{{ end }}
+{{ return $people }}

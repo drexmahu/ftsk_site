@@ -2,6 +2,7 @@
 
 import io
 import json
+import subprocess
 import tempfile
 import threading
 import unittest
@@ -10,6 +11,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 from PIL import Image
+import pillow_heif
 
 import site_workbench as workbench
 
@@ -31,7 +33,11 @@ class Fixture(unittest.TestCase):
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory(prefix="ftsk-workbench-test-")
         self.root = Path(self.directory.name)
+        subprocess.run(["git", "init", "-b", "fixture", str(self.root)],
+                       check=True, capture_output=True)
         (self.root / "data").mkdir()
+        (self.root / "data" / "people.yaml").write_text(
+            "people: []\ngroups:\n- label: Members\n  members: []\n", encoding="utf-8")
         hero = self.root / "static" / "images" / "hero"
         hero.mkdir(parents=True)
         for name in ("one.webp", "two.webp"):
@@ -51,6 +57,71 @@ class Fixture(unittest.TestCase):
 
 
 class ImageTests(Fixture):
+    def test_heif_primary_image_photo_portrait_and_standalone_exports(self):
+        output = io.BytesIO()
+        Image.new("RGB", (160, 120), "red").save(
+            output, "HEIF", save_all=True,
+            append_images=[Image.new("RGB", (80, 120), "blue")], primary_index=1)
+        for extension in (".heic", ".HEIF"):
+            with self.subTest(extension=extension):
+                entry = self.app.stage("phone" + extension, output.getvalue())
+                self.assertEqual((entry["width"], entry["height"]), (80, 120))
+                with Image.open(self.app.scratch / entry["id"] / "preview.jpg") as preview:
+                    self.assertGreater(preview.getpixel((40, 60))[2], 200)
+                photo_file = self.app.convert({
+                    "id": entry["id"], "folder": "turak/phone", "width": 90, "height": 90,
+                })["files"][0]
+                self.assertEqual((photo_file["width"], photo_file["height"]), (60, 90))
+                portrait = self.app.convert({
+                    "id": entry["id"], "folder": "members", "thumb": 64,
+                    "crop": [0, 0, 80, 80],
+                }, portrait=True)
+                self.assertEqual(len(portrait["files"]), 2)
+        source = self.root / "phone.heic"
+        source.write_bytes(output.getvalue())
+        destination = self.root / "standalone"
+        destination.mkdir()
+        result = workbench.photos.process_image(source, destination, 60, 60, 82, log=lambda _: None)
+        self.assertEqual(result[1:], (40, 60))
+        self.assertTrue(workbench.portraits.process_image(
+            source, destination, 64, 60, 60, 82, log=lambda _: None,
+            manual_crop=lambda _path, image: (0, 0, image.width, image.width)))
+        with Image.open(destination / "phone_thumb.webp") as thumbnail:
+            self.assertEqual(thumbnail.size, (64, 64))
+            self.assertGreater(thumbnail.getpixel((32, 32))[2], 200)
+
+    def test_heif_corrupt_and_pixel_limits_remain_protected(self):
+        with self.assertRaisesRegex(workbench.ToolError, "Cannot decode image"):
+            self.app.stage("broken.heic", b"not a HEIF image")
+        output = io.BytesIO()
+        Image.new("RGB", (160, 120), "red").save(output, "HEIF")
+        with patch.object(workbench, "MAX_PIXELS", 10):
+            with self.assertRaisesRegex(workbench.ToolError, "25 million pixels"):
+                self.app.stage("large.heif", output.getvalue())
+        self.assertEqual(self.app.uploads, {})
+        with patch.object(Image, "open", side_effect=EOFError("Truncated HEIF")):
+            with self.assertRaisesRegex(workbench.ToolError, "Cannot decode image"):
+                self.app.stage("truncated.heic", output.getvalue())
+
+    def test_heif_rotation_and_high_bit_depth(self):
+        exif = Image.Exif()
+        exif[274] = 6
+        source = pillow_heif.from_bytes("RGB", (160, 120), bytes([255, 0, 0]) * 160 * 120)
+        source.info["exif"] = exif.tobytes()
+        output = io.BytesIO()
+        source.save(output)
+        entry = self.app.stage("rotated.heic", output.getvalue())
+        self.assertEqual((entry["width"], entry["height"]), (120, 160))
+        hdr = pillow_heif.from_bytes("RGB;16", (16, 16), bytes([255, 255, 0, 0, 0, 0]) * 16 * 16)
+        output = io.BytesIO()
+        hdr.save(output, bit_depth=10)
+        entry = self.app.stage("high-bit-depth.heif", output.getvalue())
+        result = self.app.convert({"id": entry["id"], "folder": "gallery"})["files"][0]
+        with Image.open(self.root / "static" / result["url"].lstrip("/")) as image:
+            self.assertEqual(image.mode, "RGB")
+            self.assertEqual(image.size, (16, 16))
+            self.assertGreater(image.getpixel((8, 8))[0], 200)
+
     def test_exif_orientation_and_preview(self):
         entry = self.stage(orientation=6)
         self.assertEqual((entry["width"], entry["height"]), (120, 160))
@@ -268,6 +339,25 @@ class HTTPTests(Fixture):
         url = json.loads(body)["files"][0]["url"]
         self.assertEqual(self.request(url)[0], 200)
         self.assertEqual(self.request(f"/api/workbench/uploads/{identifier}", "DELETE", headers=headers)[0], 200)
+
+    def test_heif_upload_preview_conversion_and_corrupt_response(self):
+        output = io.BytesIO()
+        Image.new("RGB", (160, 120), "blue").save(output, "HEIF")
+        headers = {"X-Workbench-Token": self.app.token, "X-Filename": "phone.heic"}
+        status, body, _ = self.request("/api/workbench/uploads", "POST", output.getvalue(), headers)
+        self.assertEqual(status, 200, body)
+        identifier = json.loads(body)["id"]
+        status, body, _ = self.request(f"/api/workbench/uploads/{identifier}")
+        self.assertEqual(status, 200)
+        with Image.open(io.BytesIO(body)) as preview:
+            self.assertEqual(preview.format, "JPEG")
+        status, body, _ = self.request("/api/workbench/convert", "POST",
+                                      json.dumps({"id": identifier, "folder": "gallery"}), headers)
+        self.assertEqual(status, 200, body)
+        self.assertTrue(json.loads(body)["files"][0]["url"].endswith(".webp"))
+        status, body, _ = self.request("/api/workbench/uploads", "POST", b"broken HEIF", headers)
+        self.assertEqual(status, 400)
+        self.assertIn("Cannot decode image", json.loads(body)["error"])
 
     def test_bad_payload_traversal_and_unknown_routes(self):
         headers = {"X-Workbench-Token": self.app.token}

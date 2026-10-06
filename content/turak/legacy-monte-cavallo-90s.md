@@ -3,10 +3,11 @@ date: 1995-08-01T00:00:00Z
 title: Monte Cavallo túrák a 90'-es években
 categories:
   - Túra
-author: Zsólyomi Zsolt (Frédi)
+author: ''
 thumbImg:
   image_path: /images/hero/ftsk-cave-hero.jpg
 featuredImg:
+  width: 40
   image_path: /images/hero/ftsk-cave-hero.jpg
 seo:
   page_description: 
@@ -16,6 +17,7 @@ seo:
   open_graph_type: article
   no_index: false
 draft: false
+author_id: zsolyomi-zsolt
 ---
 Ki nem hallott már erről a magashegyi barlangról, sok barlangász már járt is benne.
 Talán a legismertebb külföldi célpont a Gortani barlang után. Ez nem véletlen mivel

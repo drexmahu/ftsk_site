@@ -25,7 +25,7 @@
     <script src="{{ $siteScript.RelPermalink }}" defer></script>
     <title>{{print .Page.Title " | " .Site.Title}}</title>
   </head>
-  <body>
+  <body{{ if not .IsHome }} class="ftsk-inner-page"{{ end }}>
     {{ partial "navbar.html" . }} {{ block "main" . }} {{ end }} {{ partial
     "footer.html" . }} {{ partial "member-modal.html" . }}
 

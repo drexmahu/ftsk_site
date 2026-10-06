@@ -1,0 +1,41 @@
+{{- /* _bookshop_name is retained as a data key, not a rendering dependency. */ -}}
+{{- $templates := dict
+  "about/hero" "sections/about/hero.html"
+  "contact/hero" "sections/contact/hero.html"
+  "contact/info" "sections/contact/info.html"
+  "feature/hero" "sections/feature/hero.html"
+  "global/cta" "sections/global/cta.html"
+  "global/feature" "sections/global/feature.html"
+  "global/gallery" "sections/global/gallery.html"
+  "global/header" "sections/global/header.html"
+  "global/linklist" "sections/global/linklist.html"
+  "global/members" "sections/global/members.html"
+  "global/page-hero" "sections/global/page-hero.html"
+  "global/richtext" "sections/global/richtext.html"
+  "home/hero" "sections/home/hero.html"
+-}}
+{{- $blocks := slice -}}
+{{- if isset .Params "content_blocks" -}}
+  {{- $blocks = .Params.content_blocks -}}
+{{- end -}}
+{{- if not (reflect.IsSlice $blocks) -}}
+  {{- errorf "%s: content_blocks must be a list" .File.Path -}}
+{{- else -}}
+  {{- $page := . -}}
+  {{- range $index, $block := $blocks -}}
+    {{- if not (reflect.IsMap $block) -}}
+      {{- errorf "%s: content block %d must be a mapping" $page.File.Path $index -}}
+    {{- else -}}
+      {{- $name := $block._bookshop_name | default "" -}}
+      {{- if ne (printf "%T" $name) "string" -}}
+        {{- errorf "%s: content block %d needs a section name" $page.File.Path $index -}}
+      {{- else -}}
+        {{- with index $templates $name -}}
+          {{ partial . $block }}
+        {{- else -}}
+          {{- errorf "%s: unknown content section %q at block %d" $page.File.Path $name $index -}}
+        {{- end -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}

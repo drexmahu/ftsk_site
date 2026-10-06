@@ -1,0 +1,3 @@
+{{ $author := .Params.author | default "" }}
+{{ with .Params.author_id }}{{ $author = dict "person" . }}{{ end }}
+{{ return $author }}

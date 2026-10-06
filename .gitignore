@@ -15,8 +15,12 @@ hugo.linux
 # Pinned tool binaries downloaded by scripts/setup-dev-env.ps1
 /.tools/
 
-# Python bytecode cache (scripts/membership_image_converter/)
+# Python bytecode caches and local tooling environment
 __pycache__/
 /.venv/
 
-/node_modules
+# Optional local npm installation artifacts
+/node_modules/
+
+# Local history recovery bundles and patches created before Workbench rebases
+/.workbench-backups/
