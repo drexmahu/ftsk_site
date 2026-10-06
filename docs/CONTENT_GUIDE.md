@@ -390,7 +390,7 @@ Indítsd el a főmappában lévő `site_editor.bat` alkalmazást, majd nyisd meg
   A **Course & FAQ → Course flyers → + Add → Choose image…** szórólapot rendel
   hozzá; az **Add images & PDFs** kijelölt képén az **Add course flyer** is használható.
   A szórólapok a címsávban, enyhén elforgatott és egymást átfedő kártyákként
-  jelennek meg, nem cserélik le a fő vagy közösségi képet.
+  jelennek meg, vastag, a címszöveggel azonos törtfehér kerettel; nem cserélik le a fő vagy közösségi képet.
   A kártyák mérete a darabszámhoz igazodik: egy szórólap nagyobb, kettő
   közepes, három vagy több kisebb; sok kártya további sorokba rendeződik.
   Kattintásra az eredeti kép
