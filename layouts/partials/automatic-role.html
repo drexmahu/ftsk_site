@@ -1,0 +1,16 @@
+{{ $definitions := partialCached "participant-roles.html" . "registry" }}
+{{ $label := "" }}
+{{ range $definitions.roles }}
+  {{ $role := . }}
+  {{ with .automatic_when }}
+    {{ $match := true }}
+    {{ range $key, $value := . }}
+      {{ if ne (index $.facts $key) $value }}{{ $match = false }}{{ end }}
+    {{ end }}
+    {{ if $match }}
+      {{ if $label }}{{ errorf "Overlapping automatic role rules" }}{{ end }}
+      {{ $label = $role.label }}
+    {{ end }}
+  {{ end }}
+{{ end }}
+{{ return $label }}

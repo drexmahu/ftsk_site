@@ -1,0 +1,34 @@
+roles:
+  - id: elnok
+    label: elnök
+    aliases: []
+    exempt_from_guest: false
+  - id: kutatasvezeto
+    label: kutatásvezető
+    aliases: []
+    exempt_from_guest: false
+  - id: elnoksegi-tag
+    label: elnökségi tag
+    aliases: []
+    exempt_from_guest: false
+  - id: penztaros
+    label: pénztáros
+    aliases: []
+    exempt_from_guest: false
+  - id: turavezeto
+    label: túravezető
+    aliases: []
+    exempt_from_guest: false
+  - id: raktaros
+    label: raktáros
+    aliases: []
+    exempt_from_guest: false
+  - id: tanfolyami-resztvevo
+    label: tanfolyami résztvevő
+    aliases: []
+    automatic_when:
+      current_member: false
+      course_participant: true
+  - id: vendeg
+    label: vendég
+    aliases: []

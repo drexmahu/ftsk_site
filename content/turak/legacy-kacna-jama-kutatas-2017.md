@@ -3,10 +3,11 @@ date: 2017-07-01T00:00:00Z
 title: Kacna-jama kutatás (2017)
 categories:
   - Kutatás
-author: Markó Gábor (PF)
+author: ''
 thumbImg:
   image_path: /images/hero/ftsk-cave-hero.jpg
 featuredImg:
+  width: 40
   image_path: /images/hero/ftsk-cave-hero.jpg
 seo:
   page_description: 
@@ -16,6 +17,7 @@ seo:
   open_graph_type: article
   no_index: false
 draft: false
+author_id: marko-gabor
 ---
 A szlovéniai Kacna-jama barlangrendszer kutatásába kapcsolódtunk be
 nemzetközi kollégákkal együttműködve.

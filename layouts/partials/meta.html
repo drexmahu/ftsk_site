@@ -7,23 +7,27 @@
 <!-- Page description for SEO -->
 {{ $description := .Params.seo.page_description | default hugo.Data.meta.description }}
 <meta name="description" content="{{ $description }}">
-<meta property="og:description" content="{{ $description }}" />
-<meta name="twitter:description" content="{{ $description }}" />
+{{ $shareDescription := .Params.seo.social_description | default $description }}
+{{ $defaultShareTitle := .Title }}
+{{ if .IsHome }}{{ $defaultShareTitle = hugo.Data.meta.site_title }}{{ end }}
+{{ $shareTitle := .Params.seo.social_title | default $defaultShareTitle }}
+<meta property="og:description" content="{{ $shareDescription }}" />
+<meta name="twitter:description" content="{{ $shareDescription }}" />
 
 <!-- Meta tags for open graph and twitter -->
 <meta name="twitter:card" content="summary_large_image" />
 {{ with hugo.Data.meta.twitter_site }}<meta name="twitter:site" content="{{ . }}" />{{ end }}
 {{ $socialCard := partial "social-card.html" . }}
 {{ if .IsHome }}
-    <meta property="og:title" content="{{ hugo.Data.meta.site_title }}" />
+    <meta property="og:title" content="{{ $shareTitle }}" />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="{{ $socialCard }}" />
     {{ with hugo.Data.meta.twitter_site }}<meta name="twitter:creator" content="{{ . }}" />{{ end }}
-    <meta name="twitter:title" content="{{ hugo.Data.meta.site_title }}" />
+    <meta name="twitter:title" content="{{ $shareTitle }}" />
     <meta name="twitter:image" content="{{ $socialCard }}" />
 {{ else }}
-    <meta property="og:title" content="{{ .Title }}" />
-    <meta name="twitter:title" content="{{ .Title }}" />
+    <meta property="og:title" content="{{ $shareTitle }}" />
+    <meta name="twitter:title" content="{{ $shareTitle }}" />
     {{ with .Params.seo.open_graph_type }}
     <meta property="og:type" content="{{ . }}" />
     {{ else }}

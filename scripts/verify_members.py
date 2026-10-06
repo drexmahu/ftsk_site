@@ -1,204 +1,84 @@
-"""
-Validates data/members.yaml (the canonical member roster) and every trip
-report/course article's `participants:` front matter, so data bugs are caught
-before a Hugo build even runs (see .github/workflows/ci.yml).
+"""Validate identities, current membership and every page's people references.
 
-Run locally with `python scripts/verify_members.py` from the repo root.
-Exits non-zero (and prints every problem found, not just the first) if any
-check fails.
+The historical command name is retained for CI and existing editor launchers.
+Unresolved legacy credits and identities marked needs_review are advisory;
+invalid canonical foreign keys, duplicate identities and missing images fail.
 """
 
-import re
 import sys
 from pathlib import Path
 
-import yaml
+from content_workbench import ContentError, parse_frontmatter, split_source
+from people_registry import contact_lists, page_references, person_index, registry_data, resolve_legacy
+from participant_roles import read_roles
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-MEMBERS_PATH = REPO_ROOT / "data" / "members.yaml"
-STATIC_DIR = REPO_ROOT / "static"
-CONTENT_GLOBS = ["content/turak/**/*.md", "content/tanfolyamok/**/*.md"]
-
-ALLOWED_MEMBER_KEYS = {"name", "nickname", "role", "image", "modal_image", "bio"}
-PAREN_SUFFIX = re.compile(r"\s*\([^)]*\)\s*$")
 
 
-def fail(problems, message):
-    problems.append(message)
-
-
-def load_members(problems):
-    if not MEMBERS_PATH.exists():
-        fail(problems, f"{MEMBERS_PATH} does not exist")
-        return []
-
+def verify(root: Path) -> tuple[list[str], list[str], int]:
+    problems, warnings = [], []
+    path = root / "data" / "people.yaml"
     try:
-        data = yaml.safe_load(MEMBERS_PATH.read_text(encoding="utf-8-sig"))
-    except yaml.YAMLError as exc:
-        fail(problems, f"{MEMBERS_PATH} is not valid YAML: {exc}")
-        return []
-
-    groups = (data or {}).get("groups")
-    if not isinstance(groups, list) or not groups:
-        fail(problems, f"{MEMBERS_PATH}: top-level `groups` must be a non-empty list")
-        return []
-
-    members = []
-    for group in groups:
-        label = group.get("label") if isinstance(group, dict) else None
-        if not label:
-            fail(problems, f"{MEMBERS_PATH}: a group is missing its `label`")
-            continue
-
-        group_members = group.get("members")
-        if not isinstance(group_members, list):
-            fail(problems, f"{MEMBERS_PATH}: group {label!r} `members` must be a list (which may be empty)")
-            continue
-
-        for entry in group_members:
-            if not isinstance(entry, dict):
-                fail(problems, f"{MEMBERS_PATH}: group {label!r} has a non-mapping member entry: {entry!r}")
+        data = registry_data(path.read_bytes())
+    except (OSError, UnicodeError, ContentError) as exc:
+        return [f"data/people.yaml: {exc}"], [], 0
+    people = person_index(data)
+    try:
+        roles = read_roles(root)
+    except (OSError, UnicodeError, ContentError) as exc:
+        return [f"data/participant_roles.yaml: {exc}"], [], len(people)
+    try:
+        registry_data(path.read_bytes(), roles)
+    except (OSError, UnicodeError, ContentError) as exc:
+        return [f"data/people.yaml: {exc}"], [], len(people)
+    for person in data["people"]:
+        if person.get("needs_review"):
+            warnings.append(f"Clarify identity manually: {person['name']} [{person['id']}]")
+        for field in ("image", "modal_image"):
+            url = person.get(field)
+            if not url:
                 continue
-
-            extra_keys = set(entry) - ALLOWED_MEMBER_KEYS
-            if extra_keys:
-                fail(
-                    problems,
-                    f"{MEMBERS_PATH}: member {entry.get('name')!r} in {label!r} has unknown field(s) "
-                    f"{sorted(extra_keys)} - typo? allowed fields are {sorted(ALLOWED_MEMBER_KEYS)}",
-                )
-
-            name = entry.get("name")
-            if not isinstance(name, str) or not name.strip():
-                fail(problems, f"{MEMBERS_PATH}: group {label!r} has a member with a missing/empty `name`")
-                continue
-
-            for field in ("nickname", "role", "image", "modal_image", "bio"):
-                value = entry.get(field)
-                if value is not None and not isinstance(value, str):
-                    fail(
-                        problems,
-                        f"{MEMBERS_PATH}: member {name!r} field `{field}` must be a string, got {type(value).__name__}",
-                    )
-
-            if PAREN_SUFFIX.search(name):
-                fail(
-                    problems,
-                    f"{MEMBERS_PATH}: member `name` {name!r} still has a \"(...)\" suffix baked in - "
-                    "move it to the `nickname` or `role` field instead",
-                )
-            nickname = entry.get("nickname")
-            if isinstance(nickname, str) and PAREN_SUFFIX.search(nickname):
-                fail(problems, f"{MEMBERS_PATH}: member {name!r} `nickname` {nickname!r} should not itself contain \"(...)\"")
-
-            members.append({"name": name, "nickname": nickname, "group": label})
-
-    return members
+            file = root / "static" / url.lstrip("/")
+            if (not url.startswith("/images/") or "\\" in url or ":" in url or "?" in url or "#" in url
+                    or any(part in ("", ".", "..") for part in url[1:].split("/"))
+                    or not file.resolve().is_relative_to((root / "static" / "images").resolve())
+                    or file.suffix.lower() not in (".jpg", ".jpeg", ".png", ".webp")
+                    or not file.is_file()):
+                problems.append(f"{person['id']}: invalid or missing {field}: {url}")
+    for file in sorted((root / "content").rglob("*.md")):
+        relative = file.relative_to(root).as_posix()
+        try:
+            meta = parse_frontmatter(split_source(file.read_text(encoding="utf-8-sig"))[0])
+            page_references(meta, people, roles)
+            legacy = meta.get("participants", [])
+            if (not isinstance(legacy, list) or any(not isinstance(name, str) or not name.strip() for name in legacy)
+                    or len({name.casefold() for name in legacy}) != len(legacy)):
+                raise ContentError("Legacy participants must be distinct, non-empty names.")
+            author = meta.get("author", "")
+            if not isinstance(author, str):
+                raise ContentError("Legacy author must be text.")
+            names = legacy + ([author] if author else []) + [
+                contact["name"] for _, contacts in contact_lists(meta) for contact in contacts if contact.get("name")]
+            for name in names:
+                if resolve_legacy(data, name) is None:
+                    warnings.append(f"{relative}: unresolved legacy credit {name!r}; use the workbench to clarify.")
+                else:
+                    warnings.append(f"{relative}: legacy name {name!r}; prefer permanent person IDs.")
+        except (ContentError, OSError, UnicodeError) as exc:
+            problems.append(f"{relative}: {exc}")
+    return problems, warnings, len(people)
 
 
-def check_duplicates(members, problems):
-    seen_names = {}
-    seen_nicknames = {}
-    for m in members:
-        name_key = m["name"].strip().lower()
-        if name_key in seen_names:
-            fail(
-                problems,
-                f"Duplicate member name {m['name']!r} in groups {seen_names[name_key]!r} and {m['group']!r} - "
-                "participant-card lookups would be ambiguous",
-            )
-        else:
-            seen_names[name_key] = m["group"]
-
-        if m["nickname"]:
-            nick_key = m["nickname"].strip().lower()
-            if nick_key in seen_nicknames:
-                fail(
-                    problems,
-                    f"Duplicate nickname {m['nickname']!r} used by members in {seen_nicknames[nick_key]!r} "
-                    f"and {m['group']!r} - participant-card lookups would be ambiguous",
-                )
-            else:
-                seen_nicknames[nick_key] = m["group"]
-
-            if nick_key in seen_names:
-                fail(
-                    problems,
-                    f"Nickname {m['nickname']!r} (used by a member in {m['group']!r}) collides with another "
-                    "member's plain `name` - participant-card lookups would be ambiguous",
-                )
-
-
-def check_images_exist(problems):
-    data = yaml.safe_load(MEMBERS_PATH.read_text(encoding="utf-8-sig")) or {}
-    for group in data.get("groups", []):
-        for entry in group.get("members", []) or []:
-            if not isinstance(entry, dict):
-                continue
-            for field in ("image", "modal_image"):
-                path = entry.get(field)
-                if not path:
-                    continue
-                relative = path.lstrip("/")
-                if not (STATIC_DIR / relative).is_file():
-                    fail(
-                        problems,
-                        f"Member {entry.get('name')!r} `{field}` points to a missing file: "
-                        f"static/{relative}",
-                    )
-
-
-def check_content_participants(problems):
-    for pattern in CONTENT_GLOBS:
-        for path in sorted(REPO_ROOT.glob(pattern)):
-            text = path.read_text(encoding="utf-8-sig")
-            if not text.startswith("---"):
-                continue
-            end = text.find("\n---", 3)
-            if end == -1:
-                continue
-            front_matter_text = text[3:end]
-            try:
-                front_matter = yaml.safe_load(front_matter_text) or {}
-            except yaml.YAMLError as exc:
-                fail(problems, f"{path.relative_to(REPO_ROOT)}: front matter is not valid YAML: {exc}")
-                continue
-
-            participants = front_matter.get("participants")
-            if participants is None:
-                continue
-
-            rel = path.relative_to(REPO_ROOT)
-            if not isinstance(participants, list) or not participants:
-                fail(problems, f"{rel}: `participants` must be a non-empty list when present")
-                continue
-
-            seen = set()
-            for entry in participants:
-                if not isinstance(entry, str) or not entry.strip():
-                    fail(problems, f"{rel}: `participants` entries must be non-empty strings, got {entry!r}")
-                    continue
-                key = entry.strip().lower()
-                if key in seen:
-                    fail(problems, f"{rel}: duplicate `participants` entry {entry!r}")
-                seen.add(key)
-
-
-def main():
-    problems = []
-    members = load_members(problems)
-    if members:
-        check_duplicates(members, problems)
-        check_images_exist(problems)
-    check_content_participants(problems)
-
+def main() -> int:
+    problems, warnings, count = verify(REPO_ROOT)
+    for warning in warnings:
+        print(f"NOTE - {warning}")
     if problems:
-        print(f"FAILED - {len(problems)} problem(s) found:\n")
-        for p in problems:
-            print(f" - {p}")
+        print(f"FAILED - {len(problems)} problem(s):")
+        for problem in problems:
+            print(f" - {problem}")
         return 1
-
-    print(f"OK - {len(members)} members across all groups, all checks passed.")
+    print(f"OK - {count} people; memberships, portraits and page references validated.")
     return 0
 
 

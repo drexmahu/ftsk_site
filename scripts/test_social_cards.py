@@ -155,6 +155,67 @@ class SocialCardSelectionTests(unittest.TestCase):
         images = {row["title"]: row["image"] for row in rows}
         self.assertEqual(images["First report"], images["A completely different report title"])
 
+    def test_exact_social_image_and_independent_share_text(self):
+        for relative in ("turak/exact.md", "tanfolyamok/exact.md"):
+            self.page(relative, "Article title", featured="/images/featured.png")
+            file = self.root / "content" / relative
+            data = json.loads(file.read_text(encoding="utf-8").split("\n")[0])
+            data["seo"] = {
+                "social_image": "/images/override.png",
+                "featured_image": "/images/does-not-exist.png",
+                "social_title": 'Share "title" & details',
+                "social_description": "Share description",
+                "page_description": "Search description",
+            }
+            file.write_text(json.dumps(data) + "\n\nBody\n", encoding="utf-8")
+        (self.root / "layouts" / "_default" / "single.html").write_text(
+            '{{ partial "meta.html" . }}<h1>{{ .Title }}</h1>', encoding="utf-8")
+        # The exact image must not require the generated card's overlays.
+        (self.root / "assets" / "images" / "og" / "gradient.png").unlink()
+        (self.root / "layouts" / "index.html").write_text("fixture", encoding="utf-8")
+        result = subprocess.run([self.hugo, "--source", str(self.root)],
+                                capture_output=True, text=True, encoding="utf-8")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        for section in ("turak", "tanfolyamok"):
+            html = (self.root / "public" / section / "exact" / "index.html").read_text(encoding="utf-8")
+            for tag in ('property="og:image"', 'name="twitter:image"'):
+                self.assertIn(f'<meta {tag} content="https://example.com/preview/images/override.png"', html)
+            for tag in ('property="og:title"', 'name="twitter:title"'):
+                self.assertIn(f'<meta {tag} content="Share &#34;title&#34; &amp; details"', html)
+            self.assertIn('<meta name="description" content="Search description"', html)
+            self.assertIn('<meta property="og:description" content="Share description"', html)
+            self.assertIn('<meta name="twitter:description" content="Share description"', html)
+            self.assertIn("<h1>Article title</h1>", html)
+        self.assertEqual(
+            (self.root / "assets" / "images" / "override.png").read_bytes(),
+            (self.root / "public" / "images" / "override.png").read_bytes())
+
+    def test_invalid_exact_social_images_fail_build(self):
+        (self.root / "layouts" / "_default" / "single.html").write_text(
+            '{{ partial "meta.html" . }}', encoding="utf-8")
+        for path in ("/images/missing.png", "https://example.test/image.png", "/images/vector.svg"):
+            with self.subTest(path=path):
+                (self.root / "assets" / "images" / "vector.svg").write_text(
+                    '<svg xmlns="http://www.w3.org/2000/svg"/>', encoding="utf-8")
+                (self.root / "content" / "turak" / "invalid.md").write_text(
+                    json.dumps({"title": "Invalid", "seo": {"social_image": path}}) + "\n", encoding="utf-8")
+                _, log = self.build(succeeds=False)
+                self.assertIn("Social image for", log)
+
+    def test_empty_share_overrides_keep_default_metadata(self):
+        self.page("turak/default.md", "Original title", featured="/images/featured.png")
+        file = self.root / "content" / "turak" / "default.md"
+        data = json.loads(file.read_text(encoding="utf-8").split("\n")[0])
+        data["seo"] = {"social_title": "", "social_description": "", "social_image": "",
+                       "page_description": "Original description"}
+        file.write_text(json.dumps(data) + "\n", encoding="utf-8")
+        (self.root / "layouts" / "_default" / "single.html").write_text(
+            '{{ partial "meta.html" . }}', encoding="utf-8")
+        self.build()
+        html = (self.root / "public" / "turak" / "default" / "index.html").read_text(encoding="utf-8")
+        self.assertIn('<meta property="og:title" content="Original title"', html)
+        self.assertIn('<meta property="og:description" content="Original description"', html)
+
     def test_social_url_follows_build_url_independently_of_canonical(self):
         template = '{{ partial "meta.html" . }}'
         (self.root / "layouts" / "index.html").write_text(template, encoding="utf-8")

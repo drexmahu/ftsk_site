@@ -1,0 +1,529 @@
+# Permanent identities and independent current-membership assignments.
+people:
+- name: Gyovai Tamás
+  image: /images/members/gyovai_tamas_thumb.webp
+  modal_image: /images/members/gyovai_tamas_full.webp
+  id: gyovai-tamas
+  email: gyovai94@gmail.com
+- name: Kalotai Zsófi
+  image: /images/members/kalotai_zsofia_thumb.webp
+  modal_image: /images/members/kalotai_zsofia_full.webp
+  id: kalotai-zsofia
+  aliases:
+  - Kalotai Zsófia
+- name: Rehány Niki
+  image: /images/members/rehany_nikolett-2_thumb.webp
+  modal_image: /images/members/rehany_nikolett-2_full.webp
+  id: rehany-nikolett
+  aliases:
+  - Rehány Nikolett
+- name: Fialowski Melinda
+  image: /images/members/fialowski_melinda-2_thumb.webp
+  modal_image: /images/members/fialowski_melinda-2_full.webp
+  id: fialowski-melinda
+- name: Ábrahám Gábor
+  nickname: Nasa
+  image: /images/members/abraham_gabor_thumb.webp
+  modal_image: /images/members/abraham_gabor_full.webp
+  id: abraham-gabor
+- name: Bacsó Gábor
+  image: /images/members/bacso_gabor-2_thumb.webp
+  modal_image: /images/members/bacso_gabor-2_full.webp
+  id: bacso-gabor
+- name: Balázs Zoltán
+  id: balazs-zoltan
+- name: Borsos-Szabó Bálint
+  nickname: Zeusz
+  id: borsos-szabo-balint
+  email: balintborsos@gmail.com
+- name: Czumbel Péter
+  image: /images/members/czumbel_peter_thumb.webp
+  modal_image: /images/members/czumbel_peter_full.webp
+  id: czumbel-peter
+- name: dr. Zádor Zsófia Erzsébet
+  nickname: Zudi
+  image: /images/members/zador_zs-fia_thumb.webp
+  modal_image: /images/members/zador_zs-fia_full.webp
+  id: dr-zador-zsofia-erzsebet
+- id: drexler-mate
+  name: Drexler Máté
+  nickname: Drex
+  email: mate.drexler@gmail.com
+  phone: '+36202515507'
+  social_links:
+  - https://www.facebook.com/matedrexler
+  show_profile_contacts: false
+  aliases: []
+  needs_review: false
+- name: Gyarmathy Ákos
+  image: /images/members/gyarmathy_akos_thumb.webp
+  modal_image: /images/members/gyarmathy_akos_full.webp
+  id: gyarmathy-akos
+- name: György Bence
+  image: /images/members/gyorgy_bence_thumb.webp
+  modal_image: /images/members/gyorgy_bence_full.webp
+  id: gyorgy-bence
+- name: Huszár Péter
+  nickname: Yeti
+  image: /images/members/huszar_peter-2_thumb.webp
+  modal_image: /images/members/huszar_peter-2_full.webp
+  id: huszar-peter
+- name: Kadlec Gergely
+  image: /images/members/kadlec_gergely_thumb.webp
+  modal_image: /images/members/kadlec_gergely_full.webp
+  id: kadlec-gergely
+- name: Kámvás Linda
+  image: /images/members/kamvas_linda_thumb.webp
+  modal_image: /images/members/kamvas_linda_full.webp
+  id: kamvas-linda
+- name: Kántor Zsolt
+  nickname: Zsé
+  image: /images/members/kantor_zsolt_thumb.webp
+  modal_image: /images/members/kantor_zsolt_full.webp
+  id: kantor-zsolt
+- name: Kapodisztria Lena
+  image: /images/members/kapodisztria_lena_thumb.webp
+  modal_image: /images/members/kapodisztria_lena_full.webp
+  id: kapodisztria-lena
+- name: Kertész Dániel
+  image: /images/members/kertesz_daniel_thumb.webp
+  modal_image: /images/members/kertesz_daniel_full.webp
+  id: kertesz-daniel
+- name: Konkoly Péter
+  nickname: Tege
+  image: /images/members/konkoly_peter_thumb.webp
+  modal_image: /images/members/konkoly_peter_full.webp
+  id: konkoly-peter
+- name: Kovács Dániel
+  nickname: Damó
+  image: /images/members/kovacs_daniel-2_thumb.webp
+  modal_image: /images/members/kovacs_daniel-2_full.webp
+  id: kovacs-daniel
+- name: Kovács Ferenc
+  image: /images/members/kovacs_ferenc-2_thumb.webp
+  modal_image: /images/members/kovacs_ferenc-2_full.webp
+  id: kovacs-ferenc
+- name: Kovács Imre
+  image: /images/members/kovacs-imre_thumb.webp
+  modal_image: /images/members/kovacs-imre_full.webp
+  id: kovacs-imre
+- name: Kovács Krisztina
+  image: /images/members/kovacs_kriszta-2_thumb.webp
+  modal_image: /images/members/kovacs_kriszta-2_full.webp
+  id: kovacs-krisztina
+- name: Kováts Gábor
+  image: /images/members/kovats_gabor-2_thumb.webp
+  modal_image: /images/members/kovats_gabor-2_full.webp
+  id: kovats-gabor
+- name: Kralovánszki Ádám
+  nickname: Kralo
+  image: /images/members/kralovanszki_adam-2_thumb.webp
+  modal_image: /images/members/kralovanszki_adam-2_full.webp
+  id: kralovanszki-adam
+- name: Kukoda Orsolya
+  id: kukoda-orsolya
+- name: Kun Imre
+  nickname: Bástya
+  image: /images/members/kun_imre-2_thumb.webp
+  modal_image: /images/members/kun_imre-2_full.webp
+  id: kun-imre
+- name: Laták Rudolf
+  image: /images/members/latak_rudolf-2_thumb.webp
+  modal_image: /images/members/latak_rudolf-2_full.webp
+  id: latak-rudolf
+- name: Lőrincz Győző
+  image: /images/members/lorincz_gyozo-2_thumb.webp
+  modal_image: /images/members/lorincz_gyozo-2_full.webp
+  id: lorincz-gyozo
+- name: Lőrincz Vajk
+  image: /images/members/lorincz_vajk_thumb.webp
+  modal_image: /images/members/lorincz_vajk_full.webp
+  id: lorincz-vajk
+- name: Magyar Péter
+  image: /images/members/magyar_peter-2_thumb.webp
+  modal_image: /images/members/magyar_peter-2_full.webp
+  id: magyar-peter
+- name: Mezei Eszter
+  image: /images/members/mezei_eszter_thumb.webp
+  modal_image: /images/members/mezei_eszter_full.webp
+  id: mezei-eszter
+- name: Mihályi Tibor
+  nickname: Gebe
+  image: /images/members/mihalyi_tibor-2_thumb.webp
+  modal_image: /images/members/mihalyi_tibor-2_full.webp
+  id: mihalyi-tibor
+- name: Miklós Barnabás
+  image: /images/members/miklos_barnabas-2_thumb.webp
+  modal_image: /images/members/miklos_barnabas-2_full.webp
+  id: miklos-barnabas
+- name: Nagy Eszter
+  image: /images/members/nagy_eszter-2_thumb.webp
+  modal_image: /images/members/nagy_eszter-2_full.webp
+  id: nagy-eszter
+- name: Prakfalvi András
+  nickname: Praki
+  image: /images/members/prakfalvi_andras-2_thumb.webp
+  modal_image: /images/members/prakfalvi_andras-2_full.webp
+  id: prakfalvi-andras
+- name: Sándor Ági
+  image: /images/members/sandor_agnes_thumb.webp
+  modal_image: /images/members/sandor_agnes_full.webp
+  id: sandor-agnes
+  aliases:
+  - Sándor Ágnes
+- name: Sas Dóri
+  image: /images/members/sas_dorottya-2_thumb.webp
+  modal_image: /images/members/sas_dorottya-2_full.webp
+  id: sas-dorottya
+  aliases:
+  - Sas Dorottya
+- name: Soltész Árpád
+  image: /images/members/soltesz_arpad_thumb.webp
+  modal_image: /images/members/soltesz_arpad_full.webp
+  id: soltesz-arpad
+- name: Szieberth Dénes
+  nickname: Dínó
+  image: /images/members/szieberth_denes_thumb.webp
+  modal_image: /images/members/szieberth_denes_full.webp
+  id: szieberth-denes
+- name: Tóth Ábris
+  image: /images/members/toth_abris-2_thumb.webp
+  modal_image: /images/members/toth_abris-2_full.webp
+  id: toth-abris
+- name: Tóth Csilla
+  image: /images/members/toth_csilla_thumb.webp
+  modal_image: /images/members/toth_csilla_full.webp
+  id: toth-csilla
+- name: Turi László
+  image: /images/members/turi_laszlo-2_thumb.webp
+  modal_image: /images/members/turi_laszlo-2_full.webp
+  id: turi-laszlo
+- name: Varga Gábor
+  image: /images/members/varga_gabor_thumb.webp
+  modal_image: /images/members/varga_gabor_full.webp
+  id: varga-gabor
+- name: Brunner András
+  image: /images/members/brunner_andras-2_thumb.webp
+  modal_image: /images/members/brunner_andras-2_full.webp
+  id: brunner-andras
+- name: Ekés Bálint
+  image: /images/members/ekes_balint-2_thumb.webp
+  modal_image: /images/members/ekes_balint-2_full.webp
+  id: ekes-balint
+- name: Énekes Klaudia
+  image: /images/members/enekes_klaudia_thumb.webp
+  modal_image: /images/members/enekes_klaudia_full.webp
+  id: enekes-klaudia
+- name: Gólya Bernadett
+  nickname: Detti
+  image: /images/members/golya_bernadett-2_thumb.webp
+  modal_image: /images/members/golya_bernadett-2_full.webp
+  id: golya-bernadett
+- name: Hamar Éva
+  image: /images/members/hamar_-va_thumb.webp
+  modal_image: /images/members/hamar_-va_full.webp
+  id: hamar-eva
+- name: Juhász Anna
+  image: /images/members/juhasz_anna-2_thumb.webp
+  modal_image: /images/members/juhasz_anna-2_full.webp
+  id: juhasz-anna
+- name: Kosziba Andrea
+  image: /images/members/kosziba_andrea_thumb.webp
+  modal_image: /images/members/kosziba_andrea_full.webp
+  id: kosziba-andrea
+- name: Kováts Boglárka
+  image: /images/members/kovats_boglarka-2_thumb.webp
+  modal_image: /images/members/kovats_boglarka-2_full.webp
+  id: kovats-boglarka
+- name: Kozek András
+  image: /images/members/kozek_andras-2_thumb.webp
+  modal_image: /images/members/kozek_andras-2_full.webp
+  id: kozek-andras
+- name: Köblös Csaba
+  image: /images/members/koblos_csaba-2_thumb.webp
+  modal_image: /images/members/koblos_csaba-2_full.webp
+  id: koblos-csaba
+- name: Lempochner Lili
+  image: /images/members/lempochner_lili_thumb.webp
+  modal_image: /images/members/lempochner_lili_full.webp
+  id: lempochner-lili
+- name: Péterfia Klári
+  image: /images/members/peterfia_klara_thumb.webp
+  modal_image: /images/members/peterfia_klara_full.webp
+  id: peterfia-klari
+- name: Pintér Gábor
+  nickname: Pinti
+  image: /images/members/pinter_gabor-2_thumb.webp
+  modal_image: /images/members/pinter_gabor-2_full.webp
+  id: pinter-gabor
+- name: Rádi Károly
+  image: /images/members/radi_karoly_thumb.webp
+  modal_image: /images/members/radi_karoly_full.webp
+  id: radi-karoly
+- name: Sajtos Péter
+  image: /images/members/sajtos_peter_thumb.webp
+  modal_image: /images/members/sajtos_peter_full.webp
+  id: sajtos-peter
+- name: Seiben Gabriella
+  image: /images/members/seiben_gabriella_thumb.webp
+  modal_image: /images/members/seiben_gabriella_full.webp
+  id: seiben-gabriella
+- name: Sojnóczki Annamária
+  nickname: Pötyi
+  id: sojnoczki-annamaria
+- name: Soltész Abigél
+  image: /images/members/soltesz_abigel_thumb.webp
+  modal_image: /images/members/soltesz_abigel_full.webp
+  id: soltesz-abigel
+- name: Szaniszló Anita
+  image: /images/members/szaniszlo_anita_thumb.webp
+  modal_image: /images/members/szaniszlo_anita_full.webp
+  id: szaniszlo-anita
+- name: Vajda Gábor
+  image: /images/members/vajda_gabor-2_thumb.webp
+  modal_image: /images/members/vajda_gabor-2_full.webp
+  id: vajda-gabor
+- name: Zsólyomi Andrea
+  image: /images/members/zsolyomi_andrea_thumb.webp
+  modal_image: /images/members/zsolyomi_andrea_full.webp
+  id: zsolyomi-andrea
+- name: Zsólyomi Zsófia
+  image: /images/members/zsolyomi_zsofia_thumb.webp
+  modal_image: /images/members/zsolyomi_zsofia_full.webp
+  id: zsolyomi-zsofia
+- name: Czirják Ferenc
+  image: /images/members/czirjak_ferenc-2_thumb.webp
+  modal_image: /images/members/czirjak_ferenc-2_full.webp
+  id: czirjak-ferenc
+- name: Horváth János
+  nickname: Jancsi bácsi
+  image: /images/members/horvath_janos_thumb.webp
+  modal_image: /images/members/horvath_janos_full.webp
+  id: horvath-janos
+- name: Vidics Zoltánné
+  nickname: Erimama
+  image: /images/members/vidics_zoltanne-2_thumb.webp
+  modal_image: /images/members/vidics_zoltanne-2_full.webp
+  id: vidics-zoltanne
+- name: Zsólyomi Zsolt
+  nickname: Frédi
+  image: /images/members/zsolyomi_zsolt-2_thumb.webp
+  modal_image: /images/members/zsolyomi_zsolt-2_full.webp
+  id: zsolyomi-zsolt
+- id: borhi-anita
+  name: Borhi Anita
+  needs_review: true
+- id: fercsik-gabor
+  name: Fercsik Gábor
+  needs_review: true
+- id: juhasz-kata
+  name: Juhász Kata
+  needs_review: true
+- id: kakuk-maria
+  name: Kakuk Mária
+  needs_review: true
+- id: marton-anna
+  name: Márton Anna
+  needs_review: true
+- id: pataki-laszlo
+  name: Pataki László
+  needs_review: true
+- id: szabo-dominika
+  name: Szabó Dominika
+  needs_review: true
+- id: szoko-csaba
+  name: Szökő Csaba
+  needs_review: true
+- id: toth-monika
+  name: Tóth Mónika
+  needs_review: true
+- id: toltl-erzsebet
+  name: Töltl Erzsébet
+  needs_review: true
+- id: varga-boglarka
+  name: Varga Boglárka
+  needs_review: true
+- id: varga-laszlo
+  name: Varga László
+  needs_review: true
+- id: bitter-zsuzsa
+  name: Bitter Zsuzsa
+  needs_review: true
+- id: csiky-gergo
+  name: Csiky Gergő
+  needs_review: true
+- id: janosy-zoltan
+  name: Jánosy Zoltán
+  needs_review: true
+- id: karsay-david
+  name: Karsay Dávid
+  needs_review: true
+- id: kerekgyarto-tamas
+  name: Kerékgyártó Tamás
+  needs_review: true
+- id: magyar-zsuzsanna
+  name: Magyar Zsuzsanna
+  needs_review: true
+- id: molnar-dora
+  name: Molnár Dóra
+  needs_review: true
+- id: varga-agnes
+  name: Varga Ágnes
+  needs_review: true
+- id: kolumban-zsuzsi
+  name: Kolumbán Zsuzsi
+  aliases:
+  - Zsuzsi
+  needs_review: true
+- id: geblyo-gyorgyi
+  name: Geblyó Györgyi
+  aliases:
+  - Györgyi
+  needs_review: true
+- id: toth-attila
+  name: Tóth Attila
+  needs_review: true
+- id: nemeth-zsolt
+  name: Németh Zsolt
+  needs_review: true
+  nickname: Kutya
+- id: kiss-timea
+  name: Kiss Tímea
+  needs_review: true
+- id: nemeth-bence
+  name: Németh Bence
+  aliases:
+  - Németh Bence
+  needs_review: true
+- id: acs-reka
+  name: Ács Réka
+  needs_review: true
+- id: fabian-botond
+  name: Fábián Botond
+  needs_review: true
+- id: meszaros-jozsef
+  name: Mészáros József
+  needs_review: true
+  nickname: Joe
+- id: marko-gabor
+  name: Markó Gábor
+  needs_review: true
+  nickname: PF
+- id: stieber-bence
+  name: Stieber Bence
+  aliases: []
+  needs_review: false
+groups:
+- label: Vezetőség
+  members:
+  - person: gyovai-tamas
+    roles:
+    - elnok
+    - kutatasvezeto
+  - person: kalotai-zsofia
+    roles:
+    - elnoksegi-tag
+    - penztaros
+    - kutatasvezeto
+  - person: rehany-nikolett
+    roles:
+    - elnoksegi-tag
+    - turavezeto
+  - person: fialowski-melinda
+    roles:
+    - raktaros
+    - turavezeto
+- label: Rendes tagok
+  members:
+  - person: abraham-gabor
+  - person: bacso-gabor
+    roles:
+    - turavezeto
+  - person: balazs-zoltan
+  - person: borsos-szabo-balint
+  - person: czumbel-peter
+  - person: dr-zador-zsofia-erzsebet
+    roles:
+    - turavezeto
+  - person: drexler-mate
+    roles: []
+  - person: gyarmathy-akos
+  - person: gyorgy-bence
+  - person: huszar-peter
+  - person: kadlec-gergely
+  - person: kamvas-linda
+  - person: kantor-zsolt
+    roles:
+    - turavezeto
+  - person: kapodisztria-lena
+  - person: kertesz-daniel
+  - person: konkoly-peter
+    roles:
+    - turavezeto
+  - person: kovacs-daniel
+  - person: kovacs-ferenc
+  - person: kovacs-imre
+  - person: kovacs-krisztina
+  - person: kovats-gabor
+  - person: kralovanszki-adam
+  - person: kukoda-orsolya
+  - person: kun-imre
+  - person: latak-rudolf
+  - person: lorincz-gyozo
+  - person: lorincz-vajk
+  - person: magyar-peter
+    roles:
+    - turavezeto
+  - person: mezei-eszter
+  - person: mihalyi-tibor
+    roles:
+    - turavezeto
+  - person: miklos-barnabas
+  - person: nagy-eszter
+    roles:
+    - turavezeto
+  - person: prakfalvi-andras
+  - person: sandor-agnes
+  - person: sas-dorottya
+  - person: soltesz-arpad
+  - person: szieberth-denes
+  - person: toth-abris
+  - person: toth-csilla
+  - person: turi-laszlo
+    roles:
+    - turavezeto
+  - person: varga-gabor
+- label: Pártoló tagok
+  members:
+  - person: brunner-andras
+  - person: ekes-balint
+  - person: enekes-klaudia
+  - person: golya-bernadett
+  - person: hamar-eva
+  - person: juhasz-anna
+  - person: kosziba-andrea
+  - person: kovats-boglarka
+  - person: kozek-andras
+  - person: koblos-csaba
+  - person: lempochner-lili
+  - person: peterfia-klari
+  - person: pinter-gabor
+    roles:
+    - kutatasvezeto
+  - person: radi-karoly
+  - person: sajtos-peter
+  - person: seiben-gabriella
+  - person: sojnoczki-annamaria
+  - person: soltesz-abigel
+  - person: szaniszlo-anita
+  - person: vajda-gabor
+  - person: zsolyomi-andrea
+  - person: zsolyomi-zsofia
+- label: Tiszteletbeli tagok
+  members:
+  - person: czirjak-ferenc
+- label: Örökös tagok
+  members:
+  - person: horvath-janos
+  - person: vidics-zoltanne
+  - person: zsolyomi-zsolt

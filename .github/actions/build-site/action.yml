@@ -1,5 +1,5 @@
 name: Build Hugo site
-description: Sets up Go + Hugo and builds this Hugo/Bookshop site. Assumes the repo is already checked out.
+description: Sets up Hugo and builds this site with native partials. Assumes the repo is already checked out.
 
 inputs:
   base-url:
@@ -37,12 +37,6 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Set up Go (needed to resolve Hugo modules)
-      uses: actions/setup-go@v5
-      with:
-        go-version-file: go.mod
-        cache: true
-
     - name: Resolve Hugo version
       shell: bash
       run: |
@@ -84,7 +78,7 @@ runs:
         fi
         relative=${destination#"$workspace/"}
         case "${relative%%/*}" in
-          content|data|layouts|assets|static|scripts|docs|component-library|resources|.github|.git|.tools)
+          content|data|layouts|assets|static|scripts|docs|resources|.github|.git|.tools)
             echo "Refusing to purge a source directory." >&2
             exit 1
             ;;

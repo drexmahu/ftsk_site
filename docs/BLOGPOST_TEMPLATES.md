@@ -22,8 +22,8 @@ A forrás, metaadatok, képek és még nem mentett Hugo-előnézet lépéseit a
 
 1. Cseréld ki az összes `KITÖLTENDŐ` szöveget, vagy töröld a nem szükséges blokkot.
 2. Írd át a `date` értékét. A `2000-01-01` kizárólag helyőrző, nem eseményadat.
-3. Töltsd ki az `author` és `participants` mezőket csak hiteles adatokkal.
-   Ha nem ismered őket, maradjon `author: ""` és `participants: []`.
+3. A személyválasztóval töltsd ki az `author_id` és `participant_ids` mezőket.
+   Ha nem ismered őket, maradjon `author_id: ""` és `participant_ids: []`.
 4. Cseréld a mintafotót saját képekre. A működő mintafotó nem az adott túrát
    vagy tanfolyamot ábrázolja. A mintában többször szerepel, hogy különböző
    képelrendezések legyenek kipróbálhatók; nem kell mindet megtartani.
@@ -67,8 +67,8 @@ date: 2000-01-01T00:00:00Z # KITÖLTENDŐ: a túra dátuma; jövőbeli dátummal
 title: "KITÖLTENDŐ: Túra neve (év)"
 categories:
   - Túra
-author: ""
-participants: []
+author_id: ""
+participant_ids: []
 article_image_width: 85
 thumbImg:
   image_path: /images/hero/ftsk-hero-cave-4.webp
@@ -135,8 +135,8 @@ date: 2000-01-01T00:00:00Z # KITÖLTENDŐ: az eredeti túra ismert dátuma
 title: "KITÖLTENDŐ: Régi túra neve (év)"
 categories:
   - Túra
-author: ""
-participants: []
+author_id: ""
+participant_ids: []
 thumbImg:
   image_path: /images/hero/ftsk-hero-cave-4.webp
 featuredImg:
@@ -172,8 +172,8 @@ Egyszerre csak egy publikált tanfolyamnál legyen `current: true`.
 date: 2000-01-01T00:00:00Z # KITÖLTENDŐ: a meghirdetés dátuma, nem a tanfolyam jövőbeli kezdete
 title: "KITÖLTENDŐ: Alapfokú tanfolyam (év)"
 current: true
-author: ""
-participants: []
+author_id: ""
+participant_ids: []
 article_image_width: 85
 thumbImg:
   image_path: /images/hero/ftsk-hero-cave-4.webp
@@ -241,15 +241,15 @@ A `contacts: []` helyére csak egyeztetett kapcsolattartót adj meg:
 
 ```yaml
 contacts:
-  - name: "KITÖLTENDŐ: a kapcsolattartó valódi neve"
+  - person: "" # select the real contact from the shared people registry
     role: "KITÖLTENDŐ: feladata"
-    email: "" # csak egyeztetett címet írj ide
-    phone: "" # opcionális, csak egyeztetett telefonszám
 ```
 
 Üres lista esetén nincs automatikus „Jelentkezem!” szakasz. A névhez
-tartozó elérhetőségeket a sablon közvetlen email- és telefonlinkként adja.
-A kapcsolattartó nem feltétlenül azonos az `author` szerzővel.
+tartozó, egyeztetett elérhetőségeket a közös személyrekordban szerkeszd,
+ne a cikkben. A kapcsolatkártya közvetlen email- és telefonlinkként adja őket;
+a normál tagkártya és profilablak nem mutatja ezeket.
+A kapcsolattartó nem feltétlenül azonos az `author_id` szerzővel.
 
 A `faq` kérdései a cikk szövege után lenyitható GYIK-ként jelennek meg.
 Az `answer` Markdown szöveg lehet; a mintaválaszokat cseréld jóváhagyott
@@ -278,8 +278,8 @@ szöveget őrizd meg. Újonnan feldolgozott régi tanfolyamhoz ez a minta haszn�
 date: 2000-01-01T00:00:00Z # KITÖLTENDŐ: meglévő cikknél őrizd meg; új archív cikknél egyeztetett dátum
 title: "KITÖLTENDŐ: Alapfokú tanfolyam (év)"
 current: false
-author: ""
-participants: []
+author_id: ""
+participant_ids: []
 article_image_width: 85
 thumbImg:
   image_path: /images/hero/ftsk-hero-cave-4.webp
@@ -331,14 +331,12 @@ nem rejti el a főoldali hirdetést vagy menügombot: ehhez a
 ## Szerzők és résztvevők kitöltése
 
 Az alábbi blokk **csak formai példa**; a nevek helyére az adott cikk valódi
-adatai kerüljenek. A szerző neve kattintható, ha a taglistában szerepel.
+adatai kerüljenek. A szerző a közös személyrekordját nyitja meg, tagságtól függetlenül.
 A résztvevők kártyái automatikusan a cikk szövege alá kerülnek.
 
 ```yaml
-author: "KITÖLTENDŐ: a szerző teljes neve"
-participants:
-  - "KITÖLTENDŐ: első résztvevő"
-  - "KITÖLTENDŐ: második résztvevő (Becenév)"
+author_id: "" # select the real author from the shared people registry
+participant_ids: [] # select the participants for this page only
 ```
 
 További részletek: [cikkírás és képek](CONTENT_GUIDE.md),

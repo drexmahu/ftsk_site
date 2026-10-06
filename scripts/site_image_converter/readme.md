@@ -4,6 +4,11 @@ Turns arbitrary site photos (hero banners, galleries, feature images, ...)
 into resized, web-ready `.webp` files. No cropping - aspect ratio is always
 preserved, images are only ever shrunk to fit, never upscaled.
 
+Inputs: JPG, PNG, WebP and HEIF/HEIC (including phone photos), decoded with
+Pillow and `pillow-heif`. Multi-image HEIF files use their primary image;
+extra frames, depth maps and motion are not exported. High-bit-depth images
+are decoded to 8-bit for WebP output; this is not an HDR-preserving workflow.
+
 For member portraits that need a square, face-cropped thumbnail as well, use
 the sibling tool `../membership_image_converter/` instead.
 
@@ -20,7 +25,7 @@ support, then double-click `install_dependencies.bat`.
 
 ## Use
 
-For the integrated browser alternative, run `scripts/run_workbench.bat` from
+For the integrated browser alternative, run `site_editor.bat` from
 the repository root and choose **Site photos** or **Hero slideshow**. It uses
 the same conversion and framing tools, with protected output names and a
 shared preview/check dashboard. See [Site Workbench](../../docs/TECHNICAL_ENVIRONMENT.md#site-workbench).

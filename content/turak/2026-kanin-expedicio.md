@@ -3,27 +3,12 @@ date: 2026-08-14T00:00:00Z
 title: Kanin expedíció (2026)
 categories:
   - Expedíció
-author: "Kámvás Linda"
-participants:
-  - Ács Réka
-  - Fábián Botond
-  - Fialowski Melinda
-  - Kalotai Zsófi
-  - Kámvás Linda
-  - Kiss Tímea
-  - Kralovánszki Ádám
-  - Kun Imre (Bástya)
-  - Mészáros József (Joe)
-  - Németh Zsolt (Kutya)
-  - Németh Bence
-  - Prakfalvi András
-  - Rehány Niki
-  - Sándor Ági
-  - Sas Dóri
-  - Tóth Attila
+author: ''
+participants: []
 thumbImg:
   image_path: /images/turak/2026-kanin-expedicio/01-csapat-a-ducatonal.webp
 featuredImg:
+  width: 85
   image_path: /images/turak/2026-kanin-expedicio/01-csapat-a-ducatonal.webp
 seo:
   page_description:
@@ -33,6 +18,24 @@ seo:
   open_graph_type: article
   no_index: false
 draft: false
+author_id: kamvas-linda
+participant_ids:
+- acs-reka
+- fabian-botond
+- fialowski-melinda
+- kalotai-zsofia
+- kamvas-linda
+- kiss-timea
+- kralovanszki-adam
+- kun-imre
+- meszaros-jozsef
+- nemeth-zsolt
+- nemeth-bence
+- prakfalvi-andras
+- rehany-nikolett
+- sandor-agnes
+- sas-dorottya
+- toth-attila
 ---
 
 Egészen sokáig vacilláltam azon, hogy mennyi időt legyek fent a hegyen. Idén sajnos a montenegrói tábor is kimaradt nekem és annak ellenére, hogy a nyaram elég zsúfolt volt, a barlangos programokat hiányoltam már. Végül is úgy döntöttem, hogy Atiékkal megyek és ott leszek elejétől a végéig, utólag ez egy nagyon jó döntésnek bizonyult.
@@ -40,8 +43,6 @@ Egészen sokáig vacilláltam azon, hogy mennyi időt legyek fent a hegyen. Idé
 ## 1. nap – augusztus 14. (péntek)
 
 A Ducato (Duki) augusztus 14-én (pénteken) Atival, Botival, Melindával, Zsófival, Bástyával és jómagammal délután Sella Nevea felé vette az irányt. Bevallom nem kis izgalommal vágtam neki a tábornak, nem tudtam pontosan milyen körülmények között kell felvinni a cuccokat a Gilbertitől a hágóra egészen a Boegan-katlanig, a hátizsákom sem volt a legkönnyebb és a kocsiban jöttem rá, hogy a bivakos pulcsim otthon maradt. Aztán szerencsére aggódás helyett elaludtam és így egy időugrással Olaszországban ébredtem. Az estét a felvonó parkolójábanban töltöttük és idő közben befutott a Kutya mobil is: Réka, Joe, Timi, Bence, Kutya és egy újabb autónyi ember: Niki, Dóri, Kraló, Praki.
-
-![A csapat a Ducato körül, indulás előtt](/images/turak/2026-kanin-expedicio/01-csapat-a-ducatonal.webp "A csapat a felpakolt Ducato mellett, indulás előtt")
 
 ## 2. nap – augusztus 15. (szombat)
 

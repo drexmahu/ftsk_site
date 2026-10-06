@@ -4,7 +4,7 @@
     Installs the complete Windows development and preview environment.
 .DESCRIPTION
     Reuses compatible tools, installs user-scoped Git/VS Code/Python with
-    WinGet, installs verified portable Go/Node/Hugo archives, and creates
+    WinGet, installs verified portable Node/Hugo archives, and creates
     .venv for all Python tooling. Does not elevate or change machine PATH.
 .PARAMETER CheckOnly
     Inspect dependencies without downloading, installing, or writing files.
@@ -91,9 +91,9 @@ function Refresh-ToolPaths {
     foreach ($directory in @(
         "$env:LOCALAPPDATA\Programs\Microsoft VS Code\bin", "$env:ProgramFiles\Microsoft VS Code\bin",
         "$env:LOCALAPPDATA\Programs\Git\cmd", "$env:LOCALAPPDATA\Git\cmd", "$env:ProgramFiles\Git\cmd",
-        "$env:ProgramFiles\Go\bin", "$env:ProgramFiles\nodejs"
+        "$env:ProgramFiles\nodejs"
     )) { Add-ToolPath $directory }
-    foreach ($pattern in @('.tools/go/*/go/bin', '.tools/node/*/*', '.tools/hugo/*')) {
+    foreach ($pattern in @('.tools/node/*/*', '.tools/hugo/*')) {
         Get-ChildItem (Join-Path $repoRoot $pattern) -Directory -ErrorAction SilentlyContinue |
             ForEach-Object { Add-ToolPath $_.FullName }
     }
@@ -148,6 +148,21 @@ function Get-Checksum {
     return $match.Groups[1].Value
 }
 
+function Read-DownloadText {
+    param([string]$Uri)
+    for ($attempt = 1; $attempt -le 3; $attempt++) {
+        try {
+            $content = (Invoke-WebRequest -UseBasicParsing -Uri $Uri -TimeoutSec 180).Content
+            if ($content -is [byte[]]) { return [Text.Encoding]::UTF8.GetString($content) }
+            if ($content -is [string]) { return $content }
+            throw "Unexpected text download format from $Uri"
+        } catch {
+            if ($attempt -eq 3) { throw }
+            Write-Warning "Text download attempt $attempt failed; retrying."
+        }
+    }
+}
+
 function Invoke-SetupStep {
     param([string]$Name, [scriptblock]$Action)
     Write-Host "`n== $Name ==" -ForegroundColor Cyan
@@ -166,10 +181,26 @@ function Invoke-SetupStep {
 function Find-Python {
     $candidates = New-Object 'System.Collections.Generic.List[string]'
     if ($PythonPath) { $candidates.Add($PythonPath) }
-    $command = Find-Tool 'python.exe'
-    if ($command -and $command -notmatch 'WindowsApps') { $candidates.Add($command) }
-    foreach ($pattern in @("$env:LOCALAPPDATA\Programs\Python\Python*\python.exe", "$env:LOCALAPPDATA\Python\pythoncore-*\python.exe", "$env:ProgramFiles\Python*\python.exe")) {
-        Get-ChildItem $pattern -File -ErrorAction SilentlyContinue | ForEach-Object { $candidates.Add($_.FullName) }
+    else {
+        $launcher = Find-Tool 'py.exe' @("$env:WINDIR\py.exe", "$env:LOCALAPPDATA\Programs\Python\Launcher\py.exe")
+        if ($launcher) {
+            try {
+                $executable = (& $launcher -3 -c 'import sys; print(sys.executable)' 2>$null) -join ''
+                if ($LASTEXITCODE -eq 0 -and (Test-Path -LiteralPath $executable -PathType Leaf)) { $candidates.Add($executable) }
+                $installed = @(& $launcher -0p 2>$null)
+                if ($LASTEXITCODE -eq 0) {
+                    foreach ($line in $installed) {
+                        $match = [regex]::Match($line, '([A-Za-z]:\\.*\\python(?:3)?\.exe)\s*$')
+                        if ($match.Success) { $candidates.Add($match.Groups[1].Value) }
+                    }
+                }
+            } catch { Write-Verbose "Python launcher probe failed: $($_.Exception.Message)" }
+        }
+        $command = Find-Tool 'python.exe'
+        if ($command -and $command -notmatch 'WindowsApps') { $candidates.Add($command) }
+        foreach ($pattern in @("$env:LOCALAPPDATA\Programs\Python\Python*\python.exe", "$env:LOCALAPPDATA\Python\pythoncore-*\python.exe", "$env:ProgramFiles\Python*\python.exe")) {
+            Get-ChildItem $pattern -File -ErrorAction SilentlyContinue | ForEach-Object { $candidates.Add($_.FullName) }
+        }
     }
     foreach ($candidate in ($candidates | Select-Object -Unique)) {
         try {
@@ -183,24 +214,28 @@ function Find-Python {
 }
 
 Push-Location $repoRoot
+$transcribing = $false
 try {
     if (-not [Environment]::Is64BitOperatingSystem -or $env:OS -ne 'Windows_NT') { throw 'This installer requires 64-bit Windows 10/11 and PowerShell 5.1 or newer.' }
     if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64' -or $env:PROCESSOR_ARCHITEW6432 -eq 'ARM64') { throw 'This installer currently targets Windows x64; native ARM64 tool archives require a separately configured environment.' }
     [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+    if (-not $CheckOnly -and -not $WhatIfPreference) {
+        $reportDirectory = Join-Path $repoRoot '.tools'
+        New-Item -ItemType Directory -Force -Path $reportDirectory | Out-Null
+        Start-Transcript -Path (Join-Path $reportDirectory 'setup.log') -Force | Out-Null
+        $transcribing = $true
+    }
     $hugoVersion = (Get-Content '.hugo-version' -Raw).Trim()
-    $goMatch = [regex]::Match((Get-Content 'go.mod' -Raw), '(?m)^go\s+(\d+\.\d+(?:\.\d+)?)')
-    if (-not $goMatch.Success) { throw 'go.mod does not specify a minimum Go version.' }
-    $goMinimum = [version]$goMatch.Groups[1].Value
     $package = Get-Content 'package.json' -Raw | ConvertFrom-Json
     $nodeMatch = [regex]::Match($package.engines.node, '^>=\s*(\d+\.\d+(?:\.\d+)?)$')
     if (-not $nodeMatch.Success) { throw 'Unsupported Node engines range; update the installer to match package.json.' }
     $nodeMinimum = [version]$nodeMatch.Groups[1].Value
     Write-Host 'FTSK development environment setup' -ForegroundColor Cyan
-    Write-Host "Git, VS Code/extensions, Go >= $goMinimum, Node >= $nodeMinimum, Hugo extended $hugoVersion, Python/Tk and all script dependencies."
+    Write-Host "Git, VS Code/extensions, Node >= $nodeMinimum, Hugo extended $hugoVersion, Python/Tk and all script dependencies."
     Write-Host 'User-scoped software and portable tools only. Python packages use .venv. No production credentials are requested.'
     if (-not $CheckOnly -and -not $WhatIfPreference -and -not $NonInteractive) {
         $answer = Read-Host 'Install missing components and accept their package/source agreements? [Y/n]'
-        if ($answer -and $answer -notmatch '^(?i)y(es)?$') { Write-Host 'Cancelled; no dependencies changed.'; return }
+        if ($answer -and $answer -notmatch '^(?i)y(es)?$') { Write-Host 'Cancelled; no dependencies changed.'; exit 2 }
     }
     Refresh-ToolPaths
 
@@ -233,24 +268,6 @@ try {
         }
     }
 
-    Invoke-SetupStep 'Go / Hugo Modules' {
-        $go = Find-Tool 'go.exe'
-        $version = Read-Version $go @('version')
-        if (-not $version -or $version -lt $goMinimum) {
-            Require-Changes "Go >= $goMinimum"
-            $releases = Invoke-RestMethod 'https://go.dev/dl/?mode=json' -Headers @{ 'User-Agent' = 'ftsk-site-setup' }
-            $release = $releases | Where-Object { $_.stable } | Select-Object -First 1
-            $asset = $release.files | Where-Object { $_.os -eq 'windows' -and $_.arch -eq 'amd64' -and $_.kind -eq 'archive' } | Select-Object -First 1
-            if (-not $asset) { throw 'A verified Windows x64 Go archive was not found.' }
-            $destination = Join-Path $repoRoot ".tools/go/$($release.version)"
-            Install-VerifiedZip "https://go.dev/dl/$($asset.filename)" $asset.sha256 $destination
-            Add-ToolPath (Join-Path $destination 'go/bin')
-            $go = Find-Tool 'go.exe'; $version = Read-Version $go @('version')
-        }
-        if (-not $version -or $version -lt $goMinimum) { throw 'Go version validation failed.' }
-        "Go $version : $go"
-    }
-
     Invoke-SetupStep 'Node.js / npm' {
         $node = Find-Tool 'node.exe'
         $version = Read-Version $node @('--version')
@@ -260,7 +277,7 @@ try {
             $release = $releases | Where-Object { $_.lts -and ([version]$_.version.TrimStart('v')) -ge $nodeMinimum -and $_.files -contains 'win-x64-zip' } | Select-Object -First 1
             if (-not $release) { throw 'A compatible Node LTS Windows x64 archive was not found.' }
             $filename = "node-$($release.version)-win-x64.zip"
-            $checksums = (Invoke-WebRequest -UseBasicParsing "https://nodejs.org/dist/$($release.version)/SHASUMS256.txt").Content
+            $checksums = Read-DownloadText "https://nodejs.org/dist/$($release.version)/SHASUMS256.txt"
             $destination = Join-Path $repoRoot ".tools/node/$($release.version)"
             Install-VerifiedZip "https://nodejs.org/dist/$($release.version)/$filename" (Get-Checksum $checksums $filename) $destination
             Add-ToolPath (Join-Path $destination "node-$($release.version)-win-x64")
@@ -278,13 +295,10 @@ try {
         $output = if ($script:hugoExe) { (& $script:hugoExe version) -join ' ' } else { '' }
         if ($output -notmatch ('v' + [regex]::Escape($hugoVersion) + '(?:\s|[-+])') -or $output -notmatch 'extended') {
             Require-Changes "Hugo extended $hugoVersion"
-            $release = Invoke-RestMethod "https://api.github.com/repos/gohugoio/hugo/releases/tags/v$hugoVersion" -Headers @{ 'User-Agent' = 'ftsk-site-setup' }
-            $asset = $release.assets | Where-Object { $_.name -match '^hugo_extended_[0-9].*windows[-_]amd64\.zip$' } | Select-Object -First 1
-            if (-not $asset) { throw 'The pinned Windows x64 Hugo extended archive was not found.' }
-            $checksumAsset = $release.assets | Where-Object { $_.name -match 'checksums.*\.txt$' } | Select-Object -First 1
-            if (-not $checksumAsset) { throw 'Hugo checksum manifest was not found.' }
-            $checksums = (Invoke-WebRequest -UseBasicParsing $checksumAsset.browser_download_url).Content
-            Install-VerifiedZip $asset.browser_download_url (Get-Checksum $checksums $asset.name) $directory
+            $filename = "hugo_extended_${hugoVersion}_windows-amd64.zip"
+            $releaseUrl = "https://github.com/gohugoio/hugo/releases/download/v$hugoVersion"
+            $checksums = Read-DownloadText "$releaseUrl/hugo_${hugoVersion}_checksums.txt"
+            Install-VerifiedZip "$releaseUrl/$filename" (Get-Checksum $checksums $filename) $directory
             $script:hugoExe = Join-Path $directory 'hugo.exe'
             $output = (& $script:hugoExe version) -join ' '
         }
@@ -320,47 +334,30 @@ try {
             Invoke-Tool $environmentPython @('-m', 'pip', 'install', '--only-binary=:all:', '-r', (Join-Path $PSScriptRoot 'requirements-dev.txt'))
             Invoke-Tool $environmentPython @('-m', 'pip', 'check')
         }
-        Invoke-Tool $environmentPython @('-c', 'import PIL,yaml,paramiko,tkinter')
+        Invoke-Tool $environmentPython @('-c', 'import PIL,pillow_heif,yaml,paramiko,tkinter')
         $script:pythonExe = $environmentPython
-        'Pillow, PyYAML, Paramiko and Tk are ready in .venv.'
-    }
-
-    Invoke-SetupStep 'Bookshop / npm packages' {
-        if (-not $script:npmExe) { throw 'Node/npm must be ready first.' }
-        $manifestHash = (Get-FileHash 'package.json' -Algorithm SHA256).Hash
-        if (Test-Path 'package-lock.json') { $manifestHash += (Get-FileHash 'package-lock.json' -Algorithm SHA256).Hash }
-        $stamp = Join-Path $repoRoot '.tools/npm-setup.sha256'
-        $treeReady = $false
-        if (Test-Path 'node_modules') {
-            try {
-                & $script:npmExe ls --depth=0 --json 2>$null | Out-Null
-                $treeReady = $LASTEXITCODE -eq 0
-            } catch { $treeReady = $false }
-        }
-        $sameManifest = (Test-Path -LiteralPath $stamp) -and ((Get-Content -LiteralPath $stamp -Raw).Trim() -eq $manifestHash)
-        if ($treeReady -and ($sameManifest -or $CheckOnly -or $WhatIfPreference)) { 'Compatible npm dependencies already installed.'; return }
-        Require-Changes 'Repository npm dependencies'
-        $mode = if (Test-Path 'package-lock.json') { 'ci' } else { 'install' }
-        Invoke-Tool $script:npmExe @($mode, '--no-fund', '--no-audit')
-        New-Item -ItemType Directory -Force -Path (Split-Path -Parent $stamp) | Out-Null
-        Set-Content -LiteralPath $stamp -Value $manifestHash -Encoding ASCII
-        'Bookshop and npm-run-all are ready.'
+        'Pillow, pillow-heif, PyYAML, Paramiko and Tk are ready in .venv.'
     }
 
     if (-not $SkipVerification) {
         Invoke-SetupStep 'Build and tooling verification' {
             if ($CheckOnly -or $WhatIfPreference) { 'Build skipped in inspection mode.'; return }
+            if ($results | Where-Object { $_.Status -eq 'Failed' }) { throw 'A required setup component failed. Fix it and rerun setup before verification.' }
             if (-not $script:hugoExe -or -not $script:pythonExe -or -not $script:npmExe) { throw 'Required tools are not ready; build verification cannot run.' }
             $temporary = Join-Path ([IO.Path]::GetTempPath()) ("ftsk-setup-build-" + [guid]::NewGuid())
             try {
                 Invoke-Tool $script:hugoExe @('--destination', $temporary, '--baseURL', 'https://www.ftsk.hu/', '--buildDrafts', '--buildFuture')
                 Invoke-Tool $script:pythonExe @('scripts/verify_members.py')
                 Invoke-Tool $script:pythonExe @('scripts/verify_site_links.py', '--root', $temporary, '--base-url', 'https://www.ftsk.hu/')
+                Invoke-Tool "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', (Join-Path $PSScriptRoot 'test_setup_dev_env.ps1'), '-PythonPath', $script:pythonExe)
                 Invoke-Tool (Find-Tool 'node.exe') @('scripts/site_image_converter/test_hero_framing.js')
+                Invoke-Tool (Find-Tool 'node.exe') @('scripts/test_people_workbench.js')
                 Invoke-Tool $script:pythonExe @('-m', 'unittest', 'discover', '-s', 'scripts', '-p', 'test_social*.py')
                 Invoke-Tool $script:pythonExe @('-m', 'unittest', 'discover', '-s', 'scripts', '-p', 'test_*workbench.py')
+                Invoke-Tool $script:pythonExe @('-m', 'unittest', 'discover', '-s', 'scripts', '-p', 'test_people*.py')
+                Invoke-Tool $script:pythonExe @('-m', 'unittest', 'discover', '-s', 'scripts', '-p', 'test_content_blocks.py')
             } finally { if (Test-Path -LiteralPath $temporary) { Remove-Item -LiteralPath $temporary -Recurse -Force } }
-            'Site build, roster, internal links, hero framing, social cards and browser content/image workbench verified.'
+            'Site build, people and assignments, internal links, hero framing, social cards and browser content/image workbench verified.'
         }
     }
 
@@ -377,9 +374,12 @@ try {
     } elseif ($CheckOnly) {
         Write-Host 'All inspected components are ready; no installation changes were made.' -ForegroundColor Green
     } else {
-        Write-Host 'Next: restart VS Code/your terminal, then ./scripts/run_workbench.bat (browser tools) or ./scripts/dev-server.ps1. Python CLI: ./.venv/Scripts/Activate.ps1.' -ForegroundColor Green
+        Write-Host 'Next: restart VS Code/your terminal, then ./site_editor.bat (browser tools) or ./scripts/dev-server.ps1. Python CLI: ./.venv/Scripts/Activate.ps1.' -ForegroundColor Green
     }
 } catch {
     Write-Host "`n$($_.Exception.Message)" -ForegroundColor Red
     exit 1
-} finally { Pop-Location }
+} finally {
+    if ($transcribing) { Stop-Transcript | Out-Null }
+    Pop-Location
+}

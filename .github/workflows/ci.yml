@@ -1,7 +1,7 @@
 name: CI
 
-# Required status check: validates that every PR still builds with Hugo.
-# A failed build here must block merging (enable this as a required check
+# Required status checks: site build/regressions and Windows tooling.
+# Failed checks must block merging (enable these as required checks
 # in Settings > Branches > Branch protection rules for `main`).
 on:
   pull_request:
@@ -31,15 +31,16 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: Verify member roster and participants
-        run: |
-          pip install --quiet PyYAML
-          python scripts/verify_members.py
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
 
-      - name: Test deployment safeguards
-        run: |
-          python -m unittest discover -s scripts -p test_deployment.py
-          node scripts/test_404_navigation.js
+      - name: Install test dependencies
+        run: python -m pip install --quiet -r scripts/requirements-dev.txt
+
+      - name: Verify people, membership and page assignments
+        run: python scripts/verify_members.py
 
       - name: Build Hugo site
         uses: ./.github/actions/build-site
@@ -49,6 +50,13 @@ jobs:
           hugo-version: ${{ vars.HUGO_VERSION }}
           build-drafts: "true"
           build-future: "true"
+
+      - name: Test Python safeguards and Hugo rendering
+        run: |
+          python -m unittest discover -s scripts -p 'test_*.py'
+
+      - name: Test frontend and hero framing
+        run: npm test
 
       - name: Upload build output
         uses: actions/upload-artifact@v7
@@ -64,3 +72,28 @@ jobs:
           args: --no-progress --exclude-external ./public
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  windows-tooling:
+    name: Windows tooling
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install portrait test dependencies
+        run: python -m pip install --quiet Pillow
+
+      - name: Test installer and launchers with Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $python = (Get-Command python.exe).Source
+          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File .\scripts\test_setup_dev_env.ps1 -PythonPath $python
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Test manual portrait cropping without opening a GUI
+        run: python -m unittest discover -s scripts/membership_image_converter -p test_manual_crop.py

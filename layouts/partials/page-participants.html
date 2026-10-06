@@ -1,0 +1,12 @@
+{{ $participants := .Params.participants | default slice }}
+{{ if .Params.participant_ids }}
+  {{ $participants = slice }}
+  {{ range .Params.participant_ids }}
+    {{ if reflect.IsMap . }}
+      {{ $participants = $participants | append . }}
+    {{ else }}
+      {{ $participants = $participants | append (dict "person" .) }}
+    {{ end }}
+  {{ end }}
+{{ end }}
+{{ return $participants }}

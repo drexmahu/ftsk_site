@@ -3,6 +3,10 @@
 Turns raw member photos into two web-ready `.webp` files each: a square,
 face-cropped thumbnail and a resized full image.
 
+Inputs: JPG, PNG, WebP and HEIF/HEIC via Pillow and `pillow-heif`.
+Multi-image HEIF files use the primary image only. High-bit-depth images
+are decoded to 8-bit WebP; HDR, depth maps and motion are not preserved.
+
 ## Setup (once)
 
 Run `./scripts/setup-dev-env.ps1` from the repository root to install all
@@ -16,7 +20,7 @@ support, then double-click `install_dependencies.bat`.
 
 ## Use
 
-For the integrated browser alternative, run `scripts/run_workbench.bat` from
+For the integrated browser alternative, run `site_editor.bat` from
 the repository root and choose **Member portraits**. Upload a batch, position
 each face crop and explicitly confirm before exporting. It uses this same
 converter, with protected output names and keyboard-accessible crop controls.
@@ -83,6 +87,5 @@ Copy the generated files into `static/images/members/` in the repo.
 
 - **"python is not recognized"** - reinstall Python with "Add Python to PATH", or try `py` instead of `python`.
 - **Missing module errors** - rerun `install_dependencies.bat`.
-- The manual crop tool requires only Pillow and Python/Tk; OpenCV and NumPy
+- The manual crop tool requires Pillow, pillow-heif and Python/Tk; OpenCV and NumPy
   are no longer required. Existing installations are not removed automatically.
-

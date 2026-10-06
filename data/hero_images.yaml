@@ -1,4 +1,4 @@
-# Homepage hero banner slideshow images (component-library/components/home/hero).
+# Homepage hero banner slideshow images (layouts/partials/sections/home/hero.html).
 # Rendered by hero.hugo.html via hugo.Data.hero_images. Every photo uses
 # static/js/hero-framing.js, shared with the full-photo POI editor.
 # Slideshow timing lives in static/js/script.js; styling in _hero.scss.

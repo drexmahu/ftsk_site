@@ -26,6 +26,12 @@ kapcsolót ez a szerkesztő nem módosítja. A flyerhez a médiatárból is
 választható kép, és a nem mentett tanfolyam valódi Hugo-előnézetben
 ellenőrizhető. Részletek: [böngészős szerkesztés](CONTENT_GUIDE.md#böngészős-szerkesztés).
 
+A **Page details → Card & banner photos → Featured image width (%)** mező
+csak a cikk felső képét méretezi, középre igazítva és az arányait megtartva.
+10–100% állítható; üres mezőnél 100%. A mentett érték `featuredImg.width`.
+A meglévő tanfolyamok és túrabeszámolók bannerei 40%-ra vannak állítva.
+A szövegközi képek, szórólapok, listakártyák és közösségi előnézetek nem változnak.
+
 ## 1. `data/tanfolyam.yaml` - főoldali hirdetés + menügomb
 
 ```yaml
@@ -50,8 +56,8 @@ nav_text: "Tanfolyam 2027"          # a menügomb felirata
 date: 2026-10-02T00:00:00Z          # a meghirdetés dátuma, ez alapján rendeződik a lista
 title: Alapfokú tanfolyam (2027)
 current: true                       # true = "Aktuális tanfolyam" kiemelés és jelvény
-author: ""                         # csak a valódi szerző; taglistás név esetén kattintható
-participants: []                    # ismert résztvevők; kártyák a cikk alatt
+author_id: ""                      # a valódi szerző közös személyazonosítója
+participant_ids: []                 # csak ennek a tanfolyamnak a résztvevői
 faq: []                            # opcionális, lenyitható GYIK a cikk szövege után
 article_image_width: 85             # normál Markdown képek szélessége %-ban
 thumbImg:
@@ -92,6 +98,18 @@ draft: true                         # ellenőrzés után false
   és címkéje nem kötött, nem csak négy mérföldkő adható meg.
 - Ha nincs `milestones`, `contacts` vagy `flyer_images`, az adott szakasz
   egyszerűen nem jelenik meg - archív tanfolyamnál nyugodtan maradhatnak is.
+- Minden tanfolyam saját résztvevőlistát kap. A résztvevőhöz több szerep is
+  választható a közös, Workbenchben szerkeszthető szerepkatalógusból
+  (`roles: [turavezeto, kutatasvezeto]`). A **Manage global participant roles** gombbal
+  új szerep is létrehozható kódmódosítás nélkül. Egy résztvevő későbbi tagsága nem
+  változtatja meg ezt a listát. Ugyanazt a személy-ID-t és portrét használd újra,
+  ne hozz létre külön éves másolatot. A kapcsolattartó neve is közös rekordból
+  jön; az email és telefon is a személyrekordban van, a cikkben csak a szerep:
+  `contacts: [{person: drexler-mate, role: szervező}]`.
+  A kereshető kiválasztók a **Pages & posts → Contact cards** fülön elérhetők.
+  Az elérhetőségeket a kattintható személyjelvényen keresztül a
+  **People & portraits** felületen szerkeszd. Normál tagkártyák és profilablakok
+  nem mutatnak emailt vagy telefont, csak a kapcsolattartói kártyák.
 - A megjelenés sorrendje: cím és szerző, mérföldkövek, fejlécfotó,
   szórólapok, cikk, GYIK, résztvevők, kapcsolattartók. Ezeket ne ismételd meg
   kézzel a törzsszövegben.
@@ -153,7 +171,7 @@ A lezárás két lépésben is történhet, igény szerint:
 A meglévő cikket bővítsd; ne hozz létre ugyanahhoz a tanfolyamhoz új
 beszámoló-fájlt. A szerző eredeti történetét ne írd át; a toborzó szöveg
 lezárását vagy a tényszerű beszámoló hozzáadását kezeld külön. A meglévő
-`date` maradjon meg, a résztvevőket a `participants` mezőben frissítsd.
+`date` maradjon meg, a résztvevőket a `participant_ids` mezőben frissítsd.
 
 A `content/_index.md` hirdetésszövegét lezáráskor nem kell törölni - az
 `active: false` elrejti, és a következő tanfolyamnál csak át kell írni.

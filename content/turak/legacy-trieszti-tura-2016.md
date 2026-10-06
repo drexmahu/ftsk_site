@@ -3,10 +3,11 @@ date: 2016-03-01T00:00:00Z
 title: Trieszti túra (2016 március)
 categories:
   - Túra
-author: Zsólyomi Zsófia
+author: ''
 thumbImg:
   image_path: /images/hero/ftsk-cave-hero.jpg
 featuredImg:
+  width: 40
   image_path: /images/hero/ftsk-cave-hero.jpg
 seo:
   page_description: 
@@ -16,6 +17,7 @@ seo:
   open_graph_type: article
   no_index: false
 draft: false
+author_id: zsolyomi-zsofia
 ---
 Rövid tavaszi túránk Trieszt környékének barlangjaihoz vezetett.
 

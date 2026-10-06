@@ -3,10 +3,11 @@ date: 2018-07-01T00:00:00Z
 title: "Első felvonás: Rolo szemétszedés (2018)"
 categories:
   - Szemétszedés
-author: Zsólyomi Zsófia
+author: ''
 thumbImg:
   image_path: /images/hero/ftsk-cave-hero.jpg
 featuredImg:
+  width: 40
   image_path: /images/hero/ftsk-cave-hero.jpg
 seo:
   page_description: 
@@ -16,6 +17,7 @@ seo:
   open_graph_type: article
   no_index: false
 draft: false
+author_id: zsolyomi-zsofia
 ---
 Nyári nagy túránk első felvonásaként a Rolo-fennsíkon szemétszedő akciót
 tartottunk a Gortani-kutatásaink helyszínének közelében.

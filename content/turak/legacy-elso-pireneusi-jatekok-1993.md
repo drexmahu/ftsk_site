@@ -3,10 +3,11 @@ date: 1993-08-01T00:00:00Z
 title: Első Pireneusi Játékok (1993)
 categories:
   - Expedíció
-author: Zsólyomi Zsolt (Frédi)
+author: ''
 thumbImg:
   image_path: /images/hero/ftsk-cave-hero.jpg
 featuredImg:
+  width: 40
   image_path: /images/hero/ftsk-cave-hero.jpg
 seo:
   page_description: 
@@ -16,6 +17,7 @@ seo:
   open_graph_type: article
   no_index: false
 draft: false
+author_id: zsolyomi-zsolt
 ---
 Az egyik legkorábbi nemzetközi kalandunk: az Első Pireneusi Játékok
 résztvevőjeként vettünk részt barlangász megmérettetéseken.

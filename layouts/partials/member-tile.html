@@ -1,6 +1,6 @@
 {{/*
   Renders one clickable member tile (photo-or-initials avatar + name), used by
-  both the "Tagjaink" roster (component-library/components/global/members) and
+  both the "Tagjaink" roster (layouts/partials/sections/global/members.html) and
   article participant cards (layouts/partials/participant-cards.html) so both
   share the exact same markup, styling, and click-to-open-modal behavior
   (static/js/script.js, modal itself in layouts/partials/member-modal.html).
@@ -15,6 +15,8 @@
     image      (optional) - small avatar photo path
     modal_image(optional) - larger photo shown in the modal (falls back to image)
     bio        (optional) - short text shown in the modal
+    status     (optional) - automatic participation label, used without an explicit role
+    contact_card(optional) - horizontal contact profile layout; links render separately
 */}}
 {{ $name := .name }}
 {{ with .nickname }}{{ $name = printf "%s (%s)" $.name . }}{{ end }}
@@ -25,7 +27,7 @@
 {{ $colorIdx := mod (len $cleanName) 5 }}
 <button
   type="button"
-  class="ftsk-members-tile ftsk-member-trigger"
+  class="ftsk-members-tile ftsk-member-trigger{{ if .contact_card }} ftsk-contact-profile{{ end }}"
   data-name="{{ $name }}"
   data-group="{{ .group }}"
   data-role="{{ .role }}"
@@ -43,5 +45,7 @@
     {{ end }}
   </span>
   <span class="ftsk-members-name">{{ $name }}</span>
+  {{ with .status }}<span class="ftsk-members-status">{{ . }}</span>{{ end }}
   {{ with .role }}<span class="ftsk-members-role">{{ . }}</span>{{ end }}
 </button>
+{{ partial "person-profile-contacts.html" . }}

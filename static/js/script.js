@@ -25,7 +25,7 @@ $(document).ready(function () {
       fixedContentPos: false,
    });
 
-   $('.ftsk-gallery-grid').magnificPopup({
+   $('.ftsk-gallery-grid, .ftsk-tanfolyam-flyers').magnificPopup({
       delegate: 'a',
       type: 'image',
       gallery: { enabled: true },
@@ -58,6 +58,12 @@ $(document).ready(function () {
 
       var bio = $tile.data('bio');
       $modal.find('.ftsk-member-modal-bio').text(bio || '').toggleClass('d-none', !bio);
+
+      var $contacts = $modal.find('.ftsk-member-modal-contacts').empty().addClass('d-none');
+      var contactTemplate = $tile.next('template.ftsk-profile-contacts')[0];
+      if (contactTemplate) {
+         $contacts.append(contactTemplate.content.cloneNode(true)).removeClass('d-none');
+      }
 
       var $avatar = $modal.find('.ftsk-member-modal-avatar').empty();
       var image = $tile.data('modal-image') || $tile.data('image');

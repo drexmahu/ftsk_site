@@ -1,0 +1,15 @@
+{{ $flyers := slice }}
+{{ range .Params.flyer_images }}
+{{ if .image_path }}{{ $flyers = $flyers | append . }}{{ end }}
+{{ end }}
+{{ with $flyers }}
+<div class="ftsk-tanfolyam-flyers" data-flyer-count="{{ len . }}" aria-label="Tanfolyami szórólapok">
+   {{ range . }}
+   {{ with .image_path }}
+   <a class="ftsk-tanfolyam-flyer-link" href="{{ partial `url.html` . }}" aria-label="Szórólap megnyitása teljes méretben">
+      <img src="{{ partial `url.html` . }}" alt="Szórólap" loading="lazy" />
+   </a>
+   {{ end }}
+   {{ end }}
+</div>
+{{ end }}

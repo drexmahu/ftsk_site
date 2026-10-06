@@ -166,10 +166,10 @@ content_blocks:
 
 
       **Cím:** Budapest, XI. kerület, Bartók Béla út 19.
-
-
-      **Elérhetőség:** [gyovai94@gmail.com](mailto:gyovai94@gmail.com) (Gyovai
-      Tamás, elnök)
+    contacts:
+      - person: gyovai-tamas
+        roles:
+          - elnok
   - _bookshop_name: global/linklist
     title: Beszámolóink
     anchor: beszamoloink

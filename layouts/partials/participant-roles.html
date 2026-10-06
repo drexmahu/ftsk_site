@@ -1,0 +1,39 @@
+{{ $roles := dict }}
+{{ $names := dict }}
+{{ range hugo.Data.participant_roles.roles }}
+  {{ if isset $roles .id }}{{ errorf "Duplicate participant role ID: %s" .id }}{{ end }}
+  {{ $role := . }}
+  {{ if isset . "automatic_when" }}
+    {{ if not .automatic_when }}{{ errorf "Automatic role needs at least one condition: %s" .id }}{{ end }}
+  {{ end }}
+  {{ with .automatic_when }}
+    {{ if not (reflect.IsMap .) }}{{ errorf "automatic_when must be conditions: %s" $role.id }}{{ end }}
+    {{ range $key, $value := . }}
+      {{ if or (not (in (slice "current_member" "course_participant") $key)) (ne (printf "%T" $value) "bool") }}
+        {{ errorf "Invalid automatic role condition: %s / %s" $role.id $key }}
+      {{ end }}
+    {{ end }}
+  {{ end }}
+  {{ $roles = merge $roles (dict .id .) }}
+  {{ range (slice .label | collections.Append (.aliases | default slice)) }}
+    {{ $key := lower (trim . " ") }}
+    {{ if isset $names $key }}{{ errorf "Duplicate participant role label/alias: %s" . }}{{ end }}
+    {{ $names = merge $names (dict $key $role) }}
+  {{ end }}
+  {{ range slice false true }}
+    {{ $member := . }}
+    {{ range slice false true }}
+      {{ $facts := dict "current_member" $member "course_participant" . }}
+      {{ $matches := 0 }}
+      {{ range $roles }}
+        {{ with .automatic_when }}
+          {{ $match := true }}
+          {{ range $key, $value := . }}{{ if ne (index $facts $key) $value }}{{ $match = false }}{{ end }}{{ end }}
+          {{ if $match }}{{ $matches = add $matches 1 }}{{ end }}
+        {{ end }}
+      {{ end }}
+      {{ if gt $matches 1 }}{{ errorf "Automatic role rules overlap; narrow their conditions" }}{{ end }}
+    {{ end }}
+  {{ end }}
+{{ end }}
+{{ return (dict "roles" $roles "names" $names) }}
