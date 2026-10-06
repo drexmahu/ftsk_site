@@ -8,6 +8,7 @@ import os
 import shutil
 import stat
 import subprocess
+import sys
 import threading
 import tempfile
 import uuid
@@ -460,7 +461,7 @@ class GitService:
         if self.app.job["state"] == "running":
             raise ConflictError("Wait for the current build or check to finish before changing Git state.")
         if action == "terminal":
-            if os.name != "nt":
+            if sys.platform != "win32":
                 raise ContentError("Opening a native recovery terminal is supported on Windows only. Open your own terminal at the checkout.")
             return
         if state["merge"]:

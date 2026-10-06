@@ -225,7 +225,9 @@ class GitTests(Fixture):
         try:
             with patch("git_workbench.shutil.which", side_effect=lambda name: "powershell.exe" if name == "powershell.exe" else real_which(name)), \
                     patch("git_workbench.subprocess.Popen", side_effect=lambda args, **kwargs:
-                          process if args[0] == "powershell.exe" else real_popen(args, **kwargs)) as launch:
+                          process if args[0] == "powershell.exe" else real_popen(args, **kwargs)) as launch, \
+                    patch("git_workbench.sys", Mock(platform="win32")), \
+                    patch("git_workbench.subprocess.CREATE_NEW_CONSOLE", 16, create=True):
                 result = self.git.start({"action": "terminal", "confirm": True, "revision": state["revision"]})
                 self.assertTrue(result["manual_terminal"])
                 self.assertTrue(result["busy"])
@@ -266,8 +268,17 @@ class GitTests(Fixture):
             return real_popen(args, **kwargs)
 
         with patch("git_workbench.shutil.which", side_effect=lambda name: "powershell.exe" if name == "powershell.exe" else real_which(name)), \
-                patch("git_workbench.subprocess.Popen", side_effect=launch):
+                patch("git_workbench.subprocess.Popen", side_effect=launch), \
+                patch("git_workbench.sys", Mock(platform="win32")), \
+                patch("git_workbench.subprocess.CREATE_NEW_CONSOLE", 16, create=True):
             with self.assertRaisesRegex(ContentError, "Cannot open.*Fixture launch denied"):
+                self.git.start({"action": "terminal", "confirm": True, "revision": state["revision"]})
+        self.assertFalse(self.git.busy)
+
+    def test_native_terminal_is_rejected_off_windows(self):
+        state = self.git.snapshot()
+        with patch("git_workbench.sys", Mock(platform="linux")):
+            with self.assertRaisesRegex(ContentError, "supported on Windows only"):
                 self.git.start({"action": "terminal", "confirm": True, "revision": state["revision"]})
         self.assertFalse(self.git.busy)
 
