@@ -58,7 +58,7 @@ jobs:
 
       - name: Check PR is still open at the built revision
         id: publish-check
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const { data: pullRequest } = await github.rest.pulls.get({
@@ -86,7 +86,7 @@ jobs:
 
       - name: Request Pages rebuild
         if: steps.publish-check.outputs.publish == 'true'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             await github.rest.repos.requestPagesBuild({
