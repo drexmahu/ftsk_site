@@ -450,6 +450,21 @@ people:
   name: Stieber Bence
   aliases: []
   needs_review: false
+- id: lukacs-laszlo
+  name: Lukács László
+  nickname: Drúz
+  image: /images/members/lukacs-laszlo/lukacs-laszlo_thumb.webp
+  modal_image: /images/members/lukacs-laszlo/lukacs-laszlo_full.webp
+  show_profile_contacts: false
+  aliases: []
+  needs_review: false
+- id: balazs-denes
+  name: Dr. Balázs Dénes
+  image: /images/members/balazs-denes/balazs-denes_thumb.webp
+  modal_image: /images/members/balazs-denes/balazs-denes_full.webp
+  show_profile_contacts: false
+  aliases: []
+  needs_review: false
 groups:
 - label: Vezetőség
   members:
@@ -574,3 +589,7 @@ groups:
   - person: vidics-zoltanne
     roles: []
   - person: zsolyomi-zsolt
+  - person: lukacs-laszlo
+    roles: []
+  - person: balazs-denes
+    roles: []

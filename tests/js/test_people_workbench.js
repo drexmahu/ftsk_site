@@ -140,6 +140,15 @@ for (const section of ["profile", "portraits", "membership", "contacts", "cv", "
 assert.ok(appScript.includes('"/api/workbench/members/portrait-upload-plan"'));
 assert.ok(appScript.includes("payload.overwrite_files = plan.files"));
 {
+  assert.ok(workbenchHtml.includes('data-cv-format="quote"'), "The CV editor offers a Quote button");
+  assert.ok(workbenchHtml.includes('data-markdown="quote"'), "The article editor offers a Quote button");
+  assert.ok(memberScript.includes('quote: ["\\n\\n{{< quote >}}\\n", "\\n{{< /quote >}}\\n\\n", "Quoted text"]'));
+  assert.ok(script.includes("quote: `\\n\\n{{< quote >}}\\n${area.value.slice(...studio.selection) || \"Quoted text\"}\\n{{< /quote >}}\\n\\n`"));
+  assert.ok(script.includes("{{< quote author="), "Syntax help documents quote attribution");
+  assert.ok(workbenchHtml.includes('data-cv-format="signature"'), "The CV editor offers a Signature button");
+  assert.ok(memberScript.includes('signature: ["\\n\\n{{< signature >}}", "{{< /signature >}}\\n\\n", "Author name"]'));
+}
+{
   const context = {};
   vm.runInNewContext(memberScript.slice(memberScript.indexOf("function memberCVImageMarkdown("),
     memberScript.indexOf("\nasync function browseMemberCVImages(")), context);
