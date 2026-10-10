@@ -147,6 +147,22 @@ assert.ok(appScript.includes("payload.overwrite_files = plan.files"));
     '\n\n![A \\[cave\\]](/images/members/alice/cave.webp "A \\"caption\\"")\n\n');
   assert.throws(() => context.memberCVImageMarkdown("/images/members/alice/cave.webp", "", ""), /alt text/);
   assert.throws(() => context.memberCVImageMarkdown("javascript:alert(1)", "Cave", ""), /local/);
+  const imageURL = "/images/members/alice/cave.webp";
+  assert.equal(context.memberCVImageMarkdown(imageURL, 'A "portrait"', "Caption", { width: "40", mobileWidth: "75", align: "right" }),
+    '\n\n{{< image src="/images/members/alice/cave.webp" alt="A \\"portrait\\"" caption="Caption" width="40" mobile-width="75" align="right" >}}\n\n');
+  assert.match(context.memberCVImageMarkdown(imageURL, "Portrait", "", { mobileWidth: "62.5" }), /mobile-width="62.5"/);
+  assert.doesNotMatch(context.memberCVImageMarkdown(imageURL, "Portrait", "", { mobileWidth: "75" }), / width=/);
+  assert.match(context.memberCVImageMarkdown(imageURL, "Portrait", "", { align: "left" }), /align="left"/);
+  assert.match(context.memberCVImageMarkdown(imageURL, "Portrait", "", { width: "", mobileWidth: "", align: "center" }), /!\[Portrait\]/);
+  for (const width of ["0", "9", "101", "no", "Infinity"]) {
+    assert.throws(() => context.memberCVImageMarkdown(imageURL, "Portrait", "", { width }), /10 to 100/);
+    assert.throws(() => context.memberCVImageMarkdown(imageURL, "Portrait", "", { mobileWidth: width }), /10 to 100/);
+  }
+  assert.throws(() => context.memberCVImageMarkdown(imageURL, "Portrait", "", { align: "float" }), /alignment/);
+  for (const id of ["member-cv-display-width", "member-cv-mobile-width", "member-cv-image-align"]) {
+    assert.ok(workbenchHtml.includes(`id="${id}"`));
+    assert.ok(memberScript.includes(`$("#${id}").value`));
+  }
   for (const id of ["member-cv", "member-cv_label", "member-cv_subtitle", "member-cv-upload", "member-cv-preview", "member-group-hint-save", "category-hint"]) {
     assert.ok(workbenchHtml.includes(`id="${id}"`));
   }

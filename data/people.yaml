@@ -568,7 +568,7 @@ groups:
   members:
   - person: czirjak-ferenc
 - label: Örökös tagok
-  hint: A tag kártyájára kattintva megnyílik a nekrológ.
+  hint: A fényképre kattintva felidézhetjük egykori társunk emlékét.
   members:
   - person: horvath-janos
   - person: vidics-zoltanne

@@ -305,7 +305,13 @@
                 <label>Image URL<input id="member-cv-image-url" placeholder="/images/members/person-id/photo.webp"></label>
                 <div class="field-pair"><label>Alt text (required)<input id="member-cv-alt" placeholder="Describe the image"></label>
                 <label>Caption (optional)<input id="member-cv-caption"></label></div>
-                <div class="actions"><button id="member-cv-insert-image" type="button" class="secondary">Insert Markdown image at cursor</button></div>
+                <div class="form-grid">
+                  <label>Desktop width (%)<input id="member-cv-display-width" type="number" min="10" max="100" step="any" placeholder="Automatic"></label>
+                  <label>Mobile width (%)<input id="member-cv-mobile-width" type="number" min="10" max="100" step="any" placeholder="Automatic"></label>
+                  <label>Image alignment<select id="member-cv-image-align"><option value="center">Center</option><option value="left">Left</option><option value="right">Right</option></select></label>
+                </div>
+                <p class="hint">Leave widths blank for automatic sizing: portraits stay compact. Manual widths (10–100%) override it. These are display sizes, not conversion dimensions. Custom sizes/alignment insert an image shortcode; otherwise a Markdown image is inserted. To adjust an existing image, select its entire source in the editor and insert its replacement.</p>
+                <div class="actions"><button id="member-cv-insert-image" type="button" class="secondary">Insert image at cursor / replace selection</button></div>
                 </section>
                 </div>
                 <h4>Actual site preview</h4>
