@@ -40,7 +40,7 @@ jobs:
         run: python -m pip install --quiet -r scripts/requirements-dev.txt
 
       - name: Verify people, membership and page assignments
-        run: python scripts/verify_members.py
+        run: python -m scripts.verify_members
 
       - name: Build Hugo site
         uses: ./.github/actions/build-site
@@ -53,7 +53,7 @@ jobs:
 
       - name: Test Python safeguards and Hugo rendering
         run: |
-          python -m unittest discover -s scripts -p 'test_*.py'
+          python -m unittest discover -s tests/python -p 'test_*.py'
 
       - name: Test frontend and hero framing
         run: npm test
@@ -92,8 +92,8 @@ jobs:
         shell: powershell
         run: |
           $python = (Get-Command python.exe).Source
-          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File .\scripts\test_setup_dev_env.ps1 -PythonPath $python
+          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File .\tests\powershell\test_setup_dev_env.ps1 -PythonPath $python
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Test manual portrait cropping without opening a GUI
-        run: python -m unittest discover -s scripts/membership_image_converter -p test_manual_crop.py
+        run: python -m unittest discover -s tests/python -p test_manual_crop.py

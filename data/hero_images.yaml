@@ -60,9 +60,9 @@
 # but note that changing `type` changes ALL of the motion, so when overriding `type`
 # also re-specify `direction`/`amount` if the new type needs different ones.
 #
-# Use scripts/site_image_converter/hero_focus_picker.html to preview crops/zoom/pan
+# Use tools/workbench/hero/hero_focus_picker.html to preview crops/zoom/pan
 # live. Both connected and offline modes support POI, responsive overrides, mirror,
-# and hide_below. run_hero_picker.bat opens connected mode with the real config.
+# and hide_below. Site Workbench's Hero slideshow edits the real config.
 # Direct file opening provides offline YAML output. See the tool's readme.md.
 "images":
 - "path": "/images/hero/ftsk-hero-cave-2.webp"

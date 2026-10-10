@@ -38,7 +38,7 @@ content_blocks:
          összetartó közösségben.
    -
       _bookshop_name: global/feature
-      image_path: /images/gallery/ftsk-gallery-1.jpg
+      image_path: images/index/turazas.webp
       title: Barlangtúrázás
       description: >-
          Rendszeresen szervezünk barlangtúrákat itthon és külföldön - Szlovéniában,
@@ -50,7 +50,7 @@ content_blocks:
       reversed: false
    -
       _bookshop_name: global/feature
-      image_path: /images/gallery/ftsk-gallery-2.png
+      image_path: images/index/kutatas.webp
       title: Barlangkutatás
       description: >-
          1954 óta kutatjuk a hazai barlangokat - a Szabadság-barlangban 1991-ben
@@ -63,7 +63,7 @@ content_blocks:
       reversed: true
    -
       _bookshop_name: global/feature
-      image_path: /images/gallery/ftsk-gallery-1.jpg
+      image_path: images/index/oktatas_index.webp
       title: Oktatás
       description: >-
          Alapfokú barlangász tanfolyamainkkal segítjük az új barlangászok
@@ -75,7 +75,7 @@ content_blocks:
       reversed: false
    -
       _bookshop_name: global/feature
-      image_path: /images/gallery/ftsk-gallery-3.webp
+      image_path: images/index/kanyon.webp
       title: Kanyoning
       description: >-
          Alkalmanként kanyoning túrákat is szervezünk. A sport iránt
@@ -87,10 +87,12 @@ content_blocks:
       reversed: true
    -
       _bookshop_name: global/feature
-      image_path: /images/turak/2026-kanin-expedicio/01-csapat-a-ducatonal.webp
+      image_path: images/index/kozosseg.webp
       title: Közösség
       description: >-
-         A közös túrák mellett a társasági élet is fontos nekünk.
+         A barlangászatban a közösségi élet legalább annyira fontos, mint maga a természetjárás: 
+         egy hétvégi túra végeztével a szálláson ilyenkor indul be az igazi élet. 
+         A csapatban nem csak barlangászni szeretünk együtt, hanem megannyi közösségi eseményt is szervezünk.
       btn:
          link: /kapcsolat/
          text: Csatlakozz hozzánk

@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FTSK Site Workbench</title>
+  <link rel="stylesheet" href="/workbench/style.css">
+  <link rel="stylesheet" href="/workbench/content.css">
+  <link rel="stylesheet" href="/workbench/autocomplete.css">
+  <link rel="stylesheet" href="/workbench/git.css">
+  <link rel="stylesheet" href="/workbench-editor/editor.css">
+  <link rel="stylesheet" href="/workbench/editors.css">
+  <link rel="stylesheet" href="/workbench/files.css">
+  <link rel="stylesheet" href="/workbench/uploads.css">
+  <script src="/workbench/uploads.js" defer></script>
+  <script src="/workbench/app.js" defer></script>
+  <script src="/workbench/people.js" defer></script>
+  <script src="/workbench/autocomplete.js" defer></script>
+  <script src="/workbench/content.js" defer></script>
+  <script src="/workbench/members.js" defer></script>
+  <script src="/workbench/git.js" defer></script>
+  <script src="/workbench/shortcuts.js" defer></script>
+  <script src="/workbench/editors.js" defer></script>
+  <script src="/workbench/files.js" defer></script>
+  <link rel="stylesheet" href="/workbench/members.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to workspace</a>
+  <aside class="sidebar">
+    <a class="brand" href="#overview"><img src="/static/images/ftsk-logo.png" alt=""><span>FTSK<span class="brand-sub">Site Workbench</span></span></a>
+    <nav aria-label="Tools">
+      <p class="nav-label git-nav-heading">Git / Start here</p>
+      <a href="#overview" data-view="overview" class="git-nav-entry"><span aria-hidden="true">01</span> Save &amp; sync</a>
+      <p class="git-nav-hint">Choose a branch before editing.<br>Return here to save &amp; publish.</p>
+      <p class="nav-label workspace-nav-heading">Your workspace</p>
+      <a href="#content" data-view="content"><span aria-hidden="true">✎</span> Pages &amp; posts</a>
+      <p class="nav-label">Images &amp; presentation</p>
+      <a href="#photos" data-view="photos"><span aria-hidden="true">02</span> Site photos</a>
+      <a href="#portraits" data-view="portraits"><span aria-hidden="true">03</span> People &amp; portraits</a>
+      <a href="#hero" data-view="hero"><span aria-hidden="true">04</span> Hero slideshow</a>
+      <a href="#social" data-view="social"><span aria-hidden="true">05</span> Social previews</a>
+      <p class="nav-label">Development</p>
+      <a href="#checks" data-view="checks"><span aria-hidden="true">06</span> Build &amp; checks</a>
+      <a href="#help" data-view="help"><span aria-hidden="true">07</span> Help &amp; workflow</a>
+    </nav>
+    <div class="local-note"><span class="dot"></span> Local workspace only<p>Nothing is published automatically.</p></div>
+  </aside>
+  <div class="workspace">
+    <header class="topbar">
+      <span>FTSK / <strong id="breadcrumb">Overview</strong></span>
+      <strong id="git-branch-banner" class="branch-banner locked">Connecting · editing locked</strong>
+      <a id="git-attention-link" class="git-attention-link" href="#overview" aria-live="polite">Checking save &amp; sync status…</a>
+      <div class="preview-controls" role="group" aria-label="Local site preview">
+        <span id="preview-state" class="badge">Connecting</span>
+        <button type="button" data-action="start-preview" title="Start Hugo or connect to an existing preview">Start preview</button>
+        <button type="button" class="secondary" data-action="stop-preview" title="Stop only the preview server started by this workspace" disabled>Stop preview</button>
+        <a id="open-site" href="http://127.0.0.1:1313/" target="_blank" rel="noopener">Open site ↗</a>
+      </div>
+    </header>
+    <main id="main" tabindex="-1">
+      <div id="message" class="notice" role="status" aria-live="polite" hidden></div>
+      <section data-panel="overview" data-save-target="git-review">
+        <div class="page-heading"><p class="eyebrow">Git / Start here · Return here to save &amp; sync</p><h1>Your work, safely connected.</h1><p>Start a working branch here before using the workspace tools. Edit the site, then return here to save a checkpoint and send it to GitHub. Main is read-only. Nothing is sent automatically.</p></div>
+        <div id="git-lock-notice" class="notice" role="status">Connecting to Git. Editing is locked until the branch is known.</div>
+        <section class="panel git-dashboard" aria-label="Git workspace">
+          <div class="section-heading"><h2>Where is your work?</h2><button id="git-refresh" type="button" class="secondary">Refresh local state</button></div>
+          <div class="git-guidance" id="git-guidance" role="status" aria-live="polite" aria-atomic="true">
+            <span class="eyebrow" id="git-guidance-stage">Your next step</span>
+            <p id="git-next-step" class="git-next-step">Checking the checkout…</p>
+            <p id="git-guidance-detail" class="hint"></p>
+            <button id="git-guidance-action" type="button" hidden></button>
+          </div>
+          <div class="git-map" id="git-map">
+            <section class="git-station" id="git-work-station">
+              <span class="eyebrow">01 / Editors → files</span><h3>Working files</h3><strong id="git-file-count">Checking…</strong>
+              <p id="git-draft-status">Checking browser drafts…</p><p>Save in the editor first. Then review these files and create a checkpoint on this computer.</p>
+              <div id="git-work-dots" class="git-dots" aria-hidden="true"></div>
+              <div class="git-domain-actions"><button id="git-review">Review changed files &amp; commit →</button></div>
+              <details><summary>Recover an unsaved editor draft</summary><p>Download a copy before discarding a browser draft. This never discards saved files or commits.</p><div class="actions"><button id="git-export-drafts" class="secondary">Download unsaved editor drafts</button><button id="git-discard-drafts" class="secondary">Discard unsaved editor drafts only</button></div></details>
+            </section>
+            <div class="git-connection git-files-flow" aria-hidden="true">
+              <div class="git-lane git-checkpoint-lane"><small>Checkpoint</small><span class="git-arrow forward"></span><small>Reviewed files → local history</small></div>
+            </div>
+            <section class="git-station" id="git-local-station">
+              <span class="eyebrow">02 / On this computer</span><h3 id="git-local-branch">Your branch</h3><strong id="git-local-sync">Checking…</strong>
+              <p>Checkpoints are local commits, not a GitHub backup. Branch selection controls what all editors use.</p><div id="git-local-dots" class="git-dots" aria-hidden="true"></div>
+              <div class="git-domain-actions"><button id="git-push">Send checkpoints to GitHub →</button><button id="git-push-lease" class="danger" hidden>Publish rebased branch · force with lease →</button><p id="git-lease-note" class="hint" hidden></p></div>
+              <div class="git-domain-actions git-branch-launchers"><button id="git-branch-controls" type="button" class="secondary">Switch branch · checkout ↔</button><button id="git-new-branch-open" type="button" class="secondary">Create a new working branch ↗</button></div>
+              <details id="git-rebase-controls"><summary>Follow the updated main branch</summary><p id="git-base-status" class="hint">Fetch to check main.</p><label>Base branch to follow<select id="git-rebase-target"></select></label><label class="check-label"><input id="git-rebase-published" type="checkbox"> Allow my published working branch to follow updated main, with a recovery backup</label><button id="git-rebase" class="secondary">Rebase onto selected base</button><p class="hint">Choose origin/main to follow GitHub's main. Rebase has a private recovery backup. A rewritten published branch requires a separately reviewed force-with-lease push; main is never rewritten.</p></details>
+            </section>
+            <div class="git-connection git-server-flow" aria-hidden="true">
+              <div class="git-lane git-send-lane"><small>Send</small><span class="git-arrow forward"></span><small>Checkpoints → GitHub</small></div>
+              <div class="git-lane git-fetch-lane"><small>Check</small><span class="git-arrow backward"></span><small>GitHub snapshot → here</small></div>
+              <div class="git-lane git-receive-lane"><small>Receive</small><span class="git-arrow backward"></span><small>GitHub history → branch</small></div>
+            </div>
+            <section class="git-station" id="git-server-station">
+              <span class="eyebrow">03 / GitHub</span><h3 id="git-server-branch">Server branch</h3><strong id="git-server-sync">Not checked yet</strong><p id="git-fetch-note">Fetch checks GitHub without changing your files. This snapshot is not live.</p><div id="git-server-dots" class="git-dots" aria-hidden="true"></div>
+              <div class="git-domain-actions"><button id="git-fetch">Check all remotes · fetch &amp; prune ←</button><button id="git-pull" class="secondary">Receive teammates' changes · pull --rebase ←</button></div>
+              <p id="git-pull-help" class="hint"></p>
+              <p class="hint">Check first. Receive brings your branch's updates to this computer; Send publishes local checkpoints. Nothing contacts GitHub automatically.</p>
+            </section>
+          </div>
+          <section id="git-history-graph" class="git-history-graph" aria-labelledby="git-graph-heading">
+            <div class="section-heading"><div><span class="eyebrow">Real checkpoints / shared history</span><h3 id="git-graph-heading">Main &amp; your working branch</h3></div><span class="git-graph-badge">Newer ↑ · older ↓</span></div>
+            <div class="git-graph-tools"><button id="git-graph-latest" type="button" class="secondary">Back to latest</button><button id="git-graph-detail-toggle" type="button" class="secondary" aria-pressed="false">Show technical details</button></div>
+            <p id="git-graph-location" class="notice" role="status"></p>
+            <div class="git-graph-basics"><p><strong>Save a checkpoint</strong> keeps reviewed changes on this computer.</p><p><strong>Receive</strong> brings GitHub updates here; replaying your changes may pause at conflicts.</p><p><strong>Publish / Send</strong> copies your branch to GitHub. It does not merge into main or deploy.</p><p><strong>Check GitHub</strong> refreshes our information; it changes neither your files nor your published work.</p></div>
+            <p id="git-graph-summary" class="git-graph-summary"></p>
+            <div id="git-graph-legend" class="git-graph-legend"></div>
+            <p id="git-graph-operation" class="notice" role="status" hidden></p>
+            <div class="git-graph-scroll" tabindex="0" role="region" aria-label="Scrollable checkpoint graph"><div id="git-graph-canvas"></div></div>
+            <p id="git-graph-note" class="hint"></p>
+            <details><summary>Read checkpoints as a list</summary><ol id="git-graph-list"></ol></details>
+          </section>
+          <dialog id="git-checkpoint-dialog" aria-labelledby="git-checkpoint-heading"><div class="section-heading"><h2 id="git-checkpoint-heading">Checkpoint details</h2><button id="git-checkpoint-close" type="button" class="secondary">Close</button></div><p class="hint">Read-only history. Nothing is restored, switched or published here.</p><p id="git-checkpoint-notice" class="notice" role="status"></p><p id="git-checkpoint-meta"></p><pre id="git-checkpoint-message"></pre><p id="git-checkpoint-comparison" class="hint"></p><ul id="git-checkpoint-files"></ul></dialog>
+          <details><summary>All local &amp; last-known server branches</summary><div id="git-branch-map" class="git-branch-map" aria-label="Local and last-known server branches"></div></details>
+          <div id="git-action-notice" class="notice" role="status" hidden></div>
+          <section id="git-recovery" class="notice error" hidden><h3>Rebase needs attention</h3><p>Your checkpoints are preserved. Resolve text conflicts below and continue, or abort to return to the pre-rebase state. Binary/deletion conflicts need maintainer help.</p><div id="git-conflicts"></div><button id="git-continue">Continue rebase</button><button id="git-abort" class="secondary">Abort rebase · restore previous branch state</button></section>
+          <details id="git-advanced-recovery"><summary>Advanced recovery · native Git terminal</summary><p>For experienced maintainers when this limited UI cannot resolve a situation. Text rebase conflicts can be edited above; binary/deletion conflicts, external merges and other Git problems may need manual commands or your own editor.</p><p class="notice">This opens Windows PowerShell in the real checkout. Commands can overwrite files or history and bypass all Workbench protection, including main and force-push restrictions. No command is run for you. Download/save browser drafts first. GUI editing, builds and Git operations stay locked until this terminal closes. Close child editors and type <code>exit</code>, then Workbench reloads the actual state. Do not restart Workbench while the terminal remains open.</p><p class="hint">Manual commands are not audited and do not certify a GUI recovery lease. Keep existing backups; if you finish a published rebase by hand, you may also need to complete its carefully reviewed publication in the terminal.</p><button id="git-terminal" type="button" class="danger">Review opening a native Git terminal</button><p id="git-terminal-note" class="hint" role="status"></p></details>
+          <section id="git-backup-info" class="notice" hidden><h3>Local rebase recovery backup</h3><p id="git-backup-description"></p><p>Keep this backup until the published result has been checked. It is private and excluded from Git. RESTORE.txt explains how a maintainer can recover the original history onto a new branch without overwriting current work. Backups are never automatically deleted.</p></section>
+          <details><summary>Changed files and recent local checkpoints</summary><div id="git-changes"></div><ol id="git-history"></ol></details>
+          <details><summary>Git operation details</summary><pre id="git-log">No operation yet.</pre></details>
+        </section>
+        <dialog id="git-branch-dialog" aria-labelledby="git-branch-heading">
+          <div class="section-heading"><h2 id="git-branch-heading">Choose a working branch</h2><button id="git-branch-close" type="button" class="secondary">Close</button></div>
+          <p id="git-branch-context" class="notice" role="status"></p>
+          <p>A branch is a separate line of work. Switching changes the files used by every editor; creating a branch starts a new line from the current checkout. Neither action publishes anything.</p>
+          <div class="git-branch-dialog-controls">
+            <section><h3>Switch to existing work</h3><label>Existing local / last-known server branch<select id="git-checkout"></select></label><button id="git-switch" type="button" class="secondary">Review switch to selected branch</button><p id="git-switch-reason" class="hint" role="status"></p></section>
+            <section><h3>Start a new working branch</h3><label>New branch name<input id="git-new-branch" placeholder="course-2027-update" maxlength="200"></label><button id="git-create" type="button">Review new branch from this checkout</button><p id="git-create-reason" class="hint" role="status"></p></section>
+          </div>
+          <h3>Common questions</h3>
+          <details><summary>Which branch should I start from?</summary><p>For a new task, normally check GitHub, switch to main, receive its updates, then create a working branch. Creating here uses the current checkout, not automatically the newest main.</p></details>
+          <details><summary>What happens to unsaved or uncommitted work?</summary><p>Save your editor drafts first. Switching requires all saved changes to be checkpointed. Creating a branch on main can carry saved changes safely onto it; creating from a dirty working branch is blocked. Nothing is automatically discarded or stashed.</p></details>
+          <details><summary>What is a server branch? Does switching send anything?</summary><p>Server choices come from the last GitHub check. Check GitHub first if a branch is missing. Choosing a known server branch creates or selects its local checkout. Switching never pushes your work, merges into main or deploys the site.</p></details>
+          <details><summary>Why can I not edit main?</summary><p>Main is protected. Create or select a working branch to edit. After saving and checkpointing your changes, send that working branch to GitHub explicitly.</p></details>
+        </dialog>
+        <dialog id="git-confirm-dialog" aria-labelledby="git-confirm-heading"><h2 id="git-confirm-heading">Review Git operation</h2><p id="git-confirm-description"></p><section id="git-rebase-illustration" hidden aria-label="Illustrative before and after rebase"><h3>What replaying your work means</h3><p class="notice">Illustration only — not a predicted result. Conflicts can pause the operation. Git confirms the actual history afterwards.</p><div id="git-rebase-sketch" class="git-rebase-sketch"></div><p id="git-rebase-sketch-note" class="hint"></p></section><p class="notice">Review the branch and operation before confirming. No automatic stash, merge or discard. Rewritten publication uses only an explicitly confirmed, exact force-with-lease, never an unconditional force.</p><label id="git-lease-confirm-label" hidden>Type the exact working branch name to confirm<input id="git-lease-confirm-branch" autocomplete="off"></label><div class="actions"><button id="git-confirm">Confirm operation</button><button id="git-confirm-cancel" class="secondary">Cancel</button></div></dialog>
+        <dialog id="git-commit-dialog" aria-labelledby="git-commit-heading" data-save-target="git-commit-confirm">
+          <header class="git-review-header"><h2 id="git-commit-heading">Create a checkpoint</h2><p>Select only files you intend to share. Check for private data and credentials. Unselected files stay unchanged.</p></header>
+          <div class="git-review-workspace">
+            <aside class="git-review-selection" aria-label="Choose files for the checkpoint">
+              <label>Find a file<input id="git-file-search" type="search" placeholder="Search filenames or folders"></label>
+              <div class="actions"><button id="git-select-all" type="button" class="secondary">Select all</button><button id="git-select-none" type="button" class="secondary">Select none</button></div>
+              <p id="git-selection-count" class="hint" role="status"></p>
+              <p class="hint">All/none apply to the entire file list, including hidden search results.</p>
+              <div id="git-commit-files"></div>
+              <button id="git-preview-diff" class="secondary">Review selected changes</button>
+            </aside>
+            <section class="git-review-reader" aria-label="Review selected changes">
+              <div id="git-review-navigation" hidden>
+                <label>Jump to a selected file<select id="git-review-file"></select></label>
+                <div class="actions"><button id="git-review-previous" class="secondary" type="button">Previous file</button><span id="git-review-position" class="hint" role="status"></span><button id="git-review-next" class="secondary" type="button">Next file</button></div>
+              </div>
+              <div id="git-review-scroll">
+                <div id="git-friendly-review" aria-live="polite"><p>Choose files, then review.</p></div>
+                <details id="git-technical-review" hidden><summary>Technical details for all selected files (optional)</summary><pre id="git-diff"></pre></details>
+                <p id="git-diff-note" class="hint"></p>
+              </div>
+            </section>
+          </div>
+          <footer class="git-review-footer">
+            <label>What changed? (required)<textarea id="git-commit-message" rows="2" maxlength="2000" required aria-describedby="git-message-help" placeholder="For example: Updated the course dates and added the new participants"></textarea></label>
+            <p id="git-message-help" class="hint">Write a short description in your own words. A message and a current file review are both required.</p>
+            <p class="notice git-dialog-notice" role="alert" hidden></p>
+            <div class="actions"><button id="git-commit-confirm" disabled>Create reviewed checkpoint</button><button id="git-commit-cancel" class="secondary">Cancel</button></div>
+          </footer>
+        </dialog>
+        <dialog id="git-conflict-dialog" aria-labelledby="git-conflict-heading" data-save-target="git-resolve-confirm"><h2 id="git-conflict-heading">Resolve text conflict</h2><p>Keep the intended final content and remove &lt;&lt;&lt;&lt;&lt;&lt;&lt;, ======= and &gt;&gt;&gt;&gt;&gt;&gt;&gt; markers. Ask the maintainer if unsure; Abort rebase remains available.</p><label>Final file contents<textarea id="git-conflict-source" rows="20" spellcheck="false" data-monaco-language="plaintext"></textarea></label><div class="actions"><button id="git-resolve-confirm">Accept this resolution</button><button id="git-conflict-cancel" class="secondary">Cancel</button></div></dialog>
+        <div class="tool-grid">
+          <a class="tool-card" href="#content"><span class="card-number">CONTENT STUDIO</span><h2>Pages &amp; posts</h2><p>Create and edit trip reports, PDF archives and courses. Metadata, photos, shortcodes and real unsaved Hugo previews.</p><span class="card-link">Open content studio →</span></a>
+          <a class="tool-card" href="#photos"><span class="card-number">01</span><h2>Site photos</h2><p>Batch WebP conversion. Keep proportions, reduce file size, choose a site image folder.</p><span class="card-link">Prepare photos →</span></a>
+          <a class="tool-card" href="#portraits"><span class="card-number">02</span><h2>Members &amp; portraits</h2><p>Add, edit and remove roster entries. Choose portraits and face crops in the same workspace.</p><span class="card-link">Manage members →</span></a>
+          <a class="tool-card" href="#hero"><span class="card-number">03</span><h2>Hero slideshow</h2><p>Subject placement, motion, mirroring and responsive framing in the existing live editor.</p><span class="card-link">Compose the hero →</span></a>
+          <a class="tool-card" href="#social"><span class="card-number">04</span><h2>Social previews</h2><p>Inspect the actual share image and metadata from a local or public page. Export an offline preview.</p><span class="card-link">Check a shared link →</span></a>
+        </div>
+        <p class="muted">Changes stay in your checkout. Production deployment is intentionally separate.</p>
+      </section>
+      <section data-panel="photos" hidden>
+        <div class="page-heading"><p class="eyebrow">Images / Web optimizer</p><h1>Site photos</h1><p>Upload original JPG, PNG or WebP photos. Conversion preserves the aspect ratio and never upscales.</p></div>
+        <div class="split">
+          <div class="panel"><h2>1. Choose photos</h2><label class="dropzone" for="photo-files"><strong>Select or drop photos</strong><span>JPG, PNG, WebP, HEIF/HEIC · up to 30 MiB / 25 MP per photo</span><input id="photo-files" type="file" accept="image/jpeg,image/png,image/webp,image/heif,image/heic,.heif,.heic" multiple></label><div id="photo-queue" class="queue"></div></div>
+          <div class="panel settings"><h2>2. Output settings</h2><label>Folder under static/images/<input id="photo-folder" list="image-folders" value="gallery" placeholder="turak/2026-trip"></label><p class="hint">Choose an existing folder or type any new nested folder. Examples: gallery, turak/2026-trip. Existing files are never overwritten.</p><div class="field-pair"><label>Max width (px)<input id="photo-width" type="number" min="64" max="6000" value="1600"></label><label>Max height (px)<input id="photo-height" type="number" min="64" max="6000" value="1600"></label></div><label>WebP quality (1–100)<input id="photo-quality" type="number" min="1" max="100" value="82"></label><button id="convert-photos">Convert queued photos</button><p class="hint">Writes WebP files directly into the site. Adding photos here does not automatically add them to the hero slideshow.</p></div>
+        </div>
+        <div id="photo-results" class="panel" hidden><h2>Converted files</h2><div class="results"></div></div>
+      </section>
+      <section data-panel="portraits" hidden>
+        <div class="page-heading"><p class="eyebrow">People registry / Membership &amp; face crop</p><h1>People &amp; portraits</h1><p>Keep one permanent identity per person, including guests, former members and students. Current membership is optional and separate from authorship, course participation and contacts. Assigning someone to a page never makes them a member. Portraits use the same tools for everyone.</p></div>
+        <div class="member-layout">
+          <div class="panel">
+            <div class="section-heading"><h2>People registry <span data-workbench-file="data/people.yaml"></span></h2><button id="member-refresh" class="secondary" type="button">Reload</button></div>
+            <div class="registry-filters">
+            <label>Search existing people first<input id="member-search" type="search" placeholder="Name, stable ID, nickname, alias, role or category"></label>
+            <label>Membership filter<select id="member-filter"><option value="all">All people</option><option value="current">Current members</option><option value="nonmembers">Not current members</option><option value="review">Needs clarification</option></select></label>
+            <label>Group / category<select id="member-category-filter"><option value="">All groups / categories</option></select></label>
+            </div>
+            <p class="hint">Before adding someone, search all people for their name and aliases. Reuse an existing identity rather than creating a second one.</p>
+            <div class="actions"><button id="member-new" type="button">Add person (no membership)</button><button id="member-resume" class="secondary" type="button" hidden>Resume person editor</button><button id="portrait-standalone" class="secondary" type="button">Standalone portrait export</button></div>
+            <details class="category-manager">
+              <summary>Manage categories &amp; hints</summary>
+              <p class="hint">Create organizational labels here, then select any number on a person. Automatic course groups come from all saved course participants. Save or discard a person draft before managing categories.</p>
+              <fieldset id="category-fields" data-save-target="category-save">
+                <label>Category<select id="category-select"><option value="">Create a new custom category</option></select></label>
+                <label>Category name<input id="category-label" maxlength="200" placeholder="For example: Expedition organizers"></label>
+                <label>Category hint<input id="category-hint" maxlength="1000" placeholder="Optional category description"></label>
+                <label>Stable category ID<input id="category-id" maxlength="200" placeholder="expedition-organizers"></label>
+                <div class="actions"><button id="category-save" type="button">Create category</button><button id="category-delete" type="button" class="secondary" hidden>Delete empty category</button></div>
+                <p id="category-status" class="hint" role="status">Custom categories do not grant membership.</p>
+                <h3>Public membership category hints</h3>
+                <div data-save-target="member-group-hint-save">
+                <label>Membership category<select id="member-hint-group"></select></label>
+                <label>Hint below the heading<input id="member-group-hint" maxlength="1000" placeholder="Optional click instruction"></label>
+                <button id="member-group-hint-save" type="button">Save membership hint</button>
+                </div>
+              </fieldset>
+            </details>
+            <details id="participant-role-manager" class="category-manager">
+              <summary>Manage roles — membership, courses &amp; trips</summary>
+              <p class="hint">The choices start with the roles already used by your members. Select several in a person's membership or independently on an event page. Assigning a page role never grants membership.</p>
+              <fieldset id="participant-role-fields" data-save-target="participant-role-save">
+                <label>Role<select id="participant-role-select"><option value="">Create a new role</option></select></label>
+                <label>Display name<input id="participant-role-label" maxlength="200" placeholder="For example: túravezető"></label>
+                <input id="participant-role-exempt" type="checkbox" hidden>
+                <label class="check-label"><input id="participant-role-automatic" type="checkbox"><span>Use this role automatically when all conditions below match</span></label>
+                <div class="field-pair">
+                  <label>Current membership<select id="participant-role-current_member"><option value="">Any</option><option value="true">Current member</option><option value="false">Not a current member</option></select></label>
+                  <label>Saved course participation<select id="participant-role-course_participant"><option value="">Any</option><option value="true">Listed on a course</option><option value="false">Not listed on any course</option></select></label>
+                </div>
+                <p class="hint">At least one condition is required. Overlapping rules are rejected. Manual event roles always override automatic roles on that page. Disabling a rule removes only its automatic fallback, not saved assignments.</p>
+                <details><summary>Stable ID &amp; historical labels</summary>
+                  <p class="hint">The ID is generated for new roles and stays permanent. Historical names keep older text-based assignments connected; renaming automatically keeps the old name.</p>
+                  <label>Stable role ID<input id="participant-role-id" maxlength="100" placeholder="oktato"></label>
+                  <label>Historical names (one per line)<textarea id="participant-role-aliases" rows="3"></textarea></label>
+                </details>
+                <div class="actions"><button id="participant-role-save" type="button">Create role</button><button id="participant-role-delete" type="button" class="secondary" hidden>Delete unused role</button><button id="participant-role-discard" type="button" class="secondary">Discard role draft</button></div>
+              </fieldset>
+              <p id="participant-role-status" class="hint" role="status"></p>
+              <div id="participant-role-usage" class="person-history-list"></div>
+            </details>
+            <div id="member-list" class="queue" aria-label="People registry"></div>
+          </div>
+        </div>
+        <dialog id="person-editor-dialog" aria-labelledby="person-dialog-heading" data-save-target="member-save">
+          <div class="person-dialog-top">
+          <div class="section-heading person-dialog-header">
+            <div class="person-dialog-identity"><img id="person-dialog-avatar" alt="" hidden><h2 id="person-dialog-heading">Person editor &amp; portraits</h2><span id="member-draft" class="badge">Saved</span></div>
+            <div class="person-save-actions"><button id="member-save" type="submit" form="member-form">Save person</button><button id="member-cancel" class="secondary" type="button">Close / discard draft</button><button id="person-dialog-close" class="secondary" type="button" aria-label="Close person editor">Close</button></div>
+          </div>
+          <div id="person-dialog-notice" class="notice error member-dialog-error" role="alert" hidden><span id="person-dialog-error-text"></span><button id="person-dialog-dismiss-error" type="button" class="secondary">Dismiss error</button></div>
+          </div>
+          <nav id="member-editor-nav" aria-label="Person editor sections">
+            <button type="button" data-member-tab="profile">Profile &amp; identity</button>
+            <button type="button" data-member-tab="portraits">Portrait photo</button>
+            <button type="button" data-member-tab="membership">Membership &amp; groups</button>
+            <button type="button" data-member-tab="contacts">Contact &amp; visibility</button>
+            <button type="button" data-member-tab="cv">CV / necrolog</button>
+            <button type="button" data-member-tab="history">Participation history</button>
+            <button type="button" data-member-tab="advanced">Advanced / deletion</button>
+          </nav>
+          <form id="member-form" class="panel" hidden>
+            <h2 id="member-heading" hidden>Edit person</h2>
+            <fieldset id="member-fields">
+              <section data-member-section="profile">
+              <h3>Profile</h3>
+              <div class="field-pair"><label>Name<input id="member-name" required maxlength="500"></label><label>Nickname<input id="member-nickname" maxlength="500"></label></div>
+              <label>Biography (Markdown)<textarea id="member-bio" rows="4" maxlength="10000" data-monaco-language="markdown"></textarea></label>
+              </section>
+              <details class="person-editor-section" data-member-section="cv">
+                <summary>CV / necrolog — Markdown &amp; images</summary>
+                <p class="hint">A dedicated Markdown page holds this document, linked by the person's ID. A non-empty document replaces the small profile popup. Clearing the document removes its page when you save, but keeps uploaded images. Save a new person before uploading images.</p>
+                <p class="hint">Document source: <code id="member-document-path"></code>. Save person writes both the profile and this page; changes made in Pages &amp; posts are checked before overwriting.</p>
+                <label>Public document label<input id="member-cv_label" maxlength="500" placeholder="CV"></label>
+                <p class="hint">Stored in the page's document_label frontmatter. Shown above the name, for example Nekrológ or Életút. Leave blank to use CV.</p>
+                <label>Document subtitle<input id="member-cv_subtitle" maxlength="500" placeholder="Optional text beneath the name"></label>
+                <p class="hint">A short plain-text line beneath the name on the CV page and modal, for example dates or a dedication. Leave blank to hide it.</p>
+                <label>Document author<input id="member-cv_author" maxlength="500" placeholder="Optional author name"></label>
+                <p class="hint">Free-text attribution, shown at the bottom right of the document on both the page and modal. Leave blank to hide it.</p>
+                <div class="actions" aria-label="CV formatting">
+                  <button type="button" class="secondary" data-cv-format="heading">Heading</button>
+                  <button type="button" class="secondary" data-cv-format="bold">Bold</button>
+                  <button type="button" class="secondary" data-cv-format="italic">Italic</button>
+                  <button type="button" class="secondary" data-cv-format="list">List</button>
+                  <button type="button" class="secondary" data-cv-format="link">Link</button>
+                </div>
+                <label>CV (Markdown)<textarea id="member-cv" rows="16" maxlength="100000" placeholder="## Életút" data-monaco-language="markdown"></textarea></label>
+                <h4>Images</h4>
+                <div class="cv-image-tools">
+                <section class="converter-panel">
+                <h4>Convert new photos</h4>
+                <label>Fixed upload folder under static/images/<input id="member-cv-folder" readonly></label>
+                <div class="crop-settings">
+                  <label>Max width<input id="member-cv-width" type="number" min="64" max="6000" value="1600"></label>
+                  <label>Max height<input id="member-cv-height" type="number" min="64" max="6000" value="1600"></label>
+                  <label>Quality<input id="member-cv-quality" type="number" min="1" max="100" value="82"></label>
+                </div>
+                <label class="dropzone" for="member-cv-file"><strong>Choose or drop CV photos</strong><span>Batch conversion · JPG, PNG, WebP, HEIF/HEIC</span><input id="member-cv-file" type="file" multiple accept="image/jpeg,image/png,image/webp,image/heif,image/heic,.heif,.heic"></label>
+                <p id="member-cv-file-selection" class="hint" role="status">No CV photos selected.</p>
+                <div class="actions cv-upload-actions"><button id="member-cv-upload" type="button">Convert photos</button><button id="member-cv-clear-file" type="button" class="secondary">Clear</button></div>
+                <p class="hint">Exports are saved immediately in this person's folder. Cancelling pending photos does not delete exports.</p>
+                </section>
+                <section class="converter-panel cv-library-panel">
+                <div class="section-heading cv-library-heading"><h4>Saved photos</h4><button id="member-cv-browse" class="secondary" type="button">Refresh folder</button></div>
+                <div id="member-cv-images" class="asset-grid"></div>
+                <p class="hint">Select a saved photo, add alt text, then insert at the Markdown cursor. Repeat anywhere in your text.</p>
+                <label>Image URL<input id="member-cv-image-url" placeholder="/images/members/person-id/photo.webp"></label>
+                <div class="field-pair"><label>Alt text (required)<input id="member-cv-alt" placeholder="Describe the image"></label>
+                <label>Caption (optional)<input id="member-cv-caption"></label></div>
+                <div class="actions"><button id="member-cv-insert-image" type="button" class="secondary">Insert Markdown image at cursor</button></div>
+                </section>
+                </div>
+                <h4>Actual site preview</h4>
+                <button id="member-cv-preview" type="button" class="secondary">Preview unsaved CV</button>
+                <p id="member-cv-preview-status" class="hint" role="status">Preview does not save the person.</p>
+                <a id="member-cv-preview-link" target="_blank" rel="noopener" hidden>Open CV preview</a>
+                <iframe id="member-cv-preview-frame" title="CV preview" sandbox="allow-scripts" hidden></iframe>
+              </details>
+              <details id="member-identity-details" class="person-editor-section" data-member-section="profile">
+              <summary>Identity, aliases &amp; clarification</summary>
+              <label>Stable person ID<input id="member-id" required pattern="[a-z0-9-]+" maxlength="200" placeholder="anna-kovacs"></label>
+              <p class="hint">Lowercase letters, digits and hyphens. Saved IDs are protected from ordinary profile edits. Use the reviewed ID change below to update connected saved pages.</p>
+              <label>Aliases — other names, one per line<textarea id="member-aliases" rows="3" placeholder="Previous name or spelling"></textarea></label>
+              <p class="hint">Aliases are confirmed names for this same person, not possible matches or different people with a shared first name. A name stored here cannot be assigned to another person.</p>
+              <label class="check-label"><input id="member-needs-review" type="checkbox"><span>Needs manual identity clarification</span></label>
+              <p class="hint">Flag unidentified or uncertain names instead of guessing. Clear this only after a person confirms the identity; candidate hints are not proof.</p>
+              </details>
+              <p id="member-duplicate-warning" class="notice error" role="status" hidden></p>
+              <section class="person-editor-section" data-member-section="membership">
+              <h3>Groups &amp; categories</h3>
+              <label>Current membership<select id="member-group"></select></label>
+              <p class="hint">Public membership stays separate. Choose no membership for guests, former members and students. Categories below never grant membership.</p>
+              <input id="member-role" type="hidden">
+              <div id="member-membership-roles"></div>
+              <p class="hint">Membership roles are saved as a list. The public site shows the same comma-separated labels. Add or rename the global choices in Manage roles in the registry panel.</p>
+              <h4>Custom categories — choose any number</h4>
+              <div id="member-custom-categories" class="person-category-options"></div>
+              <h4>Tanfolyami résztvevők — automatic</h4>
+              <div id="member-course-categories" class="person-category-chips"></div>
+              <p class="hint">Everyone listed as a participant on a saved course page belongs to its group, including participants without a role, instructors and helpers. Roles remain separate and membership is unchanged. Click a course to edit its participants.</p>
+              </section>
+              <details class="person-editor-section" data-member-section="contacts">
+              <summary>Contact details &amp; profile visibility</summary>
+              <div class="field-pair"><label>Contact email<input id="member-email" type="email" maxlength="500"></label><label>Contact phone<input id="member-phone" type="tel" maxlength="500"></label></div>
+              <label class="check-label"><input id="member-show-profile-contacts" type="checkbox"><span>Also show contact details in this person's opened profile</span></label>
+              <h3>Social &amp; profile links</h3><div id="member-social-links"></div><button id="member-social-add" type="button" class="secondary">+ Add social link</button>
+              <p class="hint">Use a complete https:// address. Common platforms get their own icon; other sites get a link icon. Links stay in your chosen order. Contact cards always show these shared details. Opened profiles show them only when the switch above is on; ordinary tiles never show them directly. Publish only agreed contact details.</p>
+              </details>
+              <details class="person-editor-section" data-member-section="portraits" id="member-portrait-section">
+              <summary>Portraits &amp; image assignments</summary>
+              <div class="portrait-editor-grid">
+              <div>
+              <div class="member-image-preview"><img id="member-avatar" alt="Member thumbnail" hidden><img id="member-full" alt="Member full portrait" hidden></div>
+              <p class="hint">Upload a photo below, position the face crop, then convert. Files are always named with this person's ID. Replacing the fixed pair requires confirmation and affects the files immediately.</p>
+              <button id="member-delete-portrait" class="danger" type="button">Delete saved portrait files &amp; clear assignments</button>
+              <button id="member-images-browse" class="secondary" type="button">Manage uploaded files in this person's folder</button>
+              <div id="member-uploaded-images" class="member-image-library"></div>
+              <label>Existing portrait pair<select id="member-portrait-choice"><option value="">Choose a portrait</option></select></label>
+              <div class="actions"><button id="member-use-portrait" class="secondary" type="button">Use portrait pair</button><button id="member-clear-images" class="secondary" type="button">Remove image assignments</button></div>
+              <label>Thumbnail URL<input id="member-image" maxlength="500" placeholder="/images/members/name_thumb.webp"></label>
+              <label>Full-image URL<input id="member-modal_image" maxlength="500" placeholder="/images/members/name_full.webp"></label>
+              <p class="hint">Upload and crop on the right. Save person to persist new assignments. ID-named files are replaced only after confirmation. After switching from legacy filenames, saving offers a review of the old files; shared files are kept.</p>
+              </div>
+              <div id="member-portrait-upload"></div>
+              </div>
+              </details>
+              <div id="member-references" class="hint"></div>
+              <div class="actions"><button id="member-remove-membership" class="secondary" type="button">Remove membership in draft</button></div>
+              <details class="person-editor-section" data-member-section="advanced">
+              <summary>Advanced identity operations</summary>
+              <p class="hint">These operations affect saved identities and references. Review carefully before confirming.</p>
+              <button id="member-delete" class="secondary" type="button" aria-describedby="member-delete-reason">Permanently delete person</button>
+              <p id="member-delete-reason" class="hint"></p>
+              <section id="member-rename" class="repeater" hidden>
+                <h3>Change person ID with reference review</h3>
+                <p class="hint">Save or discard person changes first. Review every affected saved page and membership before confirming. Names, portraits and event roles stay unchanged. Unsaved page drafts are not rewritten.</p>
+                <label>New person ID<input id="member-rename-target" maxlength="200" placeholder="anna-kovacs"></label>
+                <button id="member-rename-plan" type="button" class="secondary">Review ID change</button>
+                <div id="member-rename-review" class="hint" hidden></div>
+                <button id="member-rename-confirm" type="button" class="danger" hidden>Confirm reviewed ID change</button>
+              </section>
+              <section id="member-merge" class="repeater" hidden>
+                <h3>Merge duplicate identity into another person</h3>
+                <p class="hint">Use only after manually confirming both entries represent the same person. Save or discard this person draft first. The target identity stays; this source identity is removed. Saved page assignments are rewritten, but unsaved page drafts are not.</p>
+                <label>Search merge target<input id="member-merge-search" type="search" placeholder="Name, stable ID or alias"></label>
+                <label>Keep this target person<select id="member-merge-target"></select></label>
+                <button id="member-merge-plan" type="button" class="secondary">Review merge plan</button>
+                <div id="member-merge-review" class="hint" hidden></div>
+                <button id="member-merge-confirm" type="button" class="danger" hidden>Confirm permanent identity merge</button>
+              </section>
+              </details>
+            </fieldset>
+            <details class="person-editor-section" data-member-section="history">
+              <summary>Participation &amp; contribution history</summary>
+              <section id="member-overview" class="person-overview" aria-label="Membership and participation overview"></section>
+            </details>
+          </form>
+        </dialog>
+        <details class="panel member-audit"><summary id="member-audit-summary">People &amp; image checks</summary><div id="member-audit"></div><p class="hint">Legacy names may need matching to registry identities; guests do not need membership. Unassigned portraits may still be used by other content. Review and explicitly confirm loose-file deletion; files with saved site references are blocked. Nothing is automatically removed.</p></details>
+        <dialog id="member-files-dialog">
+          <div id="member-files-error" class="notice error member-dialog-error" role="alert" hidden><span id="member-files-error-text"></span><button id="member-files-dismiss-error" type="button" class="secondary">Dismiss error</button></div>
+          <div class="section-heading"><h2>Delete loose portrait files</h2><button id="member-files-cancel" class="secondary" type="button">Cancel</button></div>
+          <p class="notice error">This permanently removes selected files from the checkout. Untracked files cannot be recovered with Git. Check unsaved page drafts too: only saved site references can be scanned. Thumbnail and full images are separate files; only checked files will be deleted.</p>
+          <div id="member-files-review"></div>
+          <button id="member-files-confirm" class="danger" type="button">Permanently delete checked files</button>
+        </dialog>
+        <div id="portrait-workspace">
+        <div class="section-heading"><h2>Portrait crop &amp; export</h2><span id="portrait-member-target" class="hint">Standalone export: select or add a person above to assign a portrait.</span></div>
+        <div class="panel"><label class="dropzone" for="portrait-files"><strong>Select or drop portraits</strong><span>JPG, PNG, WebP, HEIF/HEIC · EXIF orientation is corrected</span><input id="portrait-files" type="file" accept="image/jpeg,image/png,image/webp,image/heif,image/heic,.heif,.heic" multiple></label><div id="portrait-queue" class="queue"></div></div>
+        <div id="crop-panel" class="panel" hidden>
+          <div class="section-heading"><div><p class="eyebrow">Manual selection</p><h2 id="crop-name">Choose face crop</h2></div><button class="secondary" id="skip-portrait">Skip photo</button></div>
+          <div class="crop-layout"><div><canvas id="crop-canvas" width="900" height="600" tabindex="0" role="img" aria-label="Face crop editor. Click or drag to position. Use arrow keys to move; Shift moves faster."></canvas><p class="hint">Click or drag to position · arrows to move · Shift for larger steps. The exported avatar is square; the circle previews the site.</p></div><div><h3>Avatar preview</h3><canvas id="avatar-canvas" width="180" height="180" aria-label="Selected circular avatar preview"></canvas><label>Crop size <output id="crop-size-label">65%</output><input id="crop-size" type="range" min="5" max="100" value="65"></label><div class="field-pair"><label>Center X (%)<input id="crop-x" type="number" min="0" max="100" step="0.1" value="50"></label><label>Center Y (%)<input id="crop-y" type="number" min="0" max="100" step="0.1" value="50"></label></div><button class="secondary" id="reset-crop">Reset crop</button></div></div>
+          <div class="crop-settings"><label>Output folder<input id="portrait-folder" value="members"></label><label>Avatar (px)<input id="portrait-thumb" type="number" min="64" max="1200" value="400"></label><label>Full max width<input id="portrait-width" type="number" min="64" max="6000" value="1400"></label><label>Full max height<input id="portrait-height" type="number" min="64" max="6000" value="1400"></label><label>Quality<input id="portrait-quality" type="number" min="1" max="100" value="85"></label></div>
+          <div class="actions"><button id="convert-portrait">Confirm crop &amp; convert</button><span class="hint">Review the avatar before confirming. No files are written until you confirm.</span></div>
+        </div>
+        <div id="portrait-results" class="panel" hidden><h2>Portrait files</h2><div class="results"></div><p class="hint">When a person draft is open, converted images are assigned to that draft. Save person to persist. Standalone exports remain available without a registry assignment.</p></div>
+        </div>
+      </section>
+      <section data-panel="hero" hidden>
+        <div class="page-heading"><p class="eyebrow">Presentation / Motion &amp; framing</p><h1>Hero slideshow <span data-workbench-file="data/hero_images.yaml"></span></h1><p>The existing editor, connected to the real site. Save writes data/hero_images.yaml. Removing a slide here keeps its image file for other pages.</p></div>
+        <div class="embed-actions"><a href="/hero/hero_focus_picker.html" target="_blank" rel="noopener">Open editor in a full tab ↗</a><button class="secondary" id="reload-hero">Reload editor</button><span class="hint">Save your changes before reloading.</span></div>
+        <iframe id="hero-frame" title="Hero slideshow editor" class="hero-frame"></iframe>
+      </section>
+      <section data-panel="social" hidden>
+        <div class="page-heading"><p class="eyebrow">Presentation / Shared links</p><h1>Social previews</h1><p>Preview actual Open Graph and X/Twitter images and metadata. Use a dev-server link or a public URL. Real platforms cannot fetch localhost.</p></div>
+        <form id="social-form" class="panel social-form"><label>Page URL<input id="social-url" type="url" required value="http://localhost:1313/" placeholder="https://www.ftsk.hu/turak/..."></label><button>Render preview</button><a id="social-export" class="button secondary" href="/social?url=http%3A%2F%2Flocalhost%3A1313%2F&amp;download=1">Export HTML</a></form>
+        <iframe id="social-frame" title="Social card previews and metadata checks" class="social-frame"></iframe>
+      </section>
+      <section data-panel="checks" hidden>
+        <div class="page-heading"><p class="eyebrow">Development / Quality gates</p><h1>Build &amp; checks</h1><p>Run the existing checks with visible logs and explicit results. Builds use temporary output, leaving public/ and running previews alone.</p></div>
+        <div class="panel"><div class="section-heading"><div><h2>Local preview server</h2><p>Use the header controls to start or connect to a preview. Stopping only affects the server started by this workspace.</p></div></div><details><summary>Preview server log</summary><pre id="preview-log">No owned server log.</pre></details></div>
+        <div class="check-grid">
+          <button class="check-card" data-job="build"><strong>Build site</strong><span>Hugo build with drafts and future content.</span></button>
+          <button class="check-card" data-job="links"><strong>Check links &amp; assets</strong><span>Fresh build, then verify internal links and image paths.</span></button>
+          <button class="check-card" data-job="members"><strong>Check members</strong><span>Verify member and participant references.</span></button>
+          <button class="check-card" data-job="regressions"><strong>Tool regressions</strong><span>Hero framing, navigation, social cards, portrait crops, and content/member editing tests.</span></button>
+        </div>
+        <div class="panel"><div class="section-heading"><h2>Activity log</h2><span id="job-state" class="badge">Idle</span></div><pre id="job-log" aria-live="off">Choose a check above. One job runs at a time.</pre></div>
+      </section>
+      <section data-panel="content" data-save-target="save-page" hidden>
+        <div class="page-heading"><p class="eyebrow">Content studio / Write, compose, verify</p><h1>Pages &amp; posts</h1><p>Guided editing for trips, PDF archives and courses. Source editing for every Markdown page. Preview unsaved changes through the real Hugo layouts.</p><div class="actions"><button id="toggle-content-library" class="secondary" aria-expanded="true" aria-controls="content-library">Hide page library</button><button id="new-page-toolbar" class="secondary" hidden>+ New page</button><button class="secondary" data-open-syntax aria-haspopup="dialog" aria-controls="syntax-help-dialog">Markdown &amp; syntax help</button></div></div>
+        <div class="content-shell">
+          <aside id="content-library" class="content-library panel" aria-label="Content library">
+            <div class="section-heading"><h2>Your pages</h2><button id="new-page">+ New</button></div>
+            <label>Search<input id="content-search" type="search" placeholder="Title, filename, year…"></label>
+            <div class="field-pair"><label>Type<select id="content-filter"><option value="">All pages</option><option value="turak">Trips / PDF archives</option><option value="tanfolyamok">Courses</option><option value="other">Other pages</option></select></label><label>Status<select id="content-status-filter"><option value="">All</option><option value="draft">Draft</option><option value="published">Not draft</option></select></label></div>
+            <div class="actions"><label class="library-sort">Sort<select id="content-sort"><option value="date">Newest date</option><option value="title">Title</option><option value="path">Path</option></select></label><button class="secondary" id="refresh-content">Refresh</button></div>
+            <p id="content-count" class="hint"></p><div id="content-list" class="content-list"></div>
+          </aside>
+          <div class="content-detail">
+            <div id="content-empty" class="panel empty-editor"><span class="eyebrow">Start with a page</span><h2>Your next story belongs here.</h2><p>Open an existing page or create a draft from the maintained site templates. Nothing is written until you save.</p><button id="new-page-empty">Create a draft</button></div>
+            <div id="content-editor" hidden>
+              <div class="editor-bar panel"><div><strong id="editing-title">Untitled</strong><code id="editing-path"></code><span id="editor-state" class="badge">Saved</span></div><div class="actions" aria-label="Whole-page actions"><button class="secondary" id="validate-page">Validate</button><button class="secondary" id="preview-page">Preview page</button><button id="save-page">Save page</button><button class="danger secondary" id="delete-page">Delete page…</button></div></div>
+              <div id="content-feedback" class="notice" role="status" aria-live="polite" hidden></div>
+              <section class="editor-page-tools" aria-label="Page-wide tools">
+                <div><p class="eyebrow">Page tools</p><p class="hint">Manage files and inspect the whole page. These tools do not insert content unless you choose to.</p></div>
+                <div class="page-tool-actions">
+                  <button type="button" class="secondary" data-editor-tool="page-media" aria-pressed="false"><strong>Files &amp; usage</strong><span>Page media · remove &amp; delete</span></button>
+                  <button type="button" class="secondary" data-editor-tool="media" aria-pressed="false"><strong>Add images &amp; PDFs</strong><span>Upload, borrow &amp; insert</span></button>
+                  <button type="button" class="secondary" data-editor-tool="placement" aria-pressed="false"><strong>File &amp; URL</strong><span>Path, aliases &amp; upload folders</span></button>
+                  <button type="button" class="secondary" data-editor-tool="source" aria-pressed="false"><strong>Full source</strong><span>Advanced Markdown &amp; YAML</span></button>
+                </div>
+              </section>
+              <div id="editor-content-navigation">
+                <p class="eyebrow">Edit content</p>
+                <div class="editor-tabs" role="tablist" aria-label="Content sections">
+                  <button role="tab" aria-selected="true" data-editor-tab="write">Story</button><button role="tab" aria-selected="false" data-editor-tab="metadata">Page details</button><button role="tab" aria-selected="false" data-editor-tab="contacts">People &amp; contacts</button><button role="tab" aria-selected="false" data-editor-tab="course">Course &amp; FAQ</button><button role="tab" aria-selected="false" data-editor-tab="seo">SEO &amp; sharing</button>
+                </div>
+              </div>
+              <div id="editor-tool-heading" class="section-heading editor-tool-heading" hidden>
+                <div><p class="eyebrow">Page workspace</p><h2 id="editor-tool-title"></h2></div>
+                <button type="button" id="editor-return-content" class="secondary">Back to content editing</button>
+              </div>
+              <div class="panel" data-editor-panel="write" role="tabpanel">
+                <div class="section-heading"><h2>Markdown story</h2><span id="word-count" class="hint"></span></div>
+                <p id="body-warning" class="hint">The page title, author and participant cards come from frontmatter. Do not repeat them in the story.</p>
+                <div class="markdown-toolbar" aria-label="Insert Markdown"><button class="secondary" data-markdown="heading">Heading</button><button class="secondary" data-markdown="bold">Bold</button><button class="secondary" data-markdown="italic">Italic</button><button class="secondary" data-markdown="link">Link</button><button class="secondary" data-markdown="list">List</button><button class="secondary" data-markdown="quote">Quote</button><button class="secondary" data-markdown="day">Day section</button><button class="secondary" data-insert-layout="image">+ Image</button><button class="secondary" data-insert-layout="gallery">+ Gallery</button><button class="secondary" data-insert-layout="media">+ Text &amp; photo</button><button class="secondary" data-insert-layout="pdf">+ PDF</button><button class="secondary" data-add-faq>+ FAQ</button><button class="secondary" data-open-syntax aria-haspopup="dialog" aria-controls="syntax-help-dialog">Syntax &amp; examples…</button></div>
+                <label class="sr-only" for="post-body">Markdown body</label><textarea id="post-body" class="source-editor" rows="24" spellcheck="true" data-monaco-language="markdown"></textarea>
+                <p class="hint">Ctrl+S saves · Ctrl+Shift+P renders an unsaved preview. Markdown and Hugo shortcodes are preserved as source, not converted to HTML.</p>
+              </div>
+              <div class="panel" data-editor-panel="metadata" role="tabpanel" hidden>
+                <h2>Page details</h2><div id="metadata-fields" class="form-grid"></div>
+                <h3>Categories</h3><div id="people-fields" class="form-grid"></div>
+                <h3>Card &amp; banner photos</h3><p class="hint">Featured image width scales only this page's centred banner, keeping its proportions. 10–100% of the article area; blank restores full width. Body photos, list thumbnails and social images are unaffected. The banner photo is also the default social-card photograph; choose another image in SEO &amp; sharing to override it.</p><div id="page-image-fields" class="form-grid"></div>
+              </div>
+              <div class="panel" data-editor-panel="course" role="tabpanel" hidden>
+                <p id="course-note" class="notice">Course state affects this article only. Homepage/menu announcements are separately configured in data/tanfolyam.yaml.</p>
+                <div id="course-fields"></div><div id="repeaters"></div>
+              </div>
+              <div class="panel" data-editor-panel="contacts" role="tabpanel" hidden>
+                <div id="page-people-editing"><h2>Authors &amp; participants</h2><p class="hint">Select permanent people identities for this page only. Each course has its own participants and contacts; selections never grant current membership. Names and nicknames come from the registry. Legacy name-only assignments can be inspected here and edited in Full source.</p><div id="people-assignments"></div></div>
+                <h2>Contact cards &amp; assignments</h2>
+                <div id="contact-assignments"></div>
+              </div>
+              <div class="panel" data-editor-panel="seo" role="tabpanel" hidden><h2>SEO &amp; social sharing</h2><p class="hint">Share title and description overrides affect Open Graph and Twitter only, not the article title or search description. Blank fields restore the defaults. Custom SEO fields remain intact.</p><div id="seo-fields" class="form-grid"></div><p id="social-source-note" class="notice"></p><p class="hint">An exact social preview image is used unchanged, without cropping or branding. Choose a local JPG, PNG or WebP; 1200×630 is recommended. Without it, Hugo generates the existing 1200×630 card with the FTSK logo from the selected background or default photo. Preview page → Inspect this draft's social card shows the unsaved image, share title and description. Platforms may crop images or cache older versions.</p></div>
+              <div class="panel" data-editor-panel="placement" role="region" aria-label="File and URL workspace" hidden>
+                <h2>File &amp; URL placement</h2><label>Markdown path under content/<input id="post-path" placeholder="turak/2026-trip.md"></label><p class="hint">Flat file: turak/2026-trip.md. Leaf bundle: turak/2026-trip/index.md. _index.md is a section/list page, not a post. Moving a Markdown file never moves its images or rewrites other pages.</p>
+                <div id="placement-fields" class="form-grid"></div><p class="notice">Changing a path, slug or URL can break incoming links. Add the old public URL to aliases when appropriate. The preview resolves the actual URL through Hugo.</p>
+                <h3>Page-owned upload destination</h3><label>Fixed folder under static/images/<input id="post-image-folder" readonly></label><button class="secondary" id="suggest-image-folder">Refresh page-owned folder</button><p class="hint">New files must go to this page's own folder, derived from its Markdown path. Changing the page path changes future upload destinations, not existing files. Borrowing existing files elsewhere never changes this destination.</p>
+              </div>
+              <div class="panel" data-editor-panel="media" role="region" aria-label="Media library workspace" hidden>
+                <p class="hint">Need to remove an image or delete an unused file? <button type="button" class="secondary" data-open-page-media>Manage this page's media</button></p>
+                <div id="media-target" class="notice" hidden><span id="media-target-label"></span> <button type="button" id="media-target-cancel" class="secondary">Cancel assignment</button></div>
+                <div class="section-heading"><h2>Choose existing images · page-owned or borrowed</h2><button class="secondary" id="use-page-folder">Browse page's own images</button></div>
+                <p class="hint">Browse this page's folder, or borrow existing files from any other folder below. Browsing and assigning a borrowed image does not copy it or change where new uploads go.</p>
+                <div class="field-pair"><label>Browse folder under static/images/<input id="asset-folder" list="image-folders" placeholder="gallery or turak/slug"></label><label>Filter filenames<input id="asset-search" type="search" placeholder="Search this folder"></label></div><div class="actions"><button class="secondary" id="browse-assets">Browse</button><button class="secondary" id="asset-parent">Parent folder</button><span id="asset-count" class="hint"></span></div><div id="asset-folders" class="folder-chips"></div><div id="asset-grid" class="asset-grid"></div>
+                <details open class="media-converter"><summary>Upload new images · page-owned files only</summary><p class="hint">New files always go to this page's fixed folder, even while browsing borrowed images. Writes files only after explicit conversion. Unsaved page previews do not undo these exports. Original aspect ratios are retained; output names get suffixes on collision.</p><label>Fixed destination under static/images/<input id="content-image-folder" readonly></label><div class="crop-settings"><label>Max width<input id="content-image-width" type="number" min="64" max="6000" value="1600"></label><label>Max height<input id="content-image-height" type="number" min="64" max="6000" value="1600"></label><label>Quality<input id="content-image-quality" type="number" min="1" max="100" value="82"></label><label>Output name (single file, optional)<input id="content-image-name" placeholder="01-cave-entrance"></label></div><label class="dropzone" for="content-image-files"><strong>Choose or drop original photos</strong><span>JPG, PNG, WebP, HEIF/HEIC</span><input id="content-image-files" type="file" accept="image/jpeg,image/png,image/webp,image/heif,image/heic,.heif,.heic" multiple></label><button id="content-convert">Convert &amp; add to page folder</button><div id="content-conversion-results" class="hint"></div></details>
+                <h3>Insert images / site shortcodes</h3><p class="hint">Select photos above in gallery order. Use a chosen photo as the banner/card/social override or insert a layout at the last Markdown cursor position.</p><div class="form-grid"><label>Layout<select id="insert-layout"><option value="image">Standalone image shortcode</option><option value="markdown">Markdown image</option><option value="media">Text next to a photo</option><option value="gallery">Gallery (all selected photos)</option></select></label><label>Alt text (required)<input id="insert-alt" placeholder="Describe the photo"></label><label>Caption (optional)<input id="insert-caption"></label><label>Desktop width (%)<input id="insert-width" type="number" min="10" max="100" value="60"></label><label>Mobile width (%)<input id="insert-mobile-width" type="number" min="10" max="100" value="100"></label><label>Image alignment / side<select id="insert-side"><option value="center">Center (image)</option><option value="right">Right</option><option value="left">Left</option></select></label><label>Media font multiplier<input id="insert-font" type="number" min="0.8" max="1.5" step="0.1" value="1"></label></div><div id="selected-photo-details"></div><button id="insert-photos">Insert into story</button><pre id="shortcode-output" hidden></pre>
+                <details class="media-converter"><summary>PDF reports</summary><button type="button" class="secondary" id="choose-pdf">Choose / borrow existing PDF…</button><label>Existing local PDF URL (manual entry also supported)<input id="insert-pdf-url" placeholder="/pdfs/turak/legacy-trip.pdf"></label><label>PDF title<input id="insert-pdf-title" placeholder="Full report"></label><button class="secondary" id="insert-pdf">Insert PDF shortcode</button><h3>Upload a new PDF · page-owned</h3><label>Fixed destination under static/pdfs/<input id="pdf-folder" readonly></label><label>PDF file<input id="pdf-file" type="file" accept="application/pdf,.pdf"></label><button class="secondary" id="upload-pdf">Upload PDF to page folder</button><p class="hint">30 MiB maximum. Borrowed PDFs stay where they are. New uploads always use the page-owned folder and persist independently of saving the page. Existing PDFs are never overwritten.</p></details>
+              </div>
+              <div class="panel" data-editor-panel="page-media" role="region" aria-label="Page files and usage workspace" hidden>
+                <div class="section-heading"><h2>This page's images &amp; PDFs</h2><button type="button" class="secondary" id="page-media-refresh">Refresh files &amp; references</button></div>
+                <p class="hint">Linked files are shown even when they live outside the connected folders. Remove from page changes only the draft. Save those changes before deleting a file permanently. Shared files are protected.</p>
+                <div class="field-pair">
+                  <div><label>Connected image folder under static/images/<input id="page-media-image-folder" list="image-folders"></label><button type="button" class="secondary" id="page-media-image-parent">Parent image folder</button><div id="page-media-image-folders" class="folder-chips"></div></div>
+                  <div><label>Connected PDF folder under static/pdfs/<input id="page-media-pdf-folder"></label><button type="button" class="secondary" id="page-media-pdf-parent">Parent PDF folder</button><div id="page-media-pdf-folders" class="folder-chips"></div></div>
+                </div>
+                <label>Filter files<input type="search" id="page-media-search" placeholder="Filename or path"></label>
+                <p id="page-media-status" class="hint" role="status" aria-live="polite"></p><div id="page-media-files"></div>
+              </div>
+              <div class="panel" data-editor-panel="preview" role="region" aria-label="Whole-page preview workspace" hidden>
+                <div class="section-heading"><div><h2>Actual Hugo preview</h2><p id="content-preview-state">Render an unsaved preview to see the actual site.</p></div><button class="secondary" id="preview-page-again">Render current draft</button></div>
+                <div class="actions preview-toolbar"><label>Viewport<select id="content-preview-width"><option value="100%">Fit workspace</option><option value="375px">Phone · 375 px</option><option value="768px">Tablet · 768 px</option><option value="1200px">Desktop · 1200 px</option><option value="1920px">Wide · 1920 px</option></select></label><button class="secondary" id="preview-social">Inspect this draft's social card</button><a id="preview-external" target="_blank" rel="noopener" hidden>Open preview ↗</a></div>
+                <div class="content-preview-container"><iframe id="content-preview-frame" title="Unsaved page rendered by Hugo" sandbox="allow-scripts allow-forms allow-popups allow-downloads" hidden></iframe></div>
+                <iframe id="content-social-frame" title="Social card of the unsaved draft" hidden></iframe><details open><summary>Build &amp; validation log</summary><pre id="content-preview-log">No preview build yet.</pre></details>
+              </div>
+              <div class="panel" data-editor-panel="source" role="region" aria-label="Full source workspace" hidden><h2>Complete Markdown &amp; YAML</h2><p class="notice">All frontmatter—including unknown fields, component blocks and comments—is accessible here. Unchanged blocks are preserved; edited guided blocks are serialized as YAML. Raw edits take precedence when returning to guided forms.</p><label class="sr-only" for="post-source">Full Markdown source</label><textarea id="post-source" class="source-editor" rows="32" spellcheck="false" data-monaco-language="hugo-markdown"></textarea><div class="actions"><button class="secondary" id="download-source">Download draft .md</button><button class="secondary" id="reload-page">Reload disk version…</button></div></div>
+              <div class="panel prose" data-editor-panel="syntax" role="region" aria-label="Syntax help workspace" hidden>
+                <h2>Markdown &amp; site shortcode help</h2><p>Use ## for story sections; the template prints the page title separately. Participant/author cards, FAQ and course details come from frontmatter.</p><div id="syntax-examples"></div><h3>Maintained site guides</h3><div class="actions"><button class="secondary" data-content-guide="CONTENT_GUIDE.md">Content &amp; image guide</button><button class="secondary" data-content-guide="BLOGPOST_TEMPLATES.md">Full article templates</button><button class="secondary" data-content-guide="TANFOLYAM_GUIDE.md">Course publishing workflow</button></div><pre id="content-guide" hidden></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <datalist id="image-folders"></datalist><datalist id="member-names"></datalist>
+      <dialog id="media-picker" aria-labelledby="media-picker-title">
+        <div class="section-heading"><h2 id="media-picker-title">Choose a file</h2><button type="button" id="media-picker-cancel" class="secondary">Cancel</button></div>
+        <p class="hint">Start with this page's own files, or use Borrow existing file to browse elsewhere. Choosing a file only creates a reference; it never copies or moves the file. New uploads always go to the page-owned folder.</p>
+        <label><span id="media-picker-folder-label">Folder</span><input id="media-picker-folder"></label>
+        <div class="actions"><button type="button" id="media-picker-owned" class="secondary">This page's own files</button><button type="button" id="media-picker-borrow" class="secondary">Borrow existing file…</button><button type="button" id="media-picker-browse" class="secondary">Browse</button><button type="button" id="media-picker-parent" class="secondary">Parent folder</button><button type="button" id="media-picker-upload" class="secondary">Upload new file to page folder…</button></div>
+        <div id="media-picker-folders" class="folder-chips"></div>
+        <label>Filter filenames<input type="search" id="media-picker-search"></label>
+        <p id="media-picker-status" class="hint" role="status" aria-live="polite"></p>
+        <div id="media-picker-files" class="asset-grid"></div>
+      </dialog>
+      <dialog id="remove-media-dialog" aria-labelledby="remove-media-title">
+        <div class="section-heading"><h2 id="remove-media-title">Remove from this page draft</h2><button type="button" class="secondary" data-close-dialog>Cancel</button></div>
+        <code id="remove-media-url"></code><p id="remove-media-summary"></p>
+        <p id="remove-media-remaining" class="notice">Other references remain, such as custom HTML, component YAML or code examples. Use Find in source to review them. File deletion stays blocked while any reference remains.</p>
+        <label>Review resulting page source<textarea id="remove-media-source" rows="16" readonly spellcheck="false" data-monaco-language="hugo-markdown"></textarea></label>
+        <button type="button" id="remove-media-apply">Apply to draft · keep file</button>
+      </dialog>
+      <dialog id="delete-media-dialog" aria-labelledby="delete-media-title">
+        <div class="section-heading"><h2 id="delete-media-title">Permanently delete this file</h2><button type="button" class="secondary" data-close-dialog>Cancel</button></div>
+        <code id="delete-media-url"></code>
+        <p class="notice error">Deletes this one file from disk, not the page. Git can recover tracked versions only; untracked exports cannot be restored. Saved references and the open draft are checked again before deletion. Other unsaved browser drafts cannot be checked—review those yourself.</p>
+        <label>Type the complete file URL to confirm<input id="delete-media-confirm" autocomplete="off"></label>
+        <p id="delete-media-error" class="notice error" role="alert" hidden></p>
+        <button type="button" id="delete-media-apply" class="danger">Delete this file permanently</button>
+      </dialog>
+      <dialog id="syntax-help-dialog" aria-labelledby="syntax-help-title"><div class="section-heading"><h2 id="syntax-help-title">Markdown &amp; site syntax</h2><button class="secondary" data-close-dialog>Close</button></div><p class="hint">Copy an example, then adapt its text, paths and alt descriptions. The writing toolbar formats selected text; image layouts are inserted at the remembered Markdown cursor. Ctrl+S saves, Ctrl+Shift+P renders, and Escape closes this window.</p><label>Find syntax<input id="syntax-search" type="search" placeholder="Gallery, FAQ, table, image…"></label><p id="syntax-result-count" class="hint" role="status"></p><div class="actions syntax-builders"><button class="secondary" data-insert-layout="image">Build image…</button><button class="secondary" data-insert-layout="gallery">Build gallery…</button><button class="secondary" data-insert-layout="media">Build text &amp; photo…</button><button class="secondary" data-insert-layout="pdf">Upload / insert PDF…</button><button class="secondary" data-add-faq>Add FAQ…</button></div><p class="hint">Image builders include the library, conversion and your chosen output folder. FAQ cards belong to YAML frontmatter, not an inline shortcode.</p><div id="syntax-dialog-examples"></div></dialog>
+      <dialog id="new-page-dialog"><form id="new-page-form"><div class="section-heading"><h2>Start a new draft</h2><button type="button" class="secondary" data-close-dialog>Cancel</button></div><label>Template<select id="new-page-template"></select></label><label>Filename / slug<input id="new-page-slug" required placeholder="2026-trip-name" pattern="[\p{L}\p{N}_\-]+"></label><label>Folder under content/<input id="new-page-folder" value="turak"></label><label class="check-label"><input id="new-page-bundle" type="checkbox"> Leaf bundle (slug/index.md)</label><p class="notice">Maintained templates start as drafts with explicit placeholders. Replace them before publishing. PDF archives require legacy- filenames.</p><button>Create in editor</button></form></dialog>
+      <dialog id="delete-page-dialog"><div class="section-heading"><h2>Delete page &amp; chosen assets</h2><button class="secondary" data-close-dialog>Cancel</button></div><p class="notice error">This permanently removes selected files from the checkout. Git can recover tracked versions only—not untracked files or unsaved edits. Nothing is deleted by default except the confirmed Markdown page.</p><p id="delete-page-path"></p><div id="delete-assets" class="deletion-assets"></div><p id="delete-incoming" class="hint"></p><label>Type the full Markdown path to confirm<input id="delete-confirm"></label><button id="confirm-delete-page" class="danger">Delete selected files</button></dialog>
+      <section data-panel="help" hidden>
+        <div class="page-heading"><p class="eyebrow">How it fits together</p><h1>A simple workflow</h1><p>This workspace combines the existing tools and a file-backed content studio. It does not configure production credentials or deploy the site.</p></div>
+        <div class="panel prose"><h2>Start with Git &amp; workspace</h2><p>Fetch to check the server, update a clean main checkout, then create or choose a working branch. The header always names your branch; editing stays locked on main. Saves change local files only. Review and select changed files to create a local checkpoint, then separately confirm sending your working branch to GitHub. Pull updates use rebase, not merge. To follow origin/main with a published branch, explicitly allow the backed-up rebase, then separately publish it with the exact force-with-lease. Concurrent server changes block publication; never override that rejection. The server map is last-known until you fetch again. Before switching branches, save your open editor drafts or use the dashboard to download and explicitly discard them. Conflicts offer text review, continue and abort; ask the maintainer if uncertain.</p></div>
+        <div class="panel prose"><h2>Clean up loose portraits</h2><p>In Members &amp; portraits, expand Roster &amp; image checks. Select loose portrait files individually or with Select all, then Review &amp; delete selected. Referenced files are blocked and show where they are used. Only checked files are permanently removed after confirmation. Check unsaved article drafts yourself before deleting. Untracked files cannot be restored with Git. Deleting a member still preserves their image files; cleanup is a separate action.</p></div>
+        <div class="panel prose"><h2>1. Prepare the photos</h2><p>Use Site photos for article, gallery and hero photos. Set the output folder under static/images/. Existing files are preserved; duplicate names get a numeric suffix. Copy the resulting /images/... URL where needed.</p><h2>2. Manage members &amp; portraits</h2><p>Select a member or Add member, edit their details and group, and choose an existing portrait pair or upload a photo below. Choose each face crop, inspect the circular preview and convert. Conversion fills the open member draft; Save member writes its details and image assignments together. Exported files remain even if you discard the draft. Delete member removes only the roster entry; historical report names and image files remain. Review Roster &amp; image checks for missing images, unmatched names and unassigned portraits. Guests and files used elsewhere are not automatically errors. If an external edit causes a conflict, copy your draft before Reload. Skipping a photo never writes output. The crop uses original EXIF-corrected coordinates, not the smaller browser preview.</p><h2>3. Compose the hero</h2><p>Use the connected Hero slideshow editor for subject points, motion and per-device composition. Save explicitly. Remove takes an image out of the slideshow without deleting its file. Refresh the actual site preview to inspect the result.</p><h2>4. Check a shared link</h2><p>Paste a local or public URL into Social previews. Images and metadata come from the served HTML, not guesses. Export embeds images into an HTML snapshot you can share. Platform caches and cropping can differ.</p><h2>5. Verify before publishing</h2><p>Run Build &amp; checks. Logs report errors rather than pretending success. There is no production deploy button here; use the existing reviewed deployment workflow.</p><h2>Local and explicit</h2><p>The server listens only on your machine. Uploaded originals are temporary and are removed on shutdown. Converted images, saved members and hero configuration persist in this checkout. Restarting loses queued originals, not exported images. Changes are not automatically committed.</p><h2>Setup</h2><p>Run scripts/setup-dev-env.ps1 once, then double-click site_editor.bat in the repository root. Stop the workbench with Ctrl+C in its terminal. The workbench replaces the separate image converters and hero-editor launcher.</p></div>
+      </section>
+    </main>
+    <footer class="workspace-footer">FTSK Site Workbench <span>Local files. Explicit saves. No automatic publishing.</span></footer>
+  </div>
+</body>
+</html>

@@ -1,6 +1,9 @@
 {{ $people := dict }}
 {{ $names := dict }}
 {{ range hugo.Data.people.people }}
+  {{ if or (isset . "cv") (isset . "cv_label") (isset . "cv_subtitle") }}
+    {{ errorf "%s: move CV content and document metadata to a person-linked member-cv Markdown page" .id }}
+  {{ end }}
   {{ if and (isset . "show_profile_contacts") (ne (printf "%T" .show_profile_contacts) "bool") }}
     {{ errorf "%s: show_profile_contacts must be true or false" .id }}
   {{ end }}

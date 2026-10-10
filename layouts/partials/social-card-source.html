@@ -3,7 +3,10 @@
 {{ with $page.Params.seo.featured_image }}
   {{ $srcPath = . }}
 {{ else }}
-  {{ if and $page.IsPage (in (slice "turak" "tanfolyamok") $page.Section) }}
+  {{ if eq $page.Type "member-cv" }}
+    {{ $person := partial "member-cv-person.html" $page }}
+    {{ $srcPath = $person.modal_image | default $person.image | default hugo.Data.meta.image }}
+  {{ else if and $page.IsPage (in (slice "turak" "tanfolyamok") $page.Section) }}
     {{ with $page.Params.featuredImg.image_path }}{{ $srcPath = . }}{{ end }}
   {{ end }}
 {{ end }}

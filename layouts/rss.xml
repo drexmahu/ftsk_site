@@ -1,0 +1,33 @@
+{{- $pages := .Pages -}}
+{{- if .IsHome }}{{ $pages = .Site.RegularPages }}{{ end -}}
+{{- $limit := .Site.Config.Services.RSS.Limit -}}
+{{- if ge $limit 0 }}{{ $pages = $pages | first $limit }}{{ end -}}
+{{- $title := printf "%s on %s" .Title .Site.Title -}}
+{{- $author := .Site.Params.author | default dict -}}
+{{- printf "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\"?>" | safeHTML }}
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>{{ $title }}</title>
+    <link>{{ .Permalink }}</link>
+    <description>Recent content in {{ $title }}</description>
+    <generator>Hugo</generator>
+    {{ with .Site.Language.Locale }}<language>{{ . }}</language>{{ end }}
+    {{ with $author.email }}
+      <managingEditor>{{ . }}{{ with $author.name }} ({{ . }}){{ end }}</managingEditor>
+      <webMaster>{{ . }}{{ with $author.name }} ({{ . }}){{ end }}</webMaster>
+    {{ end }}
+    {{ with .Site.Copyright }}<copyright>{{ . }}</copyright>{{ end }}
+    {{ if not .Date.IsZero }}<lastBuildDate>{{ .Date.Format "Mon, 02 Jan 2006 15:04:05 -0700" }}</lastBuildDate>{{ end }}
+    {{ with .OutputFormats.Get "RSS" }}<atom:link href="{{ .Permalink }}" rel="self" type="application/rss+xml" />{{ end }}
+    {{ range $pages }}
+      <item>
+        <title>{{ partial "page-title.html" . }}</title>
+        <link>{{ .Permalink }}</link>
+        <pubDate>{{ .Date.Format "Mon, 02 Jan 2006 15:04:05 -0700" }}</pubDate>
+        {{ with $author.email }}<author>{{ . }}{{ with $author.name }} ({{ . }}){{ end }}</author>{{ end }}
+        <guid>{{ .Permalink }}</guid>
+        <description>{{ .Summary | html }}</description>
+      </item>
+    {{ end }}
+  </channel>
+</rss>

@@ -1,0 +1,2014 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hero Focus Picker - FTSK</title>
+<link rel="stylesheet" href="../../static/vendor/phosphor-icons/css/phosphor.css" />
+<style>
+  :root {
+    color-scheme: dark;
+    --bg-page: #0a1116;
+    --bg-surface: #11202b;
+    --border: #2c4652;
+    --text: #b9c7c9;
+    --text-heading: #f2ede1;
+    --text-muted: #7c9098;
+    --accent: #bea070;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--bg-page);
+    color: var(--text);
+    margin: 0;
+    padding: 24px;
+  }
+  h1 { color: var(--text-heading); font-size: 1.4rem; margin: 0 0 6px; }
+  p.lead { margin: 0 0 20px; color: var(--text-muted); max-width: 900px; line-height: 1.5; }
+  code { background: var(--bg-surface); padding: 1px 5px; border-radius: 4px; }
+
+  .toolbar {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    margin-bottom: 20px;
+  }
+  .toolbar label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.85rem;
+  }
+  select {
+    background: var(--bg-surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 8px;
+  }
+  .btn-row { display: flex; gap: 8px; }
+
+  /* --- Connected mode: editing the real data/hero_images.yaml + static/images/hero/
+     via the Workbench API, instead of the offline drag-drop/copy-paste flow below. */
+  .connected-panel {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-bottom: 24px;
+    background: var(--bg-surface);
+  }
+  .connected-status {
+    margin: 0 0 12px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+  .connected-status.is-error { color: #e0796f; }
+  .connected-toolbar {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    margin-bottom: 4px;
+  }
+  .connected-toolbar label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.85rem;
+    min-width: 260px;
+  }
+  .connected-toolbar select { width: 100%; }
+  .connected-save-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .connected-save-note {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+  .connected-save-note.is-success { color: #8fce9c; }
+  button.danger { background: #6b2b26; color: #f2ede1; }
+
+
+  .drop-zone {
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    text-align: center;
+    margin-bottom: 24px;
+    cursor: pointer;
+    color: var(--text-muted);
+  }
+  .drop-zone.dragover { border-color: var(--accent); color: var(--text-heading); }
+
+  .cards { display: flex; flex-direction: column; gap: 28px; }
+  .poi-selector { margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+  .poi-selector-header, .poi-dialog-header { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+  .poi-selector h2, .poi-dialog h2 { font-size: 1rem; margin: 0; color: var(--text-heading); }
+  .poi-feedback { flex: 1 1 160px; color: #8fce9c; font-size: 0.8rem; }
+  .poi-feedback.is-warning { color: #e0b36d; }
+  .poi-icon-button { width: 40px; height: 40px; padding: 0; flex-shrink: 0; }
+  .poi-coordinates { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; }
+  .poi-coordinates label { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; }
+  .poi-coordinates input { width: 76px; padding: 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-page); color: var(--text-heading); }
+  .poi-dialog { width: calc(100vw - 32px); height: calc(100dvh - 32px); max-width: none; max-height: none; padding: 16px; border: 1px solid var(--border); color: var(--text); background: var(--bg-page); }
+  .poi-dialog[open] { display: flex; flex-direction: column; gap: 12px; }
+  .poi-dialog::backdrop { background: rgba(5, 9, 12, 0.85); }
+  .poi-dialog-header select { margin-left: auto; }
+  .poi-source-viewport { flex: 1; min-height: 0; overflow: auto; }
+  .poi-source-canvas { position: relative; margin: 8px auto; cursor: crosshair; }
+  .poi-source-canvas img { display: block; width: 100%; height: 100%; max-width: none; user-select: none; }
+  .poi-source-marker { position: absolute; width: 22px; height: 22px; transform: translate(-50%, -50%); border: 2px solid #8fce9c; border-radius: 50%; box-shadow: 0 0 0 2px #0a1116; pointer-events: none; }
+  .card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+  }
+
+  /* --- Device frame: simulates the real homepage hero (.hero-two) at the
+     currently selected breakpoint, incl. the real title/description/button text,
+     the readability gradient/flat dim, and the cave-silhouette motif overlay. */
+  .device-frame-wrapper {
+    width: 100%;
+    max-height: 220px;
+    overflow: hidden;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    /* Matches --bg-page, not pure black - the zoom-to-fit letterbox bars (aspect
+       mismatch between this wrapper and the simulated device size) would otherwise
+       read as a fake gap/seam that doesn't exist on the real site. */
+    background: var(--bg-page);
+    margin-bottom: 16px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  /* Compact by default (you're adjusting sliders, not inspecting pixels) -
+     "View full size" expands it to a real overlay for a closer look. */
+  .device-frame-wrapper.is-expanded {
+    position: fixed;
+    inset: 32px;
+    max-height: none;
+    z-index: 1001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0;
+  }
+  .modal-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(5, 9, 12, 0.8);
+    z-index: 1000;
+  }
+  .modal-backdrop.is-visible { display: block; }
+  .expand-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 20;
+    padding: 4px 10px;
+    font-size: 0.78rem;
+  }
+  .device-frame { transform-origin: top left; }
+  .sim-hero {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    box-sizing: border-box;
+    background: var(--bg-page);
+    font-family: "Sora", system-ui, sans-serif;
+    cursor: crosshair;
+  }
+  .sim-hero[data-tier="desktop"] { min-height: 640px; align-items: center; }
+  .sim-hero[data-tier="tablet"] { min-height: 480px; align-items: center; justify-content: center; padding: 80px 32px; }
+  .sim-hero[data-tier="mobile"] { min-height: 420px; align-items: center; justify-content: center; padding: 64px 16px; }
+  .sim-media { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
+  .sim-media img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+  }
+  .sim-fade { position: absolute; inset: 0; }
+  .sim-hero[data-tier="desktop"] .sim-fade {
+    background: linear-gradient(
+      to right,
+      var(--bg-page) 0%,
+      var(--bg-page) 32%,
+      rgba(10, 17, 22, 0.82) 48%,
+      rgba(10, 17, 22, 0.25) 68%,
+      rgba(10, 17, 22, 0) 85%
+    );
+  }
+  .sim-hero[data-tier="tablet"] .sim-fade,
+  .sim-hero[data-tier="mobile"] .sim-fade {
+    background: rgba(10, 17, 22, 0.55);
+  }
+  .sim-motif {
+    position: absolute;
+    inset: 0;
+    /* Keep this whole rule (including the top gradient) in sync with
+       .hero-two-media-motif in _hero.scss. */
+    background-image:
+      linear-gradient(to bottom, rgb(14, 24, 31) 0, rgba(14, 24, 31, 0) 90px),
+      url("../../static/images/motifs/hanging_smaller.svg"),
+      url("../../static/images/motifs/standing_smaller.svg");
+    background-repeat: no-repeat, no-repeat, no-repeat;
+    background-position: top, center 74px, bottom center;
+    background-size: 100% 100%, max(100%, 960px) auto, max(100%, 960px) auto;
+    opacity: 0.9;
+    filter: brightness(0.72);
+    pointer-events: none;
+  }
+  .sim-hero[data-tier="tablet"] .sim-motif { background-position: top, left 74px, bottom center; }
+  .sim-hero[data-tier="mobile"] .sim-motif {
+    background-position: top, left 68px, bottom center;
+    background-size: 100% 100%, 640px auto, 640px auto;
+  }
+  .sim-content { position: relative; z-index: 1; color: var(--text); }
+  .sim-hero[data-tier="desktop"] .sim-content { max-width: 50%; padding: 0 24px 0 140px; }
+  .sim-hero[data-tier="tablet"] .sim-content,
+  .sim-hero[data-tier="mobile"] .sim-content { max-width: 100%; text-align: center; }
+  .sim-content h1 { color: var(--text-heading); font-weight: 700; letter-spacing: -0.5px; margin: 0 0 20px; }
+  .sim-hero[data-tier="desktop"] .sim-content h1,
+  .sim-hero[data-tier="tablet"] .sim-content h1 { font-size: 64px; line-height: 80px; }
+  .sim-hero[data-tier="mobile"] .sim-content h1 { font-size: 40px; line-height: 50px; }
+  .sim-content p { font-size: 22px; line-height: 1.7; margin: 0 0 24px; }
+  .sim-btn {
+    display: inline-block;
+    background: var(--accent);
+    color: #0a1116;
+    font-weight: 700;
+    border-radius: 16px;
+    padding: 14px 32px;
+    font-size: 16px;
+  }
+  /* The real #mainnavigationBar is `position: fixed`, always overlaying the top of
+     the page - the photo/motif genuinely render underneath it, they don't start
+     below it. Without this, the preview shows photo content that's never actually
+     visible on the real site. Height/colors/border mirror _theme.scss's navbar
+     rule exactly (border-bottom is transparent at rest, matching the unscrolled
+     state - it only turns gold once `.sticky-nav` is added on scroll). */
+  .sim-navbar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 88px;
+    background: rgba(10, 17, 22, 0.96);
+    border-bottom: 1px solid transparent;
+    backdrop-filter: blur(12px);
+    z-index: 15;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    pointer-events: none;
+  }
+  .sim-hero[data-tier="mobile"] .sim-navbar { height: 73px; }
+  .focus-marker {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    margin: -8px 0 0 -8px;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    background: rgba(190, 160, 112, 0.25);
+    pointer-events: none;
+    z-index: 5;
+  }
+  .hidden-notice {
+    display: none;
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px;
+    background: rgba(10, 17, 22, 0.75);
+    color: var(--text-heading);
+    font-weight: 700;
+    font-size: 1rem;
+  }
+  .sim-hero.is-hidden-here .hidden-notice { display: flex; }
+
+  .controls { display: flex; flex-direction: column; gap: 10px; font-size: 0.85rem; }
+  .controls label { display: flex; flex-direction: column; gap: 4px; }
+  .controls .row-value { display: flex; justify-content: space-between; gap: 6px; }
+  input[type="range"] { width: 100%; }
+  input[type="text"] {
+    background: var(--bg-surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-family: inherit;
+  }
+  .controls select { width: 100%; }
+  select:disabled { opacity: 0.5; cursor: not-allowed; }
+  .filename { color: var(--text-heading); font-weight: 600; word-break: break-all; }
+  .meta { color: var(--text-muted); font-size: 0.78rem; }
+  hr.sep { border: none; border-top: 1px solid var(--border); margin: 2px 0; width: 100%; }
+  .override-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+  .override-row input { margin-top: 3px; }
+  .mirror-row { display: flex; gap: 18px; font-size: 0.8rem; color: var(--text-muted); }
+  .mirror-row label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+
+  /* The "which screen size am I editing" control lives INSIDE each photo's own
+     controls (it's a property of that photo's editing session), not a separate
+     global toolbar - so it's styled to stand out as the first, most important row. */
+  .viewport-row {
+    background: rgba(190, 160, 112, 0.1);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+  }
+  .viewport-row span:first-child { color: var(--text-heading); font-weight: 600; }
+  .section-title {
+    color: var(--text-heading);
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-top: 6px;
+  }
+
+  /* Tabs replace the old separate "preview at screen size" select for the
+     connected editor - one control picks both which fields show AND what the
+     preview simulates, so there's no separate always-visible tablet/mobile
+     sections to scroll past. */
+  .tier-tabs { display: flex; gap: 6px; }
+  .tier-tabs button {
+    flex: 1;
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    font-weight: 600;
+  }
+  .tier-tabs button.is-active {
+    background: var(--accent);
+    color: var(--bg-page);
+    border-color: var(--accent);
+  }
+  .timeline-row {
+    background: rgba(190, 160, 112, 0.1);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+  }
+  .timeline-row span:first-child { color: var(--text-heading); font-weight: 600; }
+  .playback-row { display: flex; align-items: center; gap: 10px; }
+  .playback-row button { flex-shrink: 0; }
+  .playback-row .meta { margin: 0; }
+
+  .yaml-output {
+    background: var(--bg-page);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+    font-family: Consolas, monospace;
+    font-size: 0.78rem;
+    white-space: pre;
+    overflow: auto;
+  }
+  button {
+    background: var(--accent);
+    border: none;
+    color: var(--bg-page);
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  button:hover { filter: brightness(1.1); }
+  button.secondary {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+  <h1>Hero Focus Picker</h1>
+  <p class="lead">
+    Adjust hero image animation properties directly for the page.
+  </p>
+
+  <div class="connected-panel" id="connectedPanel" style="display: none">
+    <p class="connected-status" id="connectedStatus"></p>
+    <div class="connected-toolbar">
+      <label>
+        Editing which photo?
+        <select id="connectedSelect"></select>
+      </label>
+      <div class="btn-row">
+        <button id="connectedAddBtn">+ Add new photo</button>
+        <button id="connectedDeleteBtn" class="danger">Delete photo</button>
+      </div>
+      <input type="file" id="connectedFileInput" accept="image/*,.heif,.heic" hidden />
+    </div>
+    <div id="connectedEditorMount"></div>
+  </div>
+
+  <div class="toolbar">
+    <p class="connected-status" style="margin: 0">Batch controls for offline preview cards below:</p>
+    <div class="btn-row">
+      <button id="playAllBtn">▶ Play all</button>
+      <button id="pauseAllBtn" class="secondary">⏸ Pause all</button>
+    </div>
+  </div>
+
+  <div class="drop-zone" id="dropZone">
+    Drop image files here, or click to choose files
+    <input type="file" id="fileInput" accept="image/*" multiple hidden />
+  </div>
+
+  <div class="cards" id="cards"></div>
+
+<script src="/static/js/hero-framing.js"></script>
+<script src="hero_poi_editor.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var dropZone = document.getElementById('dropZone');
+  var fileInput = document.getElementById('fileInput');
+  var cards = document.getElementById('cards');
+  var playAllBtn = document.getElementById('playAllBtn');
+  var pauseAllBtn = document.getElementById('pauseAllBtn');
+  var cardControllers = [];
+  var COMPACT_MAX_HEIGHT = 220;
+
+  // Representative widths/heights for each of the site's 3 breakpoint tiers (see
+  // assets/scss/_mixins.scss: mobile <768px, tablet 768-991px, desktop >=992px) -
+  // matches data/hero_images.yaml's `mobile`/`tablet` override maps + the
+  // top-level (desktop) start/animation fields. Heights mirror .sim-hero's own
+  // per-tier min-height rules above.
+  var VIEWPORTS = {
+    desktop: { width: 1440, height: 640, tier: 'desktop' },
+    tablet: { width: 834, height: 480, tier: 'tablet' },
+    mobile: { width: 390, height: 420, tier: 'mobile' },
+  };
+
+
+  dropZone.addEventListener('click', function () {
+    fileInput.click();
+  });
+  dropZone.addEventListener('dragover', function (e) {
+    e.preventDefault();
+    dropZone.classList.add('dragover');
+  });
+  dropZone.addEventListener('dragleave', function () {
+    dropZone.classList.remove('dragover');
+  });
+  dropZone.addEventListener('drop', function (e) {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    handleFiles(e.dataTransfer.files);
+  });
+  fileInput.addEventListener('change', function () {
+    handleFiles(fileInput.files);
+    fileInput.value = '';
+  });
+
+  playAllBtn.addEventListener('click', function () {
+    cardControllers.forEach(function (c) {
+      c.setPlaying(true);
+    });
+  });
+  pauseAllBtn.addEventListener('click', function () {
+    cardControllers.forEach(function (c) {
+      c.setPlaying(false);
+    });
+  });
+
+  // Re-fit every device frame to its panel width after a window resize (the
+  // frames are rendered at real site pixel widths, then scaled down via CSS
+  // `zoom` to fit - same idea as VS Code's/Chrome's device toolbar).
+  var resizeTimer = null;
+  window.addEventListener('resize', function () {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function () {
+      cardControllers.forEach(function (c) {
+        c.refreshViewport();
+      });
+    }, 150);
+  });
+
+  function handleFiles(fileList) {
+    Array.prototype.forEach.call(fileList, addCard);
+  }
+
+  function rangeRow(labelText, min, max, step, value) {
+    var label = document.createElement('label');
+    var top = document.createElement('div');
+    top.className = 'row-value';
+    var span = document.createElement('span');
+    span.textContent = labelText;
+    var valueSpan = document.createElement('span');
+    valueSpan.textContent = value;
+    top.appendChild(span);
+    top.appendChild(valueSpan);
+    var range = document.createElement('input');
+    range.type = 'range';
+    range.min = min;
+    range.max = max;
+    range.step = step;
+    range.value = value;
+    label.appendChild(top);
+    label.appendChild(range);
+    return { label: label, range: range, valueSpan: valueSpan };
+  }
+
+  // Direction options depend on the animation type - mirrors
+  var directionsByType = {
+    pan: ['right', 'left', 'up', 'down'],
+    tilt: ['right', 'left'],
+    'zoom-in': [],
+    'zoom-out': [],
+    none: [],
+  };
+  // Default amount range/step/value per type, since "amount" means % pan distance,
+  // zoom delta, or degrees depending on type - keep in sync with the same defaults
+  // documented in data/hero_images.yaml.
+  var amountDefaultsByType = {
+    pan: { min: 0, max: 20, step: 1, value: 6 },
+    'zoom-in': { min: 0, max: 0.6, step: 0.01, value: 0.15 },
+    'zoom-out': { min: 0, max: 0.6, step: 0.01, value: 0.15 },
+    tilt: { min: 0, max: 15, step: 0.5, value: 2 },
+    none: { min: 0, max: 0, step: 1, value: 0 },
+  };
+
+  function makeTier() {
+    return { focusX: 50, focusY: 50, zoom: 1.35, type: 'pan', direction: 'right', amount: 6, duration: 12 };
+  }
+
+  function addCard(file) {
+    var url = URL.createObjectURL(file);
+
+    var card = document.createElement('div');
+    card.className = 'card';
+
+    // ---- device frame: full homepage hero mockup (photo + real text/button) ----
+    var deviceWrapper = document.createElement('div');
+    deviceWrapper.className = 'device-frame-wrapper';
+    var expandBtn = document.createElement('button');
+    expandBtn.type = 'button';
+    expandBtn.className = 'expand-btn secondary';
+    expandBtn.textContent = '\u26f6 View full size';
+    var backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    document.body.appendChild(backdrop);
+    var deviceFrame = document.createElement('div');
+    deviceFrame.className = 'device-frame';
+    var simHero = document.createElement('div');
+    simHero.className = 'sim-hero';
+
+    var simMedia = document.createElement('div');
+    simMedia.className = 'sim-media';
+    var img = document.createElement('img');
+    img.src = url;
+    var simFade = document.createElement('div');
+    simFade.className = 'sim-fade';
+    var simMotif = document.createElement('div');
+    simMotif.className = 'sim-motif';
+    simMedia.appendChild(img);
+    simMedia.appendChild(simFade);
+    simMedia.appendChild(simMotif);
+
+    var marker = document.createElement('div');
+    marker.className = 'focus-marker';
+
+    var hiddenNotice = document.createElement('div');
+    hiddenNotice.className = 'hidden-notice';
+    hiddenNotice.textContent = 'Hidden at this size (hide_below)';
+
+    var simContent = document.createElement('div');
+    simContent.className = 'sim-content';
+    // Real homepage hero copy (content/_index.md's home/hero block) - so the
+    // simulation shows the actual title/description/button, not placeholder text.
+    simContent.innerHTML =
+      '<h1>Barlangászat, kutatás, közösség</h1>' +
+      '<p>Az FTSK Barlangkutató Szakosztály 1954 óta fedez fel, kutat és jár barlangokat itthon és külföldön.</p>' +
+      '<div class="sim-btn">Ismerd meg az egyesületet</div>';
+
+    var simNavbar = document.createElement('div');
+    simNavbar.className = 'sim-navbar';
+    simNavbar.textContent = 'navbar (fixed, overlays this)';
+
+    simHero.appendChild(simMedia);
+    simHero.appendChild(simContent);
+    simHero.appendChild(marker);
+    simHero.appendChild(hiddenNotice);
+    simHero.appendChild(simNavbar);
+    deviceFrame.appendChild(simHero);
+    deviceWrapper.appendChild(deviceFrame);
+
+    // ---- controls ----
+    var controls = document.createElement('div');
+    controls.className = 'controls';
+
+    var filenameEl = document.createElement('div');
+    filenameEl.className = 'filename';
+    filenameEl.textContent = file.name;
+
+    var metaEl = document.createElement('div');
+    metaEl.className = 'meta';
+
+    // "Which screen size am I editing" is a property of THIS photo's own editor,
+    // not a shared/global control - each card gets its own.
+    var currentViewport = 'desktop';
+    var viewportRow = document.createElement('label');
+    viewportRow.className = 'viewport-row';
+    var viewportSpan = document.createElement('span');
+    viewportSpan.textContent = 'Preview at screen size';
+    var viewportRowSelect = document.createElement('select');
+    [
+      ['desktop', 'Desktop (\u2265992px, ~1440px wide)'],
+      ['tablet', 'Tablet (768\u2013991px, ~834px wide)'],
+      ['mobile', 'Phone (<768px, ~390px wide)'],
+    ].forEach(function (pair) {
+      var opt = document.createElement('option');
+      opt.value = pair[0];
+      opt.textContent = pair[1];
+      viewportRowSelect.appendChild(opt);
+    });
+    viewportRow.appendChild(viewportSpan);
+    viewportRow.appendChild(viewportRowSelect);
+
+    var playBtn = document.createElement('button');
+    playBtn.textContent = '\u25b6 Play';
+
+    var timelineRow = rangeRow('Timeline position', 0, 100, 1, 0);
+    timelineRow.label.className = 'timeline-row';
+
+    var sep = document.createElement('hr');
+    sep.className = 'sep';
+
+    var altLabel = document.createElement('label');
+    var altSpan = document.createElement('span');
+    altSpan.textContent = 'Alt text (image description for screen readers / SEO)';
+    var altInput = document.createElement('input');
+    altInput.type = 'text';
+    altInput.placeholder = 'e.g. A caver rappelling in a large chamber';
+    altLabel.appendChild(altSpan);
+    altLabel.appendChild(altInput);
+
+    var mirrorRow = document.createElement('div');
+    mirrorRow.className = 'mirror-row';
+    var mirrorXLabel = document.createElement('label');
+    var mirrorXCheckbox = document.createElement('input');
+    mirrorXCheckbox.type = 'checkbox';
+    mirrorXLabel.appendChild(mirrorXCheckbox);
+    mirrorXLabel.appendChild(document.createTextNode('Flip horizontal'));
+    var mirrorYLabel = document.createElement('label');
+    var mirrorYCheckbox = document.createElement('input');
+    mirrorYCheckbox.type = 'checkbox';
+    mirrorYLabel.appendChild(mirrorYCheckbox);
+    mirrorYLabel.appendChild(document.createTextNode('Flip vertical'));
+    mirrorRow.appendChild(mirrorXLabel);
+    mirrorRow.appendChild(mirrorYLabel);
+
+    var sep2 = document.createElement('hr');
+    sep2.className = 'sep';
+
+    var visibilityRow = document.createElement('label');
+    var visibilityText = document.createElement('span');
+    visibilityText.textContent = 'Hide below (hide_below)';
+    var visibilitySelect = document.createElement('select');
+    [['', 'Always visible'], ['sm', 'Below 576px'], ['md', 'Below 768px'], ['lg', 'Below 992px']].forEach(function (pair) {
+      var option = document.createElement('option');
+      option.value = pair[0];
+      option.textContent = pair[1];
+      visibilitySelect.appendChild(option);
+    });
+    visibilityRow.appendChild(visibilityText);
+    visibilityRow.appendChild(visibilitySelect);
+
+    var sep3 = document.createElement('hr');
+    sep3.className = 'sep';
+
+    var overrideRow = document.createElement('label');
+    overrideRow.className = 'override-row';
+    var overrideCheckbox = document.createElement('input');
+    overrideCheckbox.type = 'checkbox';
+    var overrideText = document.createElement('span');
+    overrideRow.appendChild(overrideCheckbox);
+    overrideRow.appendChild(overrideText);
+
+    var focusXRow = rangeRow('Composition X%', '0', '100', '1', '50');
+    var focusYRow = rangeRow('Composition Y%', '0', '100', '1', '50');
+    var startZoom = rangeRow('Start zoom (start.zoom)', '1', '2.5', '0.05', '1.35');
+
+    var typeLabel = document.createElement('label');
+    var typeSpan = document.createElement('span');
+    typeSpan.textContent = 'Animation type (animation.type)';
+    var typeSelect = document.createElement('select');
+    ['pan', 'zoom-in', 'zoom-out', 'tilt', 'none'].forEach(function (value) {
+      var opt = document.createElement('option');
+      opt.value = value;
+      opt.textContent = value;
+      typeSelect.appendChild(opt);
+    });
+    typeLabel.appendChild(typeSpan);
+    typeLabel.appendChild(typeSelect);
+
+    var directionLabel = document.createElement('label');
+    var directionSpan = document.createElement('span');
+    directionSpan.textContent = 'Direction (animation.direction)';
+    var directionSelect = document.createElement('select');
+    directionLabel.appendChild(directionSpan);
+    directionLabel.appendChild(directionSelect);
+
+    var amount = rangeRow('Amount (animation.amount)', '0', '20', '1', '6');
+    var duration = rangeRow('Duration, seconds (animation.duration)', '4', '30', '1', '12');
+
+    var resetBtn = document.createElement('button');
+    resetBtn.className = 'secondary';
+    resetBtn.textContent = 'Reset all to defaults';
+
+    var yamlOutput = document.createElement('pre');
+    yamlOutput.className = 'yaml-output';
+    var copyBtn = document.createElement('button');
+    copyBtn.textContent = 'Copy YAML snippet';
+
+    controls.appendChild(filenameEl);
+    controls.appendChild(metaEl);
+    controls.appendChild(viewportRow);
+    controls.appendChild(timelineRow.label);
+    controls.appendChild(playBtn);
+    controls.appendChild(sep);
+    controls.appendChild(altLabel);
+    controls.appendChild(mirrorRow);
+    controls.appendChild(sep2);
+    controls.appendChild(visibilityRow);
+    controls.appendChild(sep3);
+    controls.appendChild(overrideRow);
+    controls.appendChild(focusXRow.label);
+    controls.appendChild(focusYRow.label);
+    controls.appendChild(startZoom.label);
+    controls.appendChild(typeLabel);
+    controls.appendChild(directionLabel);
+    controls.appendChild(amount.label);
+    controls.appendChild(duration.label);
+    controls.appendChild(resetBtn);
+    controls.appendChild(yamlOutput);
+    controls.appendChild(copyBtn);
+
+    card.appendChild(deviceWrapper);
+    card.appendChild(controls);
+    cards.appendChild(card);
+
+    // `base` = the top-level (desktop) start/animation fields. `tablet`/`mobile`
+    // are optional overrides (data/hero_images.yaml's `tablet:`/`mobile:` maps) -
+    // disabled by default, inheriting from `base` until explicitly enabled.
+    var state = {
+      alt: '',
+      poi: { x: 50, y: 50 },
+      base: makeTier(),
+      tablet: Object.assign(makeTier(), { enabled: false }),
+      mobile: Object.assign(makeTier(), { enabled: false }),
+      playing: false,
+      mirrorX: false,
+      mirrorY: false,
+      hideBelow: '',
+    };
+    var poiSelector = window.FTSKHeroPOI.create({
+      src: url,
+      get: function () { return state.poi; },
+      set: function (poi) { state.poi = poi; refreshAll(); }
+    });
+    card.insertBefore(poiSelector.element, deviceWrapper);
+
+    function isOverrideTier() {
+      return currentViewport !== 'desktop';
+    }
+    function usingOverride() {
+      return !isOverrideTier() || state[currentViewport].enabled;
+    }
+    // The tier object currently being edited/previewed (falls back to `base`
+    // for tablet/mobile until their override is turned on).
+    function effective() {
+      return usingOverride() ? state[currentViewport] || state.base : state.base;
+    }
+    // Enables + seeds a tablet/mobile override from the current effective
+    // values the first time the user actually edits it (auto-enable on
+    // interaction, rather than forcing an extra manual step every time).
+    function ensureEditableTier() {
+      if (isOverrideTier() && !state[currentViewport].enabled) {
+        Object.assign(state[currentViewport], effective(), { enabled: true });
+      }
+      return isOverrideTier() ? state[currentViewport] : state.base;
+    }
+
+    function refreshDirectionOptions(eff) {
+      var options = directionsByType[eff.type] || [];
+      directionSelect.innerHTML = '';
+      directionLabel.style.display = options.length ? '' : 'none';
+      options.forEach(function (value) {
+        var opt = document.createElement('option');
+        opt.value = value;
+        opt.textContent = value;
+        directionSelect.appendChild(opt);
+      });
+      directionSelect.value = options.indexOf(eff.direction) !== -1 ? eff.direction : options[0] || eff.direction;
+    }
+
+    function refreshAmountRange(eff) {
+      var defaults = amountDefaultsByType[eff.type] || amountDefaultsByType.pan;
+      amount.range.min = defaults.min;
+      amount.range.max = defaults.max;
+      amount.range.step = defaults.step;
+      amount.label.style.display = defaults.max > 0 ? '' : 'none';
+    }
+
+    function fitDeviceFrame() {
+      var vp = VIEWPORTS[currentViewport];
+      deviceFrame.style.width = vp.width + 'px';
+      simHero.dataset.tier = vp.tier;
+      var expanded = deviceWrapper.classList.contains('is-expanded');
+      var wrapperWidth = deviceWrapper.clientWidth || vp.width;
+      var wrapperHeight = expanded ? deviceWrapper.clientHeight || vp.height : COMPACT_MAX_HEIGHT;
+      // Scale the true-pixel-width frame down to fit the panel (both dimensions),
+      // like a device toolbar's zoom-to-fit (only shrinks, never upscales past 100%).
+      deviceFrame.style.zoom = Math.min(1, wrapperWidth / vp.width, wrapperHeight / (simHero.clientHeight || vp.height));
+    }
+
+
+    // Timeline-driven rendering (no CSS @keyframes) - a scrubber can show any
+    // exact point of the motion, and "0%" always means the true start point.
+    var timeline = 0;
+    var timelineDirection = 1;
+    var rafId = null;
+    var lastFrameTs = null;
+
+    function renderTransform() {
+      var eff = effective();
+      var mx = state.mirrorX ? -1 : 1;
+      var my = state.mirrorY ? -1 : 1;
+      var framing = window.FTSKHeroPOI.renderPreview({ image: img, container: simMedia, marker: marker, poi: state.poi, timeline: timeline, settings: Object.assign({}, eff, { mirrorX: mx, mirrorY: my }) });
+      poiSelector.update(framing);
+    }
+
+    function tick(ts) {
+      if (lastFrameTs != null) {
+        var eff = effective();
+        var dt = (ts - lastFrameTs) / 1000;
+        var speed = eff.duration > 0 ? 1 / eff.duration : 0;
+        timeline += timelineDirection * speed * dt;
+        if (timeline >= 1) { timeline = 1; timelineDirection = -1; }
+        if (timeline <= 0) { timeline = 0; timelineDirection = 1; }
+        timelineRow.range.value = Math.round(timeline * 100);
+        timelineRow.valueSpan.textContent = Math.round(timeline * 100);
+        renderTransform();
+      }
+      lastFrameTs = ts;
+      if (state.playing) rafId = requestAnimationFrame(tick);
+    }
+
+    function applyState() {
+      var eff = effective();
+      img.style.objectPosition = eff.focusX + '% ' + eff.focusY + '%';
+      img.style.transformOrigin = eff.focusX + '% ' + eff.focusY + '%';
+      marker.style.left = eff.focusX + '%';
+      marker.style.top = eff.focusY + '%';
+      fitDeviceFrame();
+      renderTransform();
+      playBtn.textContent = state.playing ? '⏸ Pause' : '▶ Play';
+
+      var threshold = { sm: 576, md: 768, lg: 992 }[state.hideBelow] || 0;
+      simHero.classList.toggle('is-hidden-here', VIEWPORTS[currentViewport].width < threshold);
+    }
+
+    function refreshVisibilityUI() {
+      visibilitySelect.value = state.hideBelow;
+    }
+
+    function refreshOverrideUI() {
+      var isOv = isOverrideTier();
+      overrideRow.style.display = isOv ? '' : 'none';
+      if (isOv) {
+        var enabled = state[currentViewport].enabled;
+        overrideCheckbox.checked = enabled;
+        overrideText.textContent = enabled
+          ? 'Custom for this size (enabled)'
+          : 'Custom for this size (currently inheriting desktop)';
+      }
+    }
+
+    function refreshControlValues() {
+      var eff = effective();
+      var disabled = isOverrideTier() && !usingOverride();
+      [focusXRow.range, focusYRow.range, startZoom.range, typeSelect, directionSelect, amount.range, duration.range].forEach(
+        function (el) {
+          el.disabled = disabled;
+        }
+      );
+      focusXRow.range.value = eff.focusX;
+      focusXRow.valueSpan.textContent = eff.focusX;
+      focusYRow.range.value = eff.focusY;
+      focusYRow.valueSpan.textContent = eff.focusY;
+      startZoom.range.value = eff.zoom;
+      startZoom.valueSpan.textContent = eff.zoom;
+      typeSelect.value = eff.type;
+      refreshDirectionOptions(eff);
+      refreshAmountRange(eff);
+      amount.range.value = eff.amount;
+      amount.valueSpan.textContent = eff.amount;
+      duration.range.value = eff.duration;
+      duration.valueSpan.textContent = eff.duration;
+    }
+
+    function refreshAll() {
+      refreshOverrideUI();
+      refreshVisibilityUI();
+      refreshControlValues();
+      applyState();
+      renderYaml();
+    }
+
+    function setPlaying(playing) {
+      state.playing = playing;
+      timelineRow.range.disabled = playing;
+      if (playing) {
+        lastFrameTs = null;
+        rafId = requestAnimationFrame(tick);
+      } else if (rafId != null) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+      applyState();
+    }
+
+    function amountAppliesTo(eff) {
+      return (amountDefaultsByType[eff.type] || amountDefaultsByType.pan).max > 0;
+    }
+
+    // Only emits fields that actually differ from the desktop base (minimal
+    // diff, matching data/hero_images.yaml's documented convention) - except
+    // when `type` itself differs, in which case direction/amount/duration are
+    // always re-specified too (a different type changes which channels move
+    // at all, so partial inheritance would silently mix old+new motion).
+    function diffTierLines(tierName) {
+      var t = state[tierName];
+      if (!t.enabled) return null;
+      var b = state.base;
+      var out = [];
+      if (Math.abs(t.zoom - b.zoom) > 0.001) out.push('zoom: ' + t.zoom.toFixed(2));
+      if (t.focusX !== b.focusX || t.focusY !== b.focusY) out.push('focus: "' + t.focusX + '% ' + t.focusY + '%"');
+      if (t.type !== b.type) {
+        out.push('type: ' + t.type);
+        if ((directionsByType[t.type] || []).length) out.push('direction: ' + t.direction);
+        if (amountAppliesTo(t)) out.push('amount: ' + t.amount);
+        out.push('duration: ' + t.duration);
+      } else {
+        if ((directionsByType[t.type] || []).length && t.direction !== b.direction) out.push('direction: ' + t.direction);
+        if (amountAppliesTo(t) && Math.abs(t.amount - b.amount) > 0.001) out.push('amount: ' + t.amount);
+        if (t.duration !== b.duration) out.push('duration: ' + t.duration);
+      }
+      return out;
+    }
+
+    function renderYaml() {
+      var b = state.base;
+      var lines = [
+        '- path: /images/hero/' + file.name.replace(/\.[^.]+$/, '.webp'),
+        '  alt: ' + JSON.stringify(state.alt || 'TODO'),
+      ];
+      if (state.poi) {
+        lines.push('  poi:');
+        lines.push('    x: ' + state.poi.x);
+        lines.push('    y: ' + state.poi.y);
+      }
+      if (state.mirrorX && state.mirrorY) lines.push('  mirror: both');
+      else if (state.mirrorX) lines.push('  mirror: horizontal');
+      else if (state.mirrorY) lines.push('  mirror: vertical');
+      lines.push('  start:');
+      lines.push('    focus: "' + b.focusX + '% ' + b.focusY + '%"');
+      if (Math.abs(b.zoom - 1.35) > 0.001) lines.push('    zoom: ' + b.zoom.toFixed(2));
+      lines.push('  animation:');
+      lines.push('    type: ' + b.type);
+      if ((directionsByType[b.type] || []).length) lines.push('    direction: ' + b.direction);
+      var bDefaults = amountDefaultsByType[b.type];
+      if (bDefaults.max > 0 && Math.abs(b.amount - bDefaults.value) > 0.001) lines.push('    amount: ' + b.amount);
+      if (b.duration !== 12) lines.push('    duration: ' + b.duration);
+
+      if (state.hideBelow) lines.push('  hide_below: ' + state.hideBelow);
+
+      ['tablet', 'mobile'].forEach(function (tierName) {
+        var diff = diffTierLines(tierName);
+        if (diff && diff.length) {
+          lines.push('  ' + tierName + ':');
+          diff.forEach(function (l) {
+            lines.push('    ' + l);
+          });
+        }
+      });
+
+      yamlOutput.textContent = lines.join('\n');
+    }
+
+    img.addEventListener('load', function () {
+      var orientation = img.naturalHeight > img.naturalWidth ? 'portrait' : 'landscape';
+      // Just a friendlier starting suggestion - portrait photos usually read better
+      // panning up/down than sideways; either can be changed via the direction select.
+      state.base.direction = orientation === 'portrait' ? 'down' : 'right';
+      metaEl.textContent = img.naturalWidth + 'x' + img.naturalHeight + ', ' + orientation;
+      // Deferred a frame so deviceWrapper has a real layout width to fit against.
+      requestAnimationFrame(refreshAll);
+    });
+
+    simHero.addEventListener('click', function (e) {
+      var rect = simHero.getBoundingClientRect();
+      var t = ensureEditableTier();
+      t.focusX = Math.round(Math.min(100, Math.max(0, ((e.clientX - rect.left) / rect.width) * 100)));
+      t.focusY = Math.round(Math.min(100, Math.max(0, ((e.clientY - rect.top) / rect.height) * 100)));
+      refreshAll();
+    });
+
+    playBtn.addEventListener('click', function () {
+      setPlaying(!state.playing);
+    });
+
+    viewportRowSelect.addEventListener('change', function () {
+      currentViewport = viewportRowSelect.value;
+      refreshAll();
+    });
+
+    timelineRow.range.addEventListener('input', function () {
+      if (state.playing) setPlaying(false);
+      timeline = parseInt(timelineRow.range.value, 10) / 100;
+      timelineRow.valueSpan.textContent = timelineRow.range.value;
+      renderTransform();
+    });
+
+    function setExpanded(value) {
+      deviceWrapper.classList.toggle('is-expanded', value);
+      backdrop.classList.toggle('is-visible', value);
+      expandBtn.textContent = value ? '\u2715 Close' : '\u26f6 View full size';
+      fitDeviceFrame();
+    }
+    expandBtn.addEventListener('click', function () {
+      setExpanded(!deviceWrapper.classList.contains('is-expanded'));
+    });
+    backdrop.addEventListener('click', function () {
+      setExpanded(false);
+    });
+
+    overrideCheckbox.addEventListener('change', function () {
+      if (!isOverrideTier()) return;
+      var t = state[currentViewport];
+      if (overrideCheckbox.checked) {
+        Object.assign(t, state.base, { enabled: true });
+      } else {
+        t.enabled = false;
+      }
+      refreshAll();
+    });
+
+    visibilitySelect.addEventListener('change', function () {
+      state.hideBelow = visibilitySelect.value;
+      refreshAll();
+    });
+
+    mirrorXCheckbox.addEventListener('change', function () {
+      state.mirrorX = mirrorXCheckbox.checked;
+      applyState();
+      renderYaml();
+    });
+    mirrorYCheckbox.addEventListener('change', function () {
+      state.mirrorY = mirrorYCheckbox.checked;
+      applyState();
+      renderYaml();
+    });
+
+    focusXRow.range.addEventListener('input', function () {
+      var t = ensureEditableTier();
+      t.focusX = parseInt(focusXRow.range.value, 10);
+      refreshAll();
+    });
+    focusYRow.range.addEventListener('input', function () {
+      var t = ensureEditableTier();
+      t.focusY = parseInt(focusYRow.range.value, 10);
+      refreshAll();
+    });
+    startZoom.range.addEventListener('input', function () {
+      var t = ensureEditableTier();
+      t.zoom = parseFloat(startZoom.range.value);
+      refreshAll();
+    });
+
+    typeSelect.addEventListener('change', function () {
+      var t = ensureEditableTier();
+      t.type = typeSelect.value;
+      var defaults = amountDefaultsByType[t.type];
+      t.amount = defaults.value;
+      t.direction = (directionsByType[t.type] || [])[0] || t.direction;
+      refreshAll();
+    });
+
+    directionSelect.addEventListener('change', function () {
+      var t = ensureEditableTier();
+      t.direction = directionSelect.value;
+      refreshAll();
+    });
+
+    [
+      [amount, 'amount'],
+      [duration, 'duration'],
+    ].forEach(function (pair) {
+      var control = pair[0];
+      var key = pair[1];
+      control.range.addEventListener('input', function () {
+        var t = ensureEditableTier();
+        t[key] = parseFloat(control.range.value);
+        refreshAll();
+      });
+    });
+
+    altInput.addEventListener('input', function () {
+      state.alt = altInput.value;
+      renderYaml();
+    });
+
+    resetBtn.addEventListener('click', function () {
+      state.base = makeTier();
+      state.tablet = Object.assign(makeTier(), { enabled: false });
+      state.mobile = Object.assign(makeTier(), { enabled: false });
+      state.mirrorX = false;
+      state.mirrorY = false;
+      state.poi = { x: 50, y: 50 };
+      state.hideBelow = '';
+      mirrorXCheckbox.checked = false;
+      mirrorYCheckbox.checked = false;
+      refreshAll();
+    });
+
+    copyBtn.addEventListener('click', function () {
+      navigator.clipboard.writeText(yamlOutput.textContent).then(function () {
+        var original = copyBtn.textContent;
+        copyBtn.textContent = 'Copied!';
+        setTimeout(function () {
+          copyBtn.textContent = original;
+        }, 1200);
+      });
+    });
+
+    refreshAll();
+    cardControllers.push({ refreshViewport: refreshAll, setPlaying: setPlaying });
+  }
+})();
+
+(function () {
+  'use strict';
+
+  // ---- Connected mode: talks to the Workbench bridge to load/save the REAL
+  // data/hero_images.yaml and static/images/hero/ files. Silently does nothing
+  // (leaves #connectedPanel hidden) if no server is reachable, e.g. the file
+  // was opened directly - the offline drag-drop mode above still works then.
+
+
+  var connectedPanel = document.getElementById('connectedPanel');
+  var connectedStatus = document.getElementById('connectedStatus');
+  var connectedSelect = document.getElementById('connectedSelect');
+  var connectedAddBtn = document.getElementById('connectedAddBtn');
+  var connectedDeleteBtn = document.getElementById('connectedDeleteBtn');
+  var connectedFileInput = document.getElementById('connectedFileInput');
+  var connectedEditorMount = document.getElementById('connectedEditorMount');
+
+  var VIEWPORTS = { desktop: 1440, tablet: 834, mobile: 390 };
+  var HIDE_THRESHOLD_PX = { sm: 576, md: 768, lg: 992 };
+  var directionsByType = { pan: ['right', 'left', 'up', 'down'], tilt: ['right', 'left'], 'zoom-in': [], 'zoom-out': [], none: [] };
+  var amountDefaultsByType = {
+    pan: { min: 0, max: 20, step: 1, value: 6 },
+    'zoom-in': { min: 0, max: 0.6, step: 0.01, value: 0.15 },
+    'zoom-out': { min: 0, max: 0.6, step: 0.01, value: 0.15 },
+    tilt: { min: 0, max: 15, step: 0.5, value: 2 },
+    none: { min: 0, max: 0, step: 1, value: 0 },
+  };
+
+  var config = null; // {header, images: [...]}
+  var currentPath = null;
+  var activeEditor = null; // {refreshViewport(), setPlaying()}
+
+  function setStatus(text, isError) {
+    connectedStatus.textContent = text;
+    connectedStatus.classList.toggle('is-error', !!isError);
+  }
+
+  function filenameOf(path) {
+    return path.split('/').pop();
+  }
+
+  function parseFocus(str) {
+    var m = /^(-?\d+(?:\.\d+)?)%\s+(-?\d+(?:\.\d+)?)%$/.exec(String(str || '').trim());
+    return m ? { x: parseFloat(m[1]), y: parseFloat(m[2]) } : { x: 50, y: 50 };
+  }
+
+  function baseStateFrom(entry) {
+    var start = entry.start || {};
+    var animation = entry.animation || {};
+    var focus = parseFocus(start.focus);
+    var type = animation.type || 'pan';
+    return {
+      focusX: focus.x,
+      focusY: focus.y,
+      zoom: start.zoom != null ? start.zoom : 1.35,
+      type: type,
+      direction: animation.direction || 'right',
+      amount: animation.amount != null ? animation.amount : amountDefaultsByType[type].value,
+      duration: animation.duration != null ? animation.duration : 12,
+    };
+  }
+
+  function tierStateFrom(entry, tierName, base) {
+    var t = entry[tierName];
+    if (!t) return Object.assign({ enabled: false }, base);
+    var focus = t.focus ? parseFocus(t.focus) : { x: base.focusX, y: base.focusY };
+    return {
+      enabled: true,
+      focusX: focus.x,
+      focusY: focus.y,
+      zoom: t.zoom != null ? t.zoom : base.zoom,
+      type: t.type || base.type,
+      direction: t.direction || base.direction,
+      amount: t.amount != null ? t.amount : base.amount,
+      duration: t.duration != null ? t.duration : base.duration,
+    };
+  }
+
+  function entryToState(entry) {
+    var base = baseStateFrom(entry);
+    return {
+      path: entry.path,
+      poi: Object.assign({ x: 50, y: 50 }, entry.poi),
+      alt: entry.alt || '',
+      mirror: entry.mirror || '',
+      hideBelow: entry.hide_below || '',
+      base: base,
+      tablet: tierStateFrom(entry, 'tablet', base),
+      mobile: tierStateFrom(entry, 'mobile', base),
+    };
+  }
+
+  function stateToEntry(state) {
+    var e = { path: state.path };
+    if (state.poi) e.poi = Object.assign({}, state.poi);
+    if (state.alt) e.alt = state.alt;
+    if (state.mirror) e.mirror = state.mirror;
+    if (state.hideBelow) e.hide_below = state.hideBelow;
+    e.start = { focus: state.base.focusX + '% ' + state.base.focusY + '%', zoom: state.base.zoom };
+    e.animation = {
+      type: state.base.type,
+      direction: state.base.direction,
+      amount: state.base.amount,
+      duration: state.base.duration,
+    };
+    ['tablet', 'mobile'].forEach(function (tierName) {
+      var t = state[tierName];
+      if (t.enabled) {
+        e[tierName] = {
+          enabled: true,
+          focus: t.focusX + '% ' + t.focusY + '%',
+          zoom: t.zoom,
+          type: t.type,
+          direction: t.direction,
+          amount: t.amount,
+          duration: t.duration,
+        };
+      }
+    });
+    return e;
+  }
+
+
+  function rangeRow(labelText, min, max, step, value) {
+    var label = document.createElement('label');
+    var top = document.createElement('div');
+    top.className = 'row-value';
+    var span = document.createElement('span');
+    span.textContent = labelText;
+    var valueSpan = document.createElement('span');
+    valueSpan.textContent = value;
+    top.appendChild(span);
+    top.appendChild(valueSpan);
+    var range = document.createElement('input');
+    range.type = 'range';
+    range.min = min;
+    range.max = max;
+    range.step = step;
+    range.value = value;
+    label.appendChild(top);
+    label.appendChild(range);
+    return { label: label, range: range, valueSpan: valueSpan };
+  }
+
+  function populateSelect() {
+    var previous = connectedSelect.value;
+    connectedSelect.innerHTML = '';
+    config.images.forEach(function (entry) {
+      var opt = document.createElement('option');
+      opt.value = entry.path;
+      opt.textContent = filenameOf(entry.path) + (entry.alt ? ' - ' + entry.alt : '');
+      connectedSelect.appendChild(opt);
+    });
+    if (config.images.some(function (e) { return e.path === previous; })) {
+      connectedSelect.value = previous;
+    }
+  }
+
+  /* Timeline-accurate device-frame preview:
+     the editor never relies on a live/looping CSS animation for editing - a
+     scrubber directly renders any point between the configured start and end,
+     so "start" always shows exactly what "start" means. Play just previews
+     the motion; pausing (or dragging the scrubber) freezes an exact frame. */
+  var TIER_HEIGHTS = { desktop: 640, tablet: 480, mobile: 420 };
+  var COMPACT_MAX_HEIGHT = 220;
+
+  function renderEditor(entry) {
+    if (activeEditor && activeEditor.cleanup) activeEditor.cleanup();
+    connectedEditorMount.innerHTML = '';
+    activeEditor = null;
+    var state = entryToState(entry);
+    var savedEntry = JSON.stringify(stateToEntry(state));
+
+    var card = document.createElement('div');
+    card.className = 'card';
+
+    var deviceWrapper = document.createElement('div');
+    deviceWrapper.className = 'device-frame-wrapper';
+    var expandBtn = document.createElement('button');
+    expandBtn.type = 'button';
+    expandBtn.className = 'expand-btn secondary';
+    expandBtn.textContent = '\u26f6 View full size';
+    var backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    var deviceFrame = document.createElement('div');
+    deviceFrame.className = 'device-frame';
+    var simHero = document.createElement('div');
+    simHero.className = 'sim-hero';
+    var simMedia = document.createElement('div');
+    simMedia.className = 'sim-media';
+    var img = document.createElement('img');
+    img.src = '/images/hero/' + encodeURIComponent(filenameOf(entry.path));
+    var simFade = document.createElement('div');
+    simFade.className = 'sim-fade';
+    var simMotif = document.createElement('div');
+    simMotif.className = 'sim-motif';
+    simMedia.appendChild(img);
+    simMedia.appendChild(simFade);
+    simMedia.appendChild(simMotif);
+    var marker = document.createElement('div');
+    marker.className = 'focus-marker';
+    var hiddenNotice = document.createElement('div');
+    hiddenNotice.className = 'hidden-notice';
+    hiddenNotice.textContent = 'Hidden at this size (hide_below)';
+    var simContent = document.createElement('div');
+    simContent.className = 'sim-content';
+    simContent.innerHTML =
+      '<h1>Barlangászat, kutatás, közösség</h1>' +
+      '<p>Az FTSK Barlangkutató Szakosztály 1954 óta fedez fel, kutat és jár barlangokat itthon és külföldön.!</p>' +
+      '<div class="sim-btn">Ismerd meg az egyesületet</div>';
+    var simNavbar = document.createElement('div');
+    simNavbar.className = 'sim-navbar';
+    simNavbar.textContent = 'navbar (fixed, overlays this)';
+    simHero.appendChild(simMedia);
+    simHero.appendChild(simContent);
+    simHero.appendChild(marker);
+    simHero.appendChild(hiddenNotice);
+    simHero.appendChild(simNavbar);
+    deviceFrame.appendChild(simHero);
+    deviceWrapper.appendChild(deviceFrame);
+    deviceWrapper.appendChild(expandBtn);
+
+    var controls = document.createElement('div');
+    controls.className = 'controls';
+
+    var filenameEl = document.createElement('div');
+    filenameEl.className = 'filename';
+    filenameEl.textContent = filenameOf(entry.path);
+
+    // Tabs both pick which breakpoint's fields are shown AND which one the
+    // preview simulates - screen size is a property of what you're editing.
+    var currentViewport = 'desktop';
+    var tierTabs = document.createElement('div');
+    tierTabs.className = 'tier-tabs';
+    var tabButtons = {};
+    [
+      ['desktop', 'Desktop'],
+      ['tablet', 'Tablet'],
+      ['mobile', 'Phone'],
+    ].forEach(function (pair) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'secondary';
+      btn.textContent = pair[1];
+      btn.addEventListener('click', function () {
+        currentViewport = pair[0];
+        refreshAll();
+      });
+      tabButtons[pair[0]] = btn;
+      tierTabs.appendChild(btn);
+    });
+
+    var timelineRow = rangeRow('Timeline position', 0, 100, 1, 0);
+    timelineRow.label.className = 'timeline-row';
+    var playBtn = document.createElement('button');
+    playBtn.textContent = '\u25b6 Play';
+    var playbackRow = document.createElement('div');
+    playbackRow.className = 'playback-row';
+    playbackRow.appendChild(playBtn);
+    var playbackHint = document.createElement('span');
+    playbackHint.className = 'meta';
+    playbackHint.textContent = 'Drag the timeline above to inspect any point of the motion.';
+    playbackRow.appendChild(playbackHint);
+
+    var altLabel = document.createElement('label');
+    var altSpan = document.createElement('span');
+    altSpan.textContent = 'Alt text';
+    var altInput = document.createElement('input');
+    altInput.type = 'text';
+    altInput.value = state.alt;
+    altLabel.appendChild(altSpan);
+    altLabel.appendChild(altInput);
+
+    function selectRow(labelText, options, value) {
+      var label = document.createElement('label');
+      var span = document.createElement('span');
+      span.textContent = labelText;
+      var select = document.createElement('select');
+      options.forEach(function (opt) {
+        var o = document.createElement('option');
+        o.value = opt.value;
+        o.textContent = opt.text;
+        select.appendChild(o);
+      });
+      select.value = value;
+      label.appendChild(span);
+      label.appendChild(select);
+      return { label: label, select: select };
+    }
+
+    var mirrorRow = selectRow('Mirror', [
+      { value: '', text: 'None' },
+      { value: 'horizontal', text: 'Horizontal' },
+      { value: 'vertical', text: 'Vertical' },
+      { value: 'both', text: 'Both' },
+    ], state.mirror);
+
+    var hideBelowRow = selectRow('Hide below (hide_below)', [
+      { value: '', text: 'Always visible' },
+      { value: 'sm', text: 'sm - hidden below 576px' },
+      { value: 'md', text: 'md - hidden below 768px' },
+      { value: 'lg', text: 'lg - hidden below 992px' },
+    ], state.hideBelow);
+
+    var sep1 = document.createElement('hr');
+    sep1.className = 'sep';
+
+    function buildTierFields(tierState) {
+      var focusXRow = rangeRow('Composition X%', 0, 100, 1, tierState.focusX);
+      var focusYRow = rangeRow('Composition Y%', 0, 100, 1, tierState.focusY);
+      var zoomRow = rangeRow('Zoom (start.zoom)', 1, 2.5, 0.05, tierState.zoom);
+      var typeRow = selectRow(
+        'Animation type',
+        ['pan', 'zoom-in', 'zoom-out', 'tilt', 'none'].map(function (v) {
+          return { value: v, text: v };
+        }),
+        tierState.type
+      );
+      var directionRow = selectRow('Direction', [], tierState.direction);
+      var amountRow = rangeRow('Amount', 0, 20, 1, tierState.amount);
+      var durationRow = rangeRow('Duration, seconds', 4, 30, 1, tierState.duration);
+      return {
+        focusXRow: focusXRow, focusYRow: focusYRow, zoomRow: zoomRow,
+        typeRow: typeRow, directionRow: directionRow, amountRow: amountRow, durationRow: durationRow,
+      };
+    }
+    function appendTierFields(container, fields) {
+      container.appendChild(fields.focusXRow.label);
+      container.appendChild(fields.focusYRow.label);
+      container.appendChild(fields.zoomRow.label);
+      container.appendChild(fields.typeRow.label);
+      container.appendChild(fields.directionRow.label);
+      container.appendChild(fields.amountRow.label);
+      container.appendChild(fields.durationRow.label);
+    }
+
+    var baseFields = buildTierFields(state.base);
+    var baseBox = document.createElement('div');
+    appendTierFields(baseBox, baseFields);
+
+    var tabletEnable = document.createElement('label');
+    tabletEnable.className = 'override-row';
+    var tabletCheckbox = document.createElement('input');
+    tabletCheckbox.type = 'checkbox';
+    tabletCheckbox.checked = state.tablet.enabled;
+    tabletEnable.appendChild(tabletCheckbox);
+    tabletEnable.appendChild(document.createTextNode('Use custom settings for tablet (otherwise inherits Desktop)'));
+    var tabletFields = buildTierFields(state.tablet);
+    var tabletBox = document.createElement('div');
+    tabletBox.appendChild(tabletEnable);
+    appendTierFields(tabletBox, tabletFields);
+
+    var mobileEnable = document.createElement('label');
+    mobileEnable.className = 'override-row';
+    var mobileCheckbox = document.createElement('input');
+    mobileCheckbox.type = 'checkbox';
+    mobileCheckbox.checked = state.mobile.enabled;
+    mobileEnable.appendChild(mobileCheckbox);
+    mobileEnable.appendChild(document.createTextNode('Use custom settings for phone (otherwise inherits Desktop)'));
+    var mobileFields = buildTierFields(state.mobile);
+    var mobileBox = document.createElement('div');
+    mobileBox.appendChild(mobileEnable);
+    appendTierFields(mobileBox, mobileFields);
+
+    var saveBtn = document.createElement('button');
+    saveBtn.textContent = 'Save';
+    var saveNote = document.createElement('span');
+    saveNote.className = 'connected-save-note';
+    var saveRow = document.createElement('div');
+    saveRow.className = 'connected-save-row';
+    saveRow.appendChild(saveBtn);
+    saveRow.appendChild(saveNote);
+
+    var previewOutput = document.createElement('pre');
+    previewOutput.className = 'yaml-output';
+
+    var sectionSave = document.createElement('div');
+    sectionSave.className = 'section-title';
+    sectionSave.textContent = 'Save';
+
+    controls.appendChild(filenameEl);
+    controls.appendChild(tierTabs);
+    controls.appendChild(timelineRow.label);
+    controls.appendChild(playbackRow);
+    controls.appendChild(altLabel);
+    controls.appendChild(mirrorRow.label);
+    controls.appendChild(hideBelowRow.label);
+    controls.appendChild(sep1);
+    controls.appendChild(baseBox);
+    controls.appendChild(tabletBox);
+    controls.appendChild(mobileBox);
+    var sep4 = document.createElement('hr');
+    sep4.className = 'sep';
+    controls.appendChild(sep4);
+    controls.appendChild(sectionSave);
+    controls.appendChild(saveRow);
+    controls.appendChild(previewOutput);
+
+    card.appendChild(deviceWrapper);
+    card.appendChild(controls);
+    var poiSelector = window.FTSKHeroPOI.create({
+      src: img.src,
+      get: function () { return state.poi; },
+      set: function (poi) { state.poi = poi; saveNote.textContent = ''; refreshAll(); }
+    });
+    card.insertBefore(poiSelector.element, deviceWrapper);
+    connectedEditorMount.appendChild(card);
+    document.body.appendChild(backdrop);
+
+    function effectiveTierName() {
+      return currentViewport === 'desktop' ? 'base' : currentViewport;
+    }
+    function effective() {
+      var tierName = effectiveTierName();
+      if (tierName === 'base') return state.base;
+      return state[tierName].enabled ? state[tierName] : state.base;
+    }
+    function refreshDirectionOptions(fields, eff) {
+      var options = directionsByType[eff.type] || [];
+      fields.directionRow.select.innerHTML = '';
+      fields.directionRow.label.style.display = options.length ? '' : 'none';
+      options.forEach(function (value) {
+        var opt = document.createElement('option');
+        opt.value = value;
+        opt.textContent = value;
+        fields.directionRow.select.appendChild(opt);
+      });
+      fields.directionRow.select.value = options.indexOf(eff.direction) !== -1 ? eff.direction : options[0] || eff.direction;
+    }
+    function refreshAmountRange(fields, eff) {
+      var d = amountDefaultsByType[eff.type];
+      fields.amountRow.range.min = d.min;
+      fields.amountRow.range.max = d.max;
+      fields.amountRow.range.step = d.step;
+      fields.amountRow.label.style.display = d.max > 0 ? '' : 'none';
+    }
+    function syncFieldsFromState(fields, tierState, disabled) {
+      [fields.focusXRow.range, fields.focusYRow.range, fields.zoomRow.range, fields.typeRow.select,
+        fields.directionRow.select, fields.amountRow.range, fields.durationRow.range].forEach(function (el) {
+        el.disabled = !!disabled;
+      });
+      fields.focusXRow.range.value = tierState.focusX;
+      fields.focusXRow.valueSpan.textContent = tierState.focusX;
+      fields.focusYRow.range.value = tierState.focusY;
+      fields.focusYRow.valueSpan.textContent = tierState.focusY;
+      fields.zoomRow.range.value = tierState.zoom;
+      fields.zoomRow.valueSpan.textContent = tierState.zoom;
+      fields.typeRow.select.value = tierState.type;
+      refreshDirectionOptions(fields, tierState);
+      refreshAmountRange(fields, tierState);
+      fields.amountRow.range.value = tierState.amount;
+      fields.amountRow.valueSpan.textContent = tierState.amount;
+      fields.durationRow.range.value = tierState.duration;
+      fields.durationRow.valueSpan.textContent = tierState.duration;
+    }
+
+    // ---- Timeline-driven rendering (no CSS @keyframes - direct transform per frame) ----
+    var timeline = 0; // 0 = configured start point, 1 = configured end point
+    var timelineDirection = 1;
+    var playing = false;
+    var rafId = null;
+    var lastFrameTs = null;
+
+    function renderTransform() {
+      var eff = effective();
+      var mx = state.mirror === 'horizontal' || state.mirror === 'both' ? -1 : 1;
+      var my = state.mirror === 'vertical' || state.mirror === 'both' ? -1 : 1;
+      var framing = window.FTSKHeroPOI.renderPreview({ image: img, container: simMedia, marker: marker, poi: state.poi, timeline: timeline, settings: Object.assign({}, eff, { mirrorX: mx, mirrorY: my }) });
+      poiSelector.update(framing);
+    }
+
+    function tick(ts) {
+      if (lastFrameTs != null) {
+        var eff = effective();
+        var dt = (ts - lastFrameTs) / 1000;
+        var speed = eff.duration > 0 ? 1 / eff.duration : 0;
+        timeline += timelineDirection * speed * dt;
+        if (timeline >= 1) { timeline = 1; timelineDirection = -1; }
+        if (timeline <= 0) { timeline = 0; timelineDirection = 1; }
+        timelineRow.range.value = Math.round(timeline * 100);
+        timelineRow.valueSpan.textContent = Math.round(timeline * 100) + '%';
+        renderTransform();
+      }
+      lastFrameTs = ts;
+      if (playing) rafId = requestAnimationFrame(tick);
+    }
+
+    function setPlaying(value) {
+      playing = value;
+      playBtn.textContent = playing ? '\u23f8 Pause' : '\u25b6 Play';
+      timelineRow.range.disabled = playing;
+      if (playing) {
+        lastFrameTs = null;
+        rafId = requestAnimationFrame(tick);
+      } else if (rafId != null) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+    }
+
+    function fitDeviceFrame() {
+      var vpWidth = VIEWPORTS[currentViewport];
+      var vpHeight = TIER_HEIGHTS[currentViewport];
+      deviceFrame.style.width = vpWidth + 'px';
+      var expanded = deviceWrapper.classList.contains('is-expanded');
+      var wrapperWidth = deviceWrapper.clientWidth || vpWidth;
+      var wrapperHeight = expanded ? deviceWrapper.clientHeight || vpHeight : COMPACT_MAX_HEIGHT;
+      deviceFrame.style.zoom = Math.min(1, wrapperWidth / vpWidth, wrapperHeight / (simHero.clientHeight || vpHeight));
+    }
+
+    function applyPreview() {
+      var eff = effective();
+      img.style.objectPosition = eff.focusX + '% ' + eff.focusY + '%';
+      img.style.transformOrigin = eff.focusX + '% ' + eff.focusY + '%';
+      marker.style.left = eff.focusX + '%';
+      marker.style.top = eff.focusY + '%';
+
+      var vpWidth = VIEWPORTS[currentViewport];
+      var hidden = state.hideBelow && vpWidth < HIDE_THRESHOLD_PX[state.hideBelow];
+      simHero.classList.toggle('is-hidden-here', !!hidden);
+      simHero.dataset.tier = currentViewport;
+
+      fitDeviceFrame();
+      renderTransform();
+    }
+
+    function refreshTabsAndBoxes() {
+      Object.keys(tabButtons).forEach(function (key) {
+        tabButtons[key].classList.toggle('is-active', key === currentViewport);
+      });
+      baseBox.style.display = currentViewport === 'desktop' ? '' : 'none';
+      tabletBox.style.display = currentViewport === 'tablet' ? '' : 'none';
+      mobileBox.style.display = currentViewport === 'mobile' ? '' : 'none';
+    }
+
+    function renderPreviewJson() {
+      previewOutput.textContent = JSON.stringify(stateToEntry(state), null, 2);
+    }
+
+    function refreshAll() {
+      refreshTabsAndBoxes();
+      syncFieldsFromState(baseFields, state.base, false);
+      syncFieldsFromState(tabletFields, state.tablet, !state.tablet.enabled);
+      syncFieldsFromState(mobileFields, state.mobile, !state.mobile.enabled);
+      applyPreview();
+      renderPreviewJson();
+    }
+
+    simHero.addEventListener('click', function (e) {
+      var rect = simHero.getBoundingClientRect();
+      var tierName = effectiveTierName();
+      var target = state.base;
+      if (tierName !== 'base') {
+        target = state[tierName];
+        if (!target.enabled) {
+          Object.assign(target, state.base, { enabled: true });
+          if (tierName === 'tablet') tabletCheckbox.checked = true;
+          if (tierName === 'mobile') mobileCheckbox.checked = true;
+        }
+      }
+      target.focusX = Math.round(Math.min(100, Math.max(0, ((e.clientX - rect.left) / rect.width) * 100)));
+      target.focusY = Math.round(Math.min(100, Math.max(0, ((e.clientY - rect.top) / rect.height) * 100)));
+      refreshAll();
+    });
+
+    playBtn.addEventListener('click', function () {
+      setPlaying(!playing);
+    });
+
+    timelineRow.range.addEventListener('input', function () {
+      if (playing) setPlaying(false);
+      timeline = parseInt(timelineRow.range.value, 10) / 100;
+      timelineRow.valueSpan.textContent = timelineRow.range.value + '%';
+      renderTransform();
+    });
+
+    function setExpanded(value) {
+      deviceWrapper.classList.toggle('is-expanded', value);
+      backdrop.classList.toggle('is-visible', value);
+      expandBtn.textContent = value ? '\u2715 Close' : '\u26f6 View full size';
+      fitDeviceFrame();
+    }
+    expandBtn.addEventListener('click', function () {
+      setExpanded(!deviceWrapper.classList.contains('is-expanded'));
+    });
+    backdrop.addEventListener('click', function () {
+      setExpanded(false);
+    });
+
+    altInput.addEventListener('input', function () {
+      state.alt = altInput.value;
+      renderPreviewJson();
+    });
+    mirrorRow.select.addEventListener('change', function () {
+      state.mirror = mirrorRow.select.value;
+      applyPreview();
+      renderPreviewJson();
+    });
+    hideBelowRow.select.addEventListener('change', function () {
+      state.hideBelow = hideBelowRow.select.value;
+      applyPreview();
+      renderPreviewJson();
+    });
+
+    function wireTierControls(fields, tierState) {
+      fields.focusXRow.range.addEventListener('input', function () {
+        tierState.focusX = parseInt(fields.focusXRow.range.value, 10);
+        refreshAll();
+      });
+      fields.focusYRow.range.addEventListener('input', function () {
+        tierState.focusY = parseInt(fields.focusYRow.range.value, 10);
+        refreshAll();
+      });
+      fields.zoomRow.range.addEventListener('input', function () {
+        tierState.zoom = parseFloat(fields.zoomRow.range.value);
+        refreshAll();
+      });
+      fields.typeRow.select.addEventListener('change', function () {
+        tierState.type = fields.typeRow.select.value;
+        tierState.amount = amountDefaultsByType[tierState.type].value;
+        tierState.direction = (directionsByType[tierState.type] || [])[0] || tierState.direction;
+        refreshAll();
+      });
+      fields.directionRow.select.addEventListener('change', function () {
+        tierState.direction = fields.directionRow.select.value;
+        refreshAll();
+      });
+      fields.amountRow.range.addEventListener('input', function () {
+        tierState.amount = parseFloat(fields.amountRow.range.value);
+        refreshAll();
+      });
+      fields.durationRow.range.addEventListener('input', function () {
+        tierState.duration = parseFloat(fields.durationRow.range.value);
+        refreshAll();
+      });
+    }
+
+    wireTierControls(baseFields, state.base);
+    wireTierControls(tabletFields, state.tablet);
+    wireTierControls(mobileFields, state.mobile);
+
+    tabletCheckbox.addEventListener('change', function () {
+      state.tablet.enabled = tabletCheckbox.checked;
+      if (state.tablet.enabled) Object.assign(state.tablet, state.base, { enabled: true });
+      refreshAll();
+    });
+    mobileCheckbox.addEventListener('change', function () {
+      state.mobile.enabled = mobileCheckbox.checked;
+      if (state.mobile.enabled) Object.assign(state.mobile, state.base, { enabled: true });
+      refreshAll();
+    });
+
+    saveBtn.addEventListener('click', function () {
+      if (saveBtn.disabled) return;
+      var idx = config.images.findIndex(function (e) {
+        return e.path === state.path;
+      });
+      if (idx === -1) {
+        saveNote.textContent = 'Error: This photo is no longer in the slideshow. Reload before saving.';
+        saveNote.classList.remove('is-success');
+        return;
+      }
+      var updated = config.images.slice();
+      updated[idx] = stateToEntry(state);
+      saveNote.textContent = 'Saving...';
+      saveNote.classList.remove('is-success');
+      saveBtn.disabled = true;
+      fetch('/api/config', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ images: updated }),
+      })
+        .then(function (r) {
+          return r.json().then(function (data) {
+            if (!r.ok) throw new Error(data.error || 'Save failed');
+            return data;
+          });
+        })
+        .then(function (data) {
+          config = data;
+          savedEntry = JSON.stringify(updated[idx]);
+          populateSelect();
+          saveNote.textContent = 'Saved!';
+          saveNote.classList.add('is-success');
+        })
+        .catch(function (err) {
+          saveNote.textContent = 'Error: ' + err.message;
+          saveNote.classList.remove('is-success');
+        })
+        .finally(function () { saveBtn.disabled = false; });
+    });
+
+    img.addEventListener('load', refreshAll);
+    refreshAll();
+
+    activeEditor = {
+      save: function () { saveBtn.click(); },
+      draft: function () {
+        var edited = stateToEntry(state);
+        if (JSON.stringify(edited) === savedEntry) return null;
+        return { images: config.images.map(function (item) { return item.path === state.path ? edited : item; }) };
+      },
+      refreshViewport: fitDeviceFrame,
+      setPlaying: setPlaying,
+      cleanup: function () {
+        if (rafId != null) cancelAnimationFrame(rafId);
+        poiSelector.cleanup();
+        backdrop.remove();
+      },
+    };
+  }
+
+  function loadEditorFor(path) {
+    currentPath = path;
+    var entry = config.images.find(function (e) {
+      return e.path === path;
+    });
+    if (entry) renderEditor(entry);
+  }
+
+  window.addEventListener('workbench-hero-draft', function (event) {
+    var draft = activeEditor && activeEditor.draft();
+    event.detail.source = draft ? JSON.stringify(draft, null, 2) : '';
+  });
+  window.addEventListener('workbench-hero-discard', function () {
+    if (config && currentPath) loadEditorFor(currentPath);
+  });
+  window.addEventListener('workbench-save', function () {
+    if (activeEditor) activeEditor.save();
+    else setStatus('Choose a slideshow photo before saving.', true);
+  });
+  window.addEventListener('keydown', function (event) {
+    if (!(event.ctrlKey || event.metaKey) || event.altKey || event.key.toLowerCase() !== 's') return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (!event.repeat) window.dispatchEvent(new Event('workbench-save'));
+  }, true);
+
+  connectedSelect.addEventListener('change', function () {
+    loadEditorFor(connectedSelect.value);
+  });
+
+  connectedAddBtn.addEventListener('click', function () {
+    connectedFileInput.click();
+  });
+
+  connectedFileInput.addEventListener('change', function () {
+    var file = connectedFileInput.files[0];
+    connectedFileInput.value = '';
+    if (!file) return;
+    setStatus('Uploading and converting...', false);
+    fetch('/api/upload', {
+      method: 'POST',
+      headers: { 'X-Filename': encodeURIComponent(file.name) },
+      body: file,
+    })
+      .then(function (r) {
+        return r.json().then(function (data) {
+          if (!r.ok) throw new Error(data.error || 'Upload failed');
+          return data;
+        });
+      })
+      .then(function (data) {
+        config = data;
+        populateSelect();
+        connectedSelect.value = data.new_path;
+        loadEditorFor(data.new_path);
+        setStatus('Connected - data/hero_images.yaml, ' + config.images.length + ' photo(s)', false);
+      })
+      .catch(function (err) {
+        setStatus('Upload failed: ' + err.message, true);
+      });
+  });
+
+  connectedDeleteBtn.addEventListener('click', function () {
+    if (!currentPath) return;
+    if (!confirm('Delete this photo from data/hero_images.yaml and static/images/hero/? This cannot be undone.')) return;
+    fetch('/api/image?path=' + encodeURIComponent(currentPath), { method: 'DELETE' })
+      .then(function (r) {
+        return r.json().then(function (data) {
+          if (!r.ok) throw new Error(data.error || 'Delete failed');
+          return data;
+        });
+      })
+      .then(function (data) {
+        config = data;
+        populateSelect();
+        if (config.images.length) {
+          connectedSelect.value = config.images[0].path;
+          loadEditorFor(config.images[0].path);
+        } else {
+          if (activeEditor && activeEditor.cleanup) activeEditor.cleanup();
+          currentPath = null;
+          activeEditor = null;
+          connectedEditorMount.innerHTML = '';
+        }
+        setStatus('Connected - data/hero_images.yaml, ' + config.images.length + ' photo(s)', false);
+      })
+      .catch(function (err) {
+        setStatus('Delete failed: ' + err.message, true);
+      });
+  });
+
+  window.addEventListener('resize', function () {
+    if (activeEditor) activeEditor.refreshViewport();
+  });
+
+  fetch('/api/config')
+    .then(function (r) {
+      if (!r.ok) throw new Error('no server');
+      return r.json();
+    })
+    .then(function (data) {
+      config = data;
+      connectedPanel.style.display = '';
+      populateSelect();
+      setStatus('Connected - data/hero_images.yaml, ' + config.images.length + ' photo(s)', false);
+      if (config.images.length) {
+        connectedSelect.value = config.images[0].path;
+        loadEditorFor(config.images[0].path);
+      }
+    })
+    .catch(function () {
+      // No Workbench bridge running (or opened as a plain file) - stay in
+      // offline/manual mode, #connectedPanel remains hidden.
+    });
+})();
+</script>
+</body>
+</html>

@@ -1,21 +1,21 @@
 @echo off
 title FTSK Social Card Preview
-cd /d "%~dp0"
+cd /d "%~dp0.."
 
 if exist "%~dp0..\.venv\Scripts\python.exe" (
-    "%~dp0..\.venv\Scripts\python.exe" social_preview.py %*
+    "%~dp0..\.venv\Scripts\python.exe" -m tools.social_preview %*
     goto :eof
 )
 
 where py >nul 2>nul
 if %errorlevel%==0 (
-    py social_preview.py %*
+    py -m tools.social_preview %*
     goto :eof
 )
 
 where python >nul 2>nul
 if %errorlevel%==0 (
-    python social_preview.py %*
+    python -m tools.social_preview %*
     goto :eof
 )
 

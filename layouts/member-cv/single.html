@@ -1,0 +1,15 @@
+{{ define "main" }}
+<section class="ftsk-member-cv-page ftsk-hero-top-motif">
+  <div class="ftsk-member-cv-preview container">
+  <div class="ftsk-member-cv-document">
+    {{ $person := partial "member-cv-person.html" . }}
+    {{ $group := .Params.cv_group | default "" }}
+    {{ if not .Params.cv_preview }}
+      {{ $index := partialCached "people-index.html" . "registry" }}
+      {{ with index $index.memberships $person.id }}{{ $group = .group }}{{ end }}
+    {{ end }}
+    {{ partial "member-cv.html" (dict "person" $person "group" $group "page" . "standalone" true) }}
+  </div>
+  </div>
+</section>
+{{ end }}

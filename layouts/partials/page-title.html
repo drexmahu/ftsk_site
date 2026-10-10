@@ -1,0 +1,8 @@
+{{ $title := .Title }}
+{{ if eq .Type "member-cv" }}
+  {{ $person := partial "member-cv-person.html" . }}
+  {{ $name := $person.name }}
+  {{ with $person.nickname }}{{ $name = printf "%s (%s)" $name . }}{{ end }}
+  {{ $title = printf "%s – %s" $name (.Params.document_label | default "CV") }}
+{{ end }}
+{{ return $title }}
