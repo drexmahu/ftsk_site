@@ -60,7 +60,14 @@ subtitle: Rövid kiegészítés a név alatt
 Szöveg **kiemeléssel**.
 
 ![A kép leírása](/images/members/person-id/photo.webp "Képaláírás")
+
+{{< quote >}}
+Kiemelt mondat, például a nekrológ záró bejelentése.
+{{< /quote >}}
 ```
+
+A **Quote** formázógomb a kijelölt szöveget kiemelt idézetkártyába teszi
+(lásd [Idézet kiemelése](#idézet-kiemelése)).
 
 Az új képeket először mentett személyhez lehet feltölteni. A **Convert photos**
 WebP-t készít, megtartja az arányokat, és kötelezően a
@@ -998,6 +1005,41 @@ rácsba a `gallery`/`photo` shortcode-okkal:
   és a `layouts/shortcodes/photo.html` ugyanazt a `.ftsk-gallery-grid`/
   `.ftsk-gallery-item` stílust használja, mint a
   `layouts/partials/sections/global/gallery.html` (a Galéria oldal).
+
+### Idézet kiemelése
+
+Minden Markdown-oldalon (túrabeszámoló, tanfolyam, CV/nekrológ) használható
+a `quote` shortcode. A szöveget kiemelt, arany szegélyű, idézőjeles kártyán
+jeleníti meg, opcionális szerzővel és forrással:
+
+```markdown
+{{< quote author="Lukács László" source="Barlangjárás, 1982" >}}
+Az idézett **Markdown** szöveg, akár több bekezdésben.
+{{< /quote >}}
+```
+
+| Paraméter | Kötelező | Jelentés |
+| --- | --- | --- |
+| `author` | nem | Az idézett személy, a kártya alján jobbra. |
+| `source` | nem | Forrás (könyv, levél, évszám), dőlt betűvel. |
+
+Mindkettő elhagyható: `{{< quote >}}…{{< /quote >}}`. Üres idézet buildhibát
+ad. A hagyományos Markdown idézet (`> szöveg`) ugyanilyen kártyán jelenik
+meg, csak szerző és forrás nélkül. A Workbench **Quote** gombja (a cikk- és
+a CV-szerkesztőben is) a kijelölt szöveget `quote` shortcode-ba csomagolja.
+
+### Aláírás a szöveg közben
+
+Ha egy dokumentum több, külön aláírt részből áll (pl. egy nekrológ után egy
+barát visszaemlékezése), a közbülső aláírást a `signature` shortcode jobbra
+igazított, dőlt sorként jeleníti meg, ugyanúgy, mint a záró szerzői sort:
+
+```markdown
+{{< signature >}}Gazdag László - Vidics Zoltánné – Zsólyomi Zsolt{{< /signature >}}
+```
+
+Az utolsó rész szerzője továbbra is a **Document author** mezőbe kerül. Üres
+aláírás buildhibát ad. A CV-szerkesztő **Signature** gombja szúrja be.
 
 ## GYIK: lenyitható kérdések és válaszok
 

@@ -232,7 +232,9 @@ for (const event of ["keyup", "click", "input"]) $("#member-cv").addEventListene
 });
 document.querySelectorAll("[data-cv-format]").forEach(button => button.addEventListener("click", () => {
   const formats = { heading: ["\n\n## ", "\n", "Heading"], bold: ["**", "**", "Text"],
-    italic: ["*", "*", "Text"], list: ["\n- ", "\n", "Item"], link: ["[", "](https://example.com)", "Link text"] };
+    italic: ["*", "*", "Text"], list: ["\n- ", "\n", "Item"], link: ["[", "](https://example.com)", "Link text"],
+    quote: ["\n\n{{< quote >}}\n", "\n{{< /quote >}}\n\n", "Quoted text"],
+    signature: ["\n\n{{< signature >}}", "{{< /signature >}}\n\n", "Author name"] };
   insertMemberCV(...formats[button.dataset.cvFormat]);
 }));
 $("#member-cv-insert-image").addEventListener("click", () => action(async () => {

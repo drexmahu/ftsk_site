@@ -1,0 +1,14 @@
+{{/* Highlighted quotation: {{< quote author="Optional" source="Optional" >}}Markdown text{{< /quote >}} */}}
+{{ $text := strings.TrimSpace (.Inner | default "") }}
+{{ if not $text }}{{ errorf "quote shortcode requires quoted text between the opening and closing quote tags (%s)" .Position }}{{ end }}
+{{ $author := strings.TrimSpace (.Get "author" | default "") }}
+{{ $source := strings.TrimSpace (.Get "source" | default "") }}
+<figure class="ftsk-quote">
+  <blockquote class="ftsk-quote-text">{{ .Page.RenderString (dict "display" "block") $text }}</blockquote>
+  {{ if or $author $source }}
+  <figcaption class="ftsk-quote-attribution">
+    {{ with $author }}<span class="ftsk-quote-author">{{ . }}</span>{{ end }}
+    {{ with $source }}<cite class="ftsk-quote-source">{{ . }}</cite>{{ end }}
+  </figcaption>
+  {{ end }}
+</figure>

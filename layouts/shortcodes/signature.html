@@ -1,0 +1,4 @@
+{{/* Right-aligned author line inside the text, e.g. when one page has several signed parts: {{< signature >}}Name{{< /signature >}} */}}
+{{ $text := strings.TrimSpace (.Inner | default "") }}
+{{ if not $text }}{{ errorf "signature shortcode requires the signing name between the opening and closing tags (%s)" .Position }}{{ end }}
+<p class="ftsk-signature">{{ .Page.RenderString $text }}</p>

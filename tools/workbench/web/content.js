@@ -1420,6 +1420,8 @@
       ["Headings, emphasis, lists & links", "## Section title\n\n**Bold** and *italic*.\n\n- First item\n- Second item\n\n[Another report](/turak/report/)\n\n> A quotation."],
       ["Ordered list & horizontal rule", "1. First step\n2. Second step\n\n---\n\nNext section."],
       ["Markdown table", "| Day | Location |\n| --- | --- |\n| 1 | Cave entrance |\n| 2 | Survey area |"],
+      ["Highlighted quote · author and source optional", '{{< quote author="Quoted person" source="Book, letter or year" >}}\nThe quoted **Markdown** text.\n{{< /quote >}}'],
+      ["Signature · right-aligned author line inside the text", "{{< signature >}}Author name{{< /signature >}}"],
       ["Fenced code block", "```text\nA literal example, without Markdown formatting.\n```"],
       ["Simple Markdown image", '![Describe the photo](/images/turak/slug/photo.webp "Optional caption")'],
       ["Standalone photo · width 10–100, mobile-width 10–100", '{{< image src="/images/turak/slug/photo.webp" alt="Describe the photo" caption="Optional caption" width="60" mobile-width="100" align="center" >}}'],
@@ -1660,7 +1662,8 @@
   document.querySelectorAll("[data-markdown]").forEach(button => button.addEventListener("click", () => {
     const area = $("#post-body"); const text = area.value.slice(...studio.selection) || "text";
     const snippets = { heading: `\n## ${text}\n`, bold: `**${text}**`, italic: `*${text}*`,
-      link: `[${text}](/turak/)`, list: `\n- ${text}\n- Next item\n`, quote: `\n> ${text}\n`,
+      link: `[${text}](/turak/)`, list: `\n- ${text}\n- Next item\n`,
+      quote: `\n\n{{< quote >}}\n${area.value.slice(...studio.selection) || "Quoted text"}\n{{< /quote >}}\n\n`,
       day: "\n## N. nap - YYYY-MM-DD (weekday)\n\n" };
     insertText(snippets[button.dataset.markdown]);
   }));
