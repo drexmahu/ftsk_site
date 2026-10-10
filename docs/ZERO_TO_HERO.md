@@ -311,7 +311,9 @@ Nem kell mindegyikben szakértőnek lenned; először elég tudni, melyik mire v
 | `layouts/` | Hugo-sablonok, shortcode-ok | Technikai megjelenítési logika |
 | `layouts/partials/sections/` | Natív Hugo-részsablonok | Újrafelhasználható oldalszakaszok |
 | `assets/` | Feldolgozott stílusok és egyéb build-erőforrások | Dizájn/technikai módosítás |
-| `scripts/` | Eszközök, launcherek, ellenőrzések | Workbench és fejlesztői segítség |
+| `tools/` | Workbench, képfeldolgozás, böngészős felület | Alkalmazások és közös háttérkód |
+| `scripts/` | Telepítés, fejlesztés, publikálás, ellenőrzések | Rövid karbantartási belépési pontok |
+| `tests/` | Python-, JavaScript- és PowerShell-tesztek | A forráskódtól elkülönített regressziók |
 | `.github/workflows/` | CI/CD feladatleírások | Automatizálás, karbantartói terület |
 | `.github/actions/build-site/` | Közös build-lépések | Több workflow ugyanazt használja |
 | `docs/` | Útmutatók | Tanulás, munkafolyamat |

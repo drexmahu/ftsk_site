@@ -23,7 +23,7 @@
       {{- $summary = (.Summary | plainify | truncate 160) -}}
     {{- end -}}
     {{- $items = $items | append (dict
-          "title" .Title
+          "title" (partial "page-title.html" .)
           "url" .RelPermalink
           "section" .Section
           "kind" .Kind

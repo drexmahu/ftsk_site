@@ -12,6 +12,7 @@
     {{ $groupLabel := .label }}
     <div class="ftsk-members-group">
       <h3>{{ .label }} <span class="ftsk-members-count">{{ len .members }}</span></h3>
+      {{ with .hint }}<p class="ftsk-members-hint">{{ . }}</p>{{ end }}
       <div class="ftsk-members-grid">
         {{ range .members }}
         {{ $person := partial "person.html" . }}

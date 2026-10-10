@@ -8,8 +8,8 @@ from pathlib import Path
 
 import yaml
 
-from content_workbench import parse_frontmatter, patched_source, split_source
-from people_registry import PAREN_SUFFIX, page_references, person_index, registry_data, resolve_legacy
+from tools.workbench.content_workbench import parse_frontmatter, patched_source, split_source
+from tools.workbench.people_registry import PAREN_SUFFIX, page_references, person_index, registry_data, resolve_legacy
 
 # These are the only shortened identities explicitly confirmed by the editor.
 DISPLAY_NAMES = {

@@ -13,4 +13,14 @@
     <p class="ftsk-member-modal-bio d-none"></p>
     <div class="ftsk-member-modal-contacts d-none"></div>
   </div>
+  <div class="ftsk-member-modal-cv d-none"></div>
 </div>
+{{ $index := partialCached "people-index.html" . "registry" }}
+{{ range $id, $document := partialCached "member-cv-pages.html" . "documents" }}
+  {{ if and (not $document.Draft) (strings.TrimSpace $document.RawContent) }}
+    {{ $person := index $index.people $id }}
+    {{ $group := "" }}
+    {{ with index $index.memberships $id }}{{ $group = .group }}{{ end }}
+    <template id="ftsk-member-cv-{{ $id }}">{{ partial "member-cv.html" (dict "person" $person "group" $group "page" $document "shareURL" $document.RelPermalink) }}</template>
+  {{ end }}
+{{ end }}

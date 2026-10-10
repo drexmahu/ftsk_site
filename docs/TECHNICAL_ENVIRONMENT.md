@@ -8,9 +8,9 @@ what has to be configured in GitHub for the CI/CD pipeline in `.github/workflows
 - **Hugo** (extended) with native reusable sections under
   [`layouts/partials/sections/`](../layouts/partials/sections/).
   There are no external Hugo modules, Bookshop runtime or Go requirement.
-- **Node.js / npm** - used for dependency-free JavaScript regression tests and
-  optional `npm start` / `npm run dev` aliases, not for a plain Hugo build/server.
-  No npm package installation is required.
+- **Node.js / npm** - used for JavaScript regression tests, optional
+  `npm start` / `npm run dev` aliases, and the local Workbench Monaco bundle.
+  A plain Hugo build/server still requires no npm packages.
 - **SCSS** compiled via Hugo's built-in libsass transpiler (`css.Sass`, see
   [assets/scss/theme.scss](../assets/scss/theme.scss)) - no separate Dart Sass
   install required.
@@ -35,6 +35,38 @@ and the local scripts (`scripts/`). Don't hardcode a version anywhere else - cha
 | Node version | `engines.node` in [`package.json`](../package.json) | `scripts/setup-dev-env.ps1` (minimum check; new installs use compatible LTS) |
 
 To bump the Hugo version everywhere (CI + local), edit `.hugo-version` only.
+
+## Tooling source layout
+
+Application code, maintenance commands and tests have separate homes:
+
+| Folder | Responsibility |
+|---|---|
+| [`tools/workbench/`](../tools/workbench/) | Python editing services and HTTP server; `web/` contains browser assets and `hero/` the embedded hero editor. |
+| [`tools/images/`](../tools/images/) | Reusable photo/portrait processing and hero configuration helpers. |
+| [`tools/social_preview.py`](../tools/social_preview.py) | Social-card preview application, also used by the Workbench. |
+| [`scripts/`](../scripts/) | Setup, local development, editor bundling, deployment, migration and verification commands, plus their dependency manifests. |
+| [`tests/python/`](../tests/python/), [`tests/js/`](../tests/js/), [`tests/powershell/`](../tests/powershell/) | Regression suites grouped by runtime, not mixed into production code. |
+| `.tools/` | Ignored, generated/downloaded executables and Monaco bundles; distinct from tracked `tools/` sources. |
+
+Run Python application modules from the repository root, without `PYTHONPATH`
+or ad-hoc import-path changes:
+
+```powershell
+.\.venv\Scripts\python.exe -m tools.workbench --no-browser
+.\.venv\Scripts\python.exe -m tools.social_preview --no-browser
+.\.venv\Scripts\python.exe -m scripts.verify_members
+.\.venv\Scripts\python.exe -m scripts.migrate_people --help
+.\.venv\Scripts\python.exe -m unittest discover -s tests\python -p 'test_*.py'
+npm test
+.\tests\powershell\test_setup_dev_env.ps1
+```
+
+The root double-click launchers remain unchanged for editors. Public Workbench
+URLs (`/workbench/`, `/hero/`, and `/workbench-editor/`) are stable despite the
+source moves. To add a test, place it in its runtime folder and update the
+JavaScript runner/CI selector when needed; Python discovery already covers all
+`test_*.py` files in `tests/python/`.
 
 ## Local setup (Windows)
 
@@ -63,12 +95,20 @@ with a nonzero exit status but does not install them.
 | VS Code | Existing CLI, otherwise user-scoped WinGet `Microsoft.VisualStudioCode`. |
 | Editor extensions | Markdown All in One, markdownlint, PowerShell, Python, Pylance, Hugo syntax; installed IDs are skipped. |
 | Node/npm | Existing version meeting `package.json`, otherwise official portable LTS archive under `.tools/node/`. |
+| Workbench Monaco | `npm ci` and `npm run workbench:editors`; local assets under `.tools/workbench-editor/`. Rebuilt when the lockfile or editor build sources change. |
 | Hugo | Exact pinned **extended** version; reused if correct, otherwise under `.tools/hugo/<version>/`. |
-| Python | Working 64-bit Python >= 3.10 with Tk and venv; checks `py` launcher runtimes, PATH and usual install folders, otherwise user-scoped Python 3.12 from WinGet. |
-| Python tool libraries | Project `.venv`: Pillow, pillow-heif, PyYAML and Paramiko, from [`scripts/requirements-dev.txt`](../scripts/requirements-dev.txt). HEIF/HEIC originals decode to 8-bit images for WebP export. Member portrait crops are selected manually with Tk. |
+| Python | Working 64-bit Python >= 3.10 with venv; checks `py` launcher runtimes, PATH and usual install folders, otherwise user-scoped Python 3.12 from WinGet. |
+| Python tool libraries | Project `.venv`: Pillow, pillow-heif, PyYAML and Paramiko, from [`scripts/requirements-dev.txt`](../scripts/requirements-dev.txt). HEIF/HEIC originals decode to 8-bit images for WebP export. Member portrait crops are selected manually in the Workbench browser canvas. |
 | Smoke checks | Builds to a temporary folder, verifies members/internal links, and runs hero-framing and social preview/card-selection regressions. |
 
 Portable archives are verified using their publisher's SHA-256 manifests.
+To prepare the Workbench editors manually, run `npm ci` then
+`npm run workbench:editors` from the repository root. Monaco, its fonts and
+language workers are served by the local Python server, never a CDN.
+The DOMPurify override in `package.json` pins the patched sanitizer used by
+the bundled Monaco Markdown tooltips; rebuild after changing dependencies.
+If the bundle is missing, Workbench displays an explicit setup error and
+leaves the original plain-text fields available for recovery.
 Text manifests are decoded whether Windows PowerShell returns text or raw UTF-8
 bytes (including GitHub's `application/octet-stream` responses). Hugo uses the
 pinned release's official download URLs without depending on GitHub API quotas.
@@ -105,15 +145,17 @@ fails. Rerun the double-click installer after fixing the reported issue.
 requires setup's `.venv` and its packages. Its launcher keeps startup errors
 visible and points to the installer instead of silently closing.
 Installer regressions run without installing software:
-`powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test_setup_dev_env.ps1`.
+`powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\powershell\test_setup_dev_env.ps1`.
 Add `-Online` to also download, checksum-verify and run the pinned Hugo in a
 disposable temporary folder; it is cleaned afterward and never added to PATH.
-Image-converter GUI launchers, their dependency installers, and the hero-picker
-launcher prefer `.venv/Scripts/python.exe`. For command-line Python tools:
+The Workbench replaces the separate image-converter GUIs and hero-server
+launcher; their dependency installers have also been removed. Conversion
+backends and the embedded hero editor remain. Tk is not required. For
+maintenance/check scripts:
 
 ```powershell
 ./.venv/Scripts/Activate.ps1
-python scripts/verify_members.py
+python -m scripts.verify_members
 ```
 
 In VS Code use **Python: Select Interpreter** and choose `.venv/Scripts/python.exe`
@@ -158,7 +200,7 @@ content flags and build-date environment, then compare every output:
 
 ```powershell
 .\.venv\Scripts\python.exe scripts/compare_site_builds.py before after
-.\.venv\Scripts\python.exe -m unittest discover -s scripts -p test_content_blocks.py
+.\.venv\Scripts\python.exe -m unittest discover -s tests/python -p test_content_blocks.py
 ```
 
 The comparator ignores only Bookshop HTML marker comments and non-verbatim
@@ -183,12 +225,14 @@ One local browser application brings together the existing tools:
 ```powershell
 .\site_editor.bat
 # Without opening a browser automatically:
-.\.venv\Scripts\python.exe scripts\site_workbench.py --no-browser --port 8879
+.\.venv\Scripts\python.exe -m tools.workbench --no-browser --port 8879
 ```
 
 Open <http://127.0.0.1:8879/>. The launcher uses the project `.venv`; the
-environment installer already supplies Pillow and PyYAML. No additional
-framework, npm build or Python dependencies are required.
+environment installer already supplies Pillow, PyYAML and the local Monaco
+bundle. For an existing installation, rerun setup or run `npm ci` followed
+by `npm run workbench:editors` before starting Workbench. No external editor
+service or CDN is used.
 
 - **Git & workspace:** the landing page displays working files, local commits,
   last-known origin refs and the checked-out branch, with operation animations
@@ -202,7 +246,8 @@ framework, npm build or Python dependencies are required.
   both controls and common questions. It explains the creation base, main
   protection, cached server choices and the absence of automatic stash/push.
   Execution still requires the existing separate operation confirmation.
-  The checkpoint graph uses real parent links, merge-base(s), separate main
+  The checkpoint graph shows newer tips at the top, with older ancestry below
+  (also in the accessible checkpoint list). It uses real parent links, merge-base(s), separate main
   and working-branch reachability counts, and exact local/cached-server tip
   labels. It shows at most 18 recent checkpoints per lane plus the shared
   branch point; dashed stubs explicitly mark missing earlier history. Local
@@ -214,6 +259,23 @@ framework, npm build or Python dependencies are required.
   position. Rebase never moves the cached published-branch label. Reduced
   motion disables the replay marker and completion pulse; an accessible text
   list and internally scrollable graph preserve mobile and keyboard access.
+  The graph defaults to simple labels, with an explicit technical-details
+  toggle for hashes. "You are here" marks the actual checkout (including a
+  paused replay, not its original branch tip). "Back to latest" scrolls only
+  the graph; polling never forces readers away from older history.
+  Clicking a checkpoint or activating it with Enter/Space opens read-only
+  author/date/message and changed-file details. The authenticated endpoint
+  accepts only full IDs in the current graph, refuses inspection while Git
+  is busy, and never restores files or changes branches. Merge changes are
+  compared against the first parent; file lists are capped at 500 and messages
+  at 10,000 characters with explicit truncation notices.
+  Confirmed newly visible checkpoints get a brief pulse, not on initial load.
+  Rebase/Receive confirmations include a static before/after illustration
+  from the bounded snapshot, not an exact replay forecast. Equivalent changes
+  may be skipped, fresh fetches may change the target, and conflicts may pause
+  replay. Confirmation, stale-state checks and recovery backups are unchanged.
+  Short graph guidance distinguishes local Save, Receive, Publish and Check
+  GitHub; a successful publish is never presented as a merge or deployment.
   A persistent header hint and next-step banner flag browser drafts, saved but
   uncommitted files, unpublished checkpoints, conflicts and missing updates.
   GitHub snapshots older than 15 minutes prompt an explicit fetch; no network
@@ -434,7 +496,6 @@ framework, npm build or Python dependencies are required.
 - **Hero slideshow:** embeds the existing connected POI/motion editor. Explicit
   Save updates `data/hero_images.yaml`. In workbench mode, Remove only removes
   the slideshow entry; its file remains available for posts and social cards.
-  The standalone hero launcher's existing deletion behavior is unchanged.
 - **Social previews:** inspect localhost or public HTTP(S) pages and export a
   self-contained HTML snapshot with embedded preview images.
 - **Build & checks:** temporary Hugo build, internal links/assets, member
@@ -472,16 +533,16 @@ being overwritten. Relative output folders cannot traverse outside
 only to loopback and requires same-origin, token-authenticated writes.
 Do not expose it through a public tunnel: it edits local site files.
 
-Deployment and environment installation are not embedded. Existing standalone tools continue
-to work. Use Ctrl+C in the launch terminal to stop and clear staged originals.
+Deployment and environment installation are not embedded. Use Ctrl+C in the
+Workbench launch terminal to stop and clear staged originals.
 No automatic commits or publishing occur.
 
 Tests (disposable site fixtures; no real image/config edits):
 
 ```powershell
-.\.venv\Scripts\python.exe -m unittest discover -s scripts -p 'test_*workbench.py'
-.\.venv\Scripts\python.exe -m unittest discover -s scripts -p 'test_people*.py'
-node scripts/test_people_workbench.js
+.\.venv\Scripts\python.exe -m unittest discover -s tests/python -p 'test_*workbench.py'
+.\.venv\Scripts\python.exe -m unittest discover -s tests/python -p 'test_people*.py'
+node tests/js/test_people_workbench.js
 ```
 
 The environment installer's smoke verification includes these tests.
@@ -493,8 +554,8 @@ Start Hugo separately, then open the local Python viewer:
 ```powershell
 .\scripts\run_social_preview.bat "http://localhost:1313/tanfolyamok/tanfolyam-2027/"
 # Or use the configured Python interpreter:
-python scripts\social_preview.py "https://www.ftsk.hu/"
-python scripts\social_preview.py --no-browser --port 8878
+python -m tools.social_preview "https://www.ftsk.hu/"
+python -m tools.social_preview --no-browser --port 8878
 ```
 
 The viewer uses Python >= 3.10 and Pillow (already in
@@ -512,8 +573,8 @@ That link only works on the machine running the viewer. To share an offline
 preview, export HTML with embedded images:
 
 ```powershell
-python scripts\social_preview.py "http://localhost:1313/" --output "$env:TEMP\ftsk-social-preview.html"
-python -m unittest discover -s scripts -p test_social_preview.py
+python -m tools.social_preview "http://localhost:1313/" --output "$env:TEMP\ftsk-social-preview.html"
+python -m unittest discover -s tests/python -p test_social_preview.py
 ```
 
 The tool does not upload pages/images to a third-party service. Only the supplied
@@ -551,7 +612,7 @@ SEO canonical links continue to identify the production page even in local/PR bu
 
 The environment installer already installs Pillow from the existing requirements;
 no extra package is needed. Its verification stage now also runs
-`python -m unittest discover -s scripts -p "test_social*.py"` (offline fixtures,
+`python -m unittest discover -s tests/python -p "test_social*.py"` (offline fixtures,
 including real Hugo builds). The social viewer's launcher prefers the project
 `.venv`, just like the existing image tools.
 
@@ -646,7 +707,7 @@ entry in `package.json`). Do not delete the rest of
 
 | Workflow | Trigger | Purpose |
 |---|---|---|
-| [`ci.yml`](../.github/workflows/ci.yml) | PR opened/updated and merge queue | Ubuntu: validates people, builds with drafts/future, discovers all top-level Python tests, and runs `npm test`. Windows: installer/launcher regressions under PowerShell 5.1 and manual portrait cropping. Internal links/assets are a required build gate; the additional lychee check is advisory. |
+| [`ci.yml`](../.github/workflows/ci.yml) | PR opened/updated and merge queue | Ubuntu: validates people, builds with drafts/future, discovers all Python tests under `tests/python/`, and runs `npm test`. Windows: installer/launcher regressions under PowerShell 5.1 and manual portrait cropping. Internal links/assets are a required build gate; the additional lychee check is advisory. |
 | [`pr-preview.yml`](../.github/workflows/pr-preview.yml) | PR opened/updated | Builds and deploys the preview under `gh-pages/pr-preview/`, then verifies that Pages serves the current PR revision before succeeding. Require `PR Preview / preview` before merging. |
 | [`pr-preview-cleanup.yml`](../.github/workflows/pr-preview-cleanup.yml) | PR close, push to `main`, preview/staging job completion, daily, manual | Deletes previews not associated with open PRs targeting `main`. The completion trigger also removes a preview recreated by a job that was still running when its PR closed. Use **Run workflow** to clean old folders after merging this workflow. |
 | [`staging-deploy.yml`](../.github/workflows/staging-deploy.yml) | push to `main` | Publishes a shareable "always current `main`" preview to GitHub Pages. This is **not** production. |
@@ -659,8 +720,8 @@ CI's Python discovery includes social previews/cards, participant roles, feature
 images, deployment safeguards and all people/content/Git Workbench tests.
 Hugo is installed before discovery so rendering tests actually run.
 `npm test` includes 404 navigation, autocomplete, Git/people frontend tests and
-hero-framing geometry. The nested manual-crop suite runs separately on Windows,
-where Tk is available; it tests image processing/geometry without opening a window.
+hero-framing geometry. The manual-crop suite also runs separately on Windows;
+it tests image processing without requiring Tk or opening a window.
 The Windows installer suite uses disposable fixtures and does not install software,
 change PATH, or make live downloads. Its optional `-Online` check remains manual:
 publisher availability is not a deterministic regression test. A hosted Windows
@@ -819,8 +880,8 @@ build request fails the workflow rather than silently claiming publication.
 ## Verification commands
 
 ```powershell
-python -m unittest discover -s scripts -p test_deployment.py
-node scripts/test_404_navigation.js
+python -m unittest discover -s tests/python -p test_deployment.py
+node tests/js/test_404_navigation.js
 python scripts/verify_site_links.py --root public --base-url "https://www.ftsk.hu/"
 ```
 

@@ -23,7 +23,7 @@
     <script src="{{ relURL `js/hero-framing.js` }}" defer></script>
     {{ $siteScript := resources.FromString "js/site.js" (os.ReadFile "static/js/script.js") | resources.Minify | resources.Fingerprint }}
     <script src="{{ $siteScript.RelPermalink }}" defer></script>
-    <title>{{print .Page.Title " | " .Site.Title}}</title>
+    <title>{{print (partial "page-title.html" .) " | " .Site.Title}}</title>
   </head>
   <body{{ if not .IsHome }} class="ftsk-inner-page"{{ end }}>
     {{ partial "navbar.html" . }} {{ block "main" . }} {{ end }} {{ partial

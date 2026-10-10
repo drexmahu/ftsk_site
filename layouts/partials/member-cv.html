@@ -1,0 +1,29 @@
+{{ $person := .person }}
+{{ $name := $person.name }}
+{{ with $person.nickname }}{{ $name = printf "%s (%s)" $name . }}{{ end }}
+<article class="ftsk-member-cv">
+  <header class="ftsk-member-cv-header">
+    {{ $image := $person.modal_image | default $person.image }}
+    {{ with $image }}<img class="ftsk-member-cv-portrait" src="{{ partial `url.html` . }}" alt="{{ $name }}" loading="lazy" />{{ end }}
+    <div>
+      <p class="ftsk-member-cv-label">{{ .page.Params.document_label | default "CV" }}</p>
+      {{ if .standalone }}<h1>{{ $name }}</h1>{{ else }}<h2>{{ $name }}</h2>{{ end }}
+      {{ with strings.TrimSpace (.page.Params.subtitle | default "") }}<p class="ftsk-member-cv-subtitle">{{ . }}</p>{{ end }}
+      {{ with .group }}<p class="ftsk-member-cv-group">{{ . }}</p>{{ end }}
+    </div>
+  </header>
+  <div class="ftsk-prose ftsk-member-cv-prose">{{ .page.Content }}</div>
+  {{ with strings.TrimSpace (.page.Params.document_author | default "") }}<p class="ftsk-member-cv-author">{{ . }}</p>{{ end }}
+  {{ with .shareURL }}
+    <footer class="ftsk-member-cv-share">
+      <a class="ftsk-member-cv-permalink" href="{{ . }}" title="Megnyitás külön oldalon">
+        Megnyitás <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 17 17 7M7 7h10v10" /></svg>
+      </a>
+      <button type="button" class="ftsk-member-cv-copy" data-share-url="{{ . }}" title="Hivatkozás másolása">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-2 2M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l2-2" /></svg>
+        <span class="ftsk-member-cv-copy-label">Megosztás</span>
+      </button>
+      <span class="ftsk-member-cv-share-status sr-only" role="status" aria-live="polite"></span>
+    </footer>
+  {{ end }}
+</article>

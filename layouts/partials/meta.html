@@ -6,9 +6,12 @@
 />
 <!-- Page description for SEO -->
 {{ $description := .Params.seo.page_description | default hugo.Data.meta.description }}
+{{ if and (eq .Type "member-cv") (not .Params.seo.page_description) }}
+  {{ $description = .Content | plainify | htmlUnescape | strings.TrimSpace | truncate 200 }}
+{{ end }}
 <meta name="description" content="{{ $description }}">
 {{ $shareDescription := .Params.seo.social_description | default $description }}
-{{ $defaultShareTitle := .Title }}
+{{ $defaultShareTitle := partial "page-title.html" . }}
 {{ if .IsHome }}{{ $defaultShareTitle = hugo.Data.meta.site_title }}{{ end }}
 {{ $shareTitle := .Params.seo.social_title | default $defaultShareTitle }}
 <meta property="og:description" content="{{ $shareDescription }}" />
@@ -31,7 +34,7 @@
     {{ with .Params.seo.open_graph_type }}
     <meta property="og:type" content="{{ . }}" />
     {{ else }}
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content="{{ cond (eq .Type "member-cv") "article" "website" }}" />
     {{ end }}
     <meta property="og:image" content="{{ $socialCard }}" />
     <meta name="twitter:image" content="{{ $socialCard }}" />

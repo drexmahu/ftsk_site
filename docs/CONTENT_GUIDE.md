@@ -19,6 +19,88 @@ cikkeket ehhez a struktúrához képest.
 
 ## Böngészős szerkesztés
 
+A helyi munkafelületen a fájlok mellett két kis ikon segíti a navigációt:
+**Open in VS Code** megnyitja a mentett szöveget vagy képet VS Code-ban,
+**Reveal in Explorer** kijelöli a fájlt a Windows Intézőben. Elérhetők az
+oldallistában, dokumentumforrásnál, képtárakban, konvertálási eredményeknél
+és Git-fájllistákban. Nem mentik a vázlatot és nem módosítják a fájlt;
+nem létező fájlnál előbb menteni/exportálni kell. A VS Code `vscode://`
+protokollkezelője és a helyi Windows munkafelület szükséges hozzájuk.
+
+### CV / nekrológ és kategóriaüzenetek
+
+A **People & portraits → személy → CV / necrolog** részben szerkeszthető
+a Markdown-formátumú életút vagy nekrológ. A dokumentum külön Markdown-oldal,
+alapesetben `content/tagok/<személy-id>/index.md`; a `data/people.yaml`
+csak az identitást, portrét, tagságot és profiladatokat tárolja.
+Dokumentum nélkül a korábbi kis profilablak marad.
+Kitöltve a kártyára (vagy a cikk szerzőjére) kattintva portrés, dokumentumszerű
+CV nyílik meg, mobilon egymás alatti elrendezéssel. A portré a `modal_image`,
+ennek hiányában az `image` mezőből származik.
+
+A **Document subtitle** (`subtitle` az oldal frontmatterében) opcionális, egyszerű szöveg a név
+alatt, a tagsági csoport fölött. Dátumokhoz, ajánláshoz vagy más rövid
+kiegészítéshez is használható; nem külön születési/halálozási adatmező.
+A CV oldalon, modalban és nem mentett előnézetben is megjelenik; üresen
+nem foglal helyet. Erimama esetében az életútban szereplő dátumokat mutatja.
+
+A formázógombok és az **Insert Markdown image at cursor** a kijelölt helyre
+illesztenek. A képek a cikkekkel azonos képaláírásos Markdown-formátumot használják:
+
+```markdown
+---
+type: member-cv
+person: person-id
+document_label: Életút
+subtitle: Rövid kiegészítés a név alatt
+---
+
+## Életút
+
+Szöveg **kiemeléssel**.
+
+![A kép leírása](/images/members/person-id/photo.webp "Képaláírás")
+```
+
+Az új képeket először mentett személyhez lehet feltölteni. A **Convert photos**
+WebP-t készít, megtartja az arányokat, és kötelezően a
+`static/images/members/<személy-id>/` mappába ír. Ez szerveroldali korlátozás is.
+Az ütköző fájlnevek sorszámot kapnak. A feltöltött fájlok a CV-vázlat eldobásakor
+is megmaradnak; a képet még be kell illeszteni, majd **Save person** szükséges.
+Egyszerre több kép is kiválasztható vagy behúzható. A közös méret- és
+minőségbeállítás minden képre érvényes; az előrehaladás a teljes köteget mutatja.
+A hibás képek újrapróbáláshoz kiválasztva maradnak, a sikeres exportok megmaradnak.
+A személy megnyitásakor automatikusan betöltődik az ID-mappa képtára,
+konvertálás és törlés után pedig frissül. Külső fájlváltozás után a
+**Refresh folder** újraolvassa a mappát. Válassz egy képet, adj
+alternatív szöveget, majd az **Insert Markdown image at cursor** gombbal illeszd
+be az utoljára kijelölt szöveghelyre. Ezt különböző soroknál ismételheted;
+a köteg konvertálása önmagában nem módosítja a Markdown-szöveget.
+
+A munkafelület fotófeltöltői közös, kompakt előnézeti komponenst használnak:
+a behúzómezőben kis bélyegképek mutatják a függőben levő fotókat, saját
+**×** gombbal. Ez csak a kiválasztást vagy ideiglenes feltöltést törli,
+soha nem a konvertált fájlt. A portrék ugyanitt kínálják a **Choose crop**
+műveletet; a tényleges arckivágást az eredeti vászon szerkeszti.
+A CV képeszközei külön konvertáló- és mentettképtár-panelre oszlanak.
+A mentett ID átnevezése vagy összevonása nem mozgatja a meglévő képeket:
+a régi URL-ek működnek, a következő feltöltés az új ID mappájába kerül.
+A személyhez rendelt új portrépár is az ID mappájába kerül, zárolt célmappával;
+új személynél előbb adj meg érvényes ID-t. A **Standalone portrait export**
+továbbra is külön, személy nélküli export marad.
+
+A **Preview unsaved CV** a valódi Hugo-elrendezést mutatja elszigetelt,
+nem mentett előnézetben. A szöveg módosítása után az előnézetet újra kell kérni.
+A nyilvános CV képeire kattintva a teljes kép külön lapon nyílik meg,
+így a nekrológ olvasási helye nem vész el.
+
+A **Manage categories & hints → Public membership category hints** alatt
+bármely tagsági csoporthoz külön `hint` szöveg menthető. Ez a nyilvános
+csoportcím alatt jelenik meg; üresen nincs üzenet. Az **Örökös tagok** alapüzenete:
+„A tag kártyájára kattintva megnyílik a nekrológ.”
+Az egyéni kategóriákhoz is menthető `hint`, de ezek továbbra is csak a
+munkafelületen léteznek, nem hoznak létre nyilvános tagsági csoportot.
+
 A **People & portraits** felületen minden személy egyetlen, tartós
 azonosítót kap a `data/people.yaml` fájlban. Először keress rá a névre,
 becenévre vagy korábbi névalakra; csak utána válaszd az **Add person** gombot.
@@ -53,6 +135,98 @@ vagy kapcsolattartó. A **Remove membership** csak a Tagjaink listából veszi k
 a régi cikkek és fotók megmaradnak. Véglegesen csak tagság és mentett
 cikkhivatkozás nélküli személy törölhető. Tanfolyami részvétel nem ad tagságot.
 
+A személy szerkesztője nagy, asztali munkafelületként nyílik meg, legfeljebb
+1600 pixel szélességgel. A felső szakaszgombok külön kezelik a profilt és
+azonosságot, a portrét, tagságot, kontaktokat, CV-t, részvételi történetet és
+veszélyes műveleteket. A mentés minden szakasz változásait együtt menti.
+A **CV / necrolog** rész **Public document label** mezője személyenként
+állítja a nyilvános modal neve feletti feliratot (`document_label` az oldal frontmatterében), például
+**Nekrológ** vagy **Életút**. Üresen az alapérték **CV**; az előnézet is ezt
+a személyre szabott feliratot mutatja.
+A dokumentum `type: member-cv` és `person: <személy-id>` frontmatterrel
+kapcsolódik a személyhez. A név, becenév és portré mindig a registryből
+származik, nem kell megismételni az oldalban. Személyenként legfeljebb egy
+ilyen oldal lehet. A **Save person** a profiladatokat és a külön dokumentumot
+együtt menti, mindkettőnél ütközésellenőrzéssel. Az oldal a **Pages & posts**
+teljes forrásszerkesztőjéből is szerkeszthető; az egyéb frontmatter és SEO
+beállítások a személy szerkesztőjében történő mentéskor megmaradnak.
+Üresre törölt dokumentum mentése eltávolítja az oldalfájlt, de a képeket nem.
+A megosztható cím alapesetben `/tagok/<személy-id>/`.
+A tagkártya továbbra is modalt nyit; a modal
+**Megnyitás** linkje a külön oldalra vezet, a **Megosztás**
+gomb annak címét másolja, majd **Másolva** visszajelzést mutat a gombon.
+A külön oldalon nincs megosztósáv; annak címét a címsorból másolhatod.
+
+A **Document author** opcionális, szabad szöveges szerzőnév. A külön oldal
+`document_author` frontmatter mezőjében tárolódik, nem a személynyilvántartásban.
+A név a dokumentum szövege alatt, jobbra igazítva jelenik meg a külön oldalon
+és a felugró CV-ben is. Üresen nem jelenik meg szerzői sor. Nem azonos a
+túrabeszámolók személyhez kapcsolt `author_id` mezőjével.
+Mindkét nézet a szokásos függő és álló
+cseppkőmintát használja, nem a hero kisebb motívumait. A külön oldalon a
+cseppkövek csak a külső oldalhátteret díszítik; a dokumentumkártya egyszínű,
+motívummentes felület. A felugró CV belsejében megmaradnak a cseppkőminták.
+A külön oldal saját Open Graph/Twitter címet, szöveges CV-kivonatot és
+1200×630-as közösségi kártyát kap. A kártya a teljes portrét, annak hiányában
+a bélyegképet használja az FTSK meglévő arculatával; portré nélkül az
+alapértelmezett oldalkép szolgál háttérként. A felirat itt is személyenként
+állítható. A változás mentés és új build/publikálás után él a nyilvános
+linken; a munkafelület nem mentett előnézete nem megosztható nyilvános CV.
+Üres CV-hez nem készül külön oldal. A közösségi platformok régi kártyát
+gyorsítótárazhatnak; a frissítéshez újra be kell olvastatniuk a linket.
+Ehhez nyilvánosan elérhető, publikált URL szükséges, a localhost-előnézet
+nem elég. A személy-id átnevezése frissíti az oldal `person` hivatkozását,
+de a meglévő fájlútvonal és megosztható cím megmarad. Két dokumentummal
+rendelkező személy összevonása előtt kézzel egyeztetni kell a tartalmat;
+a munkafelület nem választ helyetted és nem dob el dokumentumot.
+CV eltávolításakor friss, tiszta buildet publikálj, hogy
+korábbi kimeneti fájl ne maradjon a tárhelyen.
+
+Ha egy bekezdés számmal és ponttal kezdődik (például születési évvel),
+a pontot Markdownban védd visszaperjellel: `1931\. április 29-én…`.
+A megjelenített szövegben a visszaperjel nem látszik. A `1. Szöveg`
+védelem nélkül számozott listát kezd.
+A keskeny, rögzített fejlécben a kerek portré, a név, a vázlat állapota és
+a mentés/bezárás gombjai görgetés közben is láthatók.
+Markdownhoz és technikai forráshoz Monaco szerkesztő jár: az oldal szövege,
+a teljes Markdown/YAML forrás, a Markdown FAQ-válaszok, az életrajz, a CV
+és a Git szöveges konfliktusainak feloldása is ebben szerkeszthető.
+Keresés, szintaxiskiemelés és visszavonás használható; a nevek, URL-ek,
+azonosítók és egyszerű listák továbbra is szokásos űrlapmezők.
+A mező feliratára kattintva is a Monaco kap fókuszt; a szöveg **Ctrl+V**
+(macOS: **Cmd+V**) segítségével beilleszthető. A csak olvasható forrásnézetek
+továbbra sem módosíthatók.
+**Ctrl+S** (macOS: **Cmd+S**) az aktív szerkesztő meglévő mentésgombját
+használja: oldal, személy, kategória, tagsági megjegyzés, szerep vagy hero.
+A nyitott modal elsőbbséget kap. Gitnél a meglévő ellenőrzési és
+megerősítési feltételek érvényesek; a gyorsbillentyű nem kerül meg zárolást,
+nem indít képkonvertálást, törlést vagy publikálást.
+A portré feltöltése és képkivágása közvetlenül a **Portrait photo** részben van.
+Az új portréfájlok neve kötelezően `<id>_thumb.webp` és `<id>_full.webp`,
+a `members/<id>/` mappában. Az eredeti feltöltési név nem befolyásolja a nevet.
+A meglévő pár felülírása külön megerősítést kér, és megváltozott fájlok esetén
+új ellenőrzést igényel. Más mentett helyen is használt fájl nem írható felül.
+Írási hibánál a régi pár visszaáll; a felülírás a személyvázlat eldobásakor
+nem vonható vissza.
+A **Delete saved portrait files & clear assignments** ellenőrzés és megerősítés
+után törli a mentett portrékat és a profil hivatkozásait együtt. Előbb mentsd
+vagy dobd el a vázlatot. Más profilban, CV-ben vagy mentett oldalon használt
+fájl törlése tiltott; ilyenkor csak a hozzárendelést töröld, a fájlt tartsd meg.
+A CV fotók is ID-alapú nevet kapnak (`<id>-cv.webp`, majd sorszámozott változatok);
+a CV képtárban külön fájltörlési ellenőrzés kérhető.
+A portré és CV feltöltése fájlválasztással vagy a kijelölt **Choose / drop**
+területre húzással is működik. A CV-nél egyszerre egy fotó választható.
+A feltöltés és konvertálás külön folyamatjelzőt mutat; egyetlen futó műveletnél
+a jelző határozatlan, nem becsült százalék. A portré eredetik **Remove temporary
+upload** gombja csak az ideiglenes feltöltést törli. A **Manage uploaded files
+in this person's folder** a már kiírt képekhez kínál ellenőrzött fájltörlést.
+A CV-ben hivatkozott kép törléséhez előbb töröld a hivatkozást és ments.
+A modalban a keskeny fejléc és az alatta megjelenő hibasáv marad rögzítve felül;
+a szakaszgombok és a többi tartalom görgethető. A hibasáv saját **Dismiss error** gombjával
+bezárható; folyamatüzenet nem írja felül a hibát.
+Minden személy külön portré-feltöltési listát kap, a személy nélküli export
+és a CV-feltöltés pedig külön marad. Más személyre váltva nem öröklődik
+a kiválasztott portré, a kivágás vagy a konvertálás eredménylistája.
 A személy szerkesztője külön, görgethető párbeszédablakban nyílik meg, így a
 névsor a teljes rendelkezésre álló szélességet használja. A bezárás és az
 Escape nem dobja el kérdés nélkül a nem mentett változásokat.
@@ -60,10 +234,10 @@ A tanfolyamra vagy történeti oldalra navigálás megőrzi a személyvázlatot:
 visszatérve a **Resume person editor** gombbal folytathatod. A képkivágó is
 ugyanebben az ablakban elérhető; személy nélküli exporthoz válaszd a
 **Standalone portrait export** gombot.
-A szerkesztő **Profile** részében a név és bemutatkozás azonnal elérhető;
-az aliasok, kontaktadatok, portrépárok és veszélyes identitásműveletek külön
-lenyitható részekbe kerültek. A **Save person** gomb görgetéskor is elérhető.
-A korábbi történet a **Participation & contribution history** részben található.
+A szerkesztő **Profile & identity** részében a név, bemutatkozás és aliasok
+érhetők el; kontaktadatok, portrék és veszélyes identitásműveletek külön
+szakaszban vannak. A **Save person** gomb görgetéskor is elérhető.
+A korábbi történet a **Participation history** részben található.
 
 A **Groups & categories** külön kezeli a nyilvános tagságot és a munkafelület
 kategóriáit. Egy személy több tanfolyami és egyéni kategóriához tartozhat,
@@ -128,7 +302,7 @@ A régi `role: szöveg` értékek továbbra is olvashatók. Ismeretlen történe
 szerepet a szerkesztő külön jelez, nem alakít át találgatással; kiválasztás
 vagy törlés után az új listaformátum kerül mentésre.
 
-A névsor **Manage custom categories** részében új kategóriát hozhatsz létre,
+A névsor **Manage categories & hints** részében új kategóriát hozhatsz létre,
 vagy egy meglévő megjelenített nevét módosíthatod. Az ID mentés után állandó.
 Előbb mentsd vagy vesd el az aktuális személyvázlatot. A személy **Custom
 categories** jelölőnégyzeteivel több kategóriát választhatsz; ezeket a
@@ -646,7 +820,7 @@ csak az adott eseményre vonatkozik, nem veszi át a mai egyesületi tisztséget
 Ne ismételd meg kézzel ezt a listát a törzsszövegben. A régi `participants`
 névlista átmenetileg olvasható; új hozzárendeléshez ID-t használj.
 
-Push előtt futtasd le helyben a `python scripts/verify_members.py` parancsot
+Push előtt futtasd le helyben a `python -m scripts.verify_members` parancsot
 (ehhez kell a `pip install PyYAML`), hogy ellenőrizd a `data/people.yaml`-t
 és minden cikk szerző-, résztvevő- és kapcsolattartó-hivatkozását. A duplikált
 ID, név vagy alias, hibás tagság, hiányzó fotó és ismeretlen ID hibát okoz.
@@ -657,17 +831,13 @@ Ugyanez fut a CI-ban is minden pull requestnél.
 
 ### Fotók konvertálása
 
-Használd a `scripts/site_image_converter/` szkriptet (lásd a saját
-`readme.md`-jét) átméretezett, webre optimalizált `.webp` fájlok
-előállításához - soha ne commitolj eredeti kamera-/telefonfotókat, azok
-messze túl nagyok. Nem interaktív példa:
-
-```powershell
-python scripts\site_image_converter\site_image_converter.py `
-  --input "C:\path\to\original\photos" `
-  --output "static\images\turak\2026-kanin-expedicio" `
-  --max-width 1600 --max-height 1600 --quality 82
-```
+Indítsd a `site_editor.bat` munkafelületet. A **Site photos** köteges
+konvertálást kínál; cikkhez a **Pages & posts → Add images & PDFs**,
+személyhez a **People & portraits** eszközeit használd. Állítsd be a
+célmappát, méretet és minőséget, majd kérj explicit WebP-konvertálást.
+Soha ne commitolj eredeti kamera-/telefonfotókat, azok messze túl nagyok.
+A külön asztali konvertálókat és indítóikat a munkafelület váltotta fel;
+a Python konvertálómodulok háttérkódként megmaradnak.
 
 ### Mappa- és elnevezési konvenció
 

@@ -48,6 +48,14 @@ $(document).ready(function () {
       var $tile = $(this);
       var name = $tile.data('name');
       var $modal = $('#ftsk-member-modal');
+      $modal.attr({ role: 'dialog', 'aria-modal': 'true', 'aria-label': name });
+      var cvTemplate = document.getElementById('ftsk-member-cv-' + $tile.attr('data-person-id'));
+      var $cv = $modal.find('.ftsk-member-modal-cv').empty().toggleClass('d-none', !cvTemplate);
+      $modal.toggleClass('ftsk-member-modal--cv', Boolean(cvTemplate));
+      if (cvTemplate) {
+         $cv.append(cvTemplate.content.cloneNode(true));
+         $cv.find('.ftsk-article-figure-link').attr({ target: '_blank', rel: 'noopener' });
+      }
 
       $modal.find('.ftsk-member-modal-name').text(name);
       var group = $tile.data('group');
@@ -77,6 +85,7 @@ $(document).ready(function () {
          );
          $('<span>').addClass('ftsk-member-modal-initials').text($tile.data('initials')).appendTo($avatar);
       }
+      $modal.children('.ftsk-member-modal-avatar, .ftsk-member-modal-body').toggleClass('d-none', Boolean(cvTemplate));
 
       $.magnificPopup.open({
          items: { src: '#ftsk-member-modal' },
@@ -84,6 +93,29 @@ $(document).ready(function () {
          mainClass: 'mfp-fade ftsk-member-mfp',
          closeOnBgClick: true,
       });
+   });
+
+   $(document).on('click', '.ftsk-member-cv-copy', async function () {
+      var button = this;
+      var status = button.closest('.ftsk-member-cv-share').querySelector('.ftsk-member-cv-share-status');
+      var label = button.querySelector('.ftsk-member-cv-copy-label');
+      status.textContent = '';
+      status.classList.add('sr-only');
+      label.textContent = 'Megosztás';
+      button.disabled = true;
+      try {
+         if (!navigator.clipboard || !navigator.clipboard.writeText) {
+            throw new Error('A böngésző nem támogatja a vágólapra másolást.');
+         }
+         await navigator.clipboard.writeText(new URL(button.getAttribute('data-share-url'), window.location.href).href);
+         label.textContent = 'Másolva';
+         status.textContent = 'Link másolva.';
+      } catch (error) {
+         status.classList.remove('sr-only');
+         status.textContent = 'Nem sikerült másolni: ' + error.message + ' A Megnyitás után a címsorból másolhatod a linket.';
+      } finally {
+         button.disabled = false;
+      }
    });
 
    // Hero banner slideshow: slow Ken Burns crossfade, looping circularly.

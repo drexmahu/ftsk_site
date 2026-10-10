@@ -1087,6 +1087,141 @@ button.ftsk-turak-author {
 }
 .ftsk-member-modal-role { margin: 8px 0 0; }
 .ftsk-member-modal-bio { margin: 16px 0 0; }
+.ftsk-members-hint {
+  margin: -4px 0 20px;
+  color: var(--text-muted);
+}
+.ftsk-member-modal--cv {
+  max-width: 960px;
+  padding: 48px clamp(16px, 4vw, 48px) 32px;
+  text-align: left;
+  overflow: visible;
+}
+.ftsk-member-modal--cv {
+  background-color: var(--bg-surface);
+  background-image: linear-gradient(to bottom, rgba(10, 17, 22, 0.48), rgba(10, 17, 22, 0.18)), url($cave-hanging-url), url($cave-standing-url);
+  background-repeat: no-repeat;
+  background-position: center, top center, bottom center;
+  background-size: 100% 100%, 100% auto, 100% auto;
+}
+.ftsk-member-cv-document {
+  padding: 48px clamp(16px, 4vw, 48px) 32px;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px var(--shadow-ambient);
+}
+.ftsk-member-cv {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.ftsk-member-cv-header {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  padding-bottom: 28px;
+  margin-bottom: 28px;
+  border-bottom: 1px solid var(--border-strong);
+  h1, h2 { margin: 0; font-size: clamp(1.6rem, 4vw, 2.5rem); }
+}
+.ftsk-member-cv-portrait {
+  width: 180px;
+  max-width: 40%;
+  height: auto;
+  max-height: 260px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+.ftsk-member-cv-label {
+  color: $color-primary;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+}
+.ftsk-member-cv-group { margin: 12px 0 0; color: var(--text-muted); }
+.ftsk-member-cv-subtitle {
+  margin: 12px 0 0;
+  color: var(--text-body);
+  font-size: 1rem;
+  line-height: 1.6;
+  letter-spacing: 0.03em;
+}
+.ftsk-member-cv-prose {
+  font-size: 1rem;
+  line-height: 1.8;
+  img { max-width: 100%; height: auto; }
+  pre, table { max-width: 100%; overflow-x: auto; }
+  table { display: block; }
+}
+.ftsk-member-cv-author {
+  margin: 32px 0 0;
+  text-align: right;
+  color: var(--text-body);
+  font-style: italic;
+}
+.ftsk-member-cv-page {
+  position: relative;
+  isolation: isolate;
+}
+.ftsk-member-cv-preview {
+  position: relative;
+  max-width: 960px;
+  padding-top: 160px;
+  padding-bottom: 48px;
+}
+.ftsk-member-cv-share {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 24px;
+  font-size: 0.85rem;
+  svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+}
+.ftsk-member-cv-permalink,
+.ftsk-member-cv-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-body);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 20px;
+  padding: 7px 10px;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  &:hover, &:focus-visible {
+    color: $color-primary;
+    border-color: var(--border-strong);
+    background: var(--bg-surface-2);
+  }
+}
+.ftsk-member-cv-share-status:not(.sr-only) { width: 100%; color: var(--text-body); }
+.ftsk-member-cv-share-status.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+@media (max-width: 575px) {
+  .ftsk-member-modal--cv { margin: 16px auto; padding-top: 48px; }
+  .ftsk-member-cv-header { flex-direction: column; align-items: flex-start; gap: 20px; }
+  .ftsk-member-cv-portrait { width: 160px; max-width: 100%; max-height: 220px; }
+}
 .ftsk-gallery {
   padding: $base-padding * 9 0 $base-padding * 8;
   @include media-breakpoint-down-lg {

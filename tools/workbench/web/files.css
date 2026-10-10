@@ -1,0 +1,10 @@
+.file-navigation{display:inline-flex;align-items:center;gap:3px;vertical-align:middle;margin-left:6px;flex-shrink:0}
+.file-navigation-button{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;min-height:0;padding:4px;margin:0;border:1px solid transparent;border-radius:6px;background:transparent;color:var(--muted);cursor:pointer}
+.file-navigation-button:hover,.file-navigation-button:focus-visible{color:var(--gold);border-color:var(--line);background:var(--panel)}
+.file-navigation-button svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.file-navigation-row{display:flex;align-items:center;gap:4px;min-width:0}
+.file-navigation-row[hidden]{display:none}
+.file-navigation-row>button:first-child,.file-navigation-row>label:first-child{flex:1;min-width:0}
+.file-navigation-row>.file-navigation{margin:0}
+.asset-grid>.file-navigation-row{flex-direction:column;align-items:stretch}
+.asset-grid>.file-navigation-row>.file-navigation{justify-content:flex-end}

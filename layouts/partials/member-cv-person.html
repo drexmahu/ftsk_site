@@ -1,0 +1,9 @@
+{{ $person := dict }}
+{{ if .Params.cv_preview }}
+  {{ $person = .Params.cv_person }}
+{{ else }}
+  {{ $index := partialCached "people-index.html" . "registry" }}
+  {{ $person = index $index.people (.Params.person | default "") }}
+  {{ if not $person }}{{ errorf "%s: member-cv requires a known person ID" .Path }}{{ end }}
+{{ end }}
+{{ return $person }}

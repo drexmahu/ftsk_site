@@ -8,9 +8,10 @@ invalid canonical foreign keys, duplicate identities and missing images fail.
 import sys
 from pathlib import Path
 
-from content_workbench import ContentError, parse_frontmatter, split_source
-from people_registry import contact_lists, page_references, person_index, registry_data, resolve_legacy
-from participant_roles import read_roles
+from tools.workbench.content_workbench import ContentError, parse_frontmatter, split_source
+from tools.workbench.member_documents import MAX_BODY, validate_page
+from tools.workbench.people_registry import contact_lists, page_references, person_index, registry_data, resolve_legacy
+from tools.workbench.participant_roles import read_roles
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -45,10 +46,23 @@ def verify(root: Path) -> tuple[list[str], list[str], int]:
                     or file.suffix.lower() not in (".jpg", ".jpeg", ".png", ".webp")
                     or not file.is_file()):
                 problems.append(f"{person['id']}: invalid or missing {field}: {url}")
+    member_documents = set()
     for file in sorted((root / "content").rglob("*.md")):
         relative = file.relative_to(root).as_posix()
         try:
-            meta = parse_frontmatter(split_source(file.read_text(encoding="utf-8-sig"))[0])
+            relative_content = file.relative_to(root / "content").as_posix()
+            source = file.read_text(encoding="utf-8-sig")
+            frontmatter, body, _ = split_source(source)
+            meta = parse_frontmatter(frontmatter)
+            if meta.get("type") == "member-cv":
+                identifier, _ = validate_page(meta, relative_content, people)
+                if len(body) > MAX_BODY:
+                    raise ContentError(f"member-cv body exceeds {MAX_BODY} characters.")
+                if identifier in member_documents:
+                    raise ContentError(f"Multiple member-cv pages refer to person {identifier!r}.")
+                member_documents.add(identifier)
+            elif "person" in meta and not meta.get("cv_preview"):
+                raise ContentError("person references are only valid on type: member-cv pages.")
             page_references(meta, people, roles)
             legacy = meta.get("participants", [])
             if (not isinstance(legacy, list) or any(not isinstance(name, str) or not name.strip() for name in legacy)

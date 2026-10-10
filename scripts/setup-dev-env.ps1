@@ -13,7 +13,7 @@
 .PARAMETER PersistPath
     Add tool folders to current-user PATH. Enabled by default; use -PersistPath:$false to opt out.
 .PARAMETER PythonPath
-    Select an existing 64-bit Python interpreter with Tk support.
+    Select an existing 64-bit Python interpreter with venv support.
 .PARAMETER SkipEditor
     Skip VS Code and its extensions.
 .PARAMETER SkipVerification
@@ -46,6 +46,19 @@ function Invoke-Tool {
     param([string]$Executable, [string[]]$Arguments)
     & $Executable @Arguments | ForEach-Object { Write-Host $_ }
     if ($LASTEXITCODE -ne 0) { throw "$Executable exited with code $LASTEXITCODE. See the output above." }
+}
+
+function Test-WorkbenchEditorAssets {
+    param([string]$Root)
+    $editorRoot = Join-Path $Root '.tools/workbench-editor'
+    foreach ($file in @('version.json', 'editor.js', 'editor.css', 'editor.worker.js', 'json.worker.js', 'css.worker.js', 'html.worker.js', 'ts.worker.js')) {
+        if (-not (Test-Path -LiteralPath (Join-Path $editorRoot $file) -PathType Leaf)) { return $false }
+    }
+    $hashes = Get-Content -LiteralPath (Join-Path $editorRoot 'version.json') -Raw | ConvertFrom-Json
+    foreach ($file in @('package-lock.json', 'tools/workbench/web/monaco-entry.js', 'scripts/build_workbench_editors.js')) {
+        if ($hashes.$file -ne (Get-FileHash -LiteralPath (Join-Path $Root $file) -Algorithm SHA256).Hash.ToLowerInvariant()) { return $false }
+    }
+    return $true
 }
 
 function Find-Tool {
@@ -204,7 +217,7 @@ function Find-Python {
     }
     foreach ($candidate in ($candidates | Select-Object -Unique)) {
         try {
-            $info = & $candidate -c "import json,sys,struct,tkinter,venv; print(json.dumps(dict(exe=sys.executable,version=list(sys.version_info[:3]),bits=struct.calcsize('P')*8)))" 2>$null
+            $info = & $candidate -c "import json,sys,struct,venv; print(json.dumps(dict(exe=sys.executable,version=list(sys.version_info[:3]),bits=struct.calcsize('P')*8)))" 2>$null
             if ($LASTEXITCODE -ne 0) { continue }
             $parsed = $info | ConvertFrom-Json
             if ($parsed.bits -eq 64 -and ([version]($parsed.version -join '.')) -ge [version]'3.10') { return $parsed.exe }
@@ -231,7 +244,7 @@ try {
     if (-not $nodeMatch.Success) { throw 'Unsupported Node engines range; update the installer to match package.json.' }
     $nodeMinimum = [version]$nodeMatch.Groups[1].Value
     Write-Host 'FTSK development environment setup' -ForegroundColor Cyan
-    Write-Host "Git, VS Code/extensions, Node >= $nodeMinimum, Hugo extended $hugoVersion, Python/Tk and all script dependencies."
+    Write-Host "Git, VS Code/extensions, Node >= $nodeMinimum, Hugo extended $hugoVersion, Python and all script dependencies."
     Write-Host 'User-scoped software and portable tools only. Python packages use .venv. No production credentials are requested.'
     if (-not $CheckOnly -and -not $WhatIfPreference -and -not $NonInteractive) {
         $answer = Read-Host 'Install missing components and accept their package/source agreements? [Y/n]'
@@ -288,6 +301,16 @@ try {
         "Node $version and npm are ready."
     }
 
+    Invoke-SetupStep 'Workbench Monaco editor' {
+        if (-not (Test-WorkbenchEditorAssets $repoRoot)) {
+            Require-Changes 'Local Monaco editor dependencies and browser bundle'
+            if (-not $script:npmExe) { throw 'Node/npm is required for the Workbench editor.' }
+            Invoke-Tool $script:npmExe @('ci')
+            Invoke-Tool $script:npmExe @('run', 'workbench:editors')
+        }
+        'Local Monaco assets are ready; no CDN or external editor requests.'
+    }
+
     Invoke-SetupStep 'Pinned Hugo extended' {
         $directory = Join-Path $repoRoot ".tools/hugo/$hugoVersion"
         $pinnedExecutable = Join-Path $directory 'hugo.exe'
@@ -307,15 +330,15 @@ try {
         "Available: $output"
     }
 
-    Invoke-SetupStep 'Python / Tk GUI support' {
+    Invoke-SetupStep 'Python / venv support' {
         $script:pythonExe = Find-Python
         if (-not $script:pythonExe) {
-            if ($PythonPath) { throw 'The supplied -PythonPath must be a working 64-bit Python >= 3.10 with Tk and venv.' }
-            Require-Changes '64-bit Python with Tk, pip and venv'
+            if ($PythonPath) { throw 'The supplied -PythonPath must be a working 64-bit Python >= 3.10 with venv.' }
+            Require-Changes '64-bit Python with pip and venv'
             Install-UserPackage 'Python.Python.3.12'
             $script:pythonExe = Find-Python
         }
-        if (-not $script:pythonExe) { throw 'A working 64-bit Python >= 3.10 with Tk and venv was not found. Use -PythonPath to select one.' }
+        if (-not $script:pythonExe) { throw 'A working 64-bit Python >= 3.10 with venv was not found. Use -PythonPath to select one.' }
         "Available: $script:pythonExe"
     }
 
@@ -334,9 +357,9 @@ try {
             Invoke-Tool $environmentPython @('-m', 'pip', 'install', '--only-binary=:all:', '-r', (Join-Path $PSScriptRoot 'requirements-dev.txt'))
             Invoke-Tool $environmentPython @('-m', 'pip', 'check')
         }
-        Invoke-Tool $environmentPython @('-c', 'import PIL,pillow_heif,yaml,paramiko,tkinter')
+        Invoke-Tool $environmentPython @('-c', 'import PIL,pillow_heif,yaml,paramiko')
         $script:pythonExe = $environmentPython
-        'Pillow, pillow-heif, PyYAML, Paramiko and Tk are ready in .venv.'
+        'Pillow, pillow-heif, PyYAML and Paramiko are ready in .venv.'
     }
 
     if (-not $SkipVerification) {
@@ -347,15 +370,15 @@ try {
             $temporary = Join-Path ([IO.Path]::GetTempPath()) ("ftsk-setup-build-" + [guid]::NewGuid())
             try {
                 Invoke-Tool $script:hugoExe @('--destination', $temporary, '--baseURL', 'https://www.ftsk.hu/', '--buildDrafts', '--buildFuture')
-                Invoke-Tool $script:pythonExe @('scripts/verify_members.py')
+                Invoke-Tool $script:pythonExe @('-m', 'scripts.verify_members')
                 Invoke-Tool $script:pythonExe @('scripts/verify_site_links.py', '--root', $temporary, '--base-url', 'https://www.ftsk.hu/')
-                Invoke-Tool "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', (Join-Path $PSScriptRoot 'test_setup_dev_env.ps1'), '-PythonPath', $script:pythonExe)
-                Invoke-Tool (Find-Tool 'node.exe') @('scripts/site_image_converter/test_hero_framing.js')
-                Invoke-Tool (Find-Tool 'node.exe') @('scripts/test_people_workbench.js')
-                Invoke-Tool $script:pythonExe @('-m', 'unittest', 'discover', '-s', 'scripts', '-p', 'test_social*.py')
-                Invoke-Tool $script:pythonExe @('-m', 'unittest', 'discover', '-s', 'scripts', '-p', 'test_*workbench.py')
-                Invoke-Tool $script:pythonExe @('-m', 'unittest', 'discover', '-s', 'scripts', '-p', 'test_people*.py')
-                Invoke-Tool $script:pythonExe @('-m', 'unittest', 'discover', '-s', 'scripts', '-p', 'test_content_blocks.py')
+                Invoke-Tool "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', (Join-Path $repoRoot 'tests\powershell\test_setup_dev_env.ps1'), '-PythonPath', $script:pythonExe)
+                Invoke-Tool (Find-Tool 'node.exe') @('tests/js/test_hero_framing.js')
+                Invoke-Tool (Find-Tool 'node.exe') @('tests/js/test_people_workbench.js')
+                Invoke-Tool $script:pythonExe @('-m', 'unittest', 'discover', '-s', 'tests/python', '-p', 'test_social*.py')
+                Invoke-Tool $script:pythonExe @('-m', 'unittest', 'discover', '-s', 'tests/python', '-p', 'test_*workbench.py')
+                Invoke-Tool $script:pythonExe @('-m', 'unittest', 'discover', '-s', 'tests/python', '-p', 'test_people*.py')
+                Invoke-Tool $script:pythonExe @('-m', 'unittest', 'discover', '-s', 'tests/python', '-p', 'test_content_blocks.py')
             } finally { if (Test-Path -LiteralPath $temporary) { Remove-Item -LiteralPath $temporary -Recurse -Force } }
             'Site build, people and assignments, internal links, hero framing, social cards and browser content/image workbench verified.'
         }

@@ -1,0 +1,11 @@
+{{ $documents := dict }}
+{{ $people := (partialCached "people-index.html" . "registry").people }}
+{{ range where .Site.RegularPages "Type" "member-cv" }}
+  {{ if not .Params.cv_preview }}
+    {{ $id := .Params.person | default "" }}
+    {{ if not (index $people $id) }}{{ errorf "%s: member-cv requires a known person ID" .Path }}{{ end }}
+    {{ if index $documents $id }}{{ errorf "Multiple CV pages for person %s" $id }}{{ end }}
+    {{ $documents = merge $documents (dict $id .) }}
+  {{ end }}
+{{ end }}
+{{ return $documents }}

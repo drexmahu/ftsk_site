@@ -29,6 +29,7 @@
   type="button"
   class="ftsk-members-tile ftsk-member-trigger{{ if .contact_card }} ftsk-contact-profile{{ end }}"
   data-name="{{ $name }}"
+  {{ with .id }}data-person-id="{{ . }}"{{ end }}
   data-group="{{ .group }}"
   data-role="{{ .role }}"
   data-initials="{{ $initials | upper }}"

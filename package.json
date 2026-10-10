@@ -10,7 +10,8 @@
     "dev": "npm run hugo-server",
     "hugo-server": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/dev-server.ps1",
     "build": "hugo --source ./ --destination public --baseURL /",
-    "test": "node scripts/test_404_navigation.js && node scripts/test_people_workbench.js && node scripts/site_image_converter/test_hero_framing.js && node scripts/test_history_archive.js"
+    "workbench:editors": "node scripts/build_workbench_editors.js",
+    "test": "node tests/js/test_404_navigation.js && node tests/js/test_people_workbench.js && node tests/js/test_hero_framing.js && node tests/js/test_history_archive.js"
   },
   "repository": {
     "type": "git",
@@ -18,5 +19,12 @@
   },
   "keywords": [],
   "author": "",
-  "license": "SEE LICENSE IN LICENSE.md"
+  "license": "SEE LICENSE IN LICENSE.md",
+  "devDependencies": {
+    "esbuild": "0.25.12",
+    "monaco-editor": "0.57.0"
+  },
+  "overrides": {
+    "dompurify": "3.4.16"
+  }
 }
