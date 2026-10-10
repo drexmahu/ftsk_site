@@ -883,7 +883,11 @@ képaláírás lesz:
 ### Relatív képméret és igazítás
 
 A hagyományos Markdown képek alapértelmezett szélessége a cikk
-szövegoszlopának 100%-a. Az összes ilyen kép alapmérete a front matterben
+szövegoszlopának 100%-a. Kézi méret nélkül a helyi, álló tájolású fotók
+automatikusan kisebbek: magasságuk legfeljebb 32 rem, 768 px alatt 26 rem,
+és nem nőnek az eredeti pixelszélességük fölé. A képarány megmarad, nincs
+vágás. Ez a CV/nekrológ oldalakra is érvényes; a fekvő képek, külső URL-ek
+és SVG-k alapmérete változatlan. Az összes ilyen kép alapmérete a front matterben
 állítható (a túrabeszámolók és tanfolyamok esetén is):
 
 ```yaml
@@ -905,6 +909,23 @@ méretezéséhez a Markdown képsor helyett használd az `image` shortcode-ot:
 | `width` | `article_image_width`, különben `100` | A szövegoszlop szélességének 10–100%-a. |
 | `mobile-width` | `100` | Szélesség 768 px alatt, 10–100%. |
 | `align` | `center` | `left`, `center` vagy `right`; nem szövegkörbefuttatás. |
+
+A megadott `width` vagy `article_image_width` felülírja az automatikus
+portrétméretet. Ha csak `mobile-width` van megadva, az mobilon felülírja
+a korlátot, asztali nézetben az automatikus méret marad. Például egy
+nekrológ portréját így méretezheted kézzel:
+
+```markdown
+{{< image src="/images/members/vidics-zoltanne/vidics-zoltanne-cv.webp" alt="Erimama" width="40" mobile-width="75" >}}
+```
+
+A Workbench tag szerkesztőjének **CV → Saved photos** részében ugyanez
+a **Desktop width (%)**, **Mobile width (%)** és **Image alignment**
+mezőkkel állítható. Üres méretmezőkkel az automatikus méretezés marad.
+Az **Insert image at cursor / replace selection** gomb a képet a kurzorhoz
+illeszti, vagy lecseréli a kijelölt forrást. Meglévő kép módosításához jelöld
+ki a teljes Markdown képsort vagy `image` shortcode-ot. Ezek a mezők nem
+változtatják meg a feltöltött képfájl felbontását.
 
 A számokhoz ne írj `%` jelet vagy `px` egységet. A `width` csak a
 megjelenítési méretet változtatja meg: a képarány megmarad, és kattintásra

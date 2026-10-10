@@ -5,9 +5,19 @@
 {{ if not (in (slice "left" "center" "right") $align) }}
   {{ errorf "Article image: align must be left, center or right (received %q)" $align }}
 {{ end }}
-<figure class="ftsk-article-figure ftsk-article-figure-{{ $align }}" style="--article-image-width: {{ $width }}%; --article-mobile-image-width: {{ $mobileWidth }}%;">
+{{ $portraitRatio := 0 }}
+{{ $imageConfig := false }}
+{{ $localPath := path.Join "static" (strings.TrimPrefix "/" .src) }}
+{{ $extension := strings.ToLower (path.Ext .src) }}
+{{ if and (not .width) (not (urls.Parse .src).Host) (in (slice ".jpg" ".jpeg" ".png" ".webp" ".gif" ".tif" ".tiff" ".bmp") $extension) (fileExists $localPath) }}
+  {{ $imageConfig = images.Config $localPath }}
+  {{ if lt $imageConfig.Width $imageConfig.Height }}
+    {{ $portraitRatio = div (float $imageConfig.Width) (float $imageConfig.Height) }}
+  {{ end }}
+{{ end }}
+<figure class="ftsk-article-figure ftsk-article-figure-{{ $align }}{{ if $portraitRatio }} ftsk-article-figure-auto-portrait{{ if .mobileWidth }} ftsk-article-figure-manual-mobile{{ end }}{{ end }}" style="--article-image-width: {{ $width }}%; --article-mobile-image-width: {{ $mobileWidth }}%;{{ if $portraitRatio }} --article-portrait-ratio: {{ $portraitRatio }}; --article-portrait-natural-width: {{ $imageConfig.Width }}px;{{ end }}">
   <a href="{{ $src }}" class="ftsk-article-figure-link"{{ with .caption }} title="{{ . }}"{{ end }}>
-    <img src="{{ $src }}" alt="{{ .alt }}" loading="lazy" />
+    <img src="{{ $src }}" alt="{{ .alt }}" loading="lazy"{{ with $imageConfig }} width="{{ .Width }}" height="{{ .Height }}"{{ end }} />
   </a>
   {{ with .caption }}<figcaption>{{ . }}</figcaption>{{ end }}
 </figure>

@@ -22,9 +22,24 @@ function insertMemberCV(before, after = "", placeholder = "") {
   $("#member-cv-preview-status").textContent = "Draft changed. Render the preview again.";
 }
 
-function memberCVImageMarkdown(url, alt, caption) {
+function memberCVImageMarkdown(url, alt, caption, options = {}) {
   if (!alt.trim()) throw new Error("Describe the image with alt text before inserting it.");
   if (!/^\/images\/[^\s<>()"\\]+$/.test(url)) throw new Error("Choose a local /images/ URL without spaces.");
+  const align = options.align || "center";
+  if (!["left", "center", "right"].includes(align)) throw new Error("Choose left, center or right image alignment.");
+  const sizes = [];
+  for (const [key, value] of [["width", options.width], ["mobile-width", options.mobileWidth]]) {
+    if (value === undefined || String(value).trim() === "") continue;
+    const number = Number(value);
+    if (!Number.isFinite(number) || number < 10 || number > 100) throw new Error("Image widths must be numbers from 10 to 100%, or blank for automatic sizing.");
+    sizes.push(`${key}="${number}"`);
+  }
+  if (sizes.length || align !== "center") {
+    const attr = (key, value) => `${key}="${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/[\r\n]/g, " ")}"`;
+    const attributes = [attr("src", url), attr("alt", alt.trim())];
+    if (caption.trim()) attributes.push(attr("caption", caption.trim()));
+    return `\n\n{{< image ${[...attributes, ...sizes, attr("align", align)].join(" ")} >}}\n\n`;
+  }
   const escapeText = value => value.replace(/\\/g, "\\\\").replace(/[[\]]/g, "\\$&").replace(/[\r\n]/g, " ");
   const title = caption.trim() ? ` "${caption.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/[\r\n]/g, " ")}"` : "";
   return `\n\n![${escapeText(alt.trim())}](${url}${title})\n\n`;
@@ -221,7 +236,11 @@ document.querySelectorAll("[data-cv-format]").forEach(button => button.addEventL
   insertMemberCV(...formats[button.dataset.cvFormat]);
 }));
 $("#member-cv-insert-image").addEventListener("click", () => action(async () => {
-  const markdown = memberCVImageMarkdown($("#member-cv-image-url").value.trim(), $("#member-cv-alt").value, $("#member-cv-caption").value);
+  const markdown = memberCVImageMarkdown($("#member-cv-image-url").value.trim(), $("#member-cv-alt").value, $("#member-cv-caption").value, {
+    width: $("#member-cv-display-width").value,
+    mobileWidth: $("#member-cv-mobile-width").value,
+    align: $("#member-cv-image-align").value,
+  });
   insertMemberCV(markdown);
 }));
 $("#member-cv-upload").addEventListener("click", () => action(uploadMemberCVImage));
@@ -422,7 +441,8 @@ function openMember(id = null) {
   memberCV.previewID = "";
   $("#member-cv-folder").value = id ? `members/${id}` : "Save this person first";
   $("#member-cv-images").replaceChildren();
-  for (const field of ["image-url", "alt", "caption", "file"]) $(`#member-cv-${field}`).value = "";
+  for (const field of ["image-url", "alt", "caption", "file", "display-width", "mobile-width"]) $(`#member-cv-${field}`).value = "";
+  $("#member-cv-image-align").value = "center";
   $("#member-cv-file-selection").textContent = "No CV photos selected.";
   renderUploadPreviews($("#member-cv-file"));
   $("#member-cv-preview-frame").hidden = true;

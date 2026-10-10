@@ -239,6 +239,15 @@
   margin-left: auto;
   margin-right: auto;
 }
+.ftsk-article-figure.ftsk-article-figure-auto-portrait {
+  max-width: unquote("min(100%, var(--article-portrait-natural-width), calc(32rem * var(--article-portrait-ratio)))");
+  @include media-breakpoint-down-md {
+    max-width: unquote("min(100%, var(--article-portrait-natural-width), calc(26rem * var(--article-portrait-ratio)))");
+    &.ftsk-article-figure-manual-mobile {
+      max-width: none;
+    }
+  }
+}
 .ftsk-article-figure-left {
   margin-right: auto;
 }

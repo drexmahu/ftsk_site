@@ -8,5 +8,5 @@
 {{ end }}
 <div class="ftsk-article-media ftsk-article-media-{{ $side }}" style="--article-media-width: {{ $width }}%; --article-font-scale: {{ $font }};">
   <div class="ftsk-article-media-text">{{ .Page.RenderString (dict "display" "block") .Inner }}</div>
-  {{ partial "article-figure.html" (dict "src" (.Get "src") "alt" (.Get "alt") "caption" (.Get "caption") "mobileWidth" (.Get "mobile-width")) }}
+  {{ partial "article-figure.html" (dict "src" (.Get "src") "alt" (.Get "alt") "caption" (.Get "caption") "width" 100 "mobileWidth" (.Get "mobile-width")) }}
 </div>
