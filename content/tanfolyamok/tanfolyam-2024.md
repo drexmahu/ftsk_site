@@ -15,6 +15,19 @@ seo:
   no_index: false
   social_image: /images/tanfolyamok/tanfolyam-2024/ftsk-tanfolyam-2024-thumb.webp
 draft: false
+participant_ids:
+- boros-amalia
+- czumbel-peter
+- erdei-bea
+- kadlec-gergely
+- kamvas-linda
+- kovats-gabor
+- mezei-eszter
+- miklos-barnabas
+- nacsinak-david
+- simon-karola
+- szasz-noemi
+- szieberth-denes
 contacts:
 - role: ''
   person: rehany-nikolett

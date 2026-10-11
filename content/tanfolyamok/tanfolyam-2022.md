@@ -14,6 +14,19 @@ seo:
   no_index: false
   social_image: /images/tanfolyamok/tanfolyam-2022/ftsk-tanfolyam-2022-thumb.webp
 draft: false
+participant_ids:
+- abraham-gabor
+- balazs-zoltan
+- berta-adrian
+- doma-zdenka
+- filei-krisztian
+- kerekes-andrea
+- kovacs-daniel
+- kovacs-imre
+- lieber-virag
+- pavlics-ignac
+- roknich-orsolya
+- toth-abris
 flyer_images:
 - image_path: /images/tanfolyamok/tanfolyam-2022/ftsk-tanfolyam-2022-1.webp
 contacts:

@@ -15,6 +15,19 @@ seo:
   no_index: false
   social_image: /images/tanfolyamok/tanfolyam-2019/ftsk-tanfolyam-2019-thumb.webp
 draft: false
+participant_ids:
+- buranszki-domonkos
+- dombi-marianna
+- ekes-balint
+- juhasz-anna
+- lieber-virag
+- lorincz-gyozo
+- nagy-reka
+- sajtos-peter
+- szomyu-zsolt
+- toth-janka
+- varga-viktoria
+- viczian-andras
 contacts:
 - role: ''
   person: gyovai-tamas

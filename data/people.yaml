@@ -465,6 +465,44 @@ people:
   show_profile_contacts: false
   aliases: []
   needs_review: false
+- id: boros-amalia
+  name: Boros Amália
+- id: erdei-bea
+  name: Erdei Bea
+- id: nacsinak-david
+  name: Nácsinák Dávid
+- id: simon-karola
+  name: Simon Karola
+- id: szasz-noemi
+  name: Szász Noémi
+- id: berta-adrian
+  name: Berta Adrián
+- id: doma-zdenka
+  name: Doma Zdenka
+- id: filei-krisztian
+  name: Filei Krisztián
+- id: kerekes-andrea
+  name: Kerekes Andrea
+- id: lieber-virag
+  name: Lieber Virág
+- id: pavlics-ignac
+  name: Pavlics Ignác
+- id: roknich-orsolya
+  name: Roknich Orsolya
+- id: buranszki-domonkos
+  name: Buránszki Domonkos
+- id: dombi-marianna
+  name: Dombi Marianna
+- id: nagy-reka
+  name: Nagy Réka
+- id: szomyu-zsolt
+  name: Szomyú Zsolt
+- id: toth-janka
+  name: Tóth Janka
+- id: varga-viktoria
+  name: Varga Viktória
+- id: viczian-andras
+  name: Viczián András
 groups:
 - label: Vezetőség
   members:

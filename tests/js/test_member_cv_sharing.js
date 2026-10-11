@@ -60,7 +60,26 @@ async function checkMemberCVSharing() {
   assert.ok(!motifStyles.includes("$hero-cave"), "CVs use the normal cave motifs, not the hero variants");
   const documentStyles = styles.slice(styles.indexOf(".ftsk-member-cv-document {\n"), styles.indexOf("\n.ftsk-member-cv {"));
   assert.ok(!documentStyles.includes("url("), "Standalone CV cards keep motifs outside the card");
+  const popupStart = script.indexOf("$.magnificPopup.open({");
+  const popupEnd = script.indexOf("\n   });", popupStart);
+  assert.ok(popupStart >= 0 && popupEnd > popupStart);
+  for (const hasCV of [true, false]) {
+    let options;
+    vm.runInNewContext(script.slice(popupStart, popupEnd), {
+      cvTemplate: hasCV ? {} : null,
+      $: { magnificPopup: { open: value => { options = value; } } },
+    });
+    assert.equal(options.fixedContentPos, true, "Member popups lock the background on mobile");
+    assert.equal(options.overflowY, hasCV ? "hidden" : "auto");
+    assert.equal(options.mainClass.includes("ftsk-member-cv-mfp"), hasCV);
+  }
+  assert.match(motifStyles, /max-height: calc\(100dvh - 80px\)/);
+  assert.match(motifStyles, /overflow-y: auto/);
+  assert.match(motifStyles, /overscroll-behavior: contain/);
+  assert.match(styles, /max-height: calc\(100dvh - 32px\)/);
+  assert.match(styles, /\.ftsk-member-cv-header--landscape\s*\{[\s\S]*?width: 480px;[\s\S]*?max-width: 100%;[\s\S]*?max-height: none;/);
   console.log("PASS: CV sharing copies subpath-aware URLs, reports errors and uses standard cave motifs.");
+  console.log("PASS: CV popups contain scrolling and landscape headers preserve uncropped photos.");
 }
 
 module.exports = { checkMemberCVSharing };

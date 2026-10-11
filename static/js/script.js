@@ -90,7 +90,9 @@ $(document).ready(function () {
       $.magnificPopup.open({
          items: { src: '#ftsk-member-modal' },
          type: 'inline',
-         mainClass: 'mfp-fade ftsk-member-mfp',
+         mainClass: 'mfp-fade ftsk-member-mfp' + (cvTemplate ? ' ftsk-member-cv-mfp' : ''),
+         fixedContentPos: true,
+         overflowY: cvTemplate ? 'hidden' : 'auto',
          closeOnBgClick: true,
       });
    });
@@ -348,7 +350,7 @@ els.forEach(el => {
       function applyTurakFilters() {
          var term = $.trim($turakSearch.val()).toLowerCase();
          var decade = $turakDecade.val();
-         var hasActiveFilter = term || decade || activeCategories.length > 0;
+         var hasActiveFilter = Boolean(term || decade || activeCategories.length > 0);
 
          // Any active filter (search, decade or category) replaces the
          // "newest" highlight with the matching results below rather than
