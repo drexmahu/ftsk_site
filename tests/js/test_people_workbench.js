@@ -633,12 +633,12 @@ function checkEditorWorkspaceNavigation() {
       button.dataset.editorTab = name;
       return button;
     });
-    const tools = ["page-media", "media", "placement", "source"].map(name => {
+    const tools = ["page-media", "media", "placement", "source", "pdf-import"].map(name => {
       const button = element("button");
       button.dataset.editorTool = name;
       return button;
     });
-    const panels = [...contentTabs.map(button => button.dataset.editorTab), "page-media", "media", "placement", "source", "preview"].map(name => {
+    const panels = [...contentTabs.map(button => button.dataset.editorTab), "page-media", "media", "placement", "source", "preview", "pdf-import"].map(name => {
       const panel = element("section");
       panel.dataset.editorPanel = name;
       return panel;
@@ -654,12 +654,18 @@ function checkEditorWorkspaceNavigation() {
     vm.runInNewContext(script.slice(start, end), context);
     context.switchPanel("metadata");
     assert.equal(studio.contentTab, "metadata");
+    assert.equal(get("#content-editor").dataset.workspace, "edit");
+    assert.equal(get("#editor-return-content").attributes["aria-pressed"], "true");
+    assert.equal(get("#editor-workspace-badge").textContent, "EDITING");
     assert.equal(get("#editor-content-navigation").hidden, false);
     context.switchPanel("media");
     assert.equal(studio.contentTab, "metadata", "Page tools preserve the last content section");
     assert.equal(get("#editor-content-navigation").hidden, true);
     assert.equal(get("#editor-tool-title").textContent, "Add images & PDFs");
     assert.equal(tools[1].attributes["aria-pressed"], "true");
+    assert.equal(get("#content-editor").dataset.workspace, "media");
+    assert.equal(get("#editor-return-content").attributes["aria-pressed"], "false");
+    assert.equal(get("#editor-workspace-badge").textContent, "TOOL ACTIVE");
     assert.equal(panels.filter(panel => !panel.hidden).length, 1);
     context.switchPanel("preview");
     assert.equal(get("#editor-tool-title").textContent, "Whole-page preview");
@@ -668,8 +674,19 @@ function checkEditorWorkspaceNavigation() {
     assert.equal(get("#post-source").value, "current source");
     context.switchPanel(studio.contentTab);
     assert.equal(get("#editor-content-navigation").hidden, false);
-    assert.equal(get("#editor-tool-heading").hidden, true);
+    assert.equal(get("#editor-tool-title").textContent, "Edit page");
+    assert.equal(get("#content-editor").dataset.workspace, "edit");
     assert.equal(contentTabs[1].attributes["aria-selected"], "true");
+    context.switchPanel("pdf-import");
+    assert.equal(get("#content-editor").dataset.workspace, "pdf-import");
+    assert.equal(tools[4].attributes["aria-pressed"], "true");
+    assert.equal(panels.filter(panel => !panel.hidden).length, 1);
+    contentTabs[1].disabled = true;
+    context.switchPanel("source");
+    assert.equal(get("#editor-return-content").disabled, true, "Mode navigation must retain existing disabled-section guards");
+    assert.equal(get("#editor-return-content").attributes["aria-pressed"], "false");
+    assert.match(workbenchHtml, /id="editor-return-content"[^>]*aria-pressed="true"/);
+    assert(!workbenchHtml.includes("Back to content editing"), "Editing should be a persistent peer workspace, not a displaced back button");
     const tablist = workbenchHtml.match(/class="editor-tabs"[\s\S]*?<\/div>/)[0];
     for (const name of ["page-media", "media", "placement", "preview", "source"]) {
       assert.ok(!tablist.includes(`data-editor-tab="${name}"`), "Whole-page tools must not compete with content tabs");

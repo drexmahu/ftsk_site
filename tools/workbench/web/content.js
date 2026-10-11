@@ -6,7 +6,8 @@
     changes: {}, tab: "write", contentTab: "write", helpOrigin: "", dirty: false, busy: false, selection: [0, 0],
     assets: [], selected: new Map(), deletePlan: null, previewSource: "", previewPath: "",
     previewURL: "", previewID: "", initialized: false, lastJob: "idle", restoreKey: "",
-    mediaTarget: null, pickerFiles: [], pageMedia: [], mediaReview: null, assetDelete: null
+    mediaTarget: null, pickerFiles: [], pageMedia: [], mediaReview: null, assetDelete: null,
+    pdfImport: null, pdfApplied: false
   };
   const rootAPI = "/api/workbench/content/";
   const feedback = (message, error = false) => {
@@ -30,7 +31,7 @@
   }
   function updateOwnedMediaFolders() {
     const folder = pageAssetFolder({ path: activePath() });
-    for (const selector of ["#post-image-folder", "#content-image-folder", "#pdf-folder"]) $(selector).value = folder;
+    for (const selector of ["#post-image-folder", "#content-image-folder", "#pdf-folder", "#pdf-import-folder"]) $(selector).value = folder;
     return folder;
   }
 
@@ -705,6 +706,14 @@
     $("#post-image-folder").value = pageAssetFolder(page);
     $("#content-image-folder").value = $("#post-image-folder").value;
     $("#pdf-folder").value = pageAssetFolder(page);
+    $("#pdf-import-folder").value = pageAssetFolder(page);
+    $("#pdf-import-url").value = page.source.match(/\/pdfs\/[^\s"'<>}]+\.pdf/)?.[0] || "";
+    $("#pdf-import-source").value = $("#pdf-import-url").value ? "existing" : "upload";
+    $("#pdf-import-file").value = "";
+    const matchingPDF = studio.pdfImport?.path === page.path;
+    $("#pdf-import-review").hidden = !matchingPDF;
+    pdfStatus(matchingPDF ? "This page's PDF extraction is still available below." : "");
+    updatePDFSource();
     $("#page-media-image-folder").value = $("#post-image-folder").value;
     $("#page-media-pdf-folder").value = $("#pdf-folder").value;
     studio.pageMedia = [];
@@ -764,14 +773,21 @@
     const content = ["write", "metadata", "contacts", "course", "seo"].includes(tab);
     if (content) studio.contentTab = tab;
     $("#editor-content-navigation").hidden = !content;
-    $("#editor-tool-heading").hidden = content;
+    $("#content-editor").dataset.workspace = content ? "edit" : tab;
+    $("#editor-workspace-kind").textContent = content ? "Editing mode" : "Page tool mode";
+    $("#editor-workspace-badge").textContent = content ? "EDITING" : "TOOL ACTIVE";
+    $("#editor-workspace-detail").textContent = content ?
+      "Write your story and manage page details below." :
+      "You are in a dedicated page tool. Choose Edit page above to return to your last editing section.";
     $("#editor-tool-title").textContent = {
-      "page-media": "Files & usage", media: "Add images & PDFs",
+      "page-media": "Files & usage", media: "Add images & PDFs", "pdf-import": "Read a PDF",
       placement: "File & URL placement", source: "Full source",
       preview: "Whole-page preview", syntax: "Syntax help"
-    }[tab] || "";
+    }[tab] || "Edit page";
     const back = $(`[data-editor-tab="${studio.contentTab}"]`);
     $("#editor-return-content").disabled = Boolean(back?.disabled);
+    $("#editor-return-content").classList.toggle("active", content);
+    $("#editor-return-content").setAttribute("aria-pressed", String(content));
     document.querySelectorAll("[data-editor-panel]").forEach(panel => { panel.hidden = panel.dataset.editorPanel !== tab; });
     document.querySelectorAll("[data-editor-tab]").forEach(button => {
       const active = button.dataset.editorTab === tab;
@@ -1166,6 +1182,124 @@
     feedback("Image layout inserted at the remembered Markdown cursor position. Render the draft to verify placement.");
   }
 
+  function pdfStatus(message, error = false) {
+    const element = $("#pdf-import-status");
+    element.hidden = !message;
+    element.textContent = message;
+    element.className = `notice${error ? " error" : ""}`;
+  }
+
+  function updatePDFSource() {
+    const upload = $("#pdf-import-source").value === "upload";
+    $("#pdf-import-upload").hidden = !upload;
+    $("#pdf-import-existing").hidden = upload;
+  }
+
+  async function discardPDFImport() {
+    if (studio.busy) throw new Error("Wait for the current PDF operation.");
+    if (studio.pdfImport) await api(rootAPI + `pdf-import/${studio.pdfImport.id}`, { method: "DELETE" });
+    studio.pdfImport = null;
+    studio.pdfApplied = false;
+    $("#pdf-import-review").hidden = true;
+    $("#pdf-import-images").replaceChildren();
+    $("#pdf-import-text").value = "";
+    $("#pdf-import-discard").disabled = true;
+    pdfStatus("Temporary extraction discarded. Any previously exported site files are kept.");
+  }
+
+  async function readPDFImport() {
+    if (!studio.page || studio.busy) throw new Error("Open a page and wait for current operations first.");
+    await sync();
+    const path = activePath();
+    const upload = $("#pdf-import-source").value === "upload";
+    const file = $("#pdf-import-file").files[0];
+    const url = $("#pdf-import-url").value.trim();
+    if (upload && (!file || !file.size || file.size > 64 * 1024 * 1024)) throw new Error("Choose a non-empty PDF up to 64 MiB.");
+    if (!upload && !url.startsWith("/pdfs/")) throw new Error("Choose an existing site PDF first.");
+    if (studio.pdfImport) await discardPDFImport();
+    setBusy(true);
+    pdfStatus("Reading PDF locally… Extracting embedded text, joining photo strips and preparing image previews. No site files are being written.");
+    try {
+      const result = upload ?
+        await api(rootAPI + "pdf-import", { method: "POST", raw: file, filename: file.name, contentPath: path }) :
+        await api(rootAPI + "pdf-import/inspect", { method: "POST", payload: { path, url } });
+      studio.pdfImport = result;
+      studio.pdfApplied = false;
+      $("#pdf-import-summary").textContent = `${result.filename} · ${result.pages.length} pages · ${result.images.length} photos`;
+      $("#pdf-import-text").value = result.markdown;
+      $("#pdf-import-warnings").textContent = result.warnings.join("\n");
+      $("#pdf-import-images").replaceChildren();
+      $("#pdf-import-cover").replaceChildren(new Option("Keep the current page photos", ""));
+      for (const image of result.images) {
+        const card = node("label", "", "pdf-import-image");
+        const preview = document.createElement("img");
+        preview.src = image.preview;
+        preview.alt = `Extracted image ${image.number} from PDF page ${image.page}`;
+        preview.loading = "lazy";
+        const line = node("span", "", "check-label");
+        const check = document.createElement("input");
+        check.type = "checkbox";
+        check.value = image.id;
+        check.checked = true;
+        line.append(check, node("span", `Page ${image.page} · photo ${image.number}`));
+        card.append(preview, line, node("small", `${image.width} × ${image.height}${image.parts > 1 ? ` · ${image.parts} joined strips` : ""}`));
+        $("#pdf-import-images").append(card);
+        $("#pdf-import-cover").add(new Option(`Page ${image.page} · photo ${image.number}`, image.id));
+      }
+      $("#pdf-import-review").hidden = false;
+      $("#pdf-import-discard").disabled = false;
+      $("#pdf-import-apply").disabled = false;
+      pdfStatus("Extraction ready. Review the text and choose photos below. Nothing has been saved to the site.");
+    } catch (error) {
+      pdfStatus(error.message, true);
+      throw error;
+    } finally { setBusy(false); }
+  }
+
+  async function applyPDFImport() {
+    if (!studio.pdfImport || studio.pdfApplied || studio.busy) throw new Error("Extract a PDF first, or discard the completed extraction to start another.");
+    const extraction = studio.pdfImport;
+    if (activePath() !== extraction.path) throw new Error("The page path changed. Extract the PDF again for this destination.");
+    const images = [...$("#pdf-import-images").querySelectorAll("input:checked")].map(input => input.value);
+    const cover = $("#pdf-import-cover").value;
+    if (cover && !images.includes(cover)) throw new Error("Select the chosen heading photo for export, or keep the current page photos.");
+    const mode = $("#pdf-import-mode").value;
+    if (mode === "images" && !images.length) throw new Error("Select at least one photo to export.");
+    if (mode === "replace" && !confirm("Replace this draft's story with extracted PDF text and selected photos? Metadata is kept. The saved page stays unchanged until you save.")) return;
+    const payload = { id: extraction.id, path: activePath(), images, keep_pdf: $("#pdf-import-keep-pdf").checked };
+    for (const key of ["width", "height", "quality"]) {
+      if (!$(`#pdf-import-${key}`).reportValidity()) throw new Error(`Check PDF image ${key}.`);
+      payload[key] = Number($(`#pdf-import-${key}`).value);
+    }
+    await sync();
+    if (mode === "append" && extraction.pdf_url && $("#post-body").value.includes(extraction.pdf_url)) {
+      payload.keep_pdf = false;
+    }
+    setBusy(true);
+    pdfStatus(`Converting ${images.length} selected photos through the site converter…`);
+    try {
+      const result = await api(rootAPI + "pdf-import/export", { method: "POST", payload });
+      if (mode !== "images") {
+        const body = $("#post-body");
+        body.value = mode === "replace" ? result.markdown : `${body.value.trimEnd()}\n\n${result.markdown}`;
+      }
+      if (cover) {
+        const file = result.images.find(image => image.id === cover);
+        change("thumbImg.image_path", file.url);
+        change("featuredImg.image_path", file.url);
+      }
+      studio.pdfApplied = true;
+      $("#pdf-import-apply").disabled = true;
+      $("#pdf-import-text").value = result.markdown;
+      markDirty();
+      const message = `${result.images.length} WebP photos exported to ${result.folder}. ${mode === "images" ? "Story kept." : "Extracted story added to the unsaved draft."} Review image descriptions and formatting, preview, then save explicitly.`;
+      pdfStatus(message);
+      feedback(message);
+    } catch (error) {
+      pdfStatus(error.message, true);
+      throw error;
+    } finally { setBusy(false); }
+  }
   async function convertImages() {
     const input = $("#content-image-files");
     const files = [...input.files];
@@ -1571,6 +1705,21 @@
     $("#asset-folder").value = $("#asset-folder").value.split("/").slice(0, -1).join("/"); await browseAssets();
   }));
   $("#content-convert").addEventListener("click", () => run(convertImages));
+  $("#pdf-import-source").addEventListener("change", updatePDFSource);
+  $("#pdf-import-borrow").addEventListener("click", () => run(async () => {
+    await openMediaPicker("pdfs", "PDF to read", $("#pdf-import-url").value, url => { $("#pdf-import-url").value = url; });
+  }));
+  $("#pdf-import-read").addEventListener("click", () => run(readPDFImport));
+  $("#pdf-import-discard").addEventListener("click", () => run(discardPDFImport));
+  $("#pdf-import-apply").addEventListener("click", () => run(applyPDFImport));
+  $("#pdf-import-download").addEventListener("click", () => {
+    downloadWorkbenchDraft("pdf-extracted-text.md", $("#pdf-import-text").value);
+  });
+  for (const [id, checked] of [["#pdf-import-all", true], ["#pdf-import-none", false]]) {
+    $(id).addEventListener("click", () => {
+      $("#pdf-import-images").querySelectorAll("input").forEach(input => { input.checked = checked; });
+    });
+  }
   renderUploadPreviews($("#content-image-files"));
   const dropzone = $("#content-image-files").closest(".upload-drop-area");
   $("#content-image-files").addEventListener("change", () => renderUploadPreviews($("#content-image-files")));

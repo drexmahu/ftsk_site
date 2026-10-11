@@ -4,6 +4,21 @@ const $ = selector => document.querySelector(selector);
 const state = { token: "", git: null, photos: [], portraits: [], activePortrait: null, crop: null, image: null, busy: false, preview: null, initialized: false, jobState: "idle" };
 const viewNames = { overview: "Git · Start here", content: "Pages & posts", photos: "Site photos", portraits: "People & portraits", hero: "Hero slideshow", social: "Social previews", checks: "Build & checks", help: "Help & workflow" };
 
+function startupStatus(error = "") {
+  const blocker = $("#workbench-startup");
+  if (blocker.hidden) return;
+  const ready = !error && Boolean(state.token && state.git && state.initialized);
+  blocker.hidden = ready;
+  blocker.dataset.failed = String(Boolean(error));
+  blocker.setAttribute("aria-busy", String(!ready && !error));
+  $("#startup-retry").hidden = !error;
+  if (error) {
+    $("#startup-title").textContent = "Workspace connection needs attention";
+    $("#startup-detail").textContent = `${error} Retrying automatically. Check that the local Workbench server is still running, or reload to try again.`;
+  }
+  for (const selector of [".sidebar", ".workspace", ".skip-link"]) $(selector).inert = !ready;
+}
+
 function notify(message, kind = "") {
   const element = $("#message");
   element.textContent = message;
@@ -427,11 +442,13 @@ function updateStatus(status) {
 async function poll() {
   try {
     updateStatus(await api("/api/workbench/status"));
+    startupStatus();
     if ($("#message").dataset.disconnected) { notify(""); delete $("#message").dataset.disconnected; }
   } catch (error) {
     if (window.updateGitState) window.updateGitState(null);
     notify(`Workspace disconnected: ${error.message}`, "error");
     $("#message").dataset.disconnected = "true";
+    startupStatus(error.message);
   } finally { setTimeout(poll, 2000); }
 }
 
@@ -462,6 +479,7 @@ function setupUploads(id, kind) {
 }
 
 window.addEventListener("hashchange", navigate);
+$("#startup-retry").addEventListener("click", () => location.reload());
 $("#social-form").addEventListener("submit", event => { event.preventDefault(); renderSocial(); });
 $("#social-url").addEventListener("input", () => { $("#social-export").href = `/social?${new URLSearchParams({ url: $("#social-url").value.trim(), download: "1" })}`; });
 $("#reload-hero").addEventListener("click", () => {

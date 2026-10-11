@@ -357,9 +357,9 @@ try {
             Invoke-Tool $environmentPython @('-m', 'pip', 'install', '--only-binary=:all:', '-r', (Join-Path $PSScriptRoot 'requirements-dev.txt'))
             Invoke-Tool $environmentPython @('-m', 'pip', 'check')
         }
-        Invoke-Tool $environmentPython @('-c', 'import PIL,pillow_heif,yaml,paramiko')
+        Invoke-Tool $environmentPython @('-c', 'import PIL,pillow_heif,yaml,paramiko,pypdfium2')
         $script:pythonExe = $environmentPython
-        'Pillow, pillow-heif, PyYAML and Paramiko are ready in .venv.'
+        'Pillow, pillow-heif, PyYAML, Paramiko and PDFium are ready in .venv.'
     }
 
     if (-not $SkipVerification) {

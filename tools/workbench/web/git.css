@@ -26,7 +26,7 @@
 .git-branch-map{margin:18px 0}.git-branch-row{display:flex;align-items:center;flex-wrap:wrap;gap:14px;padding:10px 14px;border-left:3px solid var(--line);border-bottom:1px solid var(--line);font-size:12px}.git-branch-row strong{flex:1;overflow-wrap:anywhere}.git-branch-row.checked-out{border-left-color:var(--teal);background:#173535;border-radius:8px}
 .git-dots{display:flex;gap:7px;flex-wrap:wrap;min-height:14px}.git-dots span{width:12px;height:12px;border-radius:50%;border:2px solid var(--teal);background:#1c5554}.git-dots span.pending{border-color:var(--gold);background:#695135}
 .git-next-step{font-size:20px;font-weight:700;color:var(--heading);margin:8px 0}
-.git-guidance{border:2px solid var(--gold);border-radius:14px;background:linear-gradient(120deg,#443622,#182733);padding:20px;margin-bottom:24px}
+.git-guidance{--suggest-rgb:246 224 116;border:2px solid rgb(var(--suggest-rgb));border-radius:14px;background:linear-gradient(120deg,rgb(var(--suggest-rgb) / .14),#182733);padding:20px;margin-bottom:24px;box-shadow:0 0 30px rgb(var(--suggest-rgb) / .13)}
 .git-guidance[data-level=synced]{border-color:var(--teal);background:#163532}
 .git-guidance[data-level=error]{border-color:#eea1a1;background:#3f2429}
 .git-guidance[data-level=working]{border-color:var(--teal);background:#183344}
@@ -62,24 +62,37 @@
 @media(max-width:650px){.git-branch-dialog-controls{grid-template-columns:1fr}#git-branch-dialog .section-heading{flex-wrap:wrap}}
 .git-station details{margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
 .git-station summary{font-weight:700;line-height:1.5;cursor:pointer}.git-station details button{width:100%;margin-top:8px;white-space:normal}
-.git-station[data-attention=true]{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold),0 0 28px #bea07026}
+.git-station[data-attention=true]{border-color:rgb(var(--suggest-rgb));box-shadow:0 0 0 1px rgb(var(--suggest-rgb) / .4),0 0 32px rgb(var(--suggest-rgb) / .18)}
 .git-station[data-pending=true] .git-dots span{animation:git-pending 2.6s ease-in-out infinite}
 .git-station[data-pending=true] strong{color:var(--gold)}
 .git-station[data-attention=true] .eyebrow{animation:git-pending 2.6s ease-in-out infinite}
 .git-domain-actions button[data-suggested=true]:not(:disabled),
 .git-station button[data-suggested=true]:not(:disabled),
 #git-guidance-action[data-suggested=true]:not(:disabled),
-.git-station details[data-suggested=true]>summary{border-radius:10px;outline:1px solid #9bdcff99;outline-offset:3px;box-shadow:0 0 16px #8bd5ff35;animation:git-suggested-glow 3s ease-in-out infinite}
+.git-station details[data-suggested=true]>summary{border-radius:10px;border-color:rgb(var(--suggest-rgb));background:rgb(var(--suggest-rgb) / .14);color:rgb(var(--suggest-rgb));outline:1px solid rgb(var(--suggest-rgb) / .7);outline-offset:3px;box-shadow:0 0 24px rgb(var(--suggest-rgb) / .3);animation:git-suggested-glow 3s ease-in-out infinite}
+#git-work-station{--suggest-rgb:246 224 116}
+#git-local-station{--suggest-rgb:244 149 255}
+#git-server-station{--suggest-rgb:115 215 255}
+.git-guidance[data-domain=local]{--suggest-rgb:244 149 255}
+.git-guidance[data-domain=server]{--suggest-rgb:115 215 255}
+.git-guidance[data-level=attention] .eyebrow{color:rgb(var(--suggest-rgb))}
+#git-guidance-action[data-suggested=true]:not(:disabled){background:rgb(var(--suggest-rgb));color:#0a1116;font-weight:800}
+.git-station button[data-suggested=true]:not(:disabled){font-weight:800}
+.git-station button[data-suggested=true]:focus-visible,#git-guidance-action[data-suggested=true]:focus-visible,.git-station details[data-suggested=true]>summary:focus-visible{outline:2px solid #fff;outline-offset:5px}
+.git-station details[data-suggested=true]>summary{padding:10px 12px}
+.git-map .git-checkpoint-lane{--suggest-rgb:246 224 116}
+.git-map .git-send-lane{--suggest-rgb:244 149 255}
+.git-map .git-fetch-lane,.git-map .git-receive-lane{--suggest-rgb:115 215 255}
 .git-map:not(.running)[data-suggested-flow=checkpoint] .git-checkpoint-lane .git-arrow,
 .git-map:not(.running)[data-suggested-flow=fetch] .git-fetch-lane .git-arrow,
 .git-map:not(.running)[data-suggested-flow=receive] .git-receive-lane .git-arrow,
-.git-map:not(.running)[data-suggested-flow=send] .git-send-lane .git-arrow{background:#9bdcff;opacity:1;filter:drop-shadow(0 0 5px #8bd5ff88);animation:git-arrow-glow 3s ease-in-out infinite}
+.git-map:not(.running)[data-suggested-flow=send] .git-send-lane .git-arrow{background:rgb(var(--suggest-rgb));opacity:1;filter:drop-shadow(0 0 7px rgb(var(--suggest-rgb) / .7));animation:git-arrow-glow 3s ease-in-out infinite}
 .git-map:not(.running)[data-suggested-flow=checkpoint] .git-checkpoint-lane .git-arrow::before,
 .git-map:not(.running)[data-suggested-flow=fetch] .git-fetch-lane .git-arrow::before,
 .git-map:not(.running)[data-suggested-flow=receive] .git-receive-lane .git-arrow::before,
-.git-map:not(.running)[data-suggested-flow=send] .git-send-lane .git-arrow::before{border-color:#9bdcff}
-@keyframes git-suggested-glow{0%,100%{box-shadow:0 0 8px #8bd5ff25,0 0 1px 1px #9bdcff44}50%{box-shadow:0 0 23px #8bd5ff55,0 0 2px 1px #9bdcff99}}
-@keyframes git-arrow-glow{0%,100%{filter:drop-shadow(0 0 3px #8bd5ff66)}50%{filter:drop-shadow(0 0 7px #9bdcff) drop-shadow(0 0 13px #8bd5ff88)}}
+.git-map:not(.running)[data-suggested-flow=send] .git-send-lane .git-arrow::before{border-color:rgb(var(--suggest-rgb))}
+@keyframes git-suggested-glow{0%,100%{box-shadow:0 0 16px rgb(var(--suggest-rgb) / .25),0 0 0 1px rgb(var(--suggest-rgb) / .5)}50%{box-shadow:0 0 34px rgb(var(--suggest-rgb) / .45),0 0 0 2px rgb(var(--suggest-rgb) / .75)}}
+@keyframes git-arrow-glow{0%,100%{filter:drop-shadow(0 0 5px rgb(var(--suggest-rgb) / .5))}50%{filter:drop-shadow(0 0 9px rgb(var(--suggest-rgb))) drop-shadow(0 0 18px rgb(var(--suggest-rgb) / .6))}}
 @media(prefers-reduced-motion:reduce){.git-map [data-suggested=true],.git-map [data-suggested=true]>summary,#git-guidance-action[data-suggested=true],.git-map[data-suggested-flow] .git-arrow{animation:none!important}}
 .git-button-help{display:inline-flex;max-width:100%;min-width:0;border-radius:10px;vertical-align:middle}
 .git-domain-actions>.git-button-help,.git-station details>.git-button-help{display:flex;width:100%}
