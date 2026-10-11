@@ -1193,9 +1193,22 @@ button.ftsk-turak-author {
 }
 .ftsk-member-modal--cv {
   max-width: 960px;
+  max-height: calc(100vh - 80px);
+  max-height: calc(100dvh - 80px);
+  display: flex;
+  flex-direction: column;
   padding: 48px clamp(16px, 4vw, 48px) 32px;
   text-align: left;
-  overflow: visible;
+  overflow: hidden;
+}
+.ftsk-member-modal-cv {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.ftsk-member-cv-mfp {
+  overscroll-behavior: none;
+  .mfp-container { overflow: hidden; }
 }
 .ftsk-member-modal--cv {
   background-color: var(--bg-surface);
@@ -1322,9 +1335,26 @@ button.ftsk-turak-author {
   border: 0;
 }
 @media (max-width: 575px) {
-  .ftsk-member-modal--cv { margin: 16px auto; padding-top: 48px; }
+  .ftsk-member-modal--cv {
+    margin: 16px auto;
+    padding-top: 48px;
+    max-height: calc(100vh - 32px);
+    max-height: calc(100dvh - 32px);
+  }
   .ftsk-member-cv-header { flex-direction: column; align-items: flex-start; gap: 20px; }
   .ftsk-member-cv-portrait { width: 160px; max-width: 100%; max-height: 220px; }
+}
+.ftsk-member-cv-header--landscape {
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  text-align: center;
+  .ftsk-member-cv-portrait {
+    width: 480px;
+    max-width: 100%;
+    max-height: none;
+    box-shadow: 0 0 0 1px var(--border-subtle), 0 10px 24px rgba(0, 0, 0, 0.16);
+  }
 }
 .ftsk-gallery {
   padding: $base-padding * 9 0 $base-padding * 8;

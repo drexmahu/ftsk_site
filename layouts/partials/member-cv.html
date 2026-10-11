@@ -1,10 +1,20 @@
 {{ $person := .person }}
 {{ $name := $person.name }}
 {{ with $person.nickname }}{{ $name = printf "%s (%s)" $name . }}{{ end }}
+{{ $image := $person.modal_image | default $person.image }}
+{{ $imageConfig := false }}
+{{ $landscape := false }}
+{{ with $image }}
+  {{ $localPath := path.Join "static" (strings.TrimPrefix "/" .) }}
+  {{ $extension := strings.ToLower (path.Ext .) }}
+  {{ if and (not (urls.Parse .).Host) (in (slice ".jpg" ".jpeg" ".png" ".webp" ".gif" ".tif" ".tiff" ".bmp") $extension) (fileExists $localPath) }}
+    {{ $imageConfig = images.Config $localPath }}
+    {{ $landscape = gt $imageConfig.Width $imageConfig.Height }}
+  {{ end }}
+{{ end }}
 <article class="ftsk-member-cv">
-  <header class="ftsk-member-cv-header">
-    {{ $image := $person.modal_image | default $person.image }}
-    {{ with $image }}<img class="ftsk-member-cv-portrait" src="{{ partial `url.html` . }}" alt="{{ $name }}" loading="lazy" />{{ end }}
+  <header class="ftsk-member-cv-header{{ if $landscape }} ftsk-member-cv-header--landscape{{ end }}">
+    {{ with $image }}<img class="ftsk-member-cv-portrait" src="{{ partial `url.html` . }}" alt="{{ $name }}" loading="lazy"{{ with $imageConfig }} width="{{ .Width }}" height="{{ .Height }}"{{ end }} />{{ end }}
     <div>
       <p class="ftsk-member-cv-label">{{ .page.Params.document_label | default "CV" }}</p>
       {{ if .standalone }}<h1>{{ $name }}</h1>{{ else }}<h2>{{ $name }}</h2>{{ end }}

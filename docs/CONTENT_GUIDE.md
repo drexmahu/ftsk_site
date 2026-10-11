@@ -37,6 +37,10 @@ Dokumentum nélkül a korábbi kis profilablak marad.
 Kitöltve a kártyára (vagy a cikk szerzőjére) kattintva portrés, dokumentumszerű
 CV nyílik meg, mobilon egymás alatti elrendezéssel. A portré a `modal_image`,
 ennek hiányában az `image` mezőből származik.
+A helyi fekvő portrék nagyobb, középre rendezett képként, a név fölött jelennek
+meg, vágás nélkül; az álló portrék elrendezése változatlan. A felugró dokumentum
+a képernyőn belül marad, és a tartalma a kereten belül görgethető, így a bezáró
+gomb olvasás közben is elérhető.
 
 A **Document subtitle** (`subtitle` az oldal frontmatterében) opcionális, egyszerű szöveg a név
 alatt, a tagsági csoport fölött. Dátumokhoz, ajánláshoz vagy más rövid
