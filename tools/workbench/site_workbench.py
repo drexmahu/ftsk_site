@@ -28,6 +28,7 @@ import yaml
 
 import tools.social_preview as social_preview
 from tools.workbench.content_workbench import ContentService, ContentError, ConflictError
+from tools.workbench.pdf_import import PDFImportService, MAX_PDF_BYTES
 from tools.workbench.member_workbench import MemberService
 from tools.workbench.people_registry import member_image_folder
 from tools.workbench.participant_roles import RoleService
@@ -88,6 +89,7 @@ class Workbench:
         self.preview_port = 1313
         self.closed = False
         self.content = ContentService(self, safe_path)
+        self.pdf_import = PDFImportService(self)
         self.members = MemberService(self, safe_path)
         self.roles = RoleService(self, safe_path)
         self.render_server: WorkbenchServer | None = None
@@ -474,6 +476,7 @@ class Workbench:
                 self.run_command([node, "tests/js/test_hero_framing.js"], "Hero framing")
                 self.run_command([node, "tests/js/test_404_navigation.js"], "404 navigation")
                 self.run_command([node, "tests/js/test_people_workbench.js"], "People assignment controls")
+                self.run_command([node, "tests/js/test_pdf_import_workbench.js"], "Reviewed PDF draft imports")
                 self.run_command([sys.executable, "-m", "unittest", "discover", "-s", "tests/python",
                                   "-p", "test_social*.py"], "Social previews and image selection")
                 self.run_command([sys.executable, "-m", "unittest", "discover", "-s",
@@ -481,6 +484,8 @@ class Workbench:
                                  "Manual portrait crop")
                 self.run_command([sys.executable, "-m", "unittest", "discover", "-s", "tests/python",
                                   "-p", "test_*workbench.py"], "Site, content and people workbench")
+                self.run_command([sys.executable, "-m", "unittest", "discover", "-s", "tests/python",
+                                  "-p", "test_pdf_import.py"], "PDF text and reviewed photo imports")
                 self.run_command([sys.executable, "-m", "unittest", "discover", "-s", "tests/python",
                                   "-p", "test_people*.py"], "People migration and rendering")
             with self.lock:
@@ -670,6 +675,12 @@ class Handler(BaseHTTPRequestHandler):
             if document not in ("CONTENT_GUIDE.md", "BLOGPOST_TEMPLATES.md", "TANFOLYAM_GUIDE.md"):
                 raise ToolError("Unknown content guide.")
             self.json(200, {"name": document, "source": (app.root / "docs" / document).read_text(encoding="utf-8")})
+        elif route.startswith("/api/workbench/content/pdf-import/"):
+            parts = route.split("/")
+            if len(parts) != 7 or not parts[-1].endswith(".png"):
+                raise ToolError("Unknown PDF image preview route.")
+            with app.lock:
+                self.file(app.pdf_import.preview(parts[-2], parts[-1].removesuffix(".png")))
         elif route.startswith("/api/workbench/uploads/"):
             identifier = route.split("/")[-1]
             with app.lock:
@@ -826,6 +837,16 @@ class Handler(BaseHTTPRequestHandler):
                 frontmatter, body, newline = split_source(source)
                 result = {"source": source, "frontmatter": frontmatter, "body": body, "newline": newline,
                           "metadata": parse_frontmatter(frontmatter)}
+            elif method == "POST" and route == "/api/workbench/content/pdf-import":
+                result = app.pdf_import.inspect(
+                    unquote(self.headers.get("X-Content-Path", "")),
+                    unquote(self.headers.get("X-Filename", "document.pdf")), self.body(MAX_PDF_BYTES))
+            elif method == "POST" and route == "/api/workbench/content/pdf-import/inspect":
+                result = app.pdf_import.inspect_asset(self.payload())
+            elif method == "POST" and route == "/api/workbench/content/pdf-import/export":
+                result = app.pdf_import.export(self.payload())
+            elif method == "DELETE" and route.startswith("/api/workbench/content/pdf-import/"):
+                result = app.pdf_import.discard(route.split("/")[-1])
             elif method == "POST" and route == "/api/workbench/content/pdf":
                 filename = unquote(self.headers.get("X-Filename", "document.pdf"))
                 relative = unquote(self.headers.get("X-Content-Path", ""))

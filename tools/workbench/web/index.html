@@ -25,8 +25,18 @@
   <link rel="stylesheet" href="/workbench/members.css">
 </head>
 <body>
-  <a class="skip-link" href="#main">Skip to workspace</a>
-  <aside class="sidebar">
+  <section id="workbench-startup" class="workbench-startup" aria-labelledby="startup-title" aria-busy="true">
+    <div class="startup-card">
+      <span class="startup-spinner" aria-hidden="true"></span>
+      <p class="eyebrow">Local workspace / Starting up</p>
+      <h1 id="startup-title">Getting everything in sync</h1>
+      <p id="startup-detail" role="status" aria-live="polite">Reading your branch, changed files and Git status. Controls will unlock when the workspace is ready. Nothing is fetched or published automatically.</p>
+      <button type="button" id="startup-retry" class="secondary" hidden>Reload &amp; try again</button>
+      <noscript><p class="notice error">JavaScript is required to start Workbench. Enable it, then reload this page.</p></noscript>
+    </div>
+  </section>
+  <a class="skip-link" href="#main" inert>Skip to workspace</a>
+  <aside class="sidebar" inert>
     <a class="brand" href="#overview"><img src="/static/images/ftsk-logo.png" alt=""><span>FTSK<span class="brand-sub">Site Workbench</span></span></a>
     <nav aria-label="Tools">
       <p class="nav-label git-nav-heading">Git / Start here</p>
@@ -45,7 +55,7 @@
     </nav>
     <div class="local-note"><span class="dot"></span> Local workspace only<p>Nothing is published automatically.</p></div>
   </aside>
-  <div class="workspace">
+  <div class="workspace" inert>
     <header class="topbar">
       <span>FTSK / <strong id="breadcrumb">Overview</strong></span>
       <strong id="git-branch-banner" class="branch-banner locked">Connecting · editing locked</strong>
@@ -459,24 +469,26 @@
             <div id="content-editor" hidden>
               <div class="editor-bar panel"><div><strong id="editing-title">Untitled</strong><code id="editing-path"></code><span id="editor-state" class="badge">Saved</span></div><div class="actions" aria-label="Whole-page actions"><button class="secondary" id="validate-page">Validate</button><button class="secondary" id="preview-page">Preview page</button><button id="save-page">Save page</button><button class="danger secondary" id="delete-page">Delete page…</button></div></div>
               <div id="content-feedback" class="notice" role="status" aria-live="polite" hidden></div>
-              <section class="editor-page-tools" aria-label="Page-wide tools">
-                <div><p class="eyebrow">Page tools</p><p class="hint">Manage files and inspect the whole page. These tools do not insert content unless you choose to.</p></div>
+              <section class="editor-page-tools" aria-label="Page workspace modes">
+                <div><p class="eyebrow">Choose your workspace</p><p class="hint">Edit the page or switch to a dedicated tool. Your draft stays with you; the highlighted workspace is active below.</p></div>
                 <div class="page-tool-actions">
+                  <button type="button" id="editor-return-content" class="secondary" aria-pressed="true"><strong>Edit page</strong><span>Story, details &amp; people</span></button>
                   <button type="button" class="secondary" data-editor-tool="page-media" aria-pressed="false"><strong>Files &amp; usage</strong><span>Page media · remove &amp; delete</span></button>
                   <button type="button" class="secondary" data-editor-tool="media" aria-pressed="false"><strong>Add images &amp; PDFs</strong><span>Upload, borrow &amp; insert</span></button>
+                  <button type="button" class="secondary" data-editor-tool="pdf-import" aria-pressed="false"><strong>Read a PDF</strong><span>Extract text &amp; review photos</span></button>
                   <button type="button" class="secondary" data-editor-tool="placement" aria-pressed="false"><strong>File &amp; URL</strong><span>Path, aliases &amp; upload folders</span></button>
                   <button type="button" class="secondary" data-editor-tool="source" aria-pressed="false"><strong>Full source</strong><span>Advanced Markdown &amp; YAML</span></button>
                 </div>
               </section>
+              <div id="editor-tool-heading" class="section-heading editor-tool-heading" role="status" aria-live="polite">
+                <div><p id="editor-workspace-kind" class="eyebrow">Editing mode</p><h2 id="editor-tool-title">Edit page</h2><p id="editor-workspace-detail" class="hint">Write your story and manage page details below.</p></div>
+                <span id="editor-workspace-badge" class="badge">EDITING</span>
+              </div>
               <div id="editor-content-navigation">
                 <p class="eyebrow">Edit content</p>
                 <div class="editor-tabs" role="tablist" aria-label="Content sections">
                   <button role="tab" aria-selected="true" data-editor-tab="write">Story</button><button role="tab" aria-selected="false" data-editor-tab="metadata">Page details</button><button role="tab" aria-selected="false" data-editor-tab="contacts">People &amp; contacts</button><button role="tab" aria-selected="false" data-editor-tab="course">Course &amp; FAQ</button><button role="tab" aria-selected="false" data-editor-tab="seo">SEO &amp; sharing</button>
                 </div>
-              </div>
-              <div id="editor-tool-heading" class="section-heading editor-tool-heading" hidden>
-                <div><p class="eyebrow">Page workspace</p><h2 id="editor-tool-title"></h2></div>
-                <button type="button" id="editor-return-content" class="secondary">Back to content editing</button>
               </div>
               <div class="panel" data-editor-panel="write" role="tabpanel">
                 <div class="section-heading"><h2>Markdown story</h2><span id="word-count" class="hint"></span></div>
@@ -514,6 +526,38 @@
                 <details open class="media-converter"><summary>Upload new images · page-owned files only</summary><p class="hint">New files always go to this page's fixed folder, even while browsing borrowed images. Writes files only after explicit conversion. Unsaved page previews do not undo these exports. Original aspect ratios are retained; output names get suffixes on collision.</p><label>Fixed destination under static/images/<input id="content-image-folder" readonly></label><div class="crop-settings"><label>Max width<input id="content-image-width" type="number" min="64" max="6000" value="1600"></label><label>Max height<input id="content-image-height" type="number" min="64" max="6000" value="1600"></label><label>Quality<input id="content-image-quality" type="number" min="1" max="100" value="82"></label><label>Output name (single file, optional)<input id="content-image-name" placeholder="01-cave-entrance"></label></div><label class="dropzone" for="content-image-files"><strong>Choose or drop original photos</strong><span>JPG, PNG, WebP, HEIF/HEIC</span><input id="content-image-files" type="file" accept="image/jpeg,image/png,image/webp,image/heif,image/heic,.heif,.heic" multiple></label><button id="content-convert">Convert &amp; add to page folder</button><div id="content-conversion-results" class="hint"></div></details>
                 <h3>Insert images / site shortcodes</h3><p class="hint">Select photos above in gallery order. Use a chosen photo as the banner/card/social override or insert a layout at the last Markdown cursor position.</p><div class="form-grid"><label>Layout<select id="insert-layout"><option value="image">Standalone image shortcode</option><option value="markdown">Markdown image</option><option value="media">Text next to a photo</option><option value="gallery">Gallery (all selected photos)</option></select></label><label>Alt text (required)<input id="insert-alt" placeholder="Describe the photo"></label><label>Caption (optional)<input id="insert-caption"></label><label>Desktop width (%)<input id="insert-width" type="number" min="10" max="100" value="60"></label><label>Mobile width (%)<input id="insert-mobile-width" type="number" min="10" max="100" value="100"></label><label>Image alignment / side<select id="insert-side"><option value="center">Center (image)</option><option value="right">Right</option><option value="left">Left</option></select></label><label>Media font multiplier<input id="insert-font" type="number" min="0.8" max="1.5" step="0.1" value="1"></label></div><div id="selected-photo-details"></div><button id="insert-photos">Insert into story</button><pre id="shortcode-output" hidden></pre>
                 <details class="media-converter"><summary>PDF reports</summary><button type="button" class="secondary" id="choose-pdf">Choose / borrow existing PDF…</button><label>Existing local PDF URL (manual entry also supported)<input id="insert-pdf-url" placeholder="/pdfs/turak/legacy-trip.pdf"></label><label>PDF title<input id="insert-pdf-title" placeholder="Full report"></label><button class="secondary" id="insert-pdf">Insert PDF shortcode</button><h3>Upload a new PDF · page-owned</h3><label>Fixed destination under static/pdfs/<input id="pdf-folder" readonly></label><label>PDF file<input id="pdf-file" type="file" accept="application/pdf,.pdf"></label><button class="secondary" id="upload-pdf">Upload PDF to page folder</button><p class="hint">30 MiB maximum. Borrowed PDFs stay where they are. New uploads always use the page-owned folder and persist independently of saving the page. Existing PDFs are never overwritten.</p></details>
+              </div>
+              <div class="panel pdf-import-panel" data-editor-panel="pdf-import" role="region" aria-label="PDF to Markdown import" hidden>
+                <p class="eyebrow">PDF → review → Markdown draft</p>
+                <p>Recover the story and photographs from a report. Extraction stays temporary until you choose to export. Your existing page is never automatically saved or replaced.</p>
+                <div class="pdf-import-steps" aria-label="Import workflow"><span>1 · Read locally</span><span>2 · Review text &amp; photos</span><span>3 · Convert &amp; add to draft</span></div>
+                <div class="form-grid">
+                  <label>PDF source<select id="pdf-import-source"><option value="existing">Existing site PDF</option><option value="upload">PDF from my computer</option></select></label>
+                  <label>Fixed image destination under static/images/<input id="pdf-import-folder" readonly></label>
+                </div>
+                <div id="pdf-import-existing"><div class="actions"><button type="button" class="secondary" id="pdf-import-borrow">Browse site PDFs…</button></div><label>Local PDF URL<input id="pdf-import-url" placeholder="/pdfs/turak/report.pdf"></label></div>
+                <div id="pdf-import-upload" hidden><label>Choose a PDF · up to 64 MiB<input id="pdf-import-file" type="file" accept="application/pdf,.pdf"></label></div>
+                <p class="hint">Embedded text only; scanned pages need OCR/manual transcription. Reading order, tables and captions may need cleanup. Adjacent photo strips are joined; tiny decorations are skipped. Nothing is sent to an external service.</p>
+                <div class="actions"><button type="button" id="pdf-import-read">Extract text &amp; photos</button><button type="button" class="secondary" id="pdf-import-discard" disabled>Discard extraction</button></div>
+                <p id="pdf-import-status" class="notice" role="status" aria-live="polite" hidden></p>
+                <section id="pdf-import-review" hidden aria-label="Review extracted PDF">
+                  <div class="section-heading"><h3 id="pdf-import-summary">Extracted content</h3><button type="button" class="secondary" id="pdf-import-download">Download extracted text.md</button></div>
+                  <p id="pdf-import-warnings" class="notice"></p>
+                  <details open><summary>Extracted text · page order</summary><textarea id="pdf-import-text" class="source-editor" readonly aria-label="Extracted Markdown text"></textarea></details>
+                  <div class="section-heading"><h3>Photographs · select the ones to keep</h3><div class="actions"><button type="button" class="secondary" id="pdf-import-all">Select all</button><button type="button" class="secondary" id="pdf-import-none">Select none</button></div></div>
+                  <p class="hint">Exports use the site converter: WebP, original aspect ratio, no upscale. Image descriptions start as page-number placeholders; replace them with meaningful descriptions in the draft.</p>
+                  <div id="pdf-import-images" class="pdf-import-images"></div>
+                  <div class="form-grid">
+                    <label>Maximum width<input id="pdf-import-width" type="number" min="64" max="6000" value="1600"></label>
+                    <label>Maximum height<input id="pdf-import-height" type="number" min="64" max="6000" value="1600"></label>
+                    <label>WebP quality<input id="pdf-import-quality" type="number" min="1" max="100" value="82"></label>
+                    <label>Card &amp; heading photo<select id="pdf-import-cover"><option value="">Keep the current page photos</option></select></label>
+                    <label>Add extracted story<select id="pdf-import-mode"><option value="append">Append to the current story</option><option value="replace">Replace the story after confirmation</option><option value="images">Export images only · keep story</option></select></label>
+                    <label class="check-label"><input id="pdf-import-keep-pdf" type="checkbox" checked> Keep the original PDF link (uploads also save the original)</label>
+                  </div>
+                  <p class="notice">Exported images and uploaded originals persist on disk even if you discard the Markdown draft. No existing files are overwritten. Review the draft, render a preview, then save explicitly.</p>
+                  <button type="button" id="pdf-import-apply">Convert selected photos &amp; add to draft</button>
+                </section>
               </div>
               <div class="panel" data-editor-panel="page-media" role="region" aria-label="Page files and usage workspace" hidden>
                 <div class="section-heading"><h2>This page's images &amp; PDFs</h2><button type="button" class="secondary" id="page-media-refresh">Refresh files &amp; references</button></div>

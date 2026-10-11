@@ -344,6 +344,23 @@ class HeroAndProcessTests(Fixture):
 
 
 class HTTPTests(Fixture):
+    def test_pdf_import_api_requires_token_and_exposes_reviewed_previews(self):
+        from test_pdf_import import sample_pdf
+        headers = {"X-Workbench-Token": self.app.token, "X-Content-Path": "turak/archive.md",
+                   "X-Filename": "report.pdf"}
+        self.assertEqual(self.request("/api/workbench/content/pdf-import", "POST", sample_pdf())[0], 403)
+        status, raw, _ = self.request("/api/workbench/content/pdf-import", "POST", sample_pdf(), headers)
+        self.assertEqual(status, 200, raw)
+        result = json.loads(raw)
+        self.assertEqual(self.request(result["images"][0]["preview"])[0], 200)
+        payload = json.dumps({"id": result["id"], "path": result["path"], "images": [result["images"][0]["id"]]})
+        self.assertEqual(self.request("/api/workbench/content/pdf-import/export", "POST", payload)[0], 403)
+        status, raw, _ = self.request("/api/workbench/content/pdf-import/export", "POST", payload, headers)
+        self.assertEqual(status, 200, raw)
+        self.assertIn(".webp", json.loads(raw)["markdown"])
+        self.assertEqual(self.request(f'/api/workbench/content/pdf-import/{result["id"]}', "DELETE", headers=headers)[0], 200)
+        self.assertEqual(self.request(result["images"][0]["preview"])[0], 400)
+
     def setUp(self):
         super().setUp()
         self.server = workbench.WorkbenchServer(("127.0.0.1", 0), self.app)

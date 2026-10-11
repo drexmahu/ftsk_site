@@ -66,6 +66,7 @@ function renderGitGuidance(data = state.git) {
   const drafts = gitDraftBlockers();
   const guidance = gitGuidance(data, drafts, !data.editable);
   $("#git-guidance").dataset.level = guidance.level;
+  $("#git-guidance").dataset.domain = guidance.domain;
   for (const [id, text] of [["git-guidance-stage", guidance.stage], ["git-next-step", guidance.message],
     ["git-guidance-detail", guidance.detail], ["git-attention-link", guidance.stage]]) {
     if ($("#" + id).textContent !== text) $("#" + id).textContent = text;

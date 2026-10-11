@@ -19,6 +19,12 @@ cikkeket ehhez a struktúrához képest.
 
 ## Böngészős szerkesztés
 
+A **Choose your workspace** sávban az **Edit page** gombbal térhetsz vissza
+az utoljára használt szerkesztési részhez. A többi gomb külön oldal-eszközt
+nyit meg; az aktív gomb színe megegyezik az alatta látható munkafelület
+keretével. Az **EDITING / TOOL ACTIVE** jelzés szöveggel is mutatja a módot,
+nem csak színnel. A módváltás megőrzi a vázlatot, de nem menti automatikusan.
+
 A helyi munkafelületen a fájlok mellett két kis ikon segíti a navigációt:
 **Open in VS Code** megnyitja a mentett szöveget vagy képet VS Code-ban,
 **Reveal in Explorer** kijelöli a fájlt a Windows Intézőben. Elérhetők az
@@ -26,6 +32,46 @@ oldallistában, dokumentumforrásnál, képtárakban, konvertálási eredmények
 és Git-fájllistákban. Nem mentik a vázlatot és nem módosítják a fájlt;
 nem létező fájlnál előbb menteni/exportálni kell. A VS Code `vscode://`
 protokollkezelője és a helyi Windows munkafelület szükséges hozzájuk.
+
+### PDF-beszámoló beolvasása
+
+A **Pages & posts → oldal → Read a PDF** eszköz helyben olvassa ki a PDF
+szövegét és képeit. Választhatsz meglévő PDF-et a fájltárból, vagy feltölthetsz
+legfeljebb **64 MiB** méretű dokumentumot. A célmappa az oldal útvonalából
+származik, nem kell kézzel megadni.
+
+1. **Extract text & photos:** ideiglenes szöveg- és képelőnézetet készít;
+   ekkor még nem ír a weboldal mappáiba.
+2. Nézd át a szöveget és jelöld ki a megtartandó képeket. Az összetartozó
+   képcsíkokat összeilleszti, az ismétlődő fotókat csak egyszer exportálja.
+   A **Download extracted text.md** külön Markdown-vázlatot tölt le.
+3. Állítsd be a méretet, minőséget és opcionálisan a kártya/fejléc képét.
+   A meglévő konverter WebP-t készít, aránytartóan, felnagyítás nélkül:
+   alapból legfeljebb 1600 × 1600 pixel, 82-es minőség.
+4. Választhatsz hozzáfűzést, megerősítést igénylő szövegcserét, vagy csak
+   képexportot. A metaadatok megmaradnak. **Save page** csak az átnézés és
+   előnézet után szükséges; a beolvasás/export önmagában nem menti a cikket.
+
+Például a `turak/legacy-bukk-mikulas-tura-2014.md` oldal képei a
+`static/images/turak/legacy-bukk-mikulas-tura-2014/` mappába kerülnek.
+A megtartott, újonnan feltöltött eredeti PDF a megfelelő
+`static/pdfs/turak/legacy-bukk-mikulas-tura-2014/` mappába kerül.
+A már létező PDF helyben marad; az ütköző fájlnevek sorszámot kapnak.
+
+A mentett képek és feltöltött PDF-ek **a vázlat vagy ideiglenes beolvasás
+eldobása után is megmaradnak**. A **Discard extraction** csak az ideiglenes
+előnézetet törli. A fájlok végleges törléséhez használd az oldal fájltárát.
+
+Ez nem OCR: képként szkennelt szöveghez külön szövegfelismerés vagy kézi
+átírás kell, erről az eszköz figyelmeztet. A kiolvasott szöveg olvasási
+sorrendjét, címeit, táblázatait, képaláírásait és oldalszámait kézzel kell
+finomítani. A képleírások kezdetben oldalszámot tartalmazó helykitöltők;
+cseréld őket érdemi leírásokra. Csak saját vagy felhasználható képeket jelölj ki.
+Sérült vagy jelszóval védett PDF-nél egyértelmű hiba jelenik meg.
+Sem a dokumentum, sem a képek nem kerülnek külső feldolgozó szolgáltatásba.
+
+A helyi API és a tömeges archívfeldolgozás részletei a
+[technikai útmutatóban](TECHNICAL_ENVIRONMENT.md#pdf-import-api-and-archive-batches) találhatók.
 
 ### CV / nekrológ és kategóriaüzenetek
 

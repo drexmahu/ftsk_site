@@ -229,10 +229,101 @@ One local browser application brings together the existing tools:
 ```
 
 Open <http://127.0.0.1:8879/>. The launcher uses the project `.venv`; the
-environment installer already supplies Pillow, PyYAML and the local Monaco
+environment installer already supplies Pillow, PyYAML, PDFium and the local Monaco
 bundle. For an existing installation, rerun setup or run `npm ci` followed
 by `npm run workbench:editors` before starting Workbench. No external editor
 service or CDN is used.
+
+### PDF import API and archive batches
+
+**Pages & posts → Read a PDF** provides staged local text/image extraction,
+photo selection and WebP conversion through the existing site converter.
+See the [editor workflow](CONTENT_GUIDE.md#pdf-beszámoló-beolvasása).
+Existing installations need the updated Python dependencies:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r scripts\requirements-dev.txt
+```
+
+The local-only API follows the existing origin, token and editable-Git guards.
+Get the session token from `GET /api/workbench/status`; send it as
+`X-Workbench-Token` on mutations. Send `X-Workbench-Branch` when pinning a
+request to the branch shown by Workbench. Do not expose this server publicly.
+
+| Method / route under `/api/workbench/content/` | Input / result |
+| --- | --- |
+| `POST pdf-import` | Raw PDF bytes; URL-encoded `X-Filename` and `X-Content-Path` headers. Returns extraction metadata, page text, image IDs/previews, warnings and `markdown`. |
+| `POST pdf-import/inspect` | JSON `{"path":"turak/report.md","url":"/pdfs/turak/report.pdf"}` for an existing local PDF. Same result; no site writes. |
+| `GET pdf-import/{id}/{image-id}.png` | Temporary image preview, valid until discard or server shutdown. |
+| `POST pdf-import/export` | JSON with `id`, matching `path`, selected `images` IDs, optional `width`, `height`, `quality`, `keep_pdf`. Returns `markdown`, exported `images` with local URLs, `pdf_url`, `warnings`, `folder`. Does not save a content page. |
+| `DELETE pdf-import/{id}` | Discards staging only; exported assets remain. |
+
+Example export JSON:
+
+```json
+{
+  "id": "extraction-id-from-inspect",
+  "path": "turak/report.md",
+  "images": ["page-002-image-01"],
+  "width": 1600,
+  "height": 1600,
+  "quality": 82,
+  "keep_pdf": true
+}
+```
+
+Exports are bound to the inspected page path and Git branch. Repeating the
+same export is idempotent; changing the selection/settings after export
+requires another extraction. Failed exports roll back newly created assets.
+Local URLs and page-owned folders are enforced server-side. HTML/shortcode
+syntax from extracted prose is escaped; image/PDF shortcodes are generated
+separately. OCR is not performed.
+
+Limits: 64 MiB per PDF, 200 pages, 200 image objects per page / distinct
+exportable images, 25 million pixels per source image, 1 MiB extracted text,
+120 MiB staged PNGs, five simultaneous staged imports. Photographs are
+deduplicated and adjacent narrow strips joined. Staging previews are bounded
+to 1600 pixels; final export never upscales.
+
+For legacy archive reports, first generate **private** contact sheets:
+
+```powershell
+.\.venv\Scripts\python.exe -m scripts.import_archive_pdfs --review-dir C:\Temp\ftsk-pdf-review
+.\.venv\Scripts\python.exe -m scripts.import_archive_pdfs --report legacy-bukk-mikulas-tura-2014 --apply --cover legacy-bukk-mikulas-tura-2014=page-003-image-02
+```
+
+Without `--apply`, the command only inspects PDFs (and optionally writes
+review artifacts outside the site). Repeat `--report`, `--cover REPORT=ID`
+and `--exclude REPORT=ID` for curated batches; `--cover REPORT=none` retains
+the existing cover. Review before applying: an automatic landscape choice
+is not necessarily a good cover. The apply step writes WebP photos under the
+page-owned image folder, changes card/heading photos and appends a gallery.
+It **preserves the existing story and original PDF** rather than publishing
+unreviewed extracted text. Previously imported pages are rejected to avoid
+duplicated galleries. A content-save failure is reported and may leave
+exported photos for manual review; the command never claims success silently.
+
+The previously truncated Cantabria 2018 archive PDF was restored from
+`https://www.ftsk.hu/FTSK/turak/Cantabria2018.pdf`: the existing 11,101,628 bytes
+were an exact prefix of the complete 55,250,442-byte, 13-page original.
+Its existing local URL is unchanged. Other original archive PDFs were not modified.
+
+### Other Workbench tools
+
+On startup, a loading screen keeps workspace controls inert until the first
+complete status snapshot has rendered (branch, changes and local Git state).
+It does not fetch or publish. Connection failures remain visible with
+automatic retries and a reload action; later polling does not interrupt
+editing with the startup screen. The spinner respects reduced motion.
+
+Page editing uses a persistent **Edit page** workspace button alongside
+dedicated tools. The active button, mode banner and panel border share an
+accent (green editing, cyan files, magenta media, yellow PDF, peach placement,
+lavender source). Text badges and pressed states also indicate the active
+mode. Git recommendations use yellow for local files/checkpoints, magenta
+for local-history actions and cyan for server actions, with stronger glows
+only on actionable recommendations. Reduced-motion preferences disable the
+recommendation pulse; busy/disabled actions remain unhighlighted.
 
 - **Git & workspace:** the landing page displays working files, local commits,
   last-known origin refs and the checked-out branch, with operation animations
