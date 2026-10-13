@@ -3,10 +3,10 @@ date: 2026-10-02T00:00:00Z
 title: Alapfokú tanfolyam (2027)
 current: true
 thumbImg:
-  image_path: /images/hero/ftsk-cave-hero.jpg
+  image_path: /images/tanfolyamok/tanfolyam-2027/2026-ftsk_poszter_03_thumb.webp
 featuredImg:
   width: 40
-  image_path: /images/hero/ftsk-cave-hero.jpg
+  image_path: /images/tanfolyamok/tanfolyam-2027/2026-ftsk_poszter_03.webp
 # Optional extra promo image(s) shown alongside the milestone bar - leave the
 # list empty until a real flyer graphic is ready.
 flyer_images: []
