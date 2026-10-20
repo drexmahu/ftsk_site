@@ -17,12 +17,12 @@ seo:
   open_graph_type: article
   no_index: false
 draft: false
-author_id: zsolyomi-zsofia
+author_id: kalotai-zsofia
 ---
 Az évváltást hagyományosan egy közös túrával ünnepeltük, ezúttal Jósvafő
 környékén.
 
-A teljes beszámolót Zsólyomi Zsófia írta.
+A teljes beszámolót Kalotai Zsófi írta.
 
 {{< pdf src="/pdfs/turak/legacy-szilveszteri-tura-2015.pdf" title="Szilveszteri túra (2015/16)" >}}
 

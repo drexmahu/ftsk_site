@@ -5,7 +5,7 @@ document_label: Emlékezünk
 subtitle: 1966-2017
 document_author: ''
 ---
-![Zsólyomi Zsolt (Frédi)](/images/members/zsolyomi-zsolt/zsolyomi-zsolt-cv.webp)
+{{< image src="/images/members/zsolyomi-zsolt/zsolyomi-zsolt-cv.webp" alt="Zsólyomi Zsolt (Frédi)" width="40" mobile-width="85" >}}
 
 Sajnos nem váratlanul, de szomorúan kell tudomásul vennünk, hogy Zsólyomi Zsolt barátunk, akit mindenki csak Frédi néven ismert, nincs többé.
 

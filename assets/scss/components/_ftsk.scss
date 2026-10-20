@@ -326,6 +326,12 @@
     width: var(--article-mobile-image-width, 100%);
   }
 }
+.ftsk-featured-image {
+  width: var(--featured-image-width, 100%);
+  @include media-breakpoint-down-md {
+    width: 100%;
+  }
+}
 .ftsk-article-figure-center {
   margin-left: auto;
   margin-right: auto;

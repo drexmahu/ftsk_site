@@ -183,8 +183,14 @@ class Workbench:
             width = integer(payload.get("width", 1400 if portrait else 1600), "Maximum width", 64, 6000)
             height = integer(payload.get("height", 1400 if portrait else 1600), "Maximum height", 64, 6000)
             stem = payload["person"] if portrait and "person" in payload else payload.get("name") or entry["stem"]
+            if isinstance(stem, str) and re.fullmatch(
+                    r"[\w-]+\.(?i:jpg|jpeg|png|webp|heif|heic)", stem):
+                stem = stem.rsplit(".", 1)[0]
             if not isinstance(stem, str) or not re.fullmatch(r"[\w-]+", stem):
-                raise ToolError("Output filename must be a stem using letters, numbers, hyphens or underscores.")
+                raise ToolError(
+                    "Output name must use letters, numbers, hyphens or underscores; "
+                    "a supported image extension is optional."
+                )
             base = stem
             suffixes = ("_thumb.webp", "_full.webp") if portrait else (".webp",)
             number = 1

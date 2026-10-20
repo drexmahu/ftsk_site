@@ -17,11 +17,11 @@ seo:
   open_graph_type: article
   no_index: false
 draft: false
-author_id: zsolyomi-zsofia
+author_id: kalotai-zsofia
 ---
 Mikulás napi hagyományos túránk a Bükk barlangjai között vezetett.
 
-A teljes beszámolót Zsólyomi Zsófia írta.
+A teljes beszámolót Kalotai Zsófi írta.
 
 {{< pdf src="/pdfs/turak/legacy-bukk-mikulas-tura-2014.pdf" title="Bükk Mikulás túra (2014)" >}}
 

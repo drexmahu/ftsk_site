@@ -17,12 +17,12 @@ seo:
   open_graph_type: article
   no_index: false
 draft: false
-author_id: zsolyomi-zsofia
+author_id: kalotai-zsofia
 ---
 Folytattuk a Gortani-fennsíkon megkezdett kutatómunkánkat, újabb szakaszok
 feltérképezésével.
 
-A teljes beszámolót Zsólyomi Zsófia írta.
+A teljes beszámolót Kalotai Zsófi írta.
 
 {{< pdf src="/pdfs/turak/legacy-gortani-kutatas-2017.pdf" title="Gortani kutatás (2017)" >}}
 

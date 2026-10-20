@@ -17,12 +17,12 @@ seo:
   open_graph_type: article
   no_index: false
 draft: false
-author_id: zsolyomi-zsofia
+author_id: kalotai-zsofia
 ---
 Idei kutatóutunk ismét a Gortani-fennsíkra vezetett, ahol tovább folytattuk a
 térképezési és feltáró munkát.
 
-A teljes beszámolót Zsólyomi Zsófia írta.
+A teljes beszámolót Kalotai Zsófi írta.
 
 {{< pdf src="/pdfs/turak/legacy-gortani-kutatas-2018.pdf" title="Gortani kutatás (2018)" >}}
 
