@@ -17,11 +17,11 @@ seo:
   open_graph_type: article
   no_index: false
 draft: false
-author_id: zsolyomi-zsofia
+author_id: kalotai-zsofia
 ---
 Rövid tavaszi túránk Trieszt környékének barlangjaihoz vezetett.
 
-A teljes beszámolót Zsólyomi Zsófia írta.
+A teljes beszámolót Kalotai Zsófi írta.
 
 {{< pdf src="/pdfs/turak/legacy-trieszti-tura-2016.pdf" title="Trieszti túra (2016 március)" >}}
 

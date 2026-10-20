@@ -17,12 +17,12 @@ seo:
   open_graph_type: article
   no_index: false
 draft: false
-author_id: zsolyomi-zsofia
+author_id: kalotai-zsofia
 ---
 Környezettudatosságunk jegyében a Gortani-fennsíkon szemétszedő túrát
 tartottunk, hogy tisztán tartsuk a barlangvidéket.
 
-A teljes beszámolót Zsólyomi Zsófia írta.
+A teljes beszámolót Kalotai Zsófi írta.
 
 {{< pdf src="/pdfs/turak/legacy-gortani-szemetszedes-2021.pdf" title="Gortani szemétszedés (2021)" >}}
 

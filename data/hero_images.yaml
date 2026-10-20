@@ -72,13 +72,16 @@
     "x": 33.9
     "y": 33.3
   "start":
-    "focus": "73% 41%"
+    "focus": "83% 50%"
   "animation":
-    "direction": "down"
-    "amount": 12
+    "amount": 2
+    "duration": 7
   "mobile":
+    "direction": "down"
     "amount": 6
-    "focus": "72% 30%"
+    "duration": 12
+    "zoom": 1.65
+    "focus": "72% 48%"
 - "path": "/images/hero/ftsk-hero-cave-3.webp"
   "alt": "Tágas barlangterem barlangászokkal"
   "mirror": "horizontal"
@@ -99,7 +102,7 @@
     "x": 61.2
     "y": 42.3
   "start":
-    "focus": "74% 55%"
+    "focus": "74% 44%"
   "mobile":
     "direction": "down"
     "focus": "56% 43%"

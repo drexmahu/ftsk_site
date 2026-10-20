@@ -17,12 +17,12 @@ seo:
   open_graph_type: article
   no_index: false
 draft: false
-author_id: zsolyomi-zsofia
+author_id: kalotai-zsofia
 ---
 Nyári nagy túránk első felvonásaként a Rolo-fennsíkon szemétszedő akciót
 tartottunk a Gortani-kutatásaink helyszínének közelében.
 
-A teljes beszámolót Zsólyomi Zsófia írta.
+A teljes beszámolót Kalotai Zsófi írta.
 
 {{< pdf src="/pdfs/turak/legacy-rolo-szemetszedes-2018.pdf" title="Első felvonás: Rolo szemétszedés (2018)" >}}
 

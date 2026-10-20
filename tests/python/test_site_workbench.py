@@ -175,6 +175,16 @@ class ImageTests(Fixture):
             with self.subTest(name=name), self.assertRaises(workbench.ToolError):
                 self.app.convert({**payload, "name": name})
 
+    def test_custom_filename_accepts_source_image_extension(self):
+        entry = self.stage()
+        result = self.app.convert({
+            "id": entry["id"],
+            "folder": "tanfolyamok/tanfolyam-2027",
+            "name": "2026_FTSK_poszter_low.png",
+        })
+        self.assertEqual(result["files"][0]["url"],
+                         "/images/tanfolyamok/tanfolyam-2027/2026_FTSK_poszter_low.webp")
+
     def test_portrait_uses_exact_manual_square(self):
         entry = self.stage()
         payload = {"id": entry["id"], "folder": "members", "thumb": 64, "crop": [80, 20, 160, 100]}

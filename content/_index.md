@@ -21,12 +21,12 @@ content_blocks:
       title: "Jelentkezz a "
       title_suffix: "2027-es alapfokú barlangász tanfolyamunkra!"
       description: >-
-         Jelentkezés 2026. október 15-től, próbatúrák 2026. december 2-től.
-         A tanfolyam 2027 februárjának második hetében indul; díja 70 000 Ft.
+         Jelentkezés 2026. október 22-től, próbatúrák 2026. december 1-től.
+         A tanfolyam 2027 február 10-én indul, díja 70 000 Ft.
       link:
          text: Bővebben
          url: /tanfolyamok/tanfolyam-2027/
-      note: Zeusz és Drex szervezésében, egyesületi közösségünk részeként.
+      note:
    -
       _bookshop_name: global/header
       title: "Mivel "
