@@ -22,7 +22,7 @@ content_blocks:
       title_suffix: "2027-es alapfokú barlangász tanfolyamunkra!"
       description: >-
          Jelentkezés 2026. október 22-től, próbatúrák 2026. december 1-től.
-         A tanfolyam 2027 február 10-én indul, díja 70 000 Ft.
+         A tanfolyam 2027. február 10-én indul, díja 70 000 Ft.
       link:
          text: Bővebben
          url: /tanfolyamok/tanfolyam-2027/
