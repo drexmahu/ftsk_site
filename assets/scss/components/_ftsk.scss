@@ -1467,9 +1467,7 @@ button.ftsk-turak-author {
     padding: 0;
   }
 }
-// Connector to the next milestone; `--p` (0-1) and `--i` (index) come from the
-// template. Segments fill one after another, each taking $seg * --p.
-$ftsk-milestone-seg: 0.5s;
+// Connector to the next milestone; `--p` (0-1) is refreshed by the page script.
 .ftsk-milestone-line {
   position: absolute;
   top: 17px;
@@ -1488,10 +1486,6 @@ $ftsk-milestone-seg: 0.5s;
 .ftsk-milestone-fill,
 .ftsk-milestone-now {
   position: absolute;
-  animation-delay: calc(var(--i) * #{$ftsk-milestone-seg});
-  animation-duration: calc(var(--p) * #{$ftsk-milestone-seg});
-  animation-timing-function: linear;
-  animation-fill-mode: both;
 }
 .ftsk-milestone-fill {
   top: 0;
@@ -1499,11 +1493,10 @@ $ftsk-milestone-seg: 0.5s;
   width: calc(var(--p) * 100%);
   height: 100%;
   background: $color-primary;
-  animation-name: ftsk-milestone-fill-x;
+  transition: width 0.5s linear, height 0.5s linear;
   @include media-breakpoint-down-md {
     width: 100%;
     height: calc(var(--p) * 100%);
-    animation-name: ftsk-milestone-fill-y;
   }
 }
 .ftsk-milestone-now {
@@ -1515,50 +1508,18 @@ $ftsk-milestone-seg: 0.5s;
   background: $color-primary;
   border: 2px solid var(--bg-surface);
   transform: translate(-50%, -50%);
-  animation-name: ftsk-milestone-now-x, ftsk-milestone-pulse;
-  animation-duration: calc(var(--p) * #{$ftsk-milestone-seg}), 2s;
-  animation-delay: calc(var(--i) * #{$ftsk-milestone-seg}),
-    calc((var(--i) + var(--p)) * #{$ftsk-milestone-seg});
-  animation-timing-function: linear, ease-in-out;
-  animation-iteration-count: 1, infinite;
+  transition: left 0.5s linear, top 0.5s linear;
+  animation: ftsk-milestone-pulse 2s ease-in-out infinite;
   @include media-breakpoint-down-md {
     top: calc(var(--p) * 100%);
     left: 50%;
-    animation-name: ftsk-milestone-now-y, ftsk-milestone-pulse;
-  }
-}
-@keyframes ftsk-milestone-fill-x {
-  from {
-    width: 0;
-  }
-}
-@keyframes ftsk-milestone-fill-y {
-  from {
-    height: 0;
-  }
-}
-@keyframes ftsk-milestone-now-x {
-  from {
-    left: 0;
-    opacity: 0;
-  }
-  1% {
-    opacity: 1;
-  }
-}
-@keyframes ftsk-milestone-now-y {
-  from {
-    top: 0;
-    opacity: 0;
-  }
-  1% {
-    opacity: 1;
   }
 }
 @media (prefers-reduced-motion: reduce) {
   .ftsk-milestone-fill,
   .ftsk-milestone-now {
     animation: none;
+    transition: none;
   }
 }
 .ftsk-milestone-dot {
