@@ -34,7 +34,7 @@ jobs:
 
       - name: Find open PRs targeting main
         id: open-prs
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const pullRequests = await github.paginate(github.rest.pulls.list, {
@@ -90,7 +90,7 @@ jobs:
 
       - name: Request Pages rebuild after cleanup
         if: steps.remove-previews.outputs.changed == 'true'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             await github.rest.repos.requestPagesBuild({
