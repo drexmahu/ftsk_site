@@ -1,5 +1,74 @@
+function getCourseMilestoneStates(milestones, now) {
+   var currentTime = now.getTime();
+   var timestamps = milestones.map(function (milestone) {
+      var match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(milestone.date);
+      if (!match) return null;
+
+      var date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+      if (date.getFullYear() !== Number(match[1]) ||
+          date.getMonth() !== Number(match[2]) - 1 ||
+          date.getDate() !== Number(match[3])) return null;
+      return date.getTime();
+   });
+   var stopped = false;
+
+   return milestones.map(function (milestone, index) {
+      var reached = false;
+      if (!stopped) {
+         reached = timestamps[index] !== null && currentTime >= timestamps[index];
+         stopped = !reached;
+      }
+
+      var last = index === milestones.length - 1;
+      var nextReached = !last && timestamps[index + 1] !== null &&
+         currentTime >= timestamps[index + 1];
+      var status = reached ? (last || nextReached ? 'done' : 'current') : 'upcoming';
+      var progress = 0;
+      if (status === 'done') {
+         progress = 1;
+      } else if (status === 'current' && !last) {
+         var span = timestamps[index + 1] - timestamps[index];
+         if (span > 0) progress = Math.max(0, Math.min(1, (currentTime - timestamps[index]) / span));
+      }
+
+      return { status: status, progress: progress, showNow: status === 'current' && !last };
+   });
+}
+
 $(document).ready(function () {
    'use strict';
+
+   var milestoneLists = document.querySelectorAll('.ftsk-milestones');
+   if (milestoneLists.length) {
+      function updateMilestones() {
+         milestoneLists.forEach(function (list) {
+            var milestones = Array.prototype.map.call(list.querySelectorAll('.ftsk-milestone'), function (item) {
+               return { element: item, date: item.getAttribute('data-date') || '' };
+            });
+            var states = getCourseMilestoneStates(milestones, new Date());
+
+            milestones.forEach(function (milestone, index) {
+               var item = milestone.element;
+               item.classList.remove('ftsk-milestone--done', 'ftsk-milestone--current', 'ftsk-milestone--upcoming');
+               item.classList.add('ftsk-milestone--' + states[index].status);
+               item.querySelector('.ftsk-milestone-dot i').hidden = states[index].status !== 'done';
+
+               var line = item.querySelector('.ftsk-milestone-line');
+               if (line) {
+                  line.style.setProperty('--p', states[index].progress.toFixed(6));
+                  var nowDot = line.querySelector('.ftsk-milestone-now');
+                  nowDot.hidden = !states[index].showNow;
+               }
+            });
+         });
+      }
+
+      updateMilestones();
+      window.setInterval(updateMilestones, 60 * 1000);
+      document.addEventListener('visibilitychange', function () {
+         if (!document.hidden) updateMilestones();
+      });
+   }
 
    $(window).on('scroll', function () {
       var windscroll = $(window).scrollTop();
