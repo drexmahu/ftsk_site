@@ -62,6 +62,8 @@ people:
 - id: drexler-mate
   name: Drexler Máté
   nickname: Drex
+  image: /images/members/drexler-mate/drexler-mate_thumb.webp
+  modal_image: /images/members/drexler-mate/drexler-mate_full.webp
   email: mate.drexler@gmail.com
   phone: '+36202515507'
   social_links:
