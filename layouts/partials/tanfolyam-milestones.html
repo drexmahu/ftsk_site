@@ -37,9 +37,9 @@
   {{ if $reached }}
     {{ $status = cond (or (eq $i $last) $nextReached) "done" "current" }}
   {{ end }}
-  <li class="ftsk-milestone ftsk-milestone--{{ $status }}">
+  <li class="ftsk-milestone ftsk-milestone--{{ $status }}" data-date="{{ with $m.date }}{{ time.AsTime . | time.Format "2006-01-02" }}{{ end }}">
     <span class="ftsk-milestone-dot" aria-hidden="true">
-      {{ if eq $status "done" }}<i class="ph ph-check-bold" aria-hidden="true"></i>{{ end }}
+      <i class="ph ph-check-bold" aria-hidden="true"{{ if ne $status "done" }} hidden{{ end }}></i>
     </span>
     <span class="ftsk-milestone-label">{{ $m.label }}</span>
     <span class="ftsk-milestone-date">
@@ -64,9 +64,9 @@
           {{ end }}
         {{ end }}
       {{ end }}
-      <span class="ftsk-milestone-line" aria-hidden="true" style="--p: {{ printf "%.4f" $p }}; --i: {{ $i }};">
+      <span class="ftsk-milestone-line" aria-hidden="true" style="--p: {{ printf "%.6f" $p }};">
         <span class="ftsk-milestone-fill"></span>
-        {{ if $showNow }}<span class="ftsk-milestone-now"></span>{{ end }}
+        <span class="ftsk-milestone-now"{{ if not $showNow }} hidden{{ end }}></span>
       </span>
     {{ end }}
   </li>

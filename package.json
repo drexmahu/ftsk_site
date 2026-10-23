@@ -11,7 +11,7 @@
     "hugo-server": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/dev-server.ps1",
     "build": "hugo --source ./ --destination public --baseURL /",
     "workbench:editors": "node scripts/build_workbench_editors.js",
-    "test": "node tests/js/test_404_navigation.js && node tests/js/test_people_workbench.js && node tests/js/test_hero_framing.js && node tests/js/test_history_archive.js && node tests/js/test_turak_filters.js && node tests/js/test_pdf_import_workbench.js && node tests/js/test_workbench_startup.js"
+    "test": "node tests/js/test_404_navigation.js && node tests/js/test_tanfolyam_milestones.js && node tests/js/test_people_workbench.js && node tests/js/test_hero_framing.js && node tests/js/test_history_archive.js && node tests/js/test_turak_filters.js && node tests/js/test_pdf_import_workbench.js && node tests/js/test_workbench_startup.js"
   },
   "repository": {
     "type": "git",
