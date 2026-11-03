@@ -29,10 +29,13 @@ people:
   image: /images/members/abraham-gabor/abraham-gabor_thumb.webp
   modal_image: /images/members/abraham-gabor/abraham-gabor_full.webp
   id: abraham-gabor
-- name: Bacsó Gábor
+- id: bacso-gabor
+  name: Bacsó Gábor
   image: /images/members/bacso-gabor/bacso-gabor_thumb.webp
   modal_image: /images/members/bacso-gabor/bacso-gabor_full.webp
-  id: bacso-gabor
+  show_profile_contacts: false
+  aliases: []
+  needs_review: false
 - id: balazs-zoltan
   name: Balázs Zoltán
   image: /images/members/balazs-zoltan/balazs-zoltan_thumb.webp
@@ -531,7 +534,7 @@ groups:
   - person: abraham-gabor
   - person: bacso-gabor
     roles:
-    - turavezeto
+    - kutatasvezeto
   - person: balazs-zoltan
     roles: []
   - person: borsos-szabo-balint
