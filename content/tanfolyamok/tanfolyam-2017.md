@@ -55,6 +55,6 @@ A keddi idõpontok este 7 órakor, a hétvégi idõpontok délelõtt 10:30-kor l
 
 A tanfolyamon való részvétel feltétele, hogy a résztvevõ vállalja az egyesület célkitûzéseinek anyagi támogatását. Ennek összege 30.000 Ft, mely magában foglalja a 2017 év elsõ félévi pártoló tagsági díjat. A tanfolyam ideje alatt az egyesület tagjai biztosítják a szükséges technikai felszerelések (sisak, fejlámpa, kötéltechnikai felszerelés) használatát.
 
-Elméleti oktatások (szerdánként este 7-tõl): Budapest, XI. Bartók Béla út 19. (Delfin klub feliratú kaputelefon, pincehelyiség). A vendégelõadóknál a helyszín és az idõpont változhat, de azt elõre jelezzük.
+Elméleti oktatások (szerdánként este 7-től): Budapest, XI. Bartók Béla út 19. (Delfin klub feliratú kaputelefon, pincehelyiség). A vendégelõadóknál a helyszín és az idõpont változhat, de azt elõre jelezzük.
 
 A tanfolyam túrái hétvégenként lesznek (fõként vidéken), valamint keddenként edzõtúrázunk este 7-tõl Budapesten.
