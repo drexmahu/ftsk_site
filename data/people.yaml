@@ -1,10 +1,13 @@
 # Permanent identities and independent current-membership assignments.
 people:
-- name: Gyovai Tamás
+- id: gyovai-tamas
+  name: Gyovai Tamás
   image: /images/members/gyovai-tamas/gyovai-tamas_thumb.webp
   modal_image: /images/members/gyovai-tamas/gyovai-tamas_full.webp
-  id: gyovai-tamas
   email: gyovai94@gmail.com
+  show_profile_contacts: false
+  aliases: []
+  needs_review: false
 - name: Kalotai Zsófi
   image: /images/members/kalotai-zsofia/kalotai-zsofia_thumb.webp
   modal_image: /images/members/kalotai-zsofia/kalotai-zsofia_full.webp
