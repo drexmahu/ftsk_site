@@ -21,7 +21,7 @@ participant_ids:
 - fercsik-gabor
 - juhasz-kata
 - kakuk-maria
-- kovacs-imre
+- kovacs-imre-2
 - lempochner-lili
 - marton-anna
 - pataki-laszlo
@@ -31,7 +31,7 @@ participant_ids:
 - szoko-csaba
 - toth-monika
 - toltl-erzsebet
-- varga-boglarka
+- varga-bogi
 - varga-laszlo
 contacts:
 - role: ''

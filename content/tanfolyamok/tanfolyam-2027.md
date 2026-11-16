@@ -18,13 +18,13 @@ milestones:
   date: '2026-12-01'
   estimated: false
 - label: Utolsó próbatúra
-  date: '2027-01-27'
-  estimated: true
+  date: '2027-01-12'
+  estimated: false
 - label: Tanfolyam kezdete
   date: '2027-02-10'
   estimated: false
 - label: Vizsga
-  date: '2027-07-01'
+  date: '2027-07-02'
   estimated: true
 contacts:
 - person: drexler-mate
@@ -136,5 +136,6 @@ A túrák körülbelül 3 óra hosszúak lesznek.
 - **2026. december 3.** - Mátyás-hegyi-barlang, este 7-től.
 - **2026. december 8.** - Mátyás-hegyi-barlang, este 7-től.
 - **2026. december 10.** - Mátyás-hegyi-barlang, este 7-től.
+- **2027. január 17.** - Mátyás-hegyi-barlang, este 7-től.
+- **2027. január 12.** - Mátyás-hegyi-barlang, este 7-től.
 
-A további időpontokat később tesszük közzé.
