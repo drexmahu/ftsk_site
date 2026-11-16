@@ -84,6 +84,42 @@ jobs:
           action: deploy
           wait-for-pages-deployment: false
 
+      - name: Check preview revision on deployment branch
+        if: steps.publish-check.outputs.publish == 'true'
+        id: deployment-check
+        uses: actions/github-script@v8
+        env:
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        with:
+          script: |
+            let deployed = false;
+            try {
+              const { data: file } = await github.rest.repos.getContent({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                path: `pr-preview/pr-${process.env.PR_NUMBER}/pr-preview-head.txt`,
+                ref: "gh-pages",
+              });
+              deployed = !Array.isArray(file) &&
+                Buffer.from(file.content, file.encoding).toString().trim() === process.env.PR_HEAD_SHA;
+            } catch {
+              core.notice("The preview revision was not found on gh-pages; retrying the deployment.");
+            }
+            core.setOutput("retry", String(!deployed));
+
+      - name: Retry PR preview deployment
+        if: steps.publish-check.outputs.publish == 'true' && steps.deployment-check.outputs.retry == 'true'
+        uses: rossjrw/pr-preview-action@v1
+        with:
+          source-dir: ./public/
+          preview-branch: gh-pages
+          umbrella-dir: pr-preview
+          pages-base-url: ${{ steps.pages-urls.outputs.action-base }}
+          action: deploy
+          comment: false
+          wait-for-pages-deployment: false
+
       - name: Request Pages rebuild
         if: steps.publish-check.outputs.publish == 'true'
         uses: actions/github-script@v8
