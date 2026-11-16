@@ -25,7 +25,7 @@ content_blocks:
       - text: "Országos Barlangnyilvántartás"
         url: https://www.termeszetvedelem.hu/index.php?pg=caves
       - text: "Montenegró barlangász expedíció"
-        url: http://montenegro.barlang.hu/
+        url: https://www.hse-montenegro.org/
       - text: "MKBT Oktatási Szakosztály"
         url: http://oktatas.barlang.hu/
       - text: "FTSK Facebook-oldala"

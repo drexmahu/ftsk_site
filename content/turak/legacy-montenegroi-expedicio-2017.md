@@ -20,7 +20,7 @@ draft: false
 author_id: gyovai-tamas
 ---
 Nagyszabású nemzetközi expedíciónk Montenegró hegyvidékére vezetett, ahol
-csapatunk feltáratlan barlangokat kutatott fel.
+csapatunk is részt vett a barlangok feltárásában.
 
 A teljes beszámolót Gyovai Tamás írta.
 

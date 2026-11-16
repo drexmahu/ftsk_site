@@ -241,10 +241,13 @@ people:
   image: /images/members/brunner-andras/brunner-andras_thumb.webp
   modal_image: /images/members/brunner-andras/brunner-andras_full.webp
   id: brunner-andras
-- name: Ekés Bálint
+- id: ekes-balint
+  name: Ekés Bálint
   image: /images/members/ekes-balint/ekes-balint_thumb.webp
   modal_image: /images/members/ekes-balint/ekes-balint_full.webp
-  id: ekes-balint
+  show_profile_contacts: false
+  aliases: []
+  needs_review: false
 - name: Énekes Klaudia
   image: /images/members/enekes-klaudia/enekes-klaudia_thumb.webp
   modal_image: /images/members/enekes-klaudia/enekes-klaudia_full.webp
@@ -512,6 +515,22 @@ people:
   name: Varga Viktória
 - id: viczian-andras
   name: Viczián András
+- id: varga-bogi
+  name: Varga Bogi
+  image: /images/members/varga-bogi/varga-bogi_thumb.webp
+  modal_image: /images/members/varga-bogi/varga-bogi_full.webp
+  show_profile_contacts: false
+  aliases: []
+  needs_review: false
+- id: kovacs-imre-2
+  name: Kovács Imi
+  image: /images/members/kovacs-imre-2/kovacs-imre-2_thumb.webp
+  modal_image: /images/members/kovacs-imre-2/kovacs-imre-2_full.webp
+  show_profile_contacts: false
+  aliases:
+  - Imre
+  - Kovács
+  needs_review: false
 groups:
 - label: Vezetőség
   members:
@@ -597,10 +616,13 @@ groups:
     roles:
     - turavezeto
   - person: varga-gabor
+  - person: varga-bogi
+    roles: []
 - label: Pártoló tagok
   members:
   - person: brunner-andras
   - person: ekes-balint
+    roles: []
   - person: enekes-klaudia
   - person: golya-bernadett
   - person: hamar-eva
