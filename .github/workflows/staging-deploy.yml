@@ -41,7 +41,7 @@ jobs:
           force: false # rebase instead of force-pushing so PR previews aren't clobbered
 
       - name: Request Pages rebuild
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             await github.rest.repos.requestPagesBuild({
