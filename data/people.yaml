@@ -361,63 +361,132 @@ people:
   id: zsolyomi-zsolt
 - id: borhi-anita
   name: Borhi Anita
+  image: /images/members/borhi-anita/borhi-anita_thumb.webp
+  modal_image: /images/members/borhi-anita/borhi-anita_full.webp
+  show_profile_contacts: false
+  aliases: []
   needs_review: true
 - id: fercsik-gabor
   name: Fercsik Gábor
+  image: /images/members/fercsik-gabor/fercsik-gabor_thumb.webp
+  modal_image: /images/members/fercsik-gabor/fercsik-gabor_full.webp
+  show_profile_contacts: false
+  aliases: []
   needs_review: true
 - id: juhasz-kata
   name: Juhász Kata
+  image: /images/members/juhasz-kata/juhasz-kata_thumb.webp
+  modal_image: /images/members/juhasz-kata/juhasz-kata_full.webp
+  show_profile_contacts: false
+  aliases: []
   needs_review: true
 - id: kakuk-maria
   name: Kakuk Mária
+  image: /images/members/kakuk-maria/kakuk-maria_thumb.webp
+  modal_image: /images/members/kakuk-maria/kakuk-maria_full.webp
+  show_profile_contacts: false
+  aliases: []
   needs_review: true
 - id: marton-anna
   name: Márton Anna
+  image: /images/members/marton-anna/marton-anna_thumb.webp
+  modal_image: /images/members/marton-anna/marton-anna_full.webp
+  show_profile_contacts: false
+  aliases: []
   needs_review: true
 - id: pataki-laszlo
   name: Pataki László
+  image: /images/members/pataki-laszlo/pataki-laszlo_thumb.webp
+  modal_image: /images/members/pataki-laszlo/pataki-laszlo_full.webp
+  show_profile_contacts: false
+  aliases: []
   needs_review: true
 - id: szabo-dominika
   name: Szabó Dominika
+  image: /images/members/szabo-dominika/szabo-dominika_thumb.webp
+  modal_image: /images/members/szabo-dominika/szabo-dominika_full.webp
+  show_profile_contacts: false
+  aliases: []
   needs_review: true
 - id: szoko-csaba
   name: Szökő Csaba
+  image: /images/members/szoko-csaba/szoko-csaba_thumb.webp
+  modal_image: /images/members/szoko-csaba/szoko-csaba_full.webp
+  show_profile_contacts: false
+  aliases: []
   needs_review: true
 - id: toth-monika
   name: Tóth Mónika
+  image: /images/members/toth-monika/toth-monika_thumb.webp
+  modal_image: /images/members/toth-monika/toth-monika_full.webp
+  show_profile_contacts: false
+  aliases: []
   needs_review: true
 - id: toltl-erzsebet
   name: Töltl Erzsébet
-  needs_review: true
-- id: varga-boglarka
-  name: Varga Boglárka
+  image: /images/members/toltl-erzsebet/toltl-erzsebet_thumb.webp
+  modal_image: /images/members/toltl-erzsebet/toltl-erzsebet_full.webp
+  show_profile_contacts: false
+  aliases: []
   needs_review: true
 - id: varga-laszlo
   name: Varga László
+  image: /images/members/varga-laszlo/varga-laszlo_thumb.webp
+  modal_image: /images/members/varga-laszlo/varga-laszlo_full.webp
+  show_profile_contacts: false
+  aliases: []
   needs_review: true
 - id: bitter-zsuzsa
   name: Bitter Zsuzsa
+  image: /images/members/bitter-zsuzsa/bitter-zsuzsa_thumb.webp
+  modal_image: /images/members/bitter-zsuzsa/bitter-zsuzsa_full.webp
+  show_profile_contacts: false
+  aliases: []
   needs_review: true
 - id: csiky-gergo
   name: Csiky Gergő
+  image: /images/members/csiky-gergo/csiky-gergo_thumb.webp
+  modal_image: /images/members/csiky-gergo/csiky-gergo_full.webp
+  show_profile_contacts: false
+  aliases: []
   needs_review: true
 - id: janosy-zoltan
   name: Jánosy Zoltán
+  image: /images/members/janosy-zoltan/janosy-zoltan_thumb.webp
+  modal_image: /images/members/janosy-zoltan/janosy-zoltan_full.webp
+  show_profile_contacts: false
+  aliases: []
   needs_review: true
 - id: karsay-david
   name: Karsay Dávid
   needs_review: true
 - id: kerekgyarto-tamas
   name: Kerékgyártó Tamás
+  image: /images/members/kerekgyarto-tamas/kerekgyarto-tamas_thumb.webp
+  modal_image: /images/members/kerekgyarto-tamas/kerekgyarto-tamas_full.webp
+  show_profile_contacts: false
+  aliases: []
   needs_review: true
 - id: magyar-zsuzsanna
   name: Magyar Zsuzsanna
+  image: /images/members/magyar-zsuzsanna/magyar-zsuzsanna_thumb.webp
+  modal_image: /images/members/magyar-zsuzsanna/magyar-zsuzsanna_full.webp
+  show_profile_contacts: false
+  aliases: []
   needs_review: true
 - id: molnar-dora
   name: Molnár Dóra
+  image: /images/members/molnar-dora/molnar-dora_thumb.webp
+  modal_image: /images/members/molnar-dora/molnar-dora_full.webp
+  show_profile_contacts: false
+  aliases: []
   needs_review: true
 - id: varga-agnes
   name: Varga Ágnes
+  image: /images/members/varga-agnes/varga-agnes_thumb.webp
+  modal_image: /images/members/varga-agnes/varga-agnes_full.webp
+  show_profile_contacts: false
+  aliases: []
   needs_review: true
 - id: kolumban-zsuzsi
   name: Kolumbán Zsuzsi
@@ -481,8 +550,18 @@ people:
   name: Boros Amália
 - id: erdei-bea
   name: Erdei Bea
+  image: /images/members/erdei-bea/erdei-bea_thumb.webp
+  modal_image: /images/members/erdei-bea/erdei-bea_full.webp
+  show_profile_contacts: false
+  aliases: []
+  needs_review: false
 - id: nacsinak-david
   name: Nácsinák Dávid
+  image: /images/members/nacsinak-david/nacsinak-david_thumb.webp
+  modal_image: /images/members/nacsinak-david/nacsinak-david_full.webp
+  show_profile_contacts: false
+  aliases: []
+  needs_review: false
 - id: simon-karola
   name: Simon Karola
 - id: szasz-noemi
@@ -497,6 +576,11 @@ people:
   name: Kerekes Andrea
 - id: lieber-virag
   name: Lieber Virág
+  image: /images/members/lieber-virag/lieber-virag_thumb.webp
+  modal_image: /images/members/lieber-virag/lieber-virag_full.webp
+  show_profile_contacts: false
+  aliases: []
+  needs_review: false
 - id: pavlics-ignac
   name: Pavlics Ignác
 - id: roknich-orsolya
@@ -505,14 +589,34 @@ people:
   name: Buránszki Domonkos
 - id: dombi-marianna
   name: Dombi Marianna
+  image: /images/members/dombi-marianna/dombi-marianna_thumb.webp
+  modal_image: /images/members/dombi-marianna/dombi-marianna_full.webp
+  show_profile_contacts: false
+  aliases: []
+  needs_review: false
 - id: nagy-reka
   name: Nagy Réka
 - id: szomyu-zsolt
   name: Szomyú Zsolt
+  image: /images/members/szomyu-zsolt/szomyu-zsolt_thumb.webp
+  modal_image: /images/members/szomyu-zsolt/szomyu-zsolt_full.webp
+  show_profile_contacts: false
+  aliases: []
+  needs_review: false
 - id: toth-janka
   name: Tóth Janka
+  image: /images/members/toth-janka/toth-janka_thumb.webp
+  modal_image: /images/members/toth-janka/toth-janka_full.webp
+  show_profile_contacts: false
+  aliases: []
+  needs_review: false
 - id: varga-viktoria
   name: Varga Viktória
+  image: /images/members/varga-viktoria/varga-viktoria_thumb.webp
+  modal_image: /images/members/varga-viktoria/varga-viktoria_full.webp
+  show_profile_contacts: false
+  aliases: []
+  needs_review: false
 - id: viczian-andras
   name: Viczián András
 - id: varga-bogi

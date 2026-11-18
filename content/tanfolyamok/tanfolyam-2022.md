@@ -28,7 +28,8 @@ participant_ids:
 - roknich-orsolya
 - toth-abris
 flyer_images:
-- image_path: /images/tanfolyamok/tanfolyam-2022/ftsk-tanfolyam-2022-1.webp
+- image_path: /images/tanfolyamok/tanfolyam-2022/2022_alap2.webp
+- image_path: /images/tanfolyamok/tanfolyam-2022/2022_alap.webp
 contacts:
 - role: ''
   person: kalotai-zsofia

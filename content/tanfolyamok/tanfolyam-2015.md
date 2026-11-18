@@ -39,7 +39,8 @@ contacts:
 - role: ''
   person: kalotai-zsofia
 flyer_images:
-- image_path: /images/tanfolyamok/tanfolyam-2015/ftsk-tanfolyam-2015-1.webp
+- image_path: /images/tanfolyamok/tanfolyam-2015/2015_alap1.webp
+- image_path: /images/tanfolyamok/tanfolyam-2015/2015_alap2.webp
 ---
 ## Az FTSK alapfokú barlangász tanfolyamot indít
 

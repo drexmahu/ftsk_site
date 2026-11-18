@@ -22,7 +22,7 @@ seo:
   featured_image: "" # opcionális másik helyi fotó a közösségi kártyához
   open_graph_type: article
   no_index: false
-draft: true
+draft: false
 author: ''
 participants: []
 ---
