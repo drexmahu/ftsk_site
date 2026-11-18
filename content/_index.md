@@ -78,9 +78,7 @@ content_blocks:
       image_path: images/index/kanyon.webp
       title: Kanyoning
       description: >-
-         Alkalmanként kanyoning túrákat is szervezünk. A sport iránt
-         lelkesedő tagjaink CanyonMonkeys néven külön csoportot alapítottak,
-         amely ma Magyar Kanyoning Sportegyesület néven működik.
+          Alkalmanként kanyoning túrákat is szervezünk: Ilyenkor Olaszországban Friuliban, vagy épp a Dolomitokban csúszkálunk és ugrálunk a szebbnél-szebb vízesések mellett. Ezzel a sporttal a természet egy igazán szép és játékos oldalát ismerhetjük meg.
       btn:
          link: /turak/legacy-predelica-kanyontura-2010/
          text: Kanyontúra-beszámoló

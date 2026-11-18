@@ -28,7 +28,7 @@ content_blocks:
       (barlangkutató, földrajztudós, világutazó) 1954-ben mintegy 20 fős
       csapatával feltárta az égerszögi Szabadság-barlangot, és ekkortájt
       csoportot alapított. Eleinte ez a csoport az Élelmiszeripari Minisztérium
-      Kinizsi S.K. turista szakosztály barlangkutató csoportjaként működött,
+      Kinizsi S.K. Turista Szakosztály barlangkutató csoportjaként működött,
       amelyben Dénes a barlangkutatást is megkezdte.
 
 
@@ -37,9 +37,9 @@ content_blocks:
       tagozódtak be, amiben többek közt a későbbiekben sok fontos csoport
       működött szakosztályként, mint például a Hóvirág Szakosztály (túrázás),
       az Excelsior Szakosztály (ma már független hegymászó egyesület), a
-      Delfin Szakosztály (búvár és egyben barlangi búvár klub), a Solymár
-      Csoport (Solymári-ördöglyuk barlangkutatói). 1992-ben a szakosztályok
-      függetlenedtek egymástól, így lett az Excelsior SE önálló egyesület és a
+      Delfin Szakosztály (búvár és egyben barlangi búvár klub), vagy a Solymár
+      Csoport (a Solymári-ördöglyuk barlangkutatói). 1992-ben a szakosztályok
+      függetlenedtek egymástól, így lett az Excelsior SE önálló egyesület, a
       többi szakosztály pedig jogilag a DELFIN Klub égisze alatt működött
       tovább. Nemrég az egyesületünk sok éven át nagy munkát végző elnöke és a
       Hóvirág Szakosztály vezetője Baloghné Szentirmay Judit lemondott
@@ -48,14 +48,14 @@ content_blocks:
       ![Egyesületi logók](/images/gallery/ftsk-gallery-2.png "Korábbi szakosztályaink")
 
       A Barlangkutató Szakosztály legnagyobb érdeme a Szabadság-barlangban
-      feltárt jelentős, 500 m hosszú új rész 1991-ben, Vidics Zoltánné és
-      Frecska József vezetésével, de számos barlang kutatása a nevünkhöz
-      fűződik (Danca-barlang, Solymári-ördöglyuk, Háromlyukú-zsomboly,
+      feltárt jelentős, 500 m hosszú új rész 1991-ben Vidics Zoltánné és
+      Frecska József vezetésével, de számos barlang kutatása az egyesülethez
+      fűződik, mint a Danca-barlang, a Solymári-ördöglyuk, a Háromlyukú-zsomboly vagy a
       Látó-hegyi-barlang).
 
 
       Egyesületünk kutatóházat is üzemeltetett Égerszögön a Szabadság-barlang
-      mellett, valamint a Som-hegyi turistaházat is az FTSK üzemeltette
+      mellett, emellett pedig a Som-hegyi turistaházat is mi működtettük
       egészen addig, amíg 2013-ban át nem adta az állam a Pilisi Parkerdő
       részére. Jelenlegi központunk a Budapesten található Bartók Béla úti
       klubhelyiség, ahol gyűléseinket, eseményeinket, tanfolyamainkat tartjuk.
@@ -141,9 +141,7 @@ content_blocks:
     image_path: images/index/kanyon.webp
     title: Kanyoning
     description: >-
-      Alkalmanként kanyoning túrákat is szervezünk. A sport iránt
-      lelkesedő tagjaink CanyonMonkeys néven külön csoportot alapítottak,
-      amely ma Magyar Kanyoning Sportegyesület néven működik.
+      Alkalmanként kanyoning túrákat is szervezünk: Ilyenkor Olaszországban Friuliban, vagy épp a Dolomitokban csúszkálunk és ugrálunk a szebbnél-szebb vízesések mellett. Ezzel a sporttal a természet egy igazán szép és játékos oldalát ismerhetjük meg.
     btn:
       link: /turak/legacy-predelica-kanyontura-2010/
       text: Kanyontúra-beszámoló
@@ -176,8 +174,12 @@ content_blocks:
     title: Beszámolóink
     anchor: beszamoloink
     title_suffix:
-    description: Egyesületünk éves szakmai és pénzügyi beszámolói.
+    description: Egyesületünk éves pénzügyi beszámolói
     items:
+      - text: "2025. évi beszámoló"
+        url: /pdfs/egyesuletunk/2025besz.pdf
+      - text: "2024. évi beszámoló"
+        url: /pdfs/egyesuletunk/2024besz.pdf
       - text: "2023. évi beszámoló"
         url: /FTSK/2023besz.pdf
       - text: "2022. évi beszámoló"
