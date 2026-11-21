@@ -464,17 +464,31 @@ Indításkor a **Git & workspace** főoldal segít kiválasztani a munkaváltoza
 tartalmat, személyt vagy képet módosítani ezeken. Leválasztott állapotban,
 Git-hiba vagy folyamatban lévő Git-művelet alatt is zárolva marad a szerkesztés.
 
+Ha az ágváltás vagy frissítés a szerkesztő saját programját is módosítja,
+a `site_editor.bat` indítója automatikusan újraindítja a megfelelő verziót.
+A böngésző címe nem változik; a verzió a fejlécben látható.
+Tartsd nyitva az indító konzolablakát. A régi, már futó szerkesztőhöz ez a
+funkció csak az első kézi frissítés és újraindítás után lesz elérhető.
+Mentetlen böngészővázlatnál előbb tölts le másolatot, majd az
+**I saved my drafts · reload** gombbal töltsd újra a megfelelő szerkesztőt.
+A mentett fájlok és Git-commitok nem vesznek el. Függő feltöltéseket törölj a
+sorból, megállt Git-műveletet fejezz be vagy abortálj az újraindítás előtt.
+Indítási hibánál **Retry startup**; hiányzó eszközöknél kattints duplán a
+`setup-dev-env.bat` fájlra, és őrizd meg az indítóablak hibaüzenetét.
+
 1. **Fetch server updates:** lekéri a GitHub legújabb ismert ágait és
    checkpointjait. Nem változtatja meg a fájljaidat. A kijelzett szerverállapot
    nem élő: az utolsó sikeres lekérés ideje látható.
-2. Válassz meglévő munkaváltozatot, vagy a **Create branch from this checkout**
-   gombbal hozz létre újat, például `tanfolyam-2027-frissites`.
-   A létrehozás az éppen kiválasztott ág aktuális állapotából indul.
-   Új munkához előbb a tiszta `main` ágon futtasd az **Update this branch**
-   műveletet: ez csak a szerverrel megegyező előzményre léptethet előre,
-   a szerkesztési menük továbbra is zárolva maradnak.
-   A `main` ágon már elmentett, de nem commitolt változásokat az új ág megőrzi.
-   Másik meglévő ágra váltás előtt a fájlokat commitolni kell.
+2. Új feladathoz **Open a new branch from main**: csak az új ág nevét
+   kell megadnod, például `tanfolyam-2027-frissites`. A gomb előbb fetch-el,
+   majd a friss `origin/main` commitból nyit új munkaváltozatot.
+   Nem a régi helyi `main` vagy a jelenlegi munka lesz az alap; a helyi
+   `main` nem íródik felül. Mentett változásokat előbb commitolj.
+   Meglévő munkához **Switch to existing work**. Mindkét ablak egyetlen
+   feladatot mutat, és a végrehajtáshoz nincs második megerősítés.
+   Kapcsolódó munkához a létrehozó ablak haladó **Use current checkout instead**
+   opciója megtartja a jelenlegi alapot és a `main` mentett változásait;
+   ez az opció nem fetch-el.
 3. A szerkesztők **Save** gombjai lemezre mentenek, nem a GitHubra.
    A **Review changed files & commit** ablakban válaszd ki a megosztani kívánt
    fájlokat, nézd át a változásokat, és írd le röviden, mit változtattál.
@@ -499,7 +513,7 @@ Git-hiba vagy folyamatban lévő Git-művelet alatt is zárolva marad a szerkesz
    Ellenőrizd, hogy nincs benne jelszó, token vagy magánadat.
    A már stage-elt fájlátnevezéseket a korlátozott commitfelület nem kezeli:
    ezek átnézéséhez és commitjához kérd a karbantartó segítségét.
-4. **Send checkpoints to GitHub:** külön megerősítés után normál push küldi
+4. **Send checkpoints to GitHub:** a gomb megnyomására normál push küldi
    a commitokat a munkaváltozat szerveroldali ágára. Nem egyesít a `main` ággal,
    és nem használ force-push-t. Az automatikus CI/deploy viselkedését
    továbbra is a repository beállításai határozzák meg.
@@ -508,6 +522,17 @@ Git-hiba vagy folyamatban lévő Git-művelet alatt is zárolva marad a szerkesz
    base** másik kiválasztott alapágra helyezi a nem publikált commitokat.
    Előbb fetch-elj, ha a legfrissebb szerveralapot akarod használni.
    Alapértelmezésben csak nem publikált történetet ír át, nem merge-el és nem stash-el.
+
+Az egyszerű **Rebase active branch onto latest main** gomb előbb fetch-el,
+majd egyetlen áttekintés után a friss main tetejére helyezi a jelenlegi ág
+commitjait. Előbb mentsd a vázlatokat és commitold a fájlokat.
+Backup készül; hiányzó szerveroldali munkatársi commitoknál nem indul átírás.
+Ütközésnél automatikusan abortál: az eredeti ág és fájlok visszaállnak,
+és külön ablak mutatja a pontos terminálparancsokat, érintett fájlokat,
+feloldási, folytatási és megszakítási lépéseket. Bizonytalanságnál kérj segítséget.
+Megosztott ág sikeres átírása után továbbra is külön, névbeírásos
+force-with-lease publikálás szükséges. Fetch, normál push, Receive és Continue
+nem kér külön jóváhagyó ablakot; átírás, abort és natív terminál igen.
 
 Ha közben a `main` továbbhalad, a már megosztott munkaváltozatod is követheti:
 

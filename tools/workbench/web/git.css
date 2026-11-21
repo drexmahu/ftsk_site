@@ -21,7 +21,7 @@
 .git-map.running[data-operation=push-lease] .git-send-lane .git-arrow::after,
 .git-map.running[data-operation=fetch] .git-fetch-lane .git-arrow::after,
 .git-map.running[data-operation=pull] .git-receive-lane .git-arrow::after{content:"";position:absolute;width:14px;height:10px;background:var(--gold);box-shadow:0 0 10px var(--gold);border-radius:8px;top:-3px;animation:git-travel 1.2s ease-in-out infinite}
-.git-map.running[data-operation=rebase] #git-local-station,.git-map.running[data-operation=checkout] #git-local-station,.git-map.running[data-operation=create] #git-local-station{border-color:var(--teal);box-shadow:0 0 24px #70c0bf40}
+.git-map.running[data-operation=rebase] #git-local-station,.git-map.running[data-operation=rebase-main] #git-local-station,.git-map.running[data-operation=checkout] #git-local-station,.git-map.running[data-operation=create] #git-local-station,.git-map.running[data-operation=create-main] #git-local-station{border-color:var(--teal);box-shadow:0 0 24px #70c0bf40}
 .git-arrow.backward::after{animation-direction:reverse!important}
 .git-branch-map{margin:18px 0}.git-branch-row{display:flex;align-items:center;flex-wrap:wrap;gap:14px;padding:10px 14px;border-left:3px solid var(--line);border-bottom:1px solid var(--line);font-size:12px}.git-branch-row strong{flex:1;overflow-wrap:anywhere}.git-branch-row.checked-out{border-left-color:var(--teal);background:#173535;border-radius:8px}
 .git-dots{display:flex;gap:7px;flex-wrap:wrap;min-height:14px}.git-dots span{width:12px;height:12px;border-radius:50%;border:2px solid var(--teal);background:#1c5554}.git-dots span.pending{border-color:var(--gold);background:#695135}
@@ -55,10 +55,15 @@
 @media(max-width:650px){.git-history-graph{padding:14px}.git-graph-summary{font-size:14px}}
 @media(max-width:650px){.git-graph-basics,.git-rebase-sketch{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){.git-graph-replay-marker{display:none}.git-graph-node.new .git-graph-halo,.git-history-graph[data-phase=settled] .git-graph-node.work .git-graph-halo{animation:none}}
-#git-branch-dialog{width:min(900px,calc(100vw - 30px));max-height:90vh;overflow:auto}
-.git-branch-dialog-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;margin:20px 0}
+#git-branch-dialog{width:min(560px,calc(100vw - 30px));max-height:90vh;overflow:auto}
+.git-branch-dialog-controls{display:grid;grid-template-columns:1fr;gap:22px;margin:20px 0}
 .git-branch-dialog-controls section{min-width:0;border:1px solid var(--line);padding:18px;border-radius:12px}
 #git-branch-dialog details{padding:12px 0;border-top:1px solid var(--line)}#git-branch-dialog summary{cursor:pointer;font-weight:700}
+.git-main-update{margin-top:16px;border-top:1px solid var(--line);padding-top:16px}
+.git-main-update>.git-button-help,.git-main-update button{width:100%}
+#git-manual-dialog{width:min(800px,calc(100vw - 30px));max-height:90vh;overflow:auto}
+#git-manual-dialog li{margin:14px 0;line-height:1.6}
+#git-manual-dialog pre{white-space:pre-wrap;overflow-wrap:anywhere;padding:14px;border:1px solid var(--line);border-radius:10px;background:#101c25}
 @media(max-width:650px){.git-branch-dialog-controls{grid-template-columns:1fr}#git-branch-dialog .section-heading{flex-wrap:wrap}}
 .git-station details{margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
 .git-station summary{font-weight:700;line-height:1.5;cursor:pointer}.git-station details button{width:100%;margin-top:8px;white-space:normal}

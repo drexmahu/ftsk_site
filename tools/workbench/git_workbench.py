@@ -261,6 +261,9 @@ class GitService:
     def snapshot(self):
         if self.busy:
             return {**self.cached, "busy": True, "editable": False, "job": dict(self.job)}
+        return self.read_snapshot()
+
+    def read_snapshot(self):
         try:
             locations = self.run("rev-parse", "--show-toplevel", "--absolute-git-dir").stdout.splitlines()
             top = Path(locations[0]).resolve()
@@ -478,7 +481,7 @@ class GitService:
 
     def validate_operation(self, action, payload, state):
         recovery = action in {"continue", "abort", "resolve"}
-        if action not in {"fetch", "checkout", "create", "pull", "rebase", "commit", "push", "push-lease", "continue", "abort", "resolve", "terminal"}:
+        if action not in {"fetch", "checkout", "create", "create-main", "pull", "rebase", "rebase-main", "commit", "push", "push-lease", "continue", "abort", "resolve", "terminal"}:
             raise ContentError("Unknown Git operation.")
         if self.app.job["state"] == "running":
             raise ConflictError("Wait for the current build or check to finish before changing Git state.")
@@ -489,16 +492,16 @@ class GitService:
         if state["merge"]:
             raise ConflictError("An external merge is unfinished. Workbench is rebase-only; resolve the merge outside the tool.")
         record = self.recovery(state["branch"])
-        if action in {"pull", "rebase"} and record and record["phase"] == "ready" and record["expected_remote"]:
+        if action in {"pull", "rebase", "rebase-main"} and record and record["phase"] == "ready" and record["expected_remote"]:
             raise ConflictError("Publish the already rebased branch with its recorded lease before starting another rebase. If publication is rejected, ask the maintainer to reconcile the server changes using the saved backup.")
         if state["rebase"] != recovery and (state["rebase"] or recovery):
             raise ConflictError("Finish or abort the current rebase before starting another operation.")
         protected_update = (action == "pull" and state["branch"] in PROTECTED and
                             state["upstream"] == f"origin/{state['branch']}" and
                             state["ahead"] == 0 and not state["conflicts"])
-        if action not in {"fetch", "checkout", "create"} and not recovery and not state["editable"] and not protected_update:
+        if action not in {"fetch", "checkout", "create", "create-main"} and not recovery and not state["editable"] and not protected_update:
             raise ConflictError("This operation is blocked on protected or detached branches.")
-        if action in {"checkout", "pull", "rebase", "push", "push-lease"} and state["changes"]:
+        if action in {"checkout", "create-main", "pull", "rebase", "rebase-main", "push", "push-lease"} and state["changes"]:
             raise ConflictError("Saved files are not committed. Create a checkpoint first; Workbench never stashes or discards them automatically.")
         if action == "create" and (state["changes"] and state["branch"] not in PROTECTED):
             raise ConflictError("Commit your current branch's changes before creating another branch.")
@@ -506,7 +509,7 @@ class GitService:
             target = payload.get("branch")
             if target not in {branch["name"] for branch in state["branches"]} or target == "origin/HEAD":
                 raise ContentError("Select an existing local or server branch.")
-        if action == "create":
+        if action in {"create", "create-main"}:
             target = payload.get("branch")
             if (not isinstance(target, str) or target.startswith(("-", "origin/")) or target in PROTECTED or
                     self.run("check-ref-format", "--branch", target, check=False).returncode):
@@ -517,6 +520,8 @@ class GitService:
                 raise ContentError("The checkout needs its first commit before branches can be created.")
         if action == "fetch" and not state.get("remotes"):
             raise ContentError("No server remote is configured. Ask the site maintainer to configure one.")
+        if action in {"create-main", "rebase-main"} and not state["remote"]:
+            raise ContentError("No origin server is configured. Ask the site maintainer to configure it.")
         if action in {"pull", "push", "push-lease"} and not state["remote"]:
             raise ContentError("No origin server is configured. Ask the site maintainer to configure it.")
         if action == "pull" and not state["upstream"].startswith("origin/"):
@@ -659,6 +664,58 @@ class GitService:
         self.command("fetch", "--all", "--prune", network=True)
         self.last_fetch = datetime.now(timezone.utc).isoformat()
 
+    def fetched_main(self):
+        self.fetch_remotes()
+        if self.run("show-ref", "--verify", "--quiet", "refs/remotes/origin/main", check=False).returncode:
+            raise ContentError("The server has no main branch. Ask the maintainer to check origin; no branch was changed.")
+        return self.text("rev-parse", "refs/remotes/origin/main")
+
+    def rebase_main(self, state):
+        target_head = self.fetched_main()
+        with self.app.lock:
+            fresh = self.read_snapshot()
+        if not fresh["available"]:
+            raise ContentError(fresh["error"])
+        published = bool(fresh["upstream"])
+        self.validate_operation("rebase", {"target": "origin/main", "allow_published": published}, fresh)
+        if not published:
+            self.assert_unpublished("origin/main", [branch["head"] for branch in state["branches"] if branch["remote"]])
+        self.assert_reviewed_checkout(state)
+        if self.run("merge-base", "--is-ancestor", target_head, "HEAD", check=False).returncode == 0:
+            return
+        record = self.backup_rebase(fresh, "origin/main", leased=published)
+        self.assert_reviewed_checkout(state)
+        try:
+            self.command("rebase", "--no-autostash", target_head)
+        except ContentError:
+            if not any(self.git_path(name).is_dir() for name in ("rebase-merge", "rebase-apply")):
+                raise
+            conflicts = self.text("diff", "--name-only", "--diff-filter=U").splitlines()
+            self.command("rebase", "--abort")
+            self.finish_rebase(state["branch"], "aborted")
+            quote = lambda value: "'" + value.replace("'", "''") + "'"
+            commands = [
+                f"Set-Location -LiteralPath {quote(str(self.root))}",
+                "git status",
+                f"git switch {quote(state['branch'])}",
+                "git fetch --all --prune",
+                f"git branch {quote('recovery-' + record['id'][:8])} {record['backup_ref']}",
+                "git rebase --no-autostash origin/main",
+            ]
+            with self.app.lock:
+                self.job["manual_rebase"] = {
+                    "branch": state["branch"], "conflicts": conflicts,
+                    "backup": record["directory"], "commands": "\n".join(commands),
+                    "resolution": "\n".join(f"git add -- {quote(path)}" for path in conflicts) +
+                                  "\ngit rebase --continue",
+                    "publication": (
+                        "git push " + quote(f"--force-with-lease=refs/heads/{state['branch']}:{record['expected_remote']}") +
+                        " origin " + quote(f"HEAD:refs/heads/{state['branch']}") if published else
+                        "git push --set-upstream origin " + quote(f"HEAD:refs/heads/{state['branch']}")),
+                }
+            raise ConflictError("Rebase could not finish automatically and was aborted. Your original branch and files are restored. Manual conflict resolution is required.")
+        self.finish_rebase(state["branch"])
+
     def execute(self, action, payload, state):
         try:
             if action == "fetch":
@@ -675,6 +732,15 @@ class GitService:
                     self.command("switch", target)
             elif action == "create":
                 self.command("switch", "-c", payload["branch"])
+            elif action == "create-main":
+                target_head = self.fetched_main()
+                self.assert_reviewed_checkout(state)
+                if self.run("show-ref", "--verify", "--quiet",
+                            f"refs/remotes/origin/{payload['branch']}", check=False).returncode == 0:
+                    raise ConflictError("That branch already exists on the server. Switch to it or choose a different name.")
+                self.command("switch", "--no-track", "-c", payload["branch"], target_head)
+            elif action == "rebase-main":
+                self.rebase_main(state)
             elif action == "pull":
                 self.fetch_remotes()
                 if state["branch"] in PROTECTED and self.run(
