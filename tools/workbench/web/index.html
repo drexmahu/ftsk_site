@@ -241,16 +241,45 @@
       </section>
       <section data-panel="portraits" hidden>
         <div class="page-heading"><p class="eyebrow">People registry / Membership &amp; face crop</p><h1>People &amp; portraits</h1><p>Keep one permanent identity per person, including guests, former members and students. Current membership is optional and separate from authorship, course participation and contacts. Assigning someone to a page never makes them a member. Portraits use the same tools for everyone.</p></div>
-        <div class="member-layout">
+        <div class="people-workspace-actions"><button id="member-new" type="button">Add person</button><button id="member-resume" class="secondary" type="button" hidden>Resume person draft</button></div>
+        <nav class="people-workspace-nav" aria-label="People workspace">
+          <button type="button" data-people-view="directory" aria-current="page">People</button>
+          <button type="button" data-people-view="connections">Connections</button>
+          <button type="button" data-people-view="checks">Checks &amp; cleanup</button>
+          <button type="button" data-people-view="tools">Categories &amp; roles</button>
+        </nav>
+        <div class="member-layout" id="people-directory-layout">
           <div class="panel">
-            <div class="section-heading"><h2>People registry <span data-workbench-file="data/people.yaml"></span></h2><button id="member-refresh" class="secondary" type="button">Reload</button></div>
+            <div class="section-heading"><h2><span id="people-view-heading">People registry</span> <span data-workbench-file="data/people.yaml"></span></h2><button id="member-refresh" class="secondary" type="button">Reload</button></div>
+            <div id="people-directory">
             <div class="registry-filters">
             <label>Search existing people first<input id="member-search" type="search" placeholder="Name, stable ID, nickname, alias, role or category"></label>
-            <label>Membership filter<select id="member-filter"><option value="all">All people</option><option value="current">Current members</option><option value="nonmembers">Not current members</option><option value="review">Needs clarification</option></select></label>
+            <label>Roster status<select id="member-filter"><option value="all">Everyone</option><option value="current">Current members</option><option value="nonmembers">External / no current membership</option><option value="review">Needs clarification</option></select></label>
             <label>Group / category<select id="member-category-filter"><option value="">All groups / categories</option></select></label>
             </div>
-            <p class="hint">Before adding someone, search all people for their name and aliases. Reuse an existing identity rather than creating a second one.</p>
-            <div class="actions"><button id="member-new" type="button">Add person (no membership)</button><button id="member-resume" class="secondary" type="button" hidden>Resume person editor</button><button id="portrait-standalone" class="secondary" type="button">Standalone portrait export</button></div>
+            <details class="people-event-filters"><summary>Filter by course, year or event role</summary><div class="registry-filters">
+              <label>Course / saved page<select id="people-filter-course"><option value="">All courses</option></select></label>
+              <label>Contribution year<select id="people-filter-year"><option value="">All years</option></select></label>
+              <label>Event role<select id="people-filter-role"><option value="">Any event role</option></select></label>
+            </div></details>
+            <div class="people-filter-status"><p id="people-result-count" class="hint" role="status" aria-live="polite"></p><button id="people-reset-filters" type="button" class="secondary">Clear filters</button></div>
+            <section id="people-connections" class="people-connections" hidden>
+              <div class="section-heading"><h3>How these people connect</h3><button id="people-show-all-connections" type="button" class="secondary">Show every overlap</button></div>
+              <p class="hint">Counts are people, not appearances. Membership is the current saved roster; courses include students, instructors and helpers. External defaults to everyone without current membership, including former members. Group totals overlap; each map row counts people only once.</p>
+              <div id="people-rule-home"><details id="people-view-rules" class="people-view-rules"><summary>Adjust grouping rules — this view only</summary>
+                <p class="hint">These rules only regroup the diagram and its results. They never grant membership, assign categories or rewrite pages. Membership edits remain in each person's editor.</p>
+                <div class="field-pair"><section><label>Course group<select id="people-rule-course"><option value="all">Everyone listed on courses (default)</option><option value="roles">Selected course roles only</option></select></label><div id="people-rule-course-roles" class="people-rule-options" hidden></div></section>
+                <section><label>External group<select id="people-rule-external"><option value="nonmembers">Everyone without current membership (default)</option><option value="participants">Nonmembers with participant assignments</option><option value="roles">Selected membership or event roles</option><option value="category">One assigned custom category</option></select></label><div id="people-rule-external-roles" class="people-rule-options" hidden></div><label id="people-rule-category-label" hidden>Custom category<select id="people-rule-external-category"><option value="">Choose a category</option></select></label></section></div>
+                <button id="people-reset-rules" type="button" class="secondary">Restore default rules</button>
+              </details></div>
+              <p id="people-rule-warning" class="notice error" role="alert" hidden></p>
+              <div id="people-connection-map"></div>
+              <p id="people-scan-warning" class="notice error" hidden>Some saved pages could not be checked. Counts may be incomplete; review Checks &amp; cleanup.</p>
+            </section>
+            </div>
+            <div id="people-tools" hidden>
+            <h3>Definitions &amp; utilities</h3><p class="hint">Use these occasionally to manage shared choices. For ordinary changes, find and open a person in People.</p>
+            <button id="portrait-standalone" class="secondary" type="button">Standalone portrait export</button>
             <details class="category-manager">
               <summary>Manage categories &amp; hints</summary>
               <p class="hint">Create organizational labels here, then select any number on a person. Automatic course groups come from all saved course participants. Save or discard a person draft before managing categories.</p>
@@ -292,24 +321,27 @@
               <p id="participant-role-status" class="hint" role="status"></p>
               <div id="participant-role-usage" class="person-history-list"></div>
             </details>
-            <div id="member-list" class="queue" aria-label="People registry"></div>
+            </div>
+            <div id="people-results"><p class="hint">Open a person to edit their profile, portraits or membership. Search before adding a new identity.</p><div id="member-list" class="queue" aria-label="People registry"></div></div>
           </div>
         </div>
         <dialog id="person-editor-dialog" aria-labelledby="person-dialog-heading" data-save-target="member-save">
           <div class="person-dialog-top">
           <div class="section-heading person-dialog-header">
             <div class="person-dialog-identity"><img id="person-dialog-avatar" alt="" hidden><h2 id="person-dialog-heading">Person editor &amp; portraits</h2><span id="member-draft" class="badge">Saved</span></div>
-            <div class="person-save-actions"><button id="member-save" type="submit" form="member-form">Save person</button><button id="member-cancel" class="secondary" type="button">Close / discard draft</button><button id="person-dialog-close" class="secondary" type="button" aria-label="Close person editor">Close</button></div>
+            <div class="person-save-actions"><button id="member-save" type="submit" form="member-form">Save person</button><button id="member-cancel" class="secondary" type="button">Discard &amp; close</button><button id="person-dialog-close" class="secondary" type="button" aria-label="Close person editor">Close</button></div>
           </div>
+          <p id="person-save-note" class="person-save-note">One save applies every section. Exported image files remain even when a draft is discarded.</p>
           <div id="person-dialog-notice" class="notice error member-dialog-error" role="alert" hidden><span id="person-dialog-error-text"></span><button id="person-dialog-dismiss-error" type="button" class="secondary">Dismiss error</button></div>
           </div>
+          <div id="person-dialog-body" class="person-dialog-body">
           <nav id="member-editor-nav" aria-label="Person editor sections">
             <button type="button" data-member-tab="profile">Profile &amp; identity</button>
             <button type="button" data-member-tab="portraits">Portrait photo</button>
             <button type="button" data-member-tab="membership">Membership &amp; groups</button>
-            <button type="button" data-member-tab="contacts">Contact &amp; visibility</button>
+            <button type="button" data-member-tab="contacts">Contacts &amp; visibility</button>
             <button type="button" data-member-tab="cv">CV / necrolog</button>
-            <button type="button" data-member-tab="history">Participation history</button>
+            <button type="button" data-member-tab="history">Connections &amp; history</button>
             <button type="button" data-member-tab="advanced">Advanced / deletion</button>
           </nav>
           <form id="member-form" class="panel" hidden>
@@ -317,6 +349,7 @@
             <fieldset id="member-fields">
               <section data-member-section="profile">
               <h3>Profile</h3>
+              <p class="hint">Start with the person's name. Membership, photos and event assignments are separate; use the sections on the left.</p>
               <div class="field-pair"><label>Name<input id="member-name" required maxlength="500"></label><label>Nickname<input id="member-nickname" maxlength="500"></label></div>
               <label>Biography (Markdown)<textarea id="member-bio" rows="4" maxlength="10000" data-monaco-language="markdown"></textarea></label>
               </section>
@@ -324,12 +357,14 @@
                 <summary>CV / necrolog — Markdown &amp; images</summary>
                 <p class="hint">A dedicated Markdown page holds this document, linked by the person's ID. A non-empty document replaces the small profile popup. Clearing the document removes its page when you save, but keeps uploaded images. Save a new person before uploading images.</p>
                 <p class="hint">Document source: <code id="member-document-path"></code>. Save person writes both the profile and this page; changes made in Pages &amp; posts are checked before overwriting.</p>
+                <details class="person-help"><summary>Document label, subtitle &amp; attribution</summary>
                 <label>Public document label<input id="member-cv_label" maxlength="500" placeholder="CV"></label>
                 <p class="hint">Stored in the page's document_label frontmatter. Shown above the name, for example Nekrológ or Életút. Leave blank to use CV.</p>
                 <label>Document subtitle<input id="member-cv_subtitle" maxlength="500" placeholder="Optional text beneath the name"></label>
                 <p class="hint">A short plain-text line beneath the name on the CV page and modal, for example dates or a dedication. Leave blank to hide it.</p>
                 <label>Document author<input id="member-cv_author" maxlength="500" placeholder="Optional author name"></label>
                 <p class="hint">Free-text attribution, shown at the bottom right of the document on both the page and modal. Leave blank to hide it.</p>
+                </details>
                 <div class="actions" aria-label="CV formatting">
                   <button type="button" class="secondary" data-cv-format="heading">Heading</button>
                   <button type="button" class="secondary" data-cv-format="bold">Bold</button>
@@ -391,6 +426,7 @@
               <section class="person-editor-section" data-member-section="membership">
               <h3>Groups &amp; categories</h3>
               <label>Current membership<select id="member-group"></select></label>
+              <button id="member-remove-membership" class="secondary" type="button">Remove membership in draft</button>
               <p class="hint">Public membership stays separate. Choose no membership for guests, former members and students. Categories below never grant membership.</p>
               <input id="member-role" type="hidden">
               <div id="member-membership-roles"></div>
@@ -412,25 +448,28 @@
               <summary>Portraits &amp; image assignments</summary>
               <div class="portrait-editor-grid">
               <div>
+              <h4>Current portrait</h4>
               <div class="member-image-preview"><img id="member-avatar" alt="Member thumbnail" hidden><img id="member-full" alt="Member full portrait" hidden></div>
               <p class="hint">Upload a photo below, position the face crop, then convert. Files are always named with this person's ID. Replacing the fixed pair requires confirmation and affects the files immediately.</p>
+              <label>Existing portrait pair<select id="member-portrait-choice"><option value="">Choose a portrait</option></select></label>
+              <div class="actions"><button id="member-use-portrait" class="secondary" type="button">Use portrait pair</button><button id="member-clear-images" class="secondary" type="button">Remove image assignments</button></div>
+              <details class="person-help"><summary>Manage saved files &amp; advanced image paths</summary>
+              <p class="hint">Removing an assignment only changes the draft. Deleting files permanently removes them after a separate review.</p>
               <button id="member-delete-portrait" class="danger" type="button">Delete saved portrait files &amp; clear assignments</button>
               <button id="member-images-browse" class="secondary" type="button">Manage uploaded files in this person's folder</button>
               <div id="member-uploaded-images" class="member-image-library"></div>
-              <label>Existing portrait pair<select id="member-portrait-choice"><option value="">Choose a portrait</option></select></label>
-              <div class="actions"><button id="member-use-portrait" class="secondary" type="button">Use portrait pair</button><button id="member-clear-images" class="secondary" type="button">Remove image assignments</button></div>
               <label>Thumbnail URL<input id="member-image" maxlength="500" placeholder="/images/members/name_thumb.webp"></label>
               <label>Full-image URL<input id="member-modal_image" maxlength="500" placeholder="/images/members/name_full.webp"></label>
               <p class="hint">Upload and crop on the right. Save person to persist new assignments. ID-named files are replaced only after confirmation. After switching from legacy filenames, saving offers a review of the old files; shared files are kept.</p>
+              </details>
               </div>
               <div id="member-portrait-upload"></div>
               </div>
               </details>
-              <div id="member-references" class="hint"></div>
-              <div class="actions"><button id="member-remove-membership" class="secondary" type="button">Remove membership in draft</button></div>
               <details class="person-editor-section" data-member-section="advanced">
               <summary>Advanced identity operations</summary>
               <p class="hint">These operations affect saved identities and references. Review carefully before confirming.</p>
+              <div id="member-references" class="hint"></div>
               <button id="member-delete" class="secondary" type="button" aria-describedby="member-delete-reason">Permanently delete person</button>
               <p id="member-delete-reason" class="hint"></p>
               <section id="member-rename" class="repeater" hidden>
@@ -454,11 +493,13 @@
             </fieldset>
             <details class="person-editor-section" data-member-section="history">
               <summary>Participation &amp; contribution history</summary>
+              <div id="member-connection-rules"></div>
               <section id="member-overview" class="person-overview" aria-label="Membership and participation overview"></section>
             </details>
           </form>
+          </div>
         </dialog>
-        <details class="panel member-audit"><summary id="member-audit-summary">People &amp; image checks</summary><div id="member-audit"></div><p class="hint">Legacy names may need matching to registry identities; guests do not need membership. Unassigned portraits may still be used by other content. Review and explicitly confirm loose-file deletion; files with saved site references are blocked. Nothing is automatically removed.</p></details>
+        <details id="people-checks" class="panel member-audit" hidden><summary id="member-audit-summary">People &amp; image checks</summary><div id="member-audit"></div><p class="hint">Legacy names may need matching to registry identities; guests do not need membership. Unassigned portraits may still be used by other content. Review and explicitly confirm loose-file deletion; files with saved site references are blocked. Nothing is automatically removed.</p></details>
         <dialog id="member-files-dialog">
           <div id="member-files-error" class="notice error member-dialog-error" role="alert" hidden><span id="member-files-error-text"></span><button id="member-files-dismiss-error" type="button" class="secondary">Dismiss error</button></div>
           <div class="section-heading"><h2>Delete loose portrait files</h2><button id="member-files-cancel" class="secondary" type="button">Cancel</button></div>

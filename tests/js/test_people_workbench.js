@@ -273,7 +273,7 @@ async function checkReferenceNavigation(reference, expected, allowOpen = true) {
 
 function element(tag, text = "", className = "") {
   return {
-    tag, text, className, children: [], dataset: {}, listeners: {}, attributes: {},
+    tag, text, className, children: [], dataset: {}, listeners: {}, attributes: {}, style: {},
     classList: { add() {}, toggle() {} },
     append(...children) { this.children.push(...children); },
     replaceChildren(...children) { this.children = children; },
@@ -282,6 +282,80 @@ function element(tag, text = "", className = "") {
     addEventListener(name, callback) { this.listeners[name] = callback; },
     focus() { this.focused = true; },
   };
+}
+
+function checkPeopleRelationshipRules() {
+  const context = {};
+  vm.runInNewContext(peopleScript, context);
+  const roles = [{id: "student", label: "Student", aliases: ["hallgató"], automatic_when: {current_member: false, course_participant: true}},
+    {id: "instructor", label: "Instructor", aliases: []},
+    {id: "helper", label: "Helper", aliases: ["segítő"]}];
+  const course = {path: "content/tanfolyamok/2025.md", section: "tanfolyamok", date: "2025-01-01", field: "participant_ids"};
+  const people = [
+    {id: "member-student", name: "Member Student", membership: {roles: ["helper"]}, course_participant: true,
+      references: [{...course, roles: ["student"]}, {...course, roles: ["student"]}]},
+    {id: "teacher", name: "Teacher", membership: null, course_participant: true, categories: [{id: "custom:staff"}],
+      references: [{...course, roles: ["instructor"]}, {path: "turak/trip.md", section: "turak", field: "participants", date: "2024-01-01", role: "segítő"}]},
+    {id: "guest", name: "Árvíztűrő Guest", membership: null, references: []},
+    {id: "author", name: "Member Author", membership: {roles: []}, references: [{...course, field: "author_id"}]},
+  ];
+  const before = JSON.stringify(people);
+  const defaults = context.peopleRelationshipCounts(people, {}, {}, roles);
+  assert.deepEqual(Array.from(defaults[3], person => person.id), ["member-student"]);
+  assert.deepEqual(Array.from(defaults[6], person => person.id), ["teacher"], "Default course membership includes instructors");
+  assert.deepEqual(Array.from(defaults[4], person => person.id), ["guest"], "Default external includes identities with no participation");
+  assert.deepEqual(Array.from(defaults[1], person => person.id), ["author"], "Course authorship is not course participation");
+  assert.equal(defaults.reduce((total, entries) => total + entries.length, 0), 4, "Multiple appearances never inflate person counts");
+  const students = context.peopleRelationshipCounts(people, {courseMode: "roles", courseRoles: ["student"]}, {}, roles);
+  assert.equal(students[4].length, 2, "Live student-role grouping excludes instructors without changing their saved course membership");
+  const custom = context.peopleRelationshipCounts(people, {externalMode: "roles", externalRoles: ["helper"]}, {}, roles);
+  assert.equal(custom[7][0].id, "member-student", "Runtime role groups can genuinely overlap all three sets");
+  assert.equal(custom[6][0].id, "teacher", "Historical role aliases participate in role discovery");
+  const category = context.peopleRelationshipCounts(people, {externalMode: "category", externalCategory: "custom:staff"}, {}, roles);
+  assert.equal(category[6][0].id, "teacher");
+  assert.equal(category[0][0].id, "guest");
+  assert.equal(context.personRelationshipMask(people[2], {externalMode: "participants"}), 0);
+  const roleless = {membership: null, course_participant: true, references: [{...course}]};
+  assert.equal(context.personRelationshipMask(roleless, {courseMode: "roles", courseRoles: ["student"]}, roleless.references, roles), 6,
+    "Selected-role discovery includes the configured automatic fallback for roleless course participants");
+  const year = context.filterPeopleView(people, {year: "2024"}, roles);
+  assert.deepEqual(Array.from(year, person => person.id), ["teacher"]);
+  assert.equal(context.peopleRelationshipCounts(year, {}, {year: "2024"}, roles)[4][0].id, "teacher", "Event-scoped diagrams do not use unrelated historical courses");
+  assert.deepEqual(Array.from(context.filterPeopleView(people, {role: "student"}, roles), person => person.id), ["member-student"]);
+  assert.deepEqual(Array.from(context.filterPeopleView(people, {search: "ARVIZTURO guest"}, roles), person => person.id), ["guest"]);
+  assert.deepEqual(Array.from(context.filterPeopleView(people, {search: "teacher helper"}, roles), person => person.id), ["teacher"]);
+  assert.deepEqual(Array.from(context.filterPeopleView(people, {course: course.path, status: "current", category: {people: ["author"]}}, roles), person => person.id), ["author"]);
+  assert.equal(JSON.stringify(people), before, "Exploration and runtime rules never rewrite registry or event assignments");
+}
+
+function checkPeopleRulesNavigation() {
+  const handlers = {}, controls = {};
+  const rules = {selectedRoles: ["helper"], externalMode: "roles"};
+  let owner = "person";
+  controls["#people-view-rules"] = rules;
+  controls["#people-rule-home"] = {append(value) { assert.equal(value, rules); owner = "registry"; }};
+  controls["#member-connection-rules"] = {append(value) { assert.equal(value, rules); owner = "person"; }};
+  controls["#person-editor-dialog"] = {open: true, close() { this.open = false; }, showModal() { this.open = true; }};
+  controls["#member-name"] = {focus() {}};
+  controls["#member-resume"] = {addEventListener(name, callback) { handlers.resume = callback; }};
+  const context = {$: selector => controls[selector], location: {hash: "#content"},
+    memberState: {editing: true, dirty: true},
+    window: {addEventListener(name, callback) { handlers[name] = callback; }}};
+  const resumeStart = memberScript.indexOf('$("#member-resume").addEventListener');
+  const resumeEnd = memberScript.indexOf('$("#portrait-standalone").addEventListener', resumeStart);
+  const hashStart = memberScript.indexOf('window.addEventListener("hashchange"', resumeStart);
+  const hashEnd = memberScript.indexOf('$("#member-remove-membership").addEventListener', hashStart);
+  vm.runInNewContext(memberScript.slice(resumeStart, resumeEnd) + memberScript.slice(hashStart, hashEnd), context);
+  handlers.hashchange();
+  assert.equal(owner, "registry", "Following a history page leaves grouping controls available in the registry");
+  assert.equal(controls["#person-editor-dialog"].open, false);
+  rules.selectedRoles.push("student");
+  context.location.hash = "#portraits";
+  handlers.resume();
+  assert.equal(owner, "person");
+  assert.equal(controls["#person-editor-dialog"].open, true);
+  assert.deepEqual(rules.selectedRoles, ["helper", "student"], "Rules adjusted while away remain available on resume");
+  assert.equal(context.memberState.dirty, true, "Navigation must preserve the unsaved person draft");
 }
 
 function checkPersonAvatars() {
@@ -394,8 +468,10 @@ function checkPersonOverview() {
     node: element,
     window: { dispatchEvent: event => events.push(event) },
     CustomEvent: function (type, options) { this.type = type; this.detail = options.detail; },
+    readPeopleViewRules: () => ({courseMode: "all", externalMode: "nonmembers"}),
   };
   vm.runInNewContext(peopleScript, context);
+  vm.runInNewContext(memberScript.slice(memberScript.indexOf("function renderPeopleConnectionMap("), memberScript.indexOf("\nfunction renderMembers(")), context);
   const start = memberScript.indexOf("function renderPersonOverview(");
   const end = memberScript.indexOf("\nasync function openPersonEditor(", start);
   vm.runInNewContext(memberScript.slice(start, end), context);
@@ -408,6 +484,7 @@ function checkPersonOverview() {
   assert.ok(entries.some(entry => entry.text === "No automatic role configured"));
   assert.ok(entries.some(entry => entry.textContent === "Authorship, contacts & other contributions (1 / 1)"));
   const expeditionButton = entries.find(entry => entry.tag === "button" && entry.children[0]?.text === "Expedition");
+  assert.equal(expeditionButton.dataset.workbenchFile, "content/turak/trip.md", "History file actions use the canonical repository-relative path");
   expeditionButton.listeners.click();
   assert.equal(events[0].detail.path, "content/turak/trip.md");
   group.value = "0";
@@ -443,6 +520,16 @@ function checkPersonOverview() {
   assert.ok(sections().every(section => !section.children[1].hidden));
   assert.ok(sections().every(section => section.children[1].tabIndex === 0));
   assert.equal(sections()[1].children[1].attributes["aria-label"], "Expeditions & trips");
+  const type = flattened(overview).find(entry => entry.id === "member-history-type");
+  const year = flattened(overview).find(entry => entry.id === "member-history-year");
+  type.value = "course"; type.listeners.change();
+  assert.equal(sections()[1].children[1].hidden, true);
+  assert.equal(sections()[2].children[1].hidden, true);
+  year.value = "2024"; year.listeners.change();
+  assert.equal(sections()[0].children[1].hidden, true);
+  clear.listeners.click();
+  assert.ok(sections().every(section => !section.children[1].hidden));
+  assert.equal(context.memberState.dirty, false, "History selectors do not change the person draft");
   filter("trip");
   context.renderPersonOverview();
   assert.equal(flattened(overview).find(entry => entry.id === "member-history-search").value, "trip",
@@ -927,11 +1014,16 @@ function checkCategoryAssignmentsAndFiltering() {
     "#member-custom-categories": custom, "#member-course-categories": courses,
     "#member-category-filter": { value: categories[2].id }, "#member-filter": { value: "all" },
     "#member-search": { value: "" }, "#member-list": element("div"),
+    "#people-rule-warning": {}, "#people-connection-map": element("div"), "#people-scan-warning": {}, "#people-result-count": {},
   };
   const context = { memberState: { original: null, catalog: { categories,
     people: [person, { id: "bob", name: "Bob", membership: null }], groups: [{ label: "Not current members" }],
     audit: { warnings: [] } } }, $: selector => controls[selector], node: element,
     memberControls() {}, renderCategoryFilters() {},
+    renderPeopleFilterChoices() {}, readPeopleViewRules: () => ({courseMode: "all", externalMode: "nonmembers"}),
+    peopleViewFilters: () => ({search: controls["#member-search"].value, status: controls["#member-filter"].value,
+      category: categories.find(category => category.id === controls["#member-category-filter"].value)}),
+    renderPeopleConnectionMap() {},
     window: { dispatchEvent: event => events.push(event) },
     CustomEvent: function(type, options) { this.type = type; this.detail = options.detail; },
   };
@@ -1396,6 +1488,8 @@ function checkChoiceSearchDoesNotChangeDraft() {
   vm.runInNewContext(memberScript.slice(start, end), context);
   handler({ target: { dataset: { selectSearch: "true" }, closest: () => null } });
   assert.equal(draft.dirty, false, "Searching a predefined choice is not a person edit");
+  handler({ target: { dataset: {}, closest: selector => selector === "#people-view-rules" ? {} : null } });
+  assert.equal(draft.dirty, false, "Runtime grouping rules are view settings, not person edits");
   handler({ target: { id: "member-group", dataset: {}, closest: () => null } });
   assert.equal(draft.dirty, true, "Selecting a membership group updates the person draft");
   assert.equal(overviewUpdates, 1);
@@ -1407,7 +1501,7 @@ async function checkGitDraftRecovery() {
     if (!inputs.has(selector)) inputs.set(selector, {
       value: "", hidden: false, open: false, checked: false,
       querySelectorAll: () => [{ value: "course-group" }], close() { this.open = false; }, focus() {},
-      removeAttribute(name) { delete this[name]; },
+      removeAttribute(name) { delete this[name]; }, append() {},
     });
     return inputs.get(selector);
   };
@@ -1538,6 +1632,8 @@ function checkHeroDraftState() {
 }
 
 async function run() {
+  checkPeopleRelationshipRules();
+  checkPeopleRulesNavigation();
   await checkUploadPreviews();
   await checkMemberCVBatch();
   await checkFileNavigation();
