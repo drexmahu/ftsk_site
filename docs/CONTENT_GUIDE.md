@@ -689,7 +689,12 @@ Indítsd el a főmappában lévő `site_editor.bat` alkalmazást, majd nyisd meg
   A fájltörlés nem törli az oldalt. Nem követett feltöltést a Git sem tud visszaállítani.
 - A **Save & sync** alatti **File cleanup** az egész webhely elhagyott képeit,
   PDF-jeit és letölthető fájljait keresi. **Discover unused files** után
-  nézd át a találatokat, szűrj névre/mappára és fájltípusra, majd jelöld ki
+  öt lépés folyamatjelzője mutatja, mi történik: fájlellenőrzés, friss build,
+  a megépített oldalak vizsgálata, hivatkozáskeresés és végső biztonsági
+  ellenőrzés. Látható az aktuális fájl, az ellenőrzött fájlok száma és a lépés
+  eltelt ideje; a build alatt mozgó jelző látszik, nem becsült százalék.
+  Hibánál a legutóbbi lépés és napló megmarad, piros jelzéssel.
+  A vizsgálat végén nézd át a találatokat, szűrj névre/mappára és fájltípusra, majd jelöld ki
   a törlendő fájlokat. A **Review deletion** egyetlen ablakban mutatja a teljes
   kijelölést. A vázlatokat előbb mentsd, a feltöltési sorokat ürítsd ki.
   A mentett tartalom, beállítások és egy friss Hugo-build hivatkozásai védenek;

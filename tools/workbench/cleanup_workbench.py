@@ -8,6 +8,8 @@ import posixpath
 import re
 import secrets
 import tempfile
+import threading
+import time
 from pathlib import Path
 from urllib.parse import unquote, quote
 
@@ -61,8 +63,39 @@ class CleanupService:
         self.root = app.root
         self.guard = guard
         self.report = None
+        # Safety snapshots hold app.lock; progress must remain readable independently.
+        self.progress_lock = threading.Lock()
+        self.progress = {"state": "idle"}
+        self.phase_started = time.monotonic()
 
-    def snapshot(self):
+    def start_progress(self):
+        self.set_phase(1, "Checking saved files",
+                       "Reading the checkout and fingerprinting saved files. This creates a safety snapshot; nothing is deleted.")
+
+    def set_phase(self, step, label, explanation):
+        with self.progress_lock:
+            self.progress = {"state": "running", "step": step, "steps": 5, "label": label,
+                             "explanation": explanation, "completed": 0, "total": None, "current": "", "error": ""}
+            self.phase_started = time.monotonic()
+
+    def update_counts(self, completed, total, current=""):
+        with self.progress_lock:
+            self.progress.update(completed=completed, total=total, current=current)
+
+    def finish_progress(self, state, error=""):
+        with self.progress_lock:
+            self.progress.update(state=state, error=error, elapsed_seconds=int(time.monotonic() - self.phase_started))
+
+    def progress_status(self):
+        with self.progress_lock:
+            progress = dict(self.progress)
+            if progress["state"] == "running":
+                progress["elapsed_seconds"] = int(time.monotonic() - self.phase_started)
+        job = self.app.job
+        progress["log"] = job["log"] if job["action"] == "cleanup-scan" else ""
+        return progress
+
+    def snapshot(self, progress=False):
         git = self.app.git.snapshot()
         if self.app.git.busy or not git.get("available") or not git.get("head"):
             raise ConflictError("Cleanup needs an available Git checkout with at least one checkpoint and no active Git operation.")
@@ -87,7 +120,10 @@ class CleanupService:
                              (name == "static" or path.suffix.lower() in TEXT))
         paths.update(path for path in self.root.iterdir()
                      if path.is_file() and (path.suffix.lower() in TEXT or path.name == ".hugo-version"))
-        for path in sorted(paths):
+        ordered = sorted(paths)
+        if progress:
+            self.update_counts(0, len(ordered))
+        for index, path in enumerate(ordered, 1):
             relative = path.relative_to(self.root).as_posix()
             self.guard(self.root, relative)
             raw = path.read_bytes() if path.suffix.lower() in TEXT else None
@@ -113,6 +149,8 @@ class CleanupService:
                               "kind": "image" if path.suffix.lower() in IMAGES and "fonts" not in path.relative_to(self.root / "static").parts else
                                       "pdf" if path.suffix.lower() == ".pdf" else "file",
                               "protected": reason, "blob": committed.get(relative)})
+            if progress:
+                self.update_counts(index, len(ordered), relative)
         return {"fingerprint": digest.hexdigest(), "branch": git["branch"], "head": git["head"],
                 "files": files, "sources": sources}
 
@@ -129,20 +167,28 @@ class CleanupService:
             raise ContentError("Cleanup build produced no home page. No files can be marked unused.")
 
     def scan(self):
+        self.start_progress()
         with self.app.lock:
             self.report = None
-            before = self.snapshot()
+            before = self.snapshot(progress=True)
         with tempfile.TemporaryDirectory(prefix="ftsk-cleanup-") as folder:
             work = Path(folder)
             output, resources = work / "public", work / "resources"
+            self.set_phase(2, "Building a fresh site",
+                           "Hugo is building all pages, including drafts, future and expired reports. Image processing can take time; the existing public folder is not used.")
             self.build(output, resources, work / "cache")
+            self.set_phase(3, "Reading built-page references",
+                           "Inspecting the fresh pages and generated image paths to catch references that only appear after a build.")
             generated = {}
-            for path in output.rglob("*"):
-                if path.is_file() and path.suffix.lower() in TEXT:
-                    relative = path.relative_to(output).as_posix()
-                    # A copied static file is already scanned as source; it cannot reference itself.
-                    if "static/" + relative not in before["sources"]:
-                        generated["Built site: " + relative] = normalized(path.read_text(encoding="utf-8-sig"))
+            generated_paths = [path for path in output.rglob("*") if path.is_file() and path.suffix.lower() in TEXT]
+            self.update_counts(0, len(generated_paths))
+            for index, path in enumerate(generated_paths, 1):
+                relative = path.relative_to(output).as_posix()
+                # A copied static file is already scanned as source; it cannot reference itself.
+                if "static/" + relative not in before["sources"]:
+                    generated["Built site: " + relative] = normalized(path.read_text(encoding="utf-8-sig"))
+                self.update_counts(index, len(generated_paths), relative)
+            self.update_counts(0, None, "Hugo image pipeline and dynamic references")
             generated["Hugo image pipeline"] = normalized("\n".join(
                 path.relative_to(resources).as_posix() for path in resources.rglob("*") if path.is_file()))
             dynamic = []
@@ -157,7 +203,10 @@ class CleanupService:
                     relative = posixpath.normpath(posixpath.join(posixpath.dirname(source), prefix))
                     dynamic.append((source, "static/" + public, relative))
             unused, used = [], 0
-            for item in before["files"]:
+            self.set_phase(4, "Checking each static file",
+                           "Comparing images, PDFs and downloads with saved sources and the fresh build. Possible dynamic references stay protected.")
+            self.update_counts(0, len(before["files"]))
+            for index, item in enumerate(before["files"], 1):
                 name = item["name"].casefold()
                 processed = str(Path(item["path"][7:]).with_suffix("")).replace("\\", "/").casefold() + "_hu_"
                 references = [source for source, text in before["sources"].items()
@@ -174,13 +223,17 @@ class CleanupService:
                     if uncertain and not item["protected"]:
                         item["protected"] = "Possible dynamically constructed reference in " + uncertain[0] + ". Review manually; not approved for deletion."
                     unused.append(item)
+                self.update_counts(index, len(before["files"]), item["path"])
+        self.set_phase(5, "Verifying the checkout has not changed",
+                       "Rechecking file fingerprints and Git state before approving any candidates. Changes during discovery invalidate the scan.")
         with self.app.lock:
-            after = self.snapshot()
+            after = self.snapshot(progress=True)
             if after["fingerprint"] != before["fingerprint"]:
                 raise ConflictError("Files or the branch changed during discovery. Run a new scan; nothing was deleted.")
             self.report = {"id": secrets.token_hex(16), "fingerprint": before["fingerprint"],
                            "branch": before["branch"], "head": before["head"], "files": unused,
                            "checked": len(before["files"]), "used": used}
+        self.finish_progress("passed")
 
     def catalog(self):
         report = self.report
@@ -220,6 +273,7 @@ class CleanupService:
             paths.append((relative, path))
         deleted = []
         self.report = None
+        self.finish_progress("idle")
         try:
             for relative, path in paths:
                 if file_revision(path) != entries[relative]["revision"]:

@@ -166,6 +166,72 @@ class CleanupTests(Fixture):
         self.assertFalse((self.root / "static/images/dead.webp").exists())
         self.assertTrue((self.root / "static/unused.css").exists())
 
+    def test_progress_counts_real_files_and_uses_indeterminate_build(self):
+        updates = []
+        update = self.service.update_counts
+        def record(completed, total, current=""):
+            update(completed, total, current)
+            updates.append(self.service.progress_status())
+        def build(output, resources, cache):
+            progress = self.service.progress_status()
+            self.assertEqual(progress["step"], 2)
+            self.assertIsNone(progress["total"])
+            self.build(output, resources, cache)
+        with patch.object(self.service, "update_counts", side_effect=record):
+            report = self.scan(build)
+        self.assertEqual({entry["step"] for entry in updates}, {1, 3, 4, 5})
+        for entry in updates:
+            if entry["total"] is not None:
+                self.assertLessEqual(entry["completed"], entry["total"])
+        matched = [entry for entry in updates if entry["step"] == 4][-1]
+        self.assertEqual(matched["completed"], report["checked"])
+        self.assertEqual(matched["total"], report["checked"])
+        progress = self.service.progress_status()
+        self.assertEqual(progress["state"], "passed")
+        self.assertEqual(progress["step"], 5)
+        self.assertEqual(progress["completed"], progress["total"])
+        self.assertTrue(progress["current"])
+
+    def test_failed_job_preserves_phase_and_retry_resets_progress(self):
+        self.app.job.update(state="running", action="cleanup-scan")
+        with patch.object(self.service, "build", side_effect=ContentError("fixture build failed")):
+            self.app.execute_job("cleanup-scan")
+        progress = self.service.progress_status()
+        self.assertEqual(progress["state"], "failed")
+        self.assertEqual(progress["step"], 2)
+        self.assertIn("fixture build failed", progress["error"])
+        self.assertIn("ERROR:", progress["log"])
+        self.assertIsNone(self.service.report)
+        with patch.object(self.service, "build", side_effect=self.build):
+            # Holding the checkout lock keeps the worker at its first safety snapshot.
+            with self.app.lock:
+                self.app.start_job("cleanup-scan")
+                progress = self.service.progress_status()
+                self.assertEqual(progress["state"], "running")
+                self.assertEqual(progress["step"], 1)
+                self.assertEqual(progress["completed"], 0)
+                self.assertEqual(progress["error"], "")
+                self.assertEqual(progress["log"], "")
+            self.app.job_thread.join(10)
+        self.assertFalse(self.app.job_thread.is_alive())
+        self.assertEqual(self.service.progress_status()["state"], "passed")
+        self.assertIsNotNone(self.service.report)
+
+    def test_changed_checkout_job_retains_final_verification_failure(self):
+        def changing(output, resources, cache):
+            self.build(output, resources, cache)
+            (self.root / "content/changed.md").write_text("Changed during discovery")
+        with patch.object(self.service, "build", side_effect=changing):
+            self.app.start_job("cleanup-scan")
+            self.app.job_thread.join(10)
+        self.assertFalse(self.app.job_thread.is_alive())
+        progress = self.service.progress_status()
+        self.assertEqual(progress["state"], "failed")
+        self.assertEqual(progress["step"], 5)
+        self.assertEqual(progress["completed"], progress["total"])
+        self.assertIn("changed during discovery", progress["error"])
+        self.assertIsNone(self.service.report)
+
     def test_real_hugo_build_isolates_resources_and_protects_processed_images(self):
         version = (REPO_ROOT / ".hugo-version").read_text().strip()
         pinned = REPO_ROOT / ".tools" / "hugo" / version / ("hugo.exe" if os.name == "nt" else "hugo")
@@ -192,6 +258,29 @@ class CleanupTests(Fixture):
 
 
 class CleanupHTTPTests(HTTPTests):
+    def test_progress_responds_while_checkout_safety_lock_is_held(self):
+        with self.app.lock:
+            self.app.job.update(state="running", action="cleanup-scan", log="Live Hugo output")
+            self.app.cleanup.start_progress()
+            self.app.cleanup.update_counts(1, 3, "static/images/one.webp")
+            response = self.request("/api/workbench/cleanup/progress")
+            self.assertEqual(response[0], 200)
+            progress = json.loads(response[1])
+            self.assertEqual(progress["completed"], 1)
+            self.assertEqual(progress["total"], 3)
+            self.assertEqual(progress["current"], "static/images/one.webp")
+            self.assertEqual(progress["log"], "Live Hugo output")
+
+    def test_progress_preserves_browser_guards_and_preview_isolation(self):
+        route = "/api/workbench/cleanup/progress"
+        self.assertEqual(self.request(route, headers={"Host": "example.invalid"})[0], 403)
+        self.assertEqual(self.request(route, headers={"Sec-Fetch-Site": "cross-site"})[0], 403)
+        self.server.render_only = True
+        try:
+            self.assertEqual(self.request(route)[0], 404)
+        finally:
+            self.server.render_only = False
+
     def test_cleanup_delete_requires_token_working_branch_and_current_scan(self):
         response = self.request("/api/workbench/cleanup")
         self.assertEqual(response[0], 200)

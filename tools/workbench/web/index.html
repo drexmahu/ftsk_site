@@ -79,6 +79,14 @@
           <button id="cleanup-scan" type="button">Discover unused files</button>
         </section>
         <div id="cleanup-notice" class="notice" role="status" aria-live="polite">Nothing is selected or deleted automatically.</div>
+        <section id="cleanup-progress" class="panel conversion-progress cleanup-progress" aria-label="File discovery progress" hidden>
+          <strong id="cleanup-progress-title" role="status" aria-live="polite"></strong>
+          <progress id="cleanup-progress-overall" max="5" value="0" aria-label="Completed discovery stages"></progress>
+          <p id="cleanup-progress-message"></p>
+          <progress id="cleanup-progress-current" aria-label="Files checked in the current stage"></progress>
+          <p id="cleanup-progress-counts" class="hint"></p>
+          <code id="cleanup-progress-path" hidden></code>
+        </section>
         <section class="panel" aria-label="Cleanup results">
           <div class="cleanup-filters">
             <label>Find a file<input id="cleanup-search" type="search" placeholder="Filename or folder"></label>
@@ -91,7 +99,7 @@
           <div id="cleanup-files" class="cleanup-files"><p class="hint">Your discovery results will appear here.</p></div>
         </section>
         <details><summary>Discovery &amp; build details</summary><pre id="cleanup-log">No cleanup scan yet.</pre></details>
-        <dialog id="cleanup-dialog" aria-labelledby="cleanup-dialog-title"><div class="section-heading"><h2 id="cleanup-dialog-title">Delete selected files?</h2><button id="cleanup-cancel" type="button" class="secondary">Cancel</button></div><p id="cleanup-dialog-summary"></p><p class="notice">Check that these files are not needed by external links or unsaved work. Files are removed from this checkout only; nothing is committed or published automatically. No local recovery copy is created. Their committed versions remain in Git.</p><div id="cleanup-dialog-notice" class="notice error" role="status" hidden></div><ul id="cleanup-dialog-files"></ul><div class="actions"><button id="cleanup-confirm" type="button" class="danger">Delete selected files</button></div></dialog>
+        <dialog id="cleanup-dialog" aria-labelledby="cleanup-dialog-title"><div class="section-heading"><h2 id="cleanup-dialog-title">Delete selected files?</h2><button id="cleanup-cancel" type="button" class="secondary">Cancel</button></div><p id="cleanup-dialog-summary"></p><p class="notice">Check that these files are not needed by external links or unsaved work. Files are removed from this checkout only; nothing is committed or published automatically. No local recovery copy is created. Their committed versions remain in Git.</p><div id="cleanup-dialog-notice" class="notice error" role="status" hidden></div><div id="cleanup-delete-progress" class="conversion-progress" hidden><p class="hint" role="status">Rechecking the checkout, Git copies and selected files before removing them. Keep this window open.</p><progress aria-label="Validating and deleting reviewed files"></progress></div><ul id="cleanup-dialog-files"></ul><div class="actions"><button id="cleanup-confirm" type="button" class="danger">Delete selected files</button></div></dialog>
       </section>
       <section data-panel="overview" data-save-target="git-review">
         <div class="page-heading"><p class="eyebrow">Git / Start here · Return here to save &amp; sync</p><h1>Your work, safely connected.</h1><p>Start a working branch here before using the workspace tools. Edit the site, then return here to save a checkpoint and send it to GitHub. Main is read-only. Nothing is sent automatically.</p></div>

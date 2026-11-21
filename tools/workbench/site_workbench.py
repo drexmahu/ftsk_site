@@ -442,6 +442,7 @@ class Workbench:
             self.job = {"state": "running", "action": action, "log": "", "exit_code": None}
             if action == "cleanup-scan":
                 self.cleanup.report = None
+                self.cleanup.start_progress()
             self.job_thread = threading.Thread(target=self.execute_job, args=(action,), daemon=True)
             self.job_thread.start()
             return dict(self.job)
@@ -512,6 +513,8 @@ class Workbench:
             with self.lock:
                 self.job["log"] = (self.job["log"] + f"\nERROR: {exc}\n")[-60_000:]
                 self.job.update(state="failed", exit_code=1)
+                if action == "cleanup-scan":
+                    self.cleanup.finish_progress("failed", str(exc))
                 if action == "content-preview":
                     self.content.preview.update(state="failed", url="", error=str(exc))
                     if preview_info:
@@ -674,6 +677,8 @@ class Handler(BaseHTTPRequestHandler):
         elif route == "/api/workbench/cleanup":
             with app.lock:
                 self.json(200, app.cleanup.catalog())
+        elif route == "/api/workbench/cleanup/progress":
+            self.json(200, app.cleanup.progress_status())
         elif route == "/api/workbench/content/catalog":
             with app.lock:
                 self.json(200, app.content.catalog())
