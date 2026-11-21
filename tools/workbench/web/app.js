@@ -2,7 +2,7 @@
 
 const $ = selector => document.querySelector(selector);
 const state = { token: "", git: null, photos: [], portraits: [], activePortrait: null, crop: null, image: null, busy: false, preview: null, initialized: false, jobState: "idle" };
-const viewNames = { overview: "Git · Start here", content: "Pages & posts", photos: "Site photos", portraits: "People & portraits", hero: "Hero slideshow", social: "Social previews", checks: "Build & checks", help: "Help & workflow" };
+const viewNames = { overview: "Git · Start here", cleanup: "File cleanup", content: "Pages & posts", photos: "Site photos", portraits: "People & portraits", hero: "Hero slideshow", social: "Social previews", checks: "Build & checks", help: "Help & workflow" };
 
 function startupStatus(error = "") {
   const blocker = $("#workbench-startup");
@@ -429,7 +429,11 @@ function updateStatus(status) {
   $("#preview-log").textContent = preview.log || "No owned server log.";
   const job = status.job;
   if (state.jobState === "running" && ["passed", "failed"].includes(job.state)) {
-    notify(`${job.action}: ${job.state}. See Build & checks for the complete log.`, job.state === "failed" ? "error" : "");
+    const message = job.action === "cleanup-scan" ?
+      (job.state === "passed" ? "File discovery complete. Review candidates in File cleanup; nothing was deleted." :
+        "File discovery failed. See discovery details in File cleanup; nothing was deleted.") :
+      `${job.action}: ${job.state}. See Build & checks for the complete log.`;
+    notify(message, job.state === "failed" ? "error" : "");
   }
   state.jobState = job.state;
   $("#job-state").textContent = job.state === "idle" ? "Idle" : `${job.action}: ${job.state}`;

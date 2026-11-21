@@ -679,6 +679,19 @@ Indítsd el a főmappában lévő `site_editor.bat` alkalmazást, majd nyisd meg
   törölhető; a törlés előtt a hivatkozások és a fájlverzió újra ellenőrződnek.
   Más böngészőablakok nem mentett vázlatait külön ellenőrizd.
   A fájltörlés nem törli az oldalt. Nem követett feltöltést a Git sem tud visszaállítani.
+- A **Save & sync** alatti **File cleanup** az egész webhely elhagyott képeit,
+  PDF-jeit és letölthető fájljait keresi. **Discover unused files** után
+  nézd át a találatokat, szűrj névre/mappára és fájltípusra, majd jelöld ki
+  a törlendő fájlokat. A **Review deletion** egyetlen ablakban mutatja a teljes
+  kijelölést. A vázlatokat előbb mentsd, a feltöltési sorokat ürítsd ki.
+  A mentett tartalom, beállítások és egy friss Hugo-build hivatkozásai védenek;
+  felismert dinamikus elérési utak, nem commitolt fájlok és helyi módosítások
+  nem törölhetők innen. Külső linkeket és könyvjelzőket külön ellenőrizz!
+  Az **Advanced: other static files** HTML-, script-, stílus-, betűkészlet- és
+  egyéb statikus fájlokat is megmutat; ezeket csak egyenkénti ellenőrzés után
+  jelöld ki. Helyi biztonsági másolat nem készül: a commitolt verzió Gitben
+  megmarad. A törlés csak helyi változás, amelyet a **Save & sync** oldalon
+  nézhetsz át és commitolhatsz; semmi nem publikálódik automatikusan.
 - Szerző, résztvevő és kapcsolattartó keresésekor a találatok gépelés közben
   automatikusan megjelennek, portréval vagy monogrammal, névvel és tartós ID-val.
   A keresés az aliasokat és beceneveket is figyeli; a tagságszűrő megmarad.
