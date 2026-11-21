@@ -60,7 +60,7 @@ function renderUploadPreviews(input, entries = null, remove = null) {
     });
     card.append(image, name, cancel);
     if (entry.choose) {
-      const choose = node("button", "Choose crop", "secondary");
+      const choose = node("button", entry.chooseLabel || "Choose crop", "secondary");
       choose.type = "button";
       choose.disabled = cancel.disabled;
       choose.addEventListener("click", () => {

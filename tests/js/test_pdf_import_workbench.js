@@ -5,7 +5,7 @@ const vm = require("node:vm");
 
 const source = fs.readFileSync(path.join(__dirname, "../../tools/workbench/web/content.js"), "utf8");
 const start = source.indexOf("  async function applyPDFImport()");
-const end = source.indexOf("\n  async function convertImages()", start);
+const end = source.indexOf("\n  async function editPageImages(", start);
 assert(start >= 0 && end > start, "PDF apply helper must remain accessible at module scope");
 
 function fixture({ mode = "append", body = "Original story.", cover = "", selected = ["photo-1"], confirm = true } = {}) {

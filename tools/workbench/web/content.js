@@ -192,7 +192,11 @@
       const choose = node("button", "Choose image…", "secondary small-button");
       choose.type = "button";
       choose.addEventListener("click", () => run(async () => {
-        await openMediaPicker("images", title, input.value, url => onChange(path, url));
+        const imageTitle = {
+          "thumbImg.image_path": "Card thumbnail", "featuredImg.image_path": "Page banner",
+          "seo.social_image": "Social preview image", "seo.featured_image": "Social card background",
+        }[path] || title;
+        await openMediaPicker("images", imageTitle, input.value, url => onChange(path, url));
       }));
       wrapper.append(choose);
     }
@@ -983,6 +987,9 @@
     }
     $("#media-picker-folder").value = folder;
     $("#media-picker-search").value = "";
+    $("#media-picker-image-upload").hidden = kind !== "images";
+    $("#media-picker-image-files").value = "";
+    renderUploadPreviews($("#media-picker-image-files"));
     $("#media-picker").showModal();
     await browsePicker();
   }
@@ -1029,7 +1036,20 @@
       } else button.append(node("strong", "PDF"));
       button.append(node("span", file.name), node("small", `${Math.round(file.bytes / 1024)} KiB`));
       button.addEventListener("click", () => run(async () => assignMedia(file.url)));
-      $("#media-picker-files").append(button);
+      if (studio.mediaTarget.kind === "images") {
+        const shell = node("div", "", "asset-picker-choice");
+        const edit = node("button", "Edit image…", "secondary");
+        edit.type = "button";
+        edit.disabled = !window.workbenchImages.supports(file.url);
+        edit.title = edit.disabled ? "Editing supports JPG, PNG and WebP. SVG/GIF files can still be selected unchanged." : "";
+        edit.addEventListener("click", () => run(async () => {
+          const target = studio.mediaTarget;
+          const outcome = await editPageImages({url: file.url, field: target.title});
+          if (studio.mediaTarget !== target) throw new Error("The image field changed. Saved files remain in the page folder.");
+          if (outcome.primary) assignMedia(outcome.primary);
+        }));
+        shell.append(button, edit); $("#media-picker-files").append(shell);
+      } else $("#media-picker-files").append(button);
     }
     $("#media-picker-status").textContent = files.length ?
       `${files.length} files. Choose one to assign it directly.` : "No matching files here. Browse another folder or upload a new file.";
@@ -1080,6 +1100,15 @@
       image.src = file.url; image.alt = file.name; image.loading = "lazy";
       const name = node("span", file.name);
       card.append(check, image, name, node("small", `${Math.round(file.bytes / 1024)} KiB`));
+      const edit = node("button", "Edit image…", "secondary");
+      edit.type = "button";
+      edit.disabled = !window.workbenchImages.supports(file.url);
+      edit.title = edit.disabled ? "Editing supports JPG, PNG and WebP. SVG/GIF files can still be selected unchanged." : "";
+      edit.addEventListener("click", event => {
+        event.preventDefault(); event.stopPropagation();
+        run(() => editPageImages({url: file.url}));
+      });
+      card.append(edit);
       check.addEventListener("change", () => {
         if (check.checked) studio.selected.set(file.url, { ...file, alt: "", caption: "" });
         else studio.selected.delete(file.url);
@@ -1327,6 +1356,33 @@
       throw error;
     } finally { setBusy(false); }
   }
+  async function editPageImages({files, url, field} = {}) {
+    const path = activePath(), folder = updateOwnedMediaFolders();
+    const settings = {name: files?.length === 1 ? $("#content-image-name").value.trim() : ""};
+    for (const key of ["width", "height", "quality"]) {
+      const input = $(`#content-image-${key}`);
+      if (!input.reportValidity()) throw new Error(`Check image ${key}.`);
+      settings[key] = Number(input.value);
+    }
+    const outcome = await window.workbenchImages.open({files, url, field, folder, settings,
+      context: {kind: "page", path}, title: field ? `Prepare ${field}` : "Prepare page photos",
+      validate() { if (activePath() !== path) throw new Error("The open page changed. Reopen the image editor for that page."); }});
+    for (const result of outcome.results) for (const image of result.files) {
+      if (!field) studio.selected.set(image.url, {...studio.selected.get(image.url), ...image,
+        name: decodeURIComponent(image.url.split("/").pop()), alt: studio.selected.get(image.url)?.alt || "",
+        caption: studio.selected.get(image.url)?.caption || ""});
+    }
+    if (outcome.results.length) {
+      $("#post-image-folder").value = folder; $("#page-media-image-folder").value = folder; $("#asset-folder").value = folder;
+      await browseAssets();
+      $("#content-conversion-results").textContent = outcome.results.flatMap(result => result.files.map(image => image.url)).join("\n");
+      feedback(`Reviewed WebP outputs saved. Page assignments and story changes remain an unsaved draft.${outcome.sourceErrors?.length ? `\n${outcome.sourceErrors.join("\n")}\nChoose the failed sources again to retry.` : ""}`, Boolean(outcome.sourceErrors?.length));
+      persistDraft();
+    }
+    if (!outcome.results.length && outcome.sourceErrors?.length) feedback(outcome.sourceErrors.join("\n"), true);
+    return outcome;
+  }
+
   async function convertImages() {
     const input = $("#content-image-files");
     const files = [...input.files];
@@ -1334,64 +1390,13 @@
     for (const file of files) {
       if (!file.size || file.size > 30 * 1024 * 1024) throw new Error(`${file.name}: choose a non-empty image up to 30 MiB.`);
     }
-    const folder = updateOwnedMediaFolders();
     const name = $("#content-image-name").value.trim();
     if (name && files.length !== 1) throw new Error("Custom output name is for a single photo. Leave it blank for a batch.");
-    const settings = { path: activePath(), folder, name };
-    for (const key of ["width", "height", "quality"]) {
-      const field = $(`#content-image-${key}`);
-      if (!field.reportValidity()) throw new Error(`Check image ${key}.`);
-      settings[key] = Number(field.value);
-    }
-    const failures = [];
-    setBusy(true);
-    $("#content-convert").disabled = true;
-    const results = [];
-    const progress = conversionProgress("content-convert", files.length);
-    let finished = false;
-    try {
-      for (const [index, file] of files.entries()) {
-        let entry;
-        let converted = false;
-        $("#content-conversion-results").textContent = `Converting ${index + 1}/${files.length}: ${file.name}`;
-        progress.update(index, `Uploading ${file.name}…`);
-        try {
-          entry = await api("/api/workbench/uploads", { method: "POST", raw: file, filename: file.name });
-          progress.update(index, `Converting ${file.name}…`);
-          const result = await api(rootAPI + "convert", { method: "POST", payload: { ...settings, id: entry.id } });
-          for (const image of result.files) {
-            const item = { ...image, name: image.url.split("/").pop(), alt: "", caption: "" };
-            studio.selected.set(image.url, item);
-            results.push(image.url);
-          }
-          converted = true;
-        } catch (error) { failures.push(`${file.name}: ${error.message}`); }
-        finally {
-          progress.update(index, `Cleaning up ${file.name}…`);
-          if (entry) {
-            try { await api(`/api/workbench/uploads/${entry.id}`, { method: "DELETE" }); }
-            catch (error) { failures.push(`${file.name}: ${converted ? "Export succeeded, but temporary original cleanup failed" : "Temporary original cleanup failed"}: ${error.message}`); }
-          }
-        }
-        progress.update(index + 1, `${results.length} converted files${failures.length ? ` · ${failures.length} errors` : ""}`);
-      }
-      $("#post-image-folder").value = folder;
-      $("#page-media-image-folder").value = folder;
-      $("#asset-folder").value = folder;
-      progress.update(files.length, "Refreshing page media…");
-      await browseAssets();
-      $("#content-conversion-results").textContent = [`${results.length} converted files:`, ...results, ...failures].join("\n");
-      feedback(failures.length ? failures.join("\n") : "Photos converted into your chosen folder and selected. Set image metadata or insert them into the story.", failures.length > 0);
-      input.value = "";
-      renderUploadPreviews(input);
-      persistDraft();
-      progress.finish(`${results.length} converted files.${failures.length ? " Some operations failed; see errors below." : " Ready to use."}`, failures.length > 0);
-      finished = true;
-    } finally {
-      if (!finished) progress.finish("Image operation interrupted. Check the error and any exported files.", true);
-      $("#content-convert").disabled = false;
-      setBusy(false);
-    }
+    const outcome = await editPageImages({files});
+    const transfer = new DataTransfer();
+    outcome.remainingFiles.forEach(file => transfer.items.add(file));
+    input.files = transfer.files;
+    renderUploadPreviews(input);
   }
 
   async function refreshPageMedia() {
@@ -1663,6 +1668,16 @@
   }
 
   $("#post-body").addEventListener("input", markDirty);
+  $("#media-picker-image-files").addEventListener("change", () => run(async () => {
+    const target = studio.mediaTarget, files = [...$("#media-picker-image-files").files];
+    if (!target || target.kind !== "images" || !files.length) return;
+    const outcome = await editPageImages({files, field: target.title});
+    if (studio.mediaTarget !== target) throw new Error("The destination field changed. Saved photos remain in the page folder.");
+    $("#media-picker-image-files").value = "";
+    renderUploadPreviews($("#media-picker-image-files"));
+    if (outcome.primary) assignMedia(outcome.primary);
+    if (outcome.sourceErrors?.length) feedback(`Some sources were not saved:\n${outcome.sourceErrors.join("\n")}\nChoose the failed sources again to retry. Already saved photos remain in this page's folder.`, true);
+  }));
   $("#post-body").addEventListener("select", rememberCursor);
   $("#post-body").addEventListener("keyup", rememberCursor);
   $("#post-body").addEventListener("click", rememberCursor);
@@ -1785,6 +1800,7 @@
   });
   $("#media-picker-upload").addEventListener("click", () => run(async () => {
     const target = studio.mediaTarget;
+    if (target.kind === "images") { $("#media-picker-image-files").click(); return; }
     updateOwnedMediaFolders();
     $("#media-picker").close();
     await showTab("media");

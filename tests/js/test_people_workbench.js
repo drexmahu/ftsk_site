@@ -175,7 +175,6 @@ assert.ok(appScript.includes("payload.overwrite_files = plan.files"));
   for (const id of ["member-cv", "member-cv_label", "member-cv_subtitle", "member-cv-upload", "member-cv-preview", "member-group-hint-save", "category-hint"]) {
     assert.ok(workbenchHtml.includes(`id="${id}"`));
   }
-  assert.ok(memberScript.includes('"/api/workbench/members/cv-image"'));
 }
 {
   const values = { "#member-image": "", "#member-modal_image": "", "#member-cv": "![Photo](/images/members/alice/photo.webp)" };
@@ -552,6 +551,8 @@ async function checkMediaPicker() {
   const requests = [];
   const context = {
     studio, $: get, node: element, document: { createElement: element },
+    window: {workbenchImages: {supports: () => true}},
+    renderUploadPreviews() {},
     updateOwnedMediaFolders: () => "tanfolyamok/2020",
     URLSearchParams, run: operation => operation(), feedback() {}, renderForms() {},
     switchPanel: value => { origin = value; },
@@ -568,11 +569,24 @@ async function checkMediaPicker() {
   assert.equal(get("#media-picker-folder").value, "tanfolyamok/2020");
   assert.equal(studio.mediaTarget.borrowedFolder, "old folder", "The current borrowed assignment remains accessible without controlling uploads");
   assert.equal(new URL(requests.at(-1), "http://fixture").searchParams.get("folder"), "tanfolyamok/2020");
-  await get("#media-picker-files").children[0].listeners.click();
+  await get("#media-picker-files").children[0].children[0].listeners.click();
   assert.equal(assigned, "/images/old/file.webp");
   assert.equal(origin, "course");
   assert.equal(studio.mediaTarget, null);
   assert.equal(get("#media-picker").open, false);
+  await context.openMediaPicker("images", "Flyer", "", url => { assigned = url; });
+  context.editPageImages = async ({files, field}) => {
+    assert.equal(files[0].name, "sample.jpg");
+    assert.equal(field, "Flyer");
+    return {primary: "/images/tanfolyamok/2020/cropped.webp"};
+  };
+  const uploadStart = script.indexOf('  $("#media-picker-image-files").addEventListener("change"');
+  const uploadEnd = script.indexOf('\n  $("#post-body").addEventListener("select"', uploadStart);
+  vm.runInNewContext(script.slice(uploadStart, uploadEnd), context);
+  get("#media-picker-image-files").files = [{name: "sample.jpg"}];
+  await get("#media-picker-image-files").listeners.change();
+  assert.equal(assigned, "/images/tanfolyamok/2020/cropped.webp", "Field uploads assign the chosen shared-editor output directly");
+  assert.equal(studio.mediaTarget, null);
   studio.tab = "media";
   await context.openMediaPicker("pdfs", "PDF report", "", url => { assigned = url; });
   assert.equal(get("#media-picker-folder").value, "tanfolyamok/2020");
@@ -615,7 +629,6 @@ function checkPageAssetFolders() {
     assert.equal(get(selector).value, "tanfolyamok/tanfolyam-2022", "Restored or tampered destinations must be reset to the page-owned folder");
   }
 
-  assert.match(script, /rootAPI \+ "convert"/);
   assert.ok(!script.includes('api("/api/workbench/convert"'), "Page uploads must use the enforced content API");
   for (const id of ["post-image-folder", "content-image-folder", "pdf-folder"]) {
     assert.match(workbenchHtml, new RegExp(`<input id="${id}" readonly`));

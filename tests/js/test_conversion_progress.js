@@ -9,8 +9,10 @@ const content = fs.readFileSync(path.join(__dirname, "..", "..", "tools", "workb
 
 function control() {
   return {
-    attributes: {}, children: [], value: 0, classes: new Set(),
+    attributes: {}, children: [], value: 0, classes: new Set(), handlers: {},
     append(...items) { this.children.push(...items); },
+    replaceChildren(...items) { this.children = items; },
+    addEventListener(name, handler) { this.handlers[name] = handler; },
     setAttribute(key, value) { this.attributes[key] = value; },
     removeAttribute(key) { delete this.attributes[key]; this.value = 0; },
     querySelector(tag) { return this.children.find(item => item.tag === tag); },
@@ -35,7 +37,7 @@ async function checkConversionProgress() {
   const context = {
     renderUploadPreviews() {},
     document: { getElementById: id => controls.get(id), createElement: tag => Object.assign(control(), { tag }) },
-    node: tag => Object.assign(get(`node-${controls.size}`), { tag }),
+    node: (tag, textContent = "") => Object.assign(get(`node-${controls.size}`), { tag, textContent }),
   };
   for (const id of ["convert-photos", "convert-portrait", "content-convert"]) get(id);
   vm.runInNewContext(app.slice(app.indexOf("function conversionProgress("), app.indexOf("\nasync function convertPhotos(")), context);
@@ -55,23 +57,56 @@ async function checkConversionProgress() {
   const events = [];
   Object.assign(context, {
     state: { photos: [{ id: "one", name: "one.jpg" }, { id: "two", name: "two.jpg" }] },
-    options: () => ({}), setBusy: value => events.push(["busy", value]),
-    notify() {}, showResults() {},
-    api: async (_url, options) => {
-      if (options.payload?.id === "two") throw new Error("Conversion failed");
-      const progress = get("convert-photos-progress").querySelector("progress");
-      if (options.payload) assert.equal(progress.value, 0, "No completed image before the first response");
-      return { files: [] };
-    },
+    options: () => ({folder: "gallery"}), setBusy: value => events.push(["busy", value]),
+    notify() {}, showResults() {}, queueView() {},
+    window: {workbenchImages: {async open(options) {
+      assert.equal(options.entries.length, 2);
+      assert.equal(options.context.kind, "photos");
+      return {results: [{files: []}], completedIds: ["one"]};
+    }}},
   });
-  vm.runInNewContext(app.slice(app.indexOf("async function convertPhotos("), app.indexOf("\nfunction clearCrop(")), context);
+  vm.runInNewContext(app.slice(app.indexOf("async function convertPhotos("), app.indexOf('\n$("#photo-library-browse")')), context);
   await context.convertPhotos();
-  const batch = get("convert-photos-progress");
-  assert.equal(batch.querySelector("progress").max, 2);
-  assert.equal(batch.querySelector("progress").value, 2);
-  assert.match(batch.querySelector("p").textContent, /Converted 1\/2 photos.*failed/);
-  assert.ok(batch.classes.has("error"));
-  assert.deepEqual(events.at(-1), ["busy", false]);
+  assert.equal(context.state.photos.length, 1);
+  assert.equal(context.state.photos[0].id, "two", "Only completed sources are removed from the photo queue");
+
+  Object.assign(context, {
+    $: get, action: callback => callback(),
+    URLSearchParams, api: async () => ({folders: [], files: [{url: "/images/old.webp", name: "old.webp"}]}),
+    window: {workbenchImages: {supports: () => true, async open(options) {
+      assert.equal(options.context.folder, "", "Root images are edited beside the source, not in the upload folder");
+      assert.equal(options.settings.width, 1600);
+      return {results: []};
+    }}},
+  });
+  get("#photo-folder").value = ""; get("#photo-library-folder").value = "";
+  for (const key of ["width", "height", "quality"]) get(`#photo-${key}`).value = key === "quality" ? "82" : "1600";
+  vm.runInNewContext(app.slice(app.indexOf("function imageSettings("), app.indexOf("\nfunction showResults(")), context);
+  assert.throws(() => context.options("photo"), /Choose an output folder/, "New uploads still require a named folder");
+  await context.browsePhotoLibrary();
+  await get("#photo-library-files").children[0].handlers.click();
+  context.api = async url => {
+    const folder = new URLSearchParams(url.split("?")[1]).get("folder");
+    return {folders: !folder ? ["hero", "turak"] : ["hero/sub"], files: []};
+  };
+  await context.visitPhotoFolder("");
+  assert.equal(get("#photo-library-parent").disabled, true);
+  await get("#photo-library-folders").children[0].handlers.click();
+  assert.equal(get("#photo-library-folder").value, "hero");
+  assert.equal(get("#photo-library-parent").disabled, false);
+  assert.deepEqual(get("#photo-library-breadcrumbs").children.map(item => item.textContent), ["Images", "›", "hero"]);
+  assert.equal(get("#photo-library-folders").children.length, 1, "Up is not mixed into the child-folder tiles");
+  await get("#photo-library-breadcrumbs").children[0].handlers.click();
+  assert.equal(get("#photo-library-folder").value, "", "Breadcrumbs return directly to an ancestor");
+  let releaseOld;
+  context.api = async url => new URLSearchParams(url.split("?")[1]).get("folder") === "hero" ?
+    new Promise(resolve => { releaseOld = resolve; }) :
+    {folders: [], files: [{url: "/images/turak/latest.webp", name: "latest.webp"}]};
+  const oldNavigation = context.visitPhotoFolder("hero");
+  await context.visitPhotoFolder("turak");
+  releaseOld({folders: [], files: [{url: "/images/hero/old.webp", name: "old.webp"}]});
+  await oldNavigation;
+  assert.equal(get("#photo-library-files").children[0].children[0].src, "/images/turak/latest.webp", "Late folder responses cannot replace the current folder's files");
 
   get("photo-files");
   Object.assign(context, {
@@ -94,6 +129,7 @@ async function checkConversionProgress() {
 
   Object.assign(context, {
     $: get, window: {}, cropBox: () => ({}), nextPortrait: async () => {},
+    options: () => ({folder: "gallery"}),
     currentPortraitOwner: () => "standalone",
     api: async () => ({ files: [] }),
   });
@@ -111,31 +147,25 @@ async function checkConversionProgress() {
   const input = get("#content-image-files");
   input.files = [{ name: "page.jpg", size: 10 }];
   get("#content-image-name").value = "";
-  const updates = [];
   Object.assign(context, {
     $: get, studio: { selected: new Map() }, rootAPI: "/content/",
     updateOwnedMediaFolders: () => "tanfolyamok/test", activePath: () => "tanfolyamok/test.md",
-    conversionProgress: (_id, total) => {
-      assert.equal(total, 1);
-      return { update: (count, label) => updates.push([count, label]), finish: (label, failed) => updates.push([label, failed]) };
-    },
-    api: async url => {
-      if (url.endsWith("uploads")) return { id: "uploaded" };
-      if (url.endsWith("convert")) return { files: [{ url: "/images/tanfolyamok/test/page.webp" }] };
-      return {};
-    },
+    window: {workbenchImages: {async open(options) {
+      assert.equal(options.context.kind, "page");
+      assert.equal(options.context.path, "tanfolyamok/test.md");
+      assert.equal(options.folder, "tanfolyamok/test");
+      return {results: [{files: [{url: "/images/tanfolyamok/test/page.webp"}]}], remainingFiles: []};
+    }}},
+    DataTransfer: class { constructor() { this.files = []; this.items = {add: file => this.files.push(file)}; } },
     browseAssets: async () => {}, feedback() {}, persistDraft() {},
   });
-  vm.runInNewContext(content.slice(content.indexOf("  async function convertImages("), content.indexOf("\n  async function refreshPageMedia(")), context);
+  vm.runInNewContext(content.slice(content.indexOf("  async function editPageImages("), content.indexOf("\n  async function refreshPageMedia(")), context);
   await context.convertImages();
-  assert.ok(updates.some(([, label]) => typeof label === "string" && label.startsWith("Uploading")));
-  assert.ok(updates.some(([, label]) => typeof label === "string" && label.startsWith("Converting")));
-  assert.ok(updates.some(([, label]) => typeof label === "string" && label.startsWith("Cleaning")));
-  assert.deepEqual(updates.at(-1), ["1 converted files. Ready to use.", false]);
+  assert.equal(context.studio.selected.size, 1);
+  input.files = [{name: "page.jpg", size: 10}];
   context.browseAssets = async () => { throw new Error("Refresh failed"); };
   await assert.rejects(context.convertImages(), /Refresh failed/);
-  assert.equal(updates.at(-1)[1], true, "Post-export failures must not leave an active or successful progress indicator");
-  console.log("PASS: Conversion progress tracks completed work, indeterminate processing, retry and explicit failures.");
+  console.log("PASS: Upload/portrait progress and shared photo/page editing preserve completed-source cleanup and explicit errors.");
 }
 
 module.exports = checkConversionProgress;

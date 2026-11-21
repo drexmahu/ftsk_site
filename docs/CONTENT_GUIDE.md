@@ -636,7 +636,10 @@ Indítsd el a főmappában lévő `site_editor.bat` alkalmazást, majd nyisd meg
   ugyanez a szabály a `static/pdfs/` alatt. A szerver is kikényszeríti ezt,
   nem csak a csak-olvasható célmező.
   Egy képhez külön fájlnév is megadható. Az ütköző nevek számozott utótagot
-  kapnak, meglévő fájl nem íródik felül. A kijelölt fotóból külön beállítható
+  kapnak; új feltöltés meglévő fájlt nem ír felül. Meglévő WebP cseréje csak
+  az új képszerkesztő külön, kifejezett jóváhagyásával történik, az eredeti
+  fájl változatlanságának szerveroldali ellenőrzése után. Kölcsönzött kép
+  más oldal mappájában innen nem írható felül. A kijelölt fotóból külön beállítható
   a bélyegkép, fő kép és `seo.featured_image` felülbírálás.
   A konvertálás mellett folyamatjelző mutatja a feldolgozott képek számát és
   az aktuális lépést (feltöltés, konvertálás, takarítás). Egyetlen kép vagy portré
@@ -946,6 +949,60 @@ célmappát, méretet és minőséget, majd kérj explicit WebP-konvertálást.
 Soha ne commitolj eredeti kamera-/telefonfotókat, azok messze túl nagyok.
 A külön asztali konvertálókat és indítóikat a munkafelület váltotta fel;
 a Python konvertálómodulok háttérkódként megmaradnak.
+
+### Közös képszerkesztő és kimeneti változatok
+
+A **Site photos → Edit & save queued photos**, a cikkek képmezőinek
+feltöltése/szerkesztése és a CV-fotók ugyanazt az ablakot használják.
+A portrék külön négyzetes arckivágója és a teljes kép/bélyegkép párja megmarad.
+
+- Az „eredeti” itt **szerkesztés nélküli WebP-kimenet**, nem a feltöltött
+  JPG/PNG/HEIC megőrzése. A telefon-/kamerafájl csak ideiglenes munkapéldány.
+- A fotók között bélyegképekkel vagy **Previous / Next** gombokkal válthatsz.
+  Minden fotónak külön megőrződnek a változatai és beállításai.
+- **Create edited version** új kivágott/színmódosított változatot készít;
+  **Duplicate version** újabb, külön szerkeszthető másolat. Az unedited
+  jelölővel dönthetsz az eredeti WebP megtartásáról. Csak eredeti, csak
+  szerkesztett változatok, vagy mindkettő is menthető.
+- Szabad vagy rögzített arányú téglalap/négyzet, kör és ellipszis választható.
+  A kör/ellipszis tényleges átlátszó sarkú WebP. A kijelölés húzható,
+  sarkaival átméretezhető; a pontos forráspixel-koordináták is megadhatók.
+  Fényerő, kontraszt, színtelítettség és meleg/hideg tónus állítható.
+- A maximális szélesség/magasság és minőség változatonként állítható.
+  Nincs nyújtás vagy felnagyítás. Az **Exact WebP output preview** már
+  a ténylegesen kódolt fájl, pontos mérettel, fájlnévvel és bájtmérettel.
+- Fotónként legfeljebb 20 változat, egy kötegben összesen 200 kijelölt kimenet
+  készülhet. Egy nem szükséges változat eltávolítása vagy az eredeti kimenet
+  kihagyása helyet szabadít fel. Hibás pixelméret esetén a mentés letiltva marad;
+  az előnézet átmeneti hibáját a **Refresh preview** gombbal próbálhatod újra.
+- **Review** az összes mentendő kimenetet megmutatja. Képmezőből nyitva
+  válaszd ki, melyik legyen a bélyegkép, fejléc vagy social kép; a többi
+  kimenet az oldal saját mappájába kerül, automatikus mezőhozzárendelés nélkül.
+- A **Site photos → Edit an existing site image** meglévő raszteres képet
+  nyit meg. A könyvtár megnyitásakor a gyökérmappából indulhatsz:
+  mappacsempékkel lépj beljebb, a felső útvonal elemeire kattintva ugorj
+  egy előző mappába, vagy használd a mindig ugyanott lévő **Up** gombot.
+  A **Go to a folder by path** csak a kézi útvonalmegadásra szolgál,
+  nem szükséges a szokásos navigáláshoz. Alapesetben új másolatot ment.
+  Az **Replace the existing WebP**
+  az adott URL-t használó összes helyet megváltoztatja, ezért a végső
+  áttekintésen külön jelölővel kell jóváhagyni. Új fotó és más oldalról
+  kölcsönzött fájl innen nem írható felül.
+- Az ablak megmagyarázza a célmappa kötöttségeit: cikkhez az oldal saját
+  mappája, CV-hez a kiválasztott személy mappája tartozik. A könyvtárban
+  másik mappába navigálás ezt nem változtatja meg. Meglévő **Site photos**
+  kép szerkesztése a forrás mappájába ment, az új feltöltések célmappájától
+  függetlenül. SVG/GIF kiválasztható változtatás nélkül, de itt nem szerkeszthető.
+- Mentés előtt semmi nem kerül a webhelyre. **Cancel / close** elveti a
+  még nem mentett változatokat. Részleges mentési hiba esetén a sikeres fájlok
+  listája megmarad, az újrapróbálás csak a hátralévő kimeneteket menti.
+  A már mentett fájlokat az ablak bezárása nem vonja vissza.
+  A be nem olvasható források neve az áttekintésen és a mentés utáni
+  visszajelzésben is megmarad; ezek nem kerülnek a mentett fájlok közé.
+
+Az ablak nyitva tartása blokkolja a Git-műveleteket és az editor újraindítását;
+a böngésző újratöltés előtt figyelmeztet. Képfájl mentése nem menti automatikusan
+a cikk/személy vázlatát, nem commitol és nem publikál.
 
 ### Mappa- és elnevezési konvenció
 
