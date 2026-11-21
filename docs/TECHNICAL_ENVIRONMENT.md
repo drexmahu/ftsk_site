@@ -225,14 +225,92 @@ One local browser application brings together the existing tools:
 ```powershell
 .\site_editor.bat
 # Without opening a browser automatically:
-.\.venv\Scripts\python.exe -m tools.workbench --no-browser --port 8879
+.\site_editor.bat --no-browser --port 8879
+# Editor development: reuse .venv; restart local source edits manually:
+.\site_editor.bat --dev
 ```
 
-Open <http://127.0.0.1:8879/>. The launcher uses the project `.venv`; the
-environment installer already supplies Pillow, PyYAML, PDFium and the local Monaco
-bundle. For an existing installation, rerun setup or run `npm ci` followed
-by `npm run workbench:editors` before starting Workbench. No external editor
-service or CDN is used.
+Open <http://127.0.0.1:8879/>. The stable, standard-library launcher starts
+from `.venv`, then supervises a separate checkout-specific editor behind that
+same browser address. Keep its console open. No external editor service or CDN
+is used. Direct `python -m tools.workbench` remains available for debugging,
+but bypasses supervision and automatic restart.
+
+### Editor versions, checkout changes and developer mode
+
+`tools/workbench/version.json` declares the editor's semantic `version` and
+`launcher_protocol` (currently `1`). Bump the semantic version for editor
+releases; change the protocol only when the launcher/editor contract changes.
+The launcher additionally hashes actual editor Python, JavaScript, CSS, HTML,
+supporting tool modules, dependency manifests and editor build inputs. Thus
+same-version source changes still trigger a restart; content-only edits do not.
+The browser displays the running version, with a source fingerprint tooltip.
+
+After checkout, creation, Receive, rebase or manual Git recovery, the launcher
+waits for Git, requests and build jobs to finish before comparing sources.
+If editor sources changed, it gracefully closes the old editor, including its
+owned preview processes, prepares dependencies and starts the matching editor.
+The launcher and its browser bridge remain in memory even when an older branch
+removes their files. Unversioned branches are labelled **legacy (unversioned)**;
+they must still contain the Workbench status API. A small legacy port adapter
+keeps isolated-preview CSP bound to the public editor address, not its private
+backend port. Unsupported protocol versions, missing editors and startup errors
+leave a recovery screen rather than serving mismatched assets.
+
+Browser requests carry an editor generation; an old tab cannot call the new
+editor's APIs until reloaded, including after reopening the launcher. Request
+tokens also change on restart. Reconnect
+never silently discards browser-only drafts: affected tabs offer draft downloads
+and an explicit reload after the user saves their work. Queued server uploads
+and paused Git recovery prevent restarting. Finish/abort Git recovery or remove
+queued uploads first. Saved files, local commits and recovery backups are never
+discarded by the launcher. If status cannot verify that Git is finished, it
+waits rather than killing an unverified worker.
+The status contract must report Git availability, busy/recovery state, queued
+uploads and the build-job lifecycle; missing fields are not treated as idle.
+
+Managed mode caches separate Python environments under
+`.tools/site-editor-runtime/python/`, keyed by the recursive requirements,
+interpreter and Python version. It installs project requirements only into these
+environments, never modifies `.venv`, and marks a cache ready only after successful
+installation and `pip check`. Editor assets are rebuilt from the current lockfile
+and build sources; `npm ci` affects project-local `node_modules` only. Missing or
+incompatible Node/Hugo/system tools require the explicit setup installer; the
+launcher does not install system tools or change PATH. Installation/startup
+failures remain visible with **Retry startup** and instructions to double-click
+`setup-dev-env.bat`. Keep the launcher window for detailed command output.
+Retry after a failed managed editor start re-prepares only that editor's cached
+Python environment; it does not delete environments or modify the project `.venv`.
+
+**One-time migration:** update existing installations manually to a checkout
+containing this launcher, rerun setup if needed, close the old editor, then
+double-click `site_editor.bat`. Already-running unsupervised editors cannot gain
+this feature retroactively. Subsequent editor-changing checkout operations are
+supervised, including downgrades within the running launcher session. On a legacy
+branch its old batch file may still launch unsupervised after the entire launcher
+is closed; return to the launcher-enabled release for the next supervised session.
+A protocol change requires closing and reopening the checkout's updated launcher.
+
+**Developers:** `site_editor.bat --dev` uses the selected project `.venv` without
+automatic dependency installation. Local source edits produce a warning and
+**Restart editor** button rather than interrupting work. Checkout-changing Git
+actions through the editor, and external branch switches, still restart changed
+editor code. External same-branch source edits/updates in this mode require the
+manual restart button. Ordinary page reloads do not reload Python modules.
+Dependencies and Monaco builds are maintained explicitly with setup or the
+existing build commands. The restart button replaces the editor process, not
+the stable launcher: after editing `launcher.py` or `runtime-bridge.js`, close
+and reopen the launcher. Keep protocol `1` compatibility across editor releases;
+changing that contract requires a protocol bump and a new launcher session.
+New processes disable stale bytecode caches, including
+same-size, same-timestamp files checked out from another branch.
+
+Focused regressions (no dependency downloads; disposable Git/editor processes):
+
+```powershell
+.\.venv\Scripts\python.exe -m unittest discover -s tests\python -p test_workbench_runtime.py
+node tests\js\test_workbench_runtime.js
+```
 
 ### PDF import API and archive batches
 
@@ -333,10 +411,10 @@ recommendation pulse; busy/disabled actions remain unhighlighted.
   beside GitHub. Separate directional lanes distinguish checkpoint, push, fetch
   (snapshot only), and pull (history/files). Only the active transfer is animated.
   Visible checkout and new-branch launchers on the local-history box open a
-  guided branch modal with the current checkout, live draft/file blockers,
-  both controls and common questions. It explains the creation base, main
-  protection, cached server choices and the absence of automatic stash/push.
-  Execution still requires the existing separate operation confirmation.
+  compact, single-purpose modal with live draft/file blockers: switching
+  existing work or naming a new branch from latest main. The submit button
+  executes without a second approval. An advanced option retains creation
+  from the current checkout, including saved changes on protected main.
   The checkpoint graph shows newer tips at the top, with older ancestry below
   (also in the accessible checkpoint list). It uses real parent links, merge-base(s), separate main
   and working-branch reachability counts, and exact local/cached-server tip
@@ -387,8 +465,10 @@ recommendation pulse; busy/disabled actions remain unhighlighted.
   Checkout, branch creation, explicit fetch, fetch+rebase updates, rebase,
   reviewed selected-file commits and ordinary push run in a serialized
   background worker. Guided operations expose no merge, unconditional
-  force-push, automatic stash, reset/discard or automatic server contact.
-  Every GUI fetch (explicit Fetch, Receive and published-rebase preflight)
+  force-push, automatic stash or reset/discard. Server contact happens only
+  after a user action. Fetch, ordinary push, Receive and Continue execute
+  directly; rebase, abort, native terminal and leased publication retain reviews.
+  Every GUI fetch (explicit Fetch, Receive, latest-main workflows and published-rebase preflight)
   runs `git fetch --all --prune`, refreshing all configured
   remotes and removing deleted server tracking refs without deleting local
   branches. The branch picker includes all cached remote branches. Receive
@@ -396,6 +476,20 @@ recommendation pulse; busy/disabled actions remain unhighlighted.
   `rebase --no-autostash`, preserving teammates' work and replaying only
   unpublished commits;
   it requires checkpointed files and makes a working-branch recovery backup.
+  **Open a new branch from main** fetches first and creates an untracked
+  working branch directly from the fetched `origin/main` commit, not current
+  work or stale local main. Local main is not overwritten; dirty files block
+  this workflow. Missing main, fetch failures and existing names fail visibly.
+  **Rebase active branch onto latest main** fetches before validating fresh
+  server tips, backs up and replays the current branch. It rejects missing
+  teammate commits and retains the exact fetched lease for published work.
+  An already-current branch does not acquire an unnecessary publication lease.
+  If replay stops, Workbench aborts it and marks the backup aborted. The failure
+  dialog gives checkout-specific PowerShell commands, conflicting paths,
+  staging/continue/abort steps and exact leased publication instructions.
+  An abort failure remains visible with recovery controls; it never claims
+  restoration. Advanced selected-base and Receive workflows still pause for
+  existing in-tool conflict recovery.
   Advanced recovery explicitly confirms a native Windows PowerShell window
   rooted at this checkout. No Git command runs automatically. Manual commands
   bypass GUI protections, so drafts must be saved/exported first and experienced
@@ -423,8 +517,9 @@ recommendation pulse; busy/disabled actions remain unhighlighted.
   inspection. A nonblank editor-written message is required by both UI and API.
   Published working branches may explicitly opt into rebase onto `origin/main`
   or `origin/master`, only when tracking their own same-name origin branch and
-  containing its recorded server tip. A new fetch must match both reviewed tips
-  before backup/rebase begins. Every guided working-branch rebase saves a verified
+  containing its recorded server tip. The advanced selected-base workflow
+  requires a new fetch to match both reviewed tips; latest-main explicitly
+  requests the freshly fetched base instead. Every guided working-branch rebase saves a verified
   history bundle, retained `refs/workbench-backups/<id>` reference, commit patch,
   binary tree-difference patch and manual recovery instructions under the
   ignored `.workbench-backups/` directory. Local `info/exclude` protects backups

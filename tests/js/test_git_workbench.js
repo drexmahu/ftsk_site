@@ -114,7 +114,9 @@ async function run() {
   assert.equal(f.get("#git-branch-dialog").open, false);
   f.get("#git-new-branch-open").handlers.click();
   assert.equal(f.get("#git-new-branch").focused, true);
-  assert.ok(f.get("#git-branch-heading").textContent.includes("Create"));
+  assert.ok(f.get("#git-branch-heading").textContent.includes("from main"));
+  assert.equal(f.get("#git-switch-workflow").hidden, true);
+  assert.equal(f.get("#git-create-workflow").hidden, false);
   f.context.openGitConfirmation("create", { branch: "course-2027" });
   assert.equal(f.get("#git-branch-dialog").open, false, "Branch choices hand over to the existing confirmation");
   assert.equal(f.get("#git-confirm-dialog").open, true);
@@ -153,6 +155,43 @@ async function run() {
   f.context.openGitConfirmation("fetch");
   assert.equal(f.get("#git-confirm-dialog").open, true, "Fetch can be reviewed without discarding a draft");
   assert.equal(f.requests(), 0, "Opening a review never executes Git");
+
+  f = fixture();
+  f.update(f.data);
+  const sent = [];
+  f.context.api = async (url, options) => {
+    sent.push(options.payload);
+    return { ...f.data, busy: true, job: { state: "running", action: options.payload.action } };
+  };
+  f.get("#git-new-branch-open").handlers.click();
+  f.get("#git-new-branch").value = "fresh-task";
+  await f.get("#git-create").handlers.click();
+  assert.equal(sent[0].action, "create-main");
+  assert.equal(sent[0].branch, "fresh-task");
+  assert.equal(f.get("#git-confirm-dialog").open, false, "Creation form is the only approval");
+  assert.equal(f.get("#git-branch-dialog").open, false);
+  f.update({ ...f.data, job: { state: "passed", action: "create-main" } });
+  await f.get("#git-fetch").handlers.click();
+  assert.equal(sent[1].action, "fetch");
+  assert.equal(f.get("#git-confirm-dialog").open, false, "Fetch needs no redundant approval");
+
+  f = fixture();
+  f.update(f.data);
+  f.get("#git-rebase-main").handlers.click();
+  assert.equal(f.get("#git-confirm-dialog").open, true, "History rewriting retains one review");
+  assert.ok(f.get("#git-confirm-description").textContent.includes("aborted"));
+  f.get("#git-confirm-dialog").close();
+  const failed = { ...f.data, job: { state: "failed", action: "rebase-main", error: "Aborted",
+    manual_rebase: { branch: "working", backup: ".workbench-backups/test",
+      conflicts: ["shared.txt"], commands: "git rebase --no-autostash origin/main",
+      resolution: "git add -- 'shared.txt'\ngit rebase --continue", publication: "git push" } } };
+  f.update(failed);
+  assert.equal(f.get("#git-manual-dialog").open, true);
+  assert.ok(f.get("#git-manual-resolution").textContent.includes("git rebase --continue"));
+  assert.equal(f.get("#git-manual-files").children[0].textContent, "shared.txt");
+  f.get("#git-manual-close").handlers.click();
+  f.update(failed);
+  assert.equal(f.get("#git-manual-dialog").open, false, "Polling does not reopen dismissed instructions");
 
   f = fixture();
   const guidance = (extra = {}, drafts = [], locked = false) =>
@@ -340,17 +379,18 @@ async function run() {
   assert.equal(f.get("#git-fetch").dataset.suggested, "false");
   assert.equal(f.get("#git-map").dataset.suggestedFlow, "send");
   f.get("#git-push").tagName = "BUTTON";
+  f.context.response = f.data;
   f.get("#git-guidance-action").handlers.click();
-  assert.equal(f.get("#git-confirm-dialog").open, true);
-  assert.equal(f.requests(), requestsBeforeGuidance, "Guidance actions still open an explicit confirmation; no silent Git action");
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(f.get("#git-confirm-dialog").open, false);
+  assert.equal(f.requests(), requestsBeforeGuidance + 1, "Clicking Send is sufficient approval for an ordinary push");
   f.update({ ...f.data, base_behind: 1, base_branch: "origin/main", last_fetch: new Date().toISOString() });
   f.get("#git-branch-controls").tagName = "DETAILS";
   f.get("#git-rebase-controls").tagName = "DETAILS";
   f.get("#git-rebase-controls").id = "git-rebase-controls";
   f.get("#git-guidance-action").handlers.click();
-  assert.equal(f.get("#git-rebase-controls").open, true);
-  assert.equal(f.get("#git-rebase-controls").focused, true);
-  assert.equal(f.get("#git-rebase-target").value, "origin/main");
+  assert.equal(f.get("#git-confirm-dialog").open, true);
+  assert.ok(f.get("#git-confirm-description").textContent.includes("latest origin/main"));
   assert.equal(f.get("#git-rebase-controls").dataset.suggested, "true");
   assert.equal(f.get("#git-map").dataset.suggestedFlow, "", "A local rebase is not a server transfer");
   f.update({ ...f.data, busy: true, job: { state: "running", action: "fetch" } });

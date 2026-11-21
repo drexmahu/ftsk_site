@@ -143,6 +143,94 @@ class GitTests(Fixture):
         self.assertEqual(result["job"]["state"], "passed", result["job"])
         self.assertEqual(result["base_behind"], 0)
 
+    def test_new_branch_fetches_latest_main_not_current_work_and_has_no_upstream(self):
+        self.commit("Old task\n")
+        old_work = self.git.snapshot()["head"]
+        self.server_update("Latest main\n")
+        result = self.operation("create-main", branch="fresh-task")
+        self.assertEqual(result["job"]["state"], "passed", result["job"])
+        self.assertEqual(result["branch"], "fresh-task")
+        self.assertEqual(result["head"], self.git.text("rev-parse", "origin/main"))
+        self.assertEqual(result["upstream"], "", "New work must not track or push to main")
+        self.assertEqual(self.shared.read_text(), "Latest main\n")
+        self.assertEqual(self.git.text("rev-parse", "working"), old_work)
+
+    def test_new_branch_from_main_preserves_dirty_files_and_rejects_new_server_name(self):
+        self.git.run("switch", "main")
+        self.shared.write_text("Unsaved checkpoint\n", encoding="utf-8")
+        with self.assertRaises(ConflictError):
+            self.operation("create-main", branch="fresh-task")
+        self.assertEqual(self.shared.read_text(), "Unsaved checkpoint\n")
+        self.shared.write_text("Original\n", encoding="utf-8")
+        subprocess.run(["git", "--git-dir", str(self.remote), "update-ref", "refs/heads/fresh-task",
+                        self.git.snapshot()["head"]], check=True, capture_output=True)
+        result = self.operation("create-main", branch="fresh-task")
+        self.assertEqual(result["job"]["state"], "failed")
+        self.assertEqual(result["branch"], "main")
+        self.assertIn("already exists on the server", result["job"]["error"])
+
+    def test_latest_main_rebase_fetches_and_replays_published_work_with_exact_lease(self):
+        other = self.root / "task.txt"
+        other.write_text("My task\n", encoding="utf-8")
+        self.git.run("add", "--", other.name)
+        self.git.run("commit", "-m", "My task")
+        original = self.operation("push")["head"]
+        self.server_update("Latest main\n")
+        result = self.operation("rebase-main")
+        self.assertEqual(result["job"]["state"], "passed", result["job"])
+        self.assertEqual(self.git.text("rev-parse", "HEAD^"), self.git.text("rev-parse", "origin/main"))
+        self.assertEqual(other.read_text(), "My task\n")
+        self.assertEqual(result["recovery"]["expected_remote"], original)
+        self.assertTrue(result["lease_ready"])
+        self.assertEqual(self.git.text("rev-parse", "origin/working"), original)
+
+    def test_latest_main_rebase_conflicts_abort_restore_and_provide_manual_steps(self):
+        original = self.commit("My conflicting task\n")["head"]
+        self.server_update("Their conflicting update\n")
+        result = self.operation("rebase-main")
+        self.assertEqual(result["job"]["state"], "failed")
+        self.assertFalse(result["rebase"])
+        self.assertEqual(result["head"], original)
+        self.assertEqual(result["branch"], "working")
+        self.assertEqual(result["changes"], [])
+        self.assertEqual(self.shared.read_text(), "My conflicting task\n")
+        self.assertEqual(result["recovery"]["phase"], "aborted")
+        manual = result["job"]["manual_rebase"]
+        self.assertEqual(manual["conflicts"], ["shared.txt"])
+        self.assertIn("git fetch --all --prune", manual["commands"])
+        self.assertIn("git rebase --no-autostash origin/main", manual["commands"])
+        self.assertIn("git add -- 'shared.txt'", manual["resolution"])
+        self.assertIn("git rebase --continue", manual["resolution"])
+        self.assertTrue((self.root / manual["backup"] / "history.bundle").is_file())
+
+    def test_latest_main_rebase_already_current_does_not_require_republication(self):
+        original = self.operation("push")["head"]
+        result = self.operation("rebase-main")
+        self.assertEqual(result["job"]["state"], "passed", result["job"])
+        self.assertEqual(result["head"], original)
+        self.assertFalse(result["lease_ready"])
+        self.assertIsNone(result["recovery"])
+        self.assertIsNotNone(result["last_fetch"])
+
+    def test_latest_main_rebase_rejects_fresh_missing_teammate_commits_and_missing_main(self):
+        original = self.operation("push")["head"]
+        self.server_update("Teammate update\n")
+        remote_head = subprocess.run(["git", "--git-dir", str(self.remote), "rev-parse", "main"],
+                                     check=True, capture_output=True, text=True).stdout.strip()
+        subprocess.run(["git", "--git-dir", str(self.remote), "update-ref", "refs/heads/working", remote_head],
+                       check=True, capture_output=True)
+        result = self.operation("rebase-main")
+        self.assertEqual(result["job"]["state"], "failed")
+        self.assertIn("missing server checkpoints", result["job"]["error"])
+        self.assertEqual(result["head"], original)
+        self.assertFalse(result["rebase"])
+        subprocess.run(["git", "--git-dir", str(self.remote), "update-ref", "-d", "refs/heads/main"],
+                       check=True, capture_output=True)
+        result = self.operation("create-main", branch="fresh-task")
+        self.assertEqual(result["job"]["state"], "failed")
+        self.assertIn("no main branch", result["job"]["error"])
+        self.assertEqual(result["branch"], "working")
+
     def test_graph_tracks_actual_fork_main_and_rebased_published_branch(self):
         original = self.git.snapshot()["head"]
         other = self.root / "working-only.txt"

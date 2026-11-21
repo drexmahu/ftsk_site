@@ -4,7 +4,7 @@ title FTSK Site Workbench
 cd /d "%~dp0"
 
 if exist "%~dp0.venv\Scripts\python.exe" (
-    "%~dp0.venv\Scripts\python.exe" -m tools.workbench %*
+    "%~dp0.venv\Scripts\python.exe" "%~dp0tools\workbench\launcher.py" %*
     if errorlevel 1 goto :failed
     exit /b 0
 )

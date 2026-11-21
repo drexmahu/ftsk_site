@@ -36,6 +36,11 @@ Az egységes **Site Workbench** a [http://127.0.0.1:8879/](http://127.0.0.1:8879
 címen nyílik meg. A meglévő eszközöket és a cikkek/frontmatter szerkesztését
 fogja össze; nem commitol és nem publikál automatikusan.
 Részletek: [böngészős munkafelület](docs/TECHNICAL_ENVIRONMENT.md#site-workbench).
+Az indító automatikusan újraindítja a szerkesztőt, ha az ágváltás másik
+programverziót hoz. Szerkesztőfejlesztéshez `.\site_editor.bat --dev` használható:
+a helyi forrásmódosítások kézzel indíthatók újra, automatikus csomagtelepítés nélkül.
+Verziózás, első kézi frissítés és hibajavítás:
+[szerkesztőverziók](docs/TECHNICAL_ENVIRONMENT.md#editor-versions-checkout-changes-and-developer-mode).
 
 A `npm start` és `npm run dev` ugyanezt a Hugo fejlesztői szervert indítja.
 A JavaScript-ellenőrzések Node-ot használnak, külső npm-csomagok nélkül.

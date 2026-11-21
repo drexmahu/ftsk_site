@@ -2,7 +2,7 @@
 
 const gitUI = { pending: null, commitReview: null, conflict: null, lastRevision: "", busy: false,
   reloadAction: "", context: "", stale: false, lastJob: "", ownedOperation: false, draftBusy: false,
-  selectionVersion: 0, reviewFiles: [], reviewIndex: 0 };
+  selectionVersion: 0, reviewFiles: [], reviewIndex: 0, createBase: "main" };
 const gitGraphUI = { key: "", detailed: false, nodes: new Set(), initialized: false, detailRequest: 0 };
 const gitButtonHints = [];
 let gitHintOwner = null;
@@ -50,7 +50,7 @@ function gitGuidance(data, drafts, locked, now = Date.now()) {
     `${data.ahead ? `${data.ahead} local checkpoint(s) still need sending. ` : !data.upstream ? "This branch is still local only. " : ""}Fetch only refreshes your knowledge of GitHub. It does not change working files, receive updates, or send your work.`,
     "git-fetch", "server");
   if (data.base_behind > 0) return step("Follow the updated main branch", `Main has ${data.base_behind} checkpoint(s) your branch does not include.`,
-    `Follow ${data.base_branch} with rebase before sharing. If this branch was already published, explicitly approve the backup-protected rebase, then publish with its lease.`,
+    "Rebase fetches main first and backs up your history. Conflicts automatically abort; published history needs a protected push afterwards.",
     "git-rebase-controls", "local");
   if (data.ahead || !data.upstream) return step("3 · Send to GitHub", data.ahead ?
     "Your local checkpoints are ready to send to GitHub." : "This working branch has not been published to GitHub.",
@@ -78,11 +78,11 @@ function renderGitGuidance(data = state.git) {
   const target = guidance.target ? $("#" + guidance.target) : null;
   action.textContent = guidance.target === "git-work-station" ? "Show draft recovery & save guidance" :
     guidance.target === "git-branch-controls" ? "Choose a working branch" :
-    guidance.target === "git-rebase-controls" ? "Review how to follow main" :
+    guidance.target === "git-rebase-controls" ? "Rebase active branch onto latest main" :
     guidance.target === "git-recovery" ? "Show conflict recovery" :
     guidance.target === "git-backup-info" ? "Show recovery backup" :
     target?.textContent || "Show next step";
-  action.disabled = Boolean(target?.disabled);
+  action.disabled = Boolean(target?.disabled || guidance.target === "git-rebase-controls" && $("#git-rebase-main").disabled);
   $("#git-draft-status").textContent = drafts.length ? `${drafts.length} unsaved draft / upload notice(s) — not checkpointed or on GitHub` :
     "No unsaved browser drafts or queued uploads detected.";
   $("#git-base-status").textContent = data.base_branch ?
@@ -110,16 +110,20 @@ function renderGitGuidance(data = state.git) {
   $("#git-server-station").dataset.pending = String(Boolean(data.behind));
   if (drafts.length && !data.changes?.length) gitDots($("#git-work-dots"), drafts.length, true);
   renderGitBranchDialog();
-  action.disabled = Boolean(target?.disabled);
+  $("#git-rebase-main").disabled = Boolean(!data.available || !state.token || !data.editable ||
+    data.busy || gitUI.busy || gitUI.draftBusy || gitUI.stale || drafts.length || data.changes?.length ||
+    !data.remote || data.rebase || data.merge || data.conflicts?.length ||
+    data.recovery?.phase === "ready" && data.recovery.expected_remote);
+  action.disabled = Boolean(target?.disabled || guidance.target === "git-rebase-controls" && $("#git-rebase-main").disabled);
   const suggested = guidance.level === "attention" && !data.busy && !gitUI.busy &&
-    !gitUI.draftBusy && !gitUI.stale && target && !target.disabled ? guidance.target : "";
+    !gitUI.draftBusy && !gitUI.stale && target && !action.disabled ? guidance.target : "";
   action.dataset.suggested = String(Boolean(suggested));
   for (const id of ["git-review", "git-fetch", "git-pull", "git-push", "git-push-lease",
-    "git-branch-controls", "git-new-branch-open", "git-rebase-controls", "git-rebase"]) {
+    "git-branch-controls", "git-new-branch-open", "git-rebase-controls", "git-rebase", "git-rebase-main"]) {
     const element = $("#" + id);
     const matches = id === suggested ||
       suggested === "git-branch-controls" && id === "git-new-branch-open" ||
-      suggested === "git-rebase-controls" && id === "git-rebase";
+      suggested === "git-rebase-controls" && id === "git-rebase-main";
     element.dataset.suggested = String(Boolean(matches && !element.disabled));
   }
   const flows = { "git-review": "checkpoint", "git-fetch": "fetch", "git-pull": "receive",
@@ -129,6 +133,9 @@ function renderGitGuidance(data = state.git) {
 }
 
 function gitDisabledReason(id, data = state.git || {}) {
+  if (id === "git-rebase-main") return !data.remote ? "Configure origin before fetching main." : gitDisabledReason("git-rebase", data);
+  if (id === "git-create" && gitUI.createBase === "main" && !data.remote) return "Configure origin before opening a branch from latest main.";
+  if (id === "git-create-current") return gitDisabledReason("git-create", data);
   if (id === "git-guidance-action") return gitDisabledReason($("#git-guidance-action").dataset.target, data);
   if (data.manual_terminal) return "The recovery terminal is open. Close child editors and type exit there to unlock Workbench.";
   if (!data.available || !state.token) return "Workbench is disconnected or Git is unavailable. Reconnect and reload the page before continuing.";
@@ -244,24 +251,37 @@ function renderGitBranchDialog() {
   for (const id of ["git-branch-controls", "git-new-branch-open"]) {
     $("#" + id).disabled = Boolean(unavailable || history);
   }
-  $("#git-branch-context").textContent = `Current checkout: ${data.branch || "no branch"}. ${data.changes?.length || 0} saved file change(s). ${drafts.length} unsaved draft / upload notice(s). ${data.last_fetch ? "Server choices reflect the last GitHub check." : "GitHub has not been checked in this session."}`;
+  $("#git-branch-context").textContent = `Current branch: ${data.branch || "no branch"}`;
   const common = unavailable ? "Wait for the operation or reconnect before changing branches." :
     history ? "Finish or abort the active history operation first." :
     gitUI.stale ? "The checkout changed outside this page. Preserve your drafts and reload before changing branches." :
     drafts.length ? drafts.join(" ") : "";
   const switchReason = common || (data.changes?.length ? "Create a checkpoint for saved changes before switching." :
     !data.branches?.length ? "No existing branch is available yet. Ask the maintainer to initialise this checkout." : "");
-  const createReason = common || (!data.head ? "A starting checkpoint is required. Ask the maintainer to initialise this checkout." :
+  const currentReason = common || (!data.head ? "A starting checkpoint is required. Ask the maintainer to initialise this checkout." :
     data.changes?.length && !["main", "master"].includes(data.branch) ? "Checkpoint saved changes on this working branch before creating another branch." : "");
+  const createReason = currentReason || (gitUI.createBase === "main" ?
+    data.changes?.length ? "Checkpoint saved changes first, or use the current checkout option below to keep saved changes on main." :
+    !data.remote ? "Configure origin before fetching main." : "" : "");
   $("#git-switch").disabled = Boolean(switchReason);
   $("#git-create").disabled = Boolean(createReason);
-  $("#git-switch-reason").textContent = switchReason || "Ready to review a switch. All editors reload after confirmation.";
-  $("#git-create-reason").textContent = createReason || `Starts from ${data.branch || "this checkout"}. Saved changes on main are carried onto the new branch. Review and confirm before anything changes.`;
+  $("#git-create-current").disabled = Boolean(currentReason);
+  $("#git-switch-reason").textContent = switchReason || "Switching does not publish anything. Server choices reflect the last GitHub check.";
+  $("#git-create-reason").textContent = createReason || (gitUI.createBase === "main" ?
+    "Fetches origin/main before creating. Your old branch stays intact." :
+    `Starts from ${data.branch || "this checkout"}, keeping saved changes on main. No fetch or publication.`);
+  $("#git-create").textContent = gitUI.createBase === "main" ? "Open branch from latest main" : "Open branch from current checkout";
+  $("#git-create-description").textContent = gitUI.createBase === "main" ?
+    "Start fresh from latest main on GitHub. Enter a short name for this task." :
+    `Start related work from ${data.branch || "this checkout"}, not latest main.`;
 }
 
 function openGitBranchDialog(create = false) {
+  gitUI.createBase = "main";
+  $("#git-switch-workflow").hidden = create;
+  $("#git-create-workflow").hidden = !create;
   renderGitBranchDialog();
-  $("#git-branch-heading").textContent = create ? "Create a new working branch" : "Switch your working branch";
+  $("#git-branch-heading").textContent = create ? "Open a new branch from main" : "Switch to existing work";
   if (!$("#git-branch-dialog").open) $("#git-branch-dialog").showModal();
   $(create ? "#git-new-branch" : "#git-checkout").focus();
 }
@@ -314,8 +334,8 @@ function renderGitGraph(data) {
     "Current checkout is outside this history view. Refresh or ask the maintainer." : data.rebase ?
     `You are here: a paused replay of ${data.rebase_branch || data.branch}. The original working branch remains labelled separately.` :
     `You are here: ${data.branch || "detached checkout"} on this computer. GitHub markers show only its last-checked state.`;
-  const running = data.busy && ["rebase", "pull", "continue"].includes(data.job?.action);
-  const settled = !data.busy && data.job?.state === "passed" && ["rebase", "pull", "continue"].includes(data.job?.action);
+  const running = data.busy && ["rebase", "rebase-main", "pull", "continue"].includes(data.job?.action);
+  const settled = !data.busy && data.job?.state === "passed" && ["rebase", "rebase-main", "pull", "continue"].includes(data.job?.action);
   region.dataset.phase = data.rebase && !data.busy ? "paused" : running ? "replaying" : settled ? "settled" : "idle";
   const operation = $("#git-graph-operation");
   operation.hidden = !running && !data.rebase && !settled;
@@ -612,12 +632,14 @@ window.updateGitState = function(raw) {
   $("#git-pull").disabled = busy || (locked && !protectedUpdate) || changes.length > 0 ||
     data.rebase || data.merge || !data.upstream?.startsWith("origin/") || !data.upstream_exists;
   $("#git-rebase").disabled = busy || locked || changes.length > 0;
+  $("#git-rebase-main").disabled = busy || locked || changes.length > 0 || !data.remote;
   $("#git-review").disabled = busy || locked || !changes.length;
   $("#git-push").disabled = busy || locked || changes.length > 0 || !data.remote || data.behind > 0;
   const leasedRebase = data.recovery?.phase === "ready" && Boolean(data.recovery.expected_remote);
   if (leasedRebase) {
     $("#git-pull").disabled = true;
     $("#git-rebase").disabled = true;
+    $("#git-rebase-main").disabled = true;
   }
   $("#git-push-lease").hidden = !leasedRebase;
   $("#git-push-lease").disabled = busy || locked || !data.lease_ready;
@@ -680,6 +702,14 @@ window.updateGitState = function(raw) {
       `${data.job.action} did not finish: ${data.job.error}${data.rebase ? " Resolve the rebase conflicts below, or abort." : " Refresh and review before retrying."}` :
       `${data.job.action === "terminal" ? "Recovery terminal closed. Inspect the refreshed state; manual Git commands were not audited. " : `${data.job.action} completed. `}${data.job.action === "fetch" ? "All remotes fetched and stale remote-tracking branches pruned; working files were not changed. " : ""}${gitGuidance(data, gitDraftBlockers(), locked).message}`,
     data.job.state === "failed");
+    if (data.job.manual_rebase) {
+      const manual = data.job.manual_rebase;
+      $("#git-manual-context").textContent = `Branch: ${manual.branch}. Private backup: ${manual.backup}.`;
+      for (const [id, text] of [["commands", manual.commands], ["resolution", manual.resolution],
+        ["publication", manual.publication]]) $("#git-manual-" + id).textContent = text;
+      $("#git-manual-files").replaceChildren(...manual.conflicts.map(path => node("li", path)));
+      if (!$("#git-manual-dialog").open) $("#git-manual-dialog").showModal();
+    }
     if (gitUI.reloadAction && data.job.state === "passed") {
       gitUI.reloadAction = "";
       location.reload();
@@ -710,6 +740,7 @@ function openGitConfirmation(action, extra = {}) {
     rebase: extra.allow_published ?
       `Follow ${extra.target} with ${state.git.branch}, including published checkpoints. Workbench will check the server again and save the original history bundle and patches in the Git-excluded .workbench-backups folder BEFORE rewriting. Conflicts may require review. To update your published branch afterwards, separately confirm force-with-lease; main is never rewritten.` :
       `Move unpublished checkpoints on ${state.git.branch} onto ${extra.target}. The original history and patches are backed up locally first. Published checkpoints need explicit permission to follow origin/main.`,
+    "rebase-main": `Fetch latest origin/main, then replay ${state.git.branch} on top. Your original history is backed up first. If Git cannot finish automatically, the rebase is aborted and manual instructions appear. Nothing is published. If this branch is already on GitHub, this may rewrite its commits; coordinate with collaborators and review a separate force-with-lease push afterwards.`,
     push: `Send local checkpoints on ${state.git.branch} to origin/${state.git.branch} using an ordinary push. Never merge into main.`,
     "push-lease": `Replace ONLY origin/${state.git.branch} with your rebased branch. The server MUST still be at ${extra.expected_remote}; any newer server checkpoint rejects this push. Recovery backup: ${state.git.recovery?.directory}. This rewrites your published branch, not main. Coordinate with anyone else using this branch before confirming.`,
     continue: "Continue the active rebase using the resolutions you have accepted.",
@@ -738,7 +769,7 @@ async function startGit(payload) {
   gitGate();
   try {
     const result = await api("/api/workbench/git/action", { method: "POST", payload });
-    if (["checkout", "create", "pull", "rebase", "continue", "abort", "terminal"].includes(payload.action)) gitUI.reloadAction = payload.action;
+    if (["checkout", "create", "create-main", "pull", "rebase", "rebase-main", "continue", "abort", "terminal"].includes(payload.action)) gitUI.reloadAction = payload.action;
     gitUI.lastJob = "";
     window.updateGitState(result);
   } catch (error) {
@@ -748,6 +779,11 @@ async function startGit(payload) {
     gitUI.busy = false;
     gitGate();
   }
+}
+
+async function runRoutineGit(action, extra = {}) {
+  await startGit({ action, ...extra, revision: state.git.revision, confirm: true });
+  if (["checkout", "create", "create-main"].includes(action)) $("#git-branch-dialog").close();
 }
 
 function gitFileAction(file) {
@@ -902,21 +938,22 @@ $("#git-discard-drafts").addEventListener("click", () => gitRun(() => {
   gitNotice("Unsaved editor drafts discarded. Saved checkout files and checkpoints were not changed.");
 }));
 for (const [id, operation] of [
-  ["git-fetch", () => openGitConfirmation("fetch")],
+  ["git-fetch", () => runRoutineGit("fetch")],
   ["git-terminal", () => openGitConfirmation("terminal")],
-  ["git-switch", () => openGitConfirmation("checkout", { branch: $("#git-checkout").value })],
+  ["git-switch", () => runRoutineGit("checkout", { branch: $("#git-checkout").value })],
   ["git-create", () => {
     const branch = $("#git-new-branch").value.trim();
     if (!branch) throw new Error("Enter a name for your new working branch before reviewing it.");
-    openGitConfirmation("create", { branch });
+    return runRoutineGit(gitUI.createBase === "main" ? "create-main" : "create", { branch });
   }],
-  ["git-pull", () => openGitConfirmation("pull")],
+  ["git-pull", () => runRoutineGit("pull")],
   ["git-rebase", () => openGitConfirmation("rebase", { target: $("#git-rebase-target").value,
     allow_published: $("#git-rebase-published").checked })],
-  ["git-push", () => openGitConfirmation("push")],
+  ["git-rebase-main", () => openGitConfirmation("rebase-main", { target: "origin/main" })],
+  ["git-push", () => runRoutineGit("push")],
   ["git-push-lease", () => openGitConfirmation("push-lease", {
     backup_id: state.git.recovery?.id, expected_remote: state.git.recovery?.expected_remote })],
-  ["git-continue", () => openGitConfirmation("continue")],
+  ["git-continue", () => runRoutineGit("continue")],
   ["git-abort", () => openGitConfirmation("abort")],
   ["git-review", openGitCommit],
 ]) $("#" + id).addEventListener("click", () => gitRun(operation));
@@ -1006,6 +1043,10 @@ document.addEventListener("click", event => {
   }
 });
 $("#git-guidance-action").addEventListener("click", () => {
+  if ($("#git-guidance-action").dataset.target === "git-rebase-controls") {
+    if (!$("#git-rebase-main").disabled) $("#git-rebase-main").click();
+    return;
+  }
   const target = $("#" + $("#git-guidance-action").dataset.target);
   if (!target || target.disabled) return;
   if (target.tagName === "BUTTON") target.click();
@@ -1022,6 +1063,13 @@ $("#git-guidance-action").addEventListener("click", () => {
 $("#git-branch-controls").addEventListener("click", () => openGitBranchDialog());
 $("#git-new-branch-open").addEventListener("click", () => openGitBranchDialog(true));
 $("#git-branch-close").addEventListener("click", () => $("#git-branch-dialog").close());
+$("#git-create-current").addEventListener("click", () => {
+  gitUI.createBase = "current";
+  $("#git-branch-heading").textContent = "Open a branch from current checkout";
+  renderGitBranchDialog();
+  $("#git-new-branch").focus();
+});
+$("#git-manual-close").addEventListener("click", () => $("#git-manual-dialog").close());
 searchableSelect($("#git-checkout"), "Git branches");
 searchableSelect($("#git-rebase-target"), "rebase base branches");
 initGitButtonHints();

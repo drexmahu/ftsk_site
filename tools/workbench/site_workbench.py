@@ -483,6 +483,10 @@ class Workbench:
                 self.run_command([node, "tests/js/test_404_navigation.js"], "404 navigation")
                 self.run_command([node, "tests/js/test_people_workbench.js"], "People assignment controls")
                 self.run_command([node, "tests/js/test_pdf_import_workbench.js"], "Reviewed PDF draft imports")
+                self.run_command([node, "tests/js/test_workbench_runtime.js"], "Editor restart and draft protection")
+                self.run_command([sys.executable, "-m", "unittest", "discover", "-s",
+                                  "tests/python", "-p", "test_workbench_runtime.py"],
+                                 "Versioned editor restarts")
                 self.run_command([sys.executable, "-m", "unittest", "discover", "-s", "tests/python",
                                   "-p", "test_social*.py"], "Social previews and image selection")
                 self.run_command([sys.executable, "-m", "unittest", "discover", "-s",
@@ -920,7 +924,7 @@ def main() -> None:
     except OSError as exc:
         app.close()
         parser.exit(1, f"ERROR: Cannot start workbench: {exc}\n")
-    url = f"http://127.0.0.1:{args.port}/"
+    url = f"http://127.0.0.1:{app.workbench_port}/"
     print(f"FTSK Site Workbench: {url}\nLocal-only. Ctrl+C stops owned processes and removes temporary uploads.", flush=True)
     if not args.no_browser and not webbrowser.open(url):
         LOGGER.warning("Could not open a browser; open the printed URL.")
