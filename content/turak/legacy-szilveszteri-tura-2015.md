@@ -1,4 +1,5 @@
 ---
+archive: true
 date: 2015-12-31T00:00:00Z
 title: Szilveszteri túra (2015/16)
 categories:

@@ -1,4 +1,22 @@
 {{ define "main" }}
+{{ $archive := partial "report-archive.html" . }}
+{{ $spacing := partial "article-size.html" (dict "name" "article_paragraph_spacing" "value" .Params.article_paragraph_spacing "default" 1.5 "min" 0 "max" 4) }}
+{{ $alignment := "left" }}
+{{ if ne .Params.article_text_align nil }}{{ $alignment = .Params.article_text_align }}{{ end }}
+{{ if not (in (slice "left" "right" "center" "justify") $alignment) }}
+  {{ errorf "Trip report %s: article_text_align must be left, right, center or justify" .RelPermalink }}
+{{ end }}
+{{ $author := partial "page-author.html" . }}
+{{ $authorName := "" }}
+{{ $pdfScript := false }}
+{{ if not $archive }}
+  {{ $pdfScript = resources.FromString "js/report-pdf.js" (os.ReadFile "static/js/report-pdf.js") | resources.Minify | resources.Fingerprint }}
+{{ end }}
+{{ with $author }}
+  {{ $person := partial "person.html" . }}
+  {{ $authorName = $person.name }}
+  {{ with $person.nickname }}{{ $authorName = printf "%s (%s)" $authorName . }}{{ end }}
+{{ end }}
 
 <section class="blog-details ftsk-hero-top-motif">
    <div class="container">
@@ -12,9 +30,21 @@
                         <li class="list-inline-item">
                            <p>{{.Date | time.Format ":date_long"}}</p>
                         </li>
-                        {{ with (partial "page-author.html" .) }}
-                        <li class="list-inline-item">
-                           {{ partial "author-badge.html" . }}
+                        {{ if or $author (not $archive) }}
+                        <li class="list-inline-item ftsk-report-author-row">
+                           {{ with $author }}{{ partial "author-badge.html" . }}{{ end }}
+                           {{ if not $archive }}
+                           {{ if $author }}<span class="ftsk-report-meta-separator" aria-hidden="true"></span>{{ end }}
+                           <button type="button" id="report-pdf-download" class="ftsk-report-pdf" aria-label="Beszámoló letöltése PDF-ként"
+                              data-title="{{ .Title }}" data-author="{{ $authorName }}" data-date="{{ .Date | time.Format ":date_long" }}"
+                              data-spacing="{{ $spacing }}" data-alignment="{{ $alignment }}"
+                              data-logo="{{ relURL `images/ftsk-logo.png` }}"
+                              data-pdfmake="{{ relURL `vendor/report-pdf/pdfmake.min.js` }}"
+                              data-fonts="{{ relURL `vendor/report-pdf/vfs_fonts.js` }}"
+                              data-converter="{{ relURL `vendor/report-pdf/html-to-pdfmake.js` }}"
+                              data-worker="{{ $pdfScript.RelPermalink }}"
+                           >pdf <i class="ph ph-download-simple" aria-hidden="true"></i></button>
+                           {{ end }}
                         </li>
                         {{ end }}
                         <li class="list-inline-item">
@@ -24,7 +54,7 @@
                   </div>
                </div>
                {{ partial "featured-image.html" . }}
-               <div class="ftsk-prose ftsk-trip-report-content" style="max-width: 900px; margin: 0 auto">
+               <div class="ftsk-prose ftsk-trip-report-content" style="max-width: 900px; margin: 0 auto; --article-paragraph-spacing: {{ $spacing }}rem; --article-text-align: {{ $alignment }};">
                   {{ .Content }}
                </div>
 
@@ -77,5 +107,18 @@
       </div>
    </div>
 </section>
+
+{{ if not $archive }}
+<dialog id="report-pdf-dialog" class="ftsk-report-pdf-dialog" aria-labelledby="report-pdf-dialog-title">
+   <div class="ftsk-report-pdf-dialog-content">
+      <button type="button" id="report-pdf-close" class="ftsk-report-pdf-close" aria-label="Bezárás és a PDF-készítés megszakítása"><i class="ph ph-x" aria-hidden="true"></i></button>
+      <div id="report-pdf-spinner" class="ftsk-report-pdf-spinner" aria-hidden="true"></div>
+      <h2 id="report-pdf-dialog-title">PDF letöltése</h2>
+      <p id="report-pdf-status" role="status" aria-live="polite"></p>
+      <button type="button" id="report-pdf-retry" class="ftsk-report-pdf-retry" hidden>Újrapróbálás</button>
+   </div>
+</dialog>
+<script src="{{ $pdfScript.RelPermalink }}" defer></script>
+{{ end }}
 
 {{ end }}

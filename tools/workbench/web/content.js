@@ -107,6 +107,7 @@
     if (JSON.stringify(studio.page.metadata[root]) === JSON.stringify(studio.changes[root])) delete studio.changes[root];
     markDirty();
     updateSocialNote();
+    updateReportPreview();
   }
 
   const definitions = {
@@ -138,13 +139,21 @@
       ["slug", "Slug override (optional)", "text"], ["url", "Public URL override (optional)", "text"],
       ["aliases", "Old public URLs — one per line", "list"]
     ],
-    "course-fields": [["current", "Current course — hides previous-course related cards", "boolean"]]
+    "course-fields": [["current", "Current course — hides previous-course related cards", "boolean"]],
+    "report-fields": [
+      ["archive", "Archive / legacy report (Archív)", "boolean"],
+      ["article_paragraph_spacing", "Paragraph spacing — gap below paragraphs (rem)", "number", "1.5"],
+      ["article_text_align", "Paragraph alignment (szövegigazítás)", "select", [
+        ["", "Default — left (balra)"], ["left", "Left (balra)"], ["right", "Right (jobbra)"],
+        ["center", "Centered (középre)"], ["justify", "Justified (sorkizárt)"]
+      ]]
+    ]
   };
 
   function field(definition, meta, onChange, prefix = "") {
     const [path, title, type, placeholder] = definition;
     const wrapper = node("label", title);
-    const input = document.createElement(["list", "textarea", "markdown"].includes(type) ? "textarea" : "input");
+    const input = document.createElement(type === "select" ? "select" : ["list", "textarea", "markdown"].includes(type) ? "textarea" : "input");
     if (type === "markdown") input.dataset.monacoLanguage = "markdown";
     input.dataset.field = path;
     input.id = `field-${prefix}${path.replaceAll(".", "-")}`;
@@ -155,16 +164,21 @@
       wrapper.replaceChildren(input, node("span", title));
     } else {
       if (type === "number") { input.type = "number"; input.min = "10"; input.max = "100"; }
+      if (path === "article_paragraph_spacing") { input.min = "0"; input.max = "4"; input.step = "0.25"; }
       if (path === "featuredImg.width") input.step = "any";
+      if (type === "select") for (const [value, label] of placeholder) {
+        const option = node("option", label); option.value = value; input.append(option);
+      }
       if (["list", "textarea", "markdown"].includes(type)) input.rows = type === "list" ? 5 : 3;
       input.value = type === "list" ? (get(meta, path) || []).join("\n") : (get(meta, path) ?? "");
-      if (placeholder) input.placeholder = placeholder;
+      if (placeholder && type !== "select") input.placeholder = placeholder;
       wrapper.append(input);
     }
     input.addEventListener("input", () => {
       const value = type === "boolean" ? input.checked : type === "list" ?
         input.value.split("\n").map(line => line.trim()).filter(Boolean) :
-        type === "number" ? (input.value ? Number(input.value) : null) : input.value;
+        type === "number" ? (input.value ? Number(input.value) : null) :
+        type === "select" ? (input.value || null) : input.value;
       onChange(path, value);
     });
     if (path === "role") attachSuggestions(input, {
@@ -429,6 +443,8 @@
     const container = $("#repeaters");
     container.replaceChildren();
     const course = activePath().startsWith("tanfolyamok/");
+    $("#report-formatting").hidden = !activePath().startsWith("turak/");
+    updateReportPreview();
     for (const [key, config] of Object.entries(repeaters)) {
       if (config.course && !course) continue;
       const section = node("section", "", "repeater");
@@ -623,6 +639,19 @@
       : `Generated social-card background: ${meta.seo?.featured_image ||
       (studio.page.guided ? meta.featuredImg?.image_path : "") ||
       "a suitable landscape hero photo, selected by Hugo at build time"}.`;
+  }
+
+  function updateReportPreview() {
+    if (!studio.page) return;
+    const meta = currentMeta();
+    const preview = $("#report-type-preview");
+    const gap = meta.article_paragraph_spacing ?? 1.5;
+    preview.style.textAlign = ["left", "right", "center", "justify"].includes(meta.article_text_align) ? meta.article_text_align : "left";
+    for (const paragraph of preview.querySelectorAll("p")) {
+      paragraph.style.margin = "0";
+      paragraph.style.lineHeight = "1.9";
+    }
+    preview.querySelector("p").style.marginBottom = `${Number.isFinite(gap) && gap >= 0 && gap <= 4 ? gap : 1.5}rem`;
   }
 
   async function refreshCatalog() {
@@ -929,8 +958,6 @@
     const template = studio.catalog.templates.find(item => item.id === $("#new-page-template").value);
     $("#new-page-folder").value = template.section;
     $("#new-page-bundle").checked = false;
-    $("#new-page-bundle").disabled = template.id === "pdf";
-    if (template.id === "pdf" && !$("#new-page-slug").value.startsWith("legacy-")) $("#new-page-slug").value = "legacy-";
     if (template.id.startsWith("course") && !$("#new-page-slug").value) $("#new-page-slug").value = "tanfolyam-";
   }
 

@@ -1,4 +1,5 @@
 ---
+archive: true
 date: 1995-08-01T00:00:00Z
 title: Monte Cavallo túrák a 90'-es években
 categories:

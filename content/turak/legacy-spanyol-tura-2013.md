@@ -1,4 +1,5 @@
 ---
+archive: true
 date: 2013-08-01T00:00:00Z
 title: Spanyol túra (2013)
 categories:

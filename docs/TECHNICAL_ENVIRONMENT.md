@@ -24,6 +24,34 @@ does not receive this class; its slideshow and existing backgrounds are unchange
 The styling lives in [the theme component](../assets/scss/components/_theme.scss).
 The cave motifs retain their original SVG colours on all pages.
 
+## Report PDF export
+
+Non-archive trip reports generate A4 PDFs in the visitor's browser using
+pdfmake 0.2.23 and html-to-pdfmake 2.6.0. Sources, browser bundles, bundled
+Roboto fonts and license notices are committed under
+[`static/vendor/report-pdf/`](../static/vendor/report-pdf/); Hugo requires no
+additional build dependency. Libraries load only when the compact author-row
+PDF control is clicked. Conversion uses the rendered Markdown/shortcodes, not
+a separate Markdown parser or raster screenshots.
+
+After deliberately updating the exact pins in [`package.json`](../package.json),
+run `npm install --ignore-scripts` and `npm run vendor:pdf`, then commit the
+lockfile and vendored outputs together. The vendoring command verifies installed
+versions before copying. Retain the Roboto SIL Open Font License 1.1 notice
+when updating fonts; the shipped Roboto Classic 3.014 fonts use this license.
+[`static/js/report-pdf.js`](../static/js/report-pdf.js) owns print normalization,
+cover design, pagination and explicit error reporting. The same source runs
+as a dedicated Web Worker for PDF layout, loading only local vendor assets.
+Closing the bat-themed progress dialog aborts image requests and terminates
+the worker; stale completions cannot download or change a newer request.
+Fonts and decoded images are in memory before using pdfmake's synchronous
+stream API so both layout and stream failures reach the dialog. Success closes
+the dialog without adding messages to the article. Isolated editor previews
+allow same-origin/blob workers while retaining their separate read-only origin.
+
+Report controls and the archive/PDF contract are documented in
+[the content guide](CONTENT_GUIDE.md#6-bekezdések-archív-beszámolók-és-pdf-letöltés).
+
 ## Single sources of truth for versions
 
 These files/fields are read by both the GitHub Actions build (`.github/actions/build-site`)

@@ -112,6 +112,101 @@
   font-size: 1em;
 }
 
+.ftsk-trip-report-content p:not(.ftsk-signature) {
+  margin-bottom: var(--article-paragraph-spacing, 1.5rem);
+  text-align: var(--article-text-align, left);
+}
+.ftsk-report-author-row {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 10px;
+}
+.ftsk-report-meta-separator {
+  width: 2px;
+  height: 15px;
+  background: $color-text-light;
+  flex: none;
+}
+button.ftsk-report-pdf {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  white-space: nowrap;
+  &:hover, &:focus-visible { text-decoration: underline; }
+  &:disabled { cursor: wait; opacity: 0.6; }
+}
+.ftsk-report-pdf-dialog {
+  container-type: inline-size;
+  width: unquote("min(420px, calc(100vw - 2rem))");
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: 22px;
+  background: var(--bg-surface);
+  color: var(--text-body);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+  &::backdrop { background: rgba(3, 8, 16, 0.72); backdrop-filter: blur(5px); }
+}
+.ftsk-report-pdf-dialog-content {
+  position: relative;
+  padding: 3rem 2rem 2.5rem;
+  text-align: center;
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: url("../images/motifs/bat-1.svg"), url("../images/motifs/bat-5.svg");
+    background-position: left -16.75cqw top -7.18cqw, right -16.75cqw bottom -10.77cqw;
+    background-size: 69.4cqw auto;
+    background-repeat: no-repeat;
+    filter: brightness(4);
+    opacity: 0.2;
+  }
+  > * { position: relative; }
+  h2 { font-size: 1.35rem; margin: 1.4rem 0 0.8rem; }
+  p { font-size: 0.95rem; margin: 0; line-height: 1.6; overflow-wrap: anywhere; }
+}
+.ftsk-report-pdf-close {
+  position: absolute !important;
+  top: 0.8rem;
+  right: 0.8rem;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-muted);
+  &:hover, &:focus-visible { background: var(--input-bg); color: var(--text-heading); }
+}
+.ftsk-report-pdf-retry {
+  margin-top: 1.5rem;
+  padding: 0.55rem 1.15rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  background: var(--input-bg);
+  color: var(--text-heading);
+}
+.ftsk-report-pdf-spinner {
+  width: 34px;
+  height: 34px;
+  margin: 0 auto;
+  border: 2px solid var(--border-subtle);
+  border-top-color: $color-primary;
+  border-radius: 50%;
+  animation: ftsk-pdf-spin 1s linear infinite;
+}
+@keyframes ftsk-pdf-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .ftsk-report-pdf-spinner { animation: none; }
+}
+
 // Quotations: the {{< quote >}} shortcode (layouts/shortcodes/quote.html) and
 // plain Markdown "> ..." blockquotes share one card with a decorative mark.
 @mixin ftsk-quote-card {

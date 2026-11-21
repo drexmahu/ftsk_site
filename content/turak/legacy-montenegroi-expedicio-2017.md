@@ -1,4 +1,5 @@
 ---
+archive: true
 date: 2017-08-01T00:00:00Z
 title: Montenegrói barlangász expedíció (2017)
 categories:

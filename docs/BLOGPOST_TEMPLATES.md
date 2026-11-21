@@ -6,15 +6,15 @@ mindegyik `draft: true` értékkel indul.
 
 A böngészős munkafelületen (**Pages & posts → New**) ugyanezek a fenntartott
 kódblokkok töltődnek be, nincs külön másolatuk az alkalmazásban.
-Választható célmappa és leaf bundle (`slug/index.md`); a PDF-es minta
-`legacy-` fájlnevet használ, és nem bundle-ként hozható létre.
+Választható célmappa és leaf bundle (`slug/index.md`); az archív PDF-es
+minta `archive: true` beállítással indul, külön fájlnév-előtag nem szükséges.
 A forrás, metaadatok, képek és még nem mentett Hugo-előnézet lépéseit a
 [böngészős szerkesztési útmutató](CONTENT_GUIDE.md#böngészős-szerkesztés) írja le.
 
 | Cikktípus | Új fájl helye | Minta |
 | --- | --- | --- |
 | Túra, kutatás, expedíció, kanyoning, szemétszedés | `content/turak/<slug>.md` | [Szöveges túrabeszámoló](#szöveges-túrabeszámoló) |
-| Régi beszámoló, amely PDF-ben olvasható | `content/turak/legacy-<slug>.md` | [PDF-es túrabeszámoló](#pdf-es-túrabeszámoló) |
+| Régi beszámoló, amely PDF-ben olvasható | `content/turak/<slug>.md` | [PDF-es túrabeszámoló](#pdf-es-túrabeszámoló) |
 | Új tanfolyam meghirdetése | `content/tanfolyamok/tanfolyam-<év>.md` | [Tanfolyami hirdetés](#tanfolyami-hirdetés) |
 | Lezárt tanfolyam bemutatása | `content/tanfolyamok/tanfolyam-<év>.md` | [Tanfolyami beszámoló](#tanfolyami-beszámoló) |
 
@@ -70,6 +70,9 @@ categories:
 author_id: ""
 participant_ids: []
 article_image_width: 85
+article_paragraph_spacing: 1.5
+article_text_align: left
+archive: false
 thumbImg:
   image_path: /images/hero/ftsk-hero-cave-4.webp
 featuredImg:
@@ -124,8 +127,9 @@ Erre automatikusan kerül a cím és az FTSK-logó.
 
 ## PDF-es túrabeszámoló
 
-A `legacy-` fájlnév miatt a kártyán archív jelvény jelenik meg, és nem
-kerül a szöveges beszámolók „Legújabb” kiemelésébe. A PDF-et tedd a
+Az `archive: true` miatt a kártyán archív jelvény jelenik meg, és nem
+kerül a szöveges beszámolók „Legújabb” kiemelésébe, illetve nem készül új
+PDF a bevezető szövegből. A PDF-et tedd a
 `static/pdfs/turak/<slug>/` mappába, vagy használd a meglévő lapos
 `static/pdfs/turak/<slug>.pdf` elrendezést; az útvonalat pontosan add meg.
 
@@ -133,6 +137,7 @@ kerül a szöveges beszámolók „Legújabb” kiemelésébe. A PDF-et tedd a
 ---
 date: 2000-01-01T00:00:00Z # KITÖLTENDŐ: az eredeti túra ismert dátuma
 title: "KITÖLTENDŐ: Régi túra neve (év)"
+archive: true
 categories:
   - Túra
 author_id: ""

@@ -1,4 +1,5 @@
 ---
+archive: true
 date: 2020-06-01T00:00:00Z
 title: Sisma napló (2020)
 categories:

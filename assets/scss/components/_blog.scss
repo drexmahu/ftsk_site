@@ -222,11 +222,13 @@
                         transform: translate(-50%, -50%);
                      }
                   }
-                  li p {
+                  li p,
+                  li button.ftsk-report-pdf {
                     font-size: $base-font-size;
                     color: $color-text-light;
                     font-family: $font-primary;
                     font-weight: 600;
+                    line-height: 29px;
                     margin-bottom: 0;
                   }
                }

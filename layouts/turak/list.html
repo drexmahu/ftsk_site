@@ -13,10 +13,10 @@
   {{ end }}
 {{ end }}
 
-{{/* The full, day-by-day written reports (as opposed to the "legacy-" stubs that just link an old PDF). */}}
+{{/* Archive reports are explicitly marked in frontmatter, independently of filenames. */}}
 {{ $featured := slice }}
 {{ range $pages }}
-  {{ if not (strings.HasPrefix .File.BaseFileName "legacy-") }}
+  {{ if not (partial "report-archive.html" .) }}
     {{ $featured = $featured | append . }}
   {{ end }}
 {{ end }}
@@ -142,7 +142,7 @@
       </div>
       <div class="row" id="ftsk-turak-grid">
          {{ range $pages }}
-         {{ $isLegacy := strings.HasPrefix .File.BaseFileName "legacy-" }}
+         {{ $isLegacy := partial "report-archive.html" . }}
          {{ $decade := sub .Date.Year (mod .Date.Year 10) }}
          {{ $catSlugs := slice }}
          {{ range .Params.categories }}
