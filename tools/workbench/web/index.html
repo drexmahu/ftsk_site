@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="/workbench/content.css">
   <link rel="stylesheet" href="/workbench/autocomplete.css">
   <link rel="stylesheet" href="/workbench/git.css">
+  <link rel="stylesheet" href="/workbench/cleanup.css">
   <link rel="stylesheet" href="/workbench-editor/editor.css">
   <link rel="stylesheet" href="/workbench/editors.css">
   <link rel="stylesheet" href="/workbench/files.css">
@@ -19,6 +20,7 @@
   <script src="/workbench/content.js" defer></script>
   <script src="/workbench/members.js" defer></script>
   <script src="/workbench/git.js" defer></script>
+  <script src="/workbench/cleanup.js" defer></script>
   <script src="/workbench/shortcuts.js" defer></script>
   <script src="/workbench/editors.js" defer></script>
   <script src="/workbench/files.js" defer></script>
@@ -41,6 +43,7 @@
     <nav aria-label="Tools">
       <p class="nav-label git-nav-heading">Git / Start here</p>
       <a href="#overview" data-view="overview" class="git-nav-entry"><span aria-hidden="true">01</span> Save &amp; sync</a>
+      <a href="#cleanup" data-view="cleanup"><span aria-hidden="true">↳</span> File cleanup</a>
       <p class="git-nav-hint">Choose a branch before editing.<br>Return here to save &amp; publish.</p>
       <p class="nav-label workspace-nav-heading">Your workspace</p>
       <a href="#content" data-view="content"><span aria-hidden="true">✎</span> Pages &amp; posts</a>
@@ -69,6 +72,27 @@
     </header>
     <main id="main" tabindex="-1">
       <div id="message" class="notice" role="status" aria-live="polite" hidden></div>
+      <section data-panel="cleanup" hidden>
+        <div class="page-heading"><p class="eyebrow">Workspace / File cleanup</p><h1>Make room for what matters.</h1><p>Discover abandoned images, PDFs and downloads. Scan first, inspect the results, then delete only the files you choose.</p></div>
+        <section class="panel cleanup-intro">
+          <div><h2>Find files with no internal references</h2><p>Checks saved content, configuration, templates, scripts and a fresh site build, including drafts, future and expired pages. Source images used by Hugo's image pipeline are protected too.</p><p class="hint">External links, bookmarks and paths assembled at runtime cannot always be detected. Treat results as candidates, not proof that nobody uses a file.</p></div>
+          <button id="cleanup-scan" type="button">Discover unused files</button>
+        </section>
+        <div id="cleanup-notice" class="notice" role="status" aria-live="polite">Nothing is selected or deleted automatically.</div>
+        <section class="panel" aria-label="Cleanup results">
+          <div class="cleanup-filters">
+            <label>Find a file<input id="cleanup-search" type="search" placeholder="Filename or folder"></label>
+            <label>File type<select id="cleanup-kind"><option value="all">All media &amp; downloads</option><option value="image">Images</option><option value="pdf">PDFs</option><option value="file">Other downloads</option></select></label>
+            <label class="cleanup-check"><input id="cleanup-advanced" type="checkbox"> Advanced: other static files</label>
+          </div>
+          <p id="cleanup-summary" class="hint">Run discovery to see candidates. No scan uses the existing public build folder.</p>
+          <p id="cleanup-advanced-note" class="notice error" hidden>Advanced mode includes HTML, scripts, styles, fonts and other static files. These may have implicit or external uses. Selectively review each file; publishing infrastructure stays protected.</p>
+          <div class="cleanup-selection"><div class="actions"><button id="cleanup-select" type="button" class="secondary" disabled>Select visible candidates</button><button id="cleanup-clear" type="button" class="secondary" disabled>Clear selection</button></div><strong id="cleanup-selected" aria-live="polite">No files selected</strong><button id="cleanup-review" type="button" class="danger" disabled>Review deletion</button></div>
+          <div id="cleanup-files" class="cleanup-files"><p class="hint">Your discovery results will appear here.</p></div>
+        </section>
+        <details><summary>Discovery &amp; build details</summary><pre id="cleanup-log">No cleanup scan yet.</pre></details>
+        <dialog id="cleanup-dialog" aria-labelledby="cleanup-dialog-title"><div class="section-heading"><h2 id="cleanup-dialog-title">Delete selected files?</h2><button id="cleanup-cancel" type="button" class="secondary">Cancel</button></div><p id="cleanup-dialog-summary"></p><p class="notice">Check that these files are not needed by external links or unsaved work. Files are removed from this checkout only; nothing is committed or published automatically. No local recovery copy is created. Their committed versions remain in Git.</p><div id="cleanup-dialog-notice" class="notice error" role="status" hidden></div><ul id="cleanup-dialog-files"></ul><div class="actions"><button id="cleanup-confirm" type="button" class="danger">Delete selected files</button></div></dialog>
+      </section>
       <section data-panel="overview" data-save-target="git-review">
         <div class="page-heading"><p class="eyebrow">Git / Start here · Return here to save &amp; sync</p><h1>Your work, safely connected.</h1><p>Start a working branch here before using the workspace tools. Edit the site, then return here to save a checkpoint and send it to GitHub. Main is read-only. Nothing is sent automatically.</p></div>
         <div id="git-lock-notice" class="notice" role="status">Connecting to Git. Editing is locked until the branch is known.</div>

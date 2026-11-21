@@ -33,6 +33,7 @@ from tools.workbench.member_workbench import MemberService
 from tools.workbench.people_registry import member_image_folder
 from tools.workbench.participant_roles import RoleService
 from tools.workbench.git_workbench import GitService
+from tools.workbench.cleanup_workbench import CleanupService
 from tools.workbench.workbench_files import navigate_file
 from tools.images import portraits
 from tools.images import hero_config as hero
@@ -97,6 +98,7 @@ class Workbench:
         self.render_origin = ""
         self.workbench_port = 0
         self.git = GitService(self)
+        self.cleanup = CleanupService(self, safe_path)
 
     def hugo_executable(self) -> str:
         version = (self.root / ".hugo-version").read_text(encoding="utf-8").strip()
@@ -430,7 +432,7 @@ class Workbench:
                     self.active_command = None
 
     def start_job(self, action: str) -> dict:
-        if action not in ("build", "links", "members", "regressions"):
+        if action not in ("build", "links", "members", "regressions", "cleanup-scan"):
             raise ToolError("Unknown build/check action.")
         with self.lock:
             if self.git.busy:
@@ -438,6 +440,8 @@ class Workbench:
             if self.closed or self.job["state"] == "running":
                 raise ToolError("A check is already running or the workspace is shutting down.")
             self.job = {"state": "running", "action": action, "log": "", "exit_code": None}
+            if action == "cleanup-scan":
+                self.cleanup.report = None
             self.job_thread = threading.Thread(target=self.execute_job, args=(action,), daemon=True)
             self.job_thread.start()
             return dict(self.job)
@@ -461,6 +465,8 @@ class Workbench:
         try:
             if action == "content-preview" and preview_info:
                 self.content.build_preview(preview_info)
+            elif action == "cleanup-scan":
+                self.cleanup.scan()
             elif action in ("build", "links"):
                 with tempfile.TemporaryDirectory(prefix="ftsk-workbench-build-") as destination:
                     self.run_command(
@@ -484,6 +490,7 @@ class Workbench:
                 self.run_command([node, "tests/js/test_people_workbench.js"], "People assignment controls")
                 self.run_command([node, "tests/js/test_pdf_import_workbench.js"], "Reviewed PDF draft imports")
                 self.run_command([node, "tests/js/test_workbench_runtime.js"], "Editor restart and draft protection")
+                self.run_command([node, "tests/js/test_cleanup_workbench.js"], "Reviewed unused-file cleanup")
                 self.run_command([sys.executable, "-m", "unittest", "discover", "-s",
                                   "tests/python", "-p", "test_workbench_runtime.py"],
                                  "Versioned editor restarts")
@@ -664,6 +671,9 @@ class Handler(BaseHTTPRequestHandler):
         elif route == "/api/workbench/git":
             with app.lock:
                 self.json(200, app.git.snapshot())
+        elif route == "/api/workbench/cleanup":
+            with app.lock:
+                self.json(200, app.cleanup.catalog())
         elif route == "/api/workbench/content/catalog":
             with app.lock:
                 self.json(200, app.content.catalog())
@@ -781,6 +791,8 @@ class Handler(BaseHTTPRequestHandler):
                     result = navigate_file(app.root, self.payload(), safe_path)
                 except ValueError as exc:
                     raise ToolError(str(exc)) from exc
+            elif method == "POST" and route == "/api/workbench/cleanup/delete":
+                result = app.cleanup.delete(self.payload())
             elif method == "POST" and route == "/api/workbench/git/action":
                 result = app.git.start(self.payload())
             elif method == "POST" and route == "/api/workbench/git/review":

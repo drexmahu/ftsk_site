@@ -312,6 +312,49 @@ Focused regressions (no dependency downloads; disposable Git/editor processes):
 node tests\js\test_workbench_runtime.js
 ```
 
+### Unused-file cleanup
+
+**File cleanup**, directly below **Save & sync**, discovers static files with no
+internal references. Discovery is explicit and read-only, including on main.
+The default view covers images, PDFs and other media/downloads. **Advanced: other
+static files** also exposes HTML, scripts, styles, fonts and miscellaneous files;
+content pages, editor source, build output and caches are never deletion targets.
+
+The scanner examines saved content/configuration/templates/scripts and performs
+a fresh Hugo build including drafts, future and expired pages. Build output,
+resource processing and caches stay in a temporary directory, not `public/` or
+the checkout's `resources/`. It also preserves original images consumed by Hugo's
+image pipeline. Conservative filename matching can retain same-named files in
+different folders. Recognized dynamic paths (such as legacy tutorial templates
+and interpolated image names) are marked protected, not approved for deletion.
+Unrecognized runtime path construction, external links and bookmarks cannot be
+proven unused; always review candidates rather than treating discovery as proof.
+A failed build or a checkout change during scanning approves no files.
+
+Filter by filename/folder and type, inspect images/PDFs, then select individual
+files or visible eligible candidates. Selection remains explicit across filters;
+leaving advanced mode removes non-media selections. A single deletion dialog
+lists every selected path. Save browser drafts and remove queued uploads first.
+Deletion requires an editable working branch, a current scan and unchanged files
+matching their committed Git blobs. Untracked, newly staged, modified and
+publishing-infrastructure files are protected. Commit new/changed files first
+when they need to become eligible. No recovery copy is created: deleted files
+remain recoverable from the recorded Git checkpoint, and deletions appear as
+ordinary local changes in **Save & sync**, with no automatic commit or publishing.
+After deletion, scan again to discover any newly unreferenced dependencies.
+
+`GET /api/workbench/cleanup` returns the current scan and build-job status.
+Start discovery through `POST /api/workbench/jobs` with `{"action":"cleanup-scan"}`.
+`POST /api/workbench/cleanup/delete` accepts `scan`, distinct `paths`,
+`confirm: true` and (for non-media files) `advanced: true`; existing token,
+branch and editable-checkout guards apply. Reference/checkout fingerprints and
+Git copies are rechecked before any deletion. Partial filesystem failures name
+the files already removed rather than reporting success.
+
+Focused tests:
+`node tests\js\test_cleanup_workbench.js` and Python discovery for
+`test_cleanup_workbench.py` under `tests\python`.
+
 ### PDF import API and archive batches
 
 **Pages & posts → Read a PDF** provides staged local text/image extraction,
