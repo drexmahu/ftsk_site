@@ -84,3 +84,70 @@ function personParticipationLabel(person, section, role = "", definitions = []) 
   if (label) return `${label} · Manual role on this page`;
   return personAutomaticStatus(person, definitions, section);
 }
+
+function peopleSearchText(value) {
+  return String(value || "").normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("hu");
+}
+
+function personReferenceRoles(person, reference, definitions = []) {
+  if (!["participant_ids", "participants"].includes(reference.field)) return [];
+  if (reference.roles?.length || reference.role) return resolveRoleSelection(reference, definitions);
+  const automatic = personAutomaticStatus(person, definitions, reference.section);
+  const role = definitions.find(item => item.label === automatic);
+  return role ? [role.id] : [];
+}
+
+function personViewReferences(person, filters = {}, definitions = []) {
+  return (person.references || []).filter(reference =>
+    (!filters.course || reference.path === filters.course) &&
+    (!filters.year || String(reference.date || "").slice(0, 4) === filters.year) &&
+    (!filters.role || personReferenceRoles(person, reference, definitions).includes(filters.role)));
+}
+
+function personRelationshipMask(person, rules = {}, references = person.references || [], definitions = [], scoped = false) {
+  const member = Boolean(person.membership);
+  const participants = references.filter(reference => ["participant_ids", "participants"].includes(reference.field));
+  let course = participants.some(reference => reference.section === "tanfolyamok" &&
+    (rules.courseMode !== "roles" || personReferenceRoles(person, reference, definitions).some(id => (rules.courseRoles || []).includes(id))));
+  if (!scoped && rules.courseMode !== "roles") {
+    course = person.course_participant ?? (course || Boolean(person.categories?.some(category => category.kind === "course")));
+  }
+  let external = !member;
+  if (rules.externalMode === "participants") external = !member && participants.length > 0;
+  else if (rules.externalMode === "roles") {
+    const ids = [...resolveRoleSelection(person.membership || {}, definitions),
+      ...participants.flatMap(reference => personReferenceRoles(person, reference, definitions))];
+    external = ids.some(id => (rules.externalRoles || []).includes(id));
+  } else if (rules.externalMode === "category") {
+    external = Boolean(person.categories?.some(category => category.id === rules.externalCategory));
+  }
+  return (member ? 1 : 0) | (course ? 2 : 0) | (external ? 4 : 0);
+}
+
+function peopleRelationshipCounts(people, rules = {}, filters = {}, definitions = []) {
+  const scoped = Boolean(filters.course || filters.year || filters.role);
+  const groups = Array.from({length: 8}, () => []);
+  for (const person of people) {
+    const references = personViewReferences(person, filters, definitions);
+    groups[personRelationshipMask(person, rules, references, definitions, scoped)].push(person);
+  }
+  return groups;
+}
+
+function filterPeopleView(people, filters = {}, definitions = []) {
+  const terms = peopleSearchText(filters.search).trim().split(/\s+/).filter(Boolean);
+  const scoped = Boolean(filters.course || filters.year || filters.role);
+  return people.filter(person => {
+    if (filters.status === "current" && !person.membership) return false;
+    if (filters.status === "nonmembers" && person.membership) return false;
+    if (filters.status === "review" && !person.needs_review) return false;
+    if (filters.category && !filters.category.people.includes(person.id)) return false;
+    if (scoped && !personViewReferences(person, filters, definitions).length) return false;
+    const text = peopleSearchText([person.id, person.name, person.nickname, person.membership?.role,
+      personAutomaticStatus(person, definitions), ...(person.aliases || []),
+      roleSelectionLabels(resolveRoleSelection(person.membership || {}, definitions), definitions),
+      ...(person.references || []).map(reference => roleSelectionLabels(personReferenceRoles(person, reference, definitions), definitions)),
+      ...(person.categories || []).map(category => category.label)].filter(Boolean).join(" "));
+    return terms.every(term => text.includes(term));
+  });
+}

@@ -1,6 +1,6 @@
 "use strict";
 
-const memberState = { catalog: null, original: null, document: null, editing: false, dirty: false, busy: false, loading: false, historySearch: "", roles: [], socialLinks: [] };
+const memberState = { catalog: null, original: null, document: null, editing: false, dirty: false, busy: false, loading: false, historySearch: "", roles: [], socialLinks: [], view: "directory", connectionFilter: "all" };
 const roleState = { dirty: false, selected: "", revision: "" };
 const memberFields = ["id", "name", "nickname", "role", "bio", "image", "modal_image", "email", "phone"];
 const memberDocumentFields = { body: "cv", label: "cv_label", subtitle: "cv_subtitle", author: "cv_author" };
@@ -317,8 +317,12 @@ function memberControls() {
   $("#member-save").disabled = busy || !memberState.editing;
   $("#member-cancel").disabled = busy;
   $("#member-save").hidden = !memberState.editing;
-  $("#member-cancel").hidden = !memberState.editing;
+  $("#member-cancel").hidden = !memberState.editing || !memberState.dirty;
+  $("#person-dialog-body").hidden = !memberState.editing;
+  $("#people-view-rules").inert = busy;
+  $("#member-remove-membership").hidden = !memberState.editing || $("#member-group").value === "";
   $("#member-draft").hidden = !memberState.editing;
+  $("#person-save-note").hidden = !memberState.editing;
   $("#member-cv-upload").disabled = busy || !memberState.original;
   $("#member-cv-browse").disabled = busy || !memberState.original;
   $("#member-images-browse").disabled = busy || !memberState.original;
@@ -383,6 +387,7 @@ function closeMember() {
   memberState.original = null;
   memberState.document = null;
   memberState.dirty = false;
+  $("#people-rule-home").append($("#people-view-rules"));
   clearMemberMergePlan();
   clearMemberRenamePlan();
   $("#member-form").hidden = true;
@@ -401,6 +406,7 @@ function openMember(id = null) {
   if (!member) throw new Error("This person is no longer in the registry. Reload before opening.");
   memberState.original = id === null ? null : { id };
   memberState.historySearch = "";
+  memberState.historyType = ""; memberState.historyYear = ""; memberState.historyRole = "";
   memberState.idTouched = false;
   memberState.editing = true;
   memberQueueOwner = id || `draft-${Date.now()}`;
@@ -457,6 +463,7 @@ function openMember(id = null) {
   $("#member-delete").hidden = id === null;
   $("#member-remove-membership").hidden = !member.membership;
   $("#member-form").hidden = false;
+  $("#member-connection-rules").append($("#people-view-rules"));
   $("#member-portrait-upload").append($("#portrait-workspace"));
   $("#member-references").replaceChildren(node("p",
     member.membership || member.references?.length ?
@@ -492,6 +499,8 @@ function renderPersonOverview() {
     "Current membership only. Course attendance and event participation are independent.", "hint"));
   if (person) membership.append(node("p", `Automatic saved classification: ${personAutomaticStatus(person, memberState.catalog?.role_catalog?.roles || [])}`, "hint"));
   overview.append(membership);
+  const connectionMap = node("div", "", "person-connection-map");
+  overview.append(connectionMap);
   const references = person?.references || [];
   const participant = reference => ["participant_ids", "participants"].includes(reference.field);
   const courses = references.filter(reference => participant(reference) && reference.section === "tanfolyamok");
@@ -507,7 +516,20 @@ function renderPersonOverview() {
   searchLabel.append(search);
   const clear = node("button", "Clear search", "secondary");
   clear.type = "button";
-  searchControls.append(searchLabel, clear);
+  searchControls.append(searchLabel);
+  const selectors = {};
+  for (const [key, title, choices] of [
+    ["Type", "Contribution type", [["", "Every contribution"], ["course", "Course participants"], ["trip", "Trips & expeditions"], ["other", "Authorship, contacts & other"]]],
+    ["Year", "Year", [["", "All years"], ...[...new Set(references.map(reference => String(reference.date || "").slice(0, 4)).filter(year => /^\d{4}$/.test(year)))].sort().reverse().map(year => [year, year])]],
+    ["Role", "Event role", [["", "Any event role"], ...(memberState.catalog.role_catalog?.roles || []).map(role => [role.id, role.label])]],
+  ]) {
+    const label = node("label", title), select = node("select");
+    select.id = `member-history-${key.toLowerCase()}`;
+    for (const [value, text] of choices) { const option = node("option", text); option.value = value; select.append(option); }
+    select.value = memberState["history" + key] || "";
+    selectors[key] = select; label.append(select); searchControls.append(label);
+  }
+  searchControls.append(clear);
   overview.append(searchControls);
   const histories = [];
   for (const [title, entries, empty] of [
@@ -528,7 +550,7 @@ function renderPersonOverview() {
     for (const reference of entries) {
       const button = node("button", "", "secondary person-history-entry");
       button.type = "button";
-      button.dataset.workbenchFile = `content/${reference.path}`;
+      button.dataset.workbenchFile = reference.path;
       button.append(node("strong", reference.title || reference.path));
       let status = reference.field;
       if (participant(reference)) {
@@ -545,22 +567,27 @@ function renderPersonOverview() {
       button.addEventListener("click", () => window.dispatchEvent(
         new CustomEvent("workbench-open-page", { detail: { path: reference.path } })));
       list.append(button);
-      rows.push({ button, text: [reference.title, reference.date, reference.role, reference.path,
+      rows.push({ button, reference, text: [reference.title, reference.date, reference.role, reference.path,
         reference.field, status, reference.draft ? "Draft page" : "",
         ["author", "participants"].includes(reference.field) ? "Legacy name assignment" : ""].filter(Boolean).join(" ") });
     }
-    histories.push({ title, heading, list, message, rows, empty });
+    histories.push({ title, type: title.startsWith("Courses") ? "course" : title.startsWith("Expeditions") ? "trip" : "other", heading, list, message, rows, empty });
     overview.append(section);
   }
   const normalize = value => value.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("hu");
   const filterHistory = () => {
     memberState.historySearch = search.value;
+    for (const key of ["Type", "Year", "Role"]) memberState["history" + key] = selectors[key].value;
     const terms = normalize(search.value).trim().split(/\s+/).filter(Boolean);
+    const visible = [];
     for (const history of histories) {
       let matches = 0;
       for (const row of history.rows) {
-        row.button.hidden = !terms.every(term => normalize(row.text).includes(term));
-        if (!row.button.hidden) matches++;
+        row.button.hidden = !terms.every(term => normalize(row.text).includes(term)) ||
+          Boolean(selectors.Type.value && selectors.Type.value !== history.type) ||
+          Boolean(selectors.Year.value && String(row.reference.date || "").slice(0, 4) !== selectors.Year.value) ||
+          Boolean(selectors.Role.value && !personReferenceRoles(person, row.reference, memberState.catalog.role_catalog?.roles || []).includes(selectors.Role.value));
+        if (!row.button.hidden) { matches++; visible.push(row.reference); }
       }
       history.heading.textContent = `${history.title} (${matches} / ${history.rows.length})`;
       history.list.hidden = matches === 0;
@@ -568,10 +595,21 @@ function renderPersonOverview() {
       history.message.hidden = matches > 0;
       history.message.textContent = history.rows.length ? "No contributions match this search." : history.empty;
     }
+    const rules = readPeopleViewRules();
+    const draftPerson = {...person, membership: group === "" ? null : {roles: memberState.roles || [], role: $("#member-role").value}};
+    if (rules.issue) connectionMap.replaceChildren(node("p", rules.issue, "notice error"));
+    else {
+      const groups = Array.from({length: 8}, () => []);
+      groups[personRelationshipMask(draftPerson, rules, visible, memberState.catalog.role_catalog?.roles || [], true)].push(draftPerson);
+      renderPeopleConnectionMap(connectionMap, groups);
+      connectionMap.append(node("p", "Your grouping rules and visible history are shown here. Membership follows the draft selection; nothing is changed by filtering.", "hint"));
+    }
   };
   search.addEventListener("input", filterHistory);
+  for (const select of Object.values(selectors)) select.addEventListener("change", filterHistory);
   clear.addEventListener("click", () => {
     search.value = "";
+    for (const select of Object.values(selectors)) select.value = "";
     filterHistory();
     search.focus();
   });
@@ -927,30 +965,143 @@ function renderPortraitChoices() {
   }
 }
 
+function setPeopleView(view) {
+  memberState.view = view;
+  $("#people-view-heading").textContent = view === "tools" ? "Categories & roles" :
+    view === "connections" ? "Connections explorer" : "People registry";
+  $("#people-directory-layout").hidden = view === "checks";
+  $("#people-directory").hidden = view === "tools";
+  $("#people-results").hidden = view === "tools";
+  $("#people-tools").hidden = view !== "tools";
+  $("#people-connections").hidden = view !== "connections";
+  $("#people-checks").hidden = view !== "checks";
+  if (view === "checks") $("#people-checks").open = true;
+  document.querySelectorAll("[data-people-view]").forEach(button => {
+    if (button.dataset.peopleView === view) button.setAttribute("aria-current", "page");
+    else button.removeAttribute("aria-current");
+  });
+}
+
+function renderPeopleFilterChoices() {
+  const fill = (id, choices) => {
+    const select = $(id), previous = select.value;
+    select.replaceChildren(...choices.map(([value, text]) => { const option = node("option", text); option.value = value; return option; }));
+    select.value = choices.some(([value]) => value === previous) ? previous : "";
+  };
+  const roles = memberState.catalog.role_catalog?.roles || [];
+  fill("#people-filter-course", [["", "All courses"], ...(memberState.catalog.categories || []).filter(category => category.kind === "course").map(category => [category.path, `${category.label}${category.draft ? " · Draft page" : ""}`])]);
+  const years = [...new Set(memberState.catalog.people.flatMap(person => (person.references || []).map(reference => String(reference.date || "").slice(0, 4))).filter(year => /^\d{4}$/.test(year)))].sort().reverse();
+  fill("#people-filter-year", [["", "All years"], ...years.map(year => [year, year])]);
+  fill("#people-filter-role", [["", "Any event role"], ...roles.map(role => [role.id, role.label])]);
+  fill("#people-rule-external-category", [["", "Choose a category"], ...(memberState.catalog.categories || []).filter(category => category.kind === "custom").map(category => [category.id, category.label])]);
+  for (const kind of ["course", "external"]) {
+    const container = $(`#people-rule-${kind}-roles`);
+    const selected = new Set(Array.from(container.querySelectorAll("input:checked"), input => input.value));
+    const signature = JSON.stringify(roles.map(role => [role.id, role.label]));
+    if (container.dataset.roles !== signature) {
+      container.replaceChildren(...roles.map(role => {
+        const label = node("label", "", "check-label"), input = node("input");
+        input.type = "checkbox"; input.value = role.id; input.checked = selected.has(role.id);
+        label.append(input, node("span", role.label)); return label;
+      }));
+      if (!roles.length) container.append(node("p", "No roles configured. Add a shared role in Categories & roles first.", "hint"));
+      container.dataset.roles = signature;
+    }
+    container.hidden = $(`#people-rule-${kind}`).value !== "roles";
+  }
+  $("#people-rule-category-label").hidden = $("#people-rule-external").value !== "category";
+}
+
+function readPeopleViewRules() {
+  const selected = kind => Array.from(document.querySelectorAll(`#people-rule-${kind}-roles input:checked`), input => input.value);
+  const rules = {courseMode: $("#people-rule-course").value, externalMode: $("#people-rule-external").value,
+    courseRoles: selected("course"), externalRoles: selected("external"), externalCategory: $("#people-rule-external-category").value};
+  rules.issue = rules.courseMode === "roles" && !rules.courseRoles.length ? "Choose at least one course role, or restore Everyone listed on courses." :
+    rules.externalMode === "roles" && !rules.externalRoles.length ? "Choose at least one external-group role." :
+    rules.externalMode === "category" && !rules.externalCategory ? "Choose a custom category for the external group." : "";
+  return rules;
+}
+
+function peopleViewFilters() {
+  return {search: $("#member-search").value, status: $("#member-filter").value,
+    category: (memberState.catalog.categories || []).find(category => category.id === $("#member-category-filter").value),
+    course: $("#people-filter-course").value, year: $("#people-filter-year").value, role: $("#people-filter-role").value};
+}
+
+function renderPeopleConnectionMap(container, groups, selected = "all", onSelect = null) {
+  container.replaceChildren();
+  const labels = ["Members", "Course group", "External group"];
+  const totals = node("div", "", "people-relation-totals");
+  for (const [index, label] of labels.entries()) {
+    const bit = 1 << index, key = `group:${bit}`, count = groups.reduce((total, people, mask) => total + (mask & bit ? people.length : 0), 0);
+    const card = node(onSelect ? "button" : "div", "", `people-relation-card relation-${bit}`);
+    if (onSelect) { card.type = "button"; card.setAttribute("aria-pressed", String(selected === key)); card.addEventListener("click", () => onSelect(key)); }
+    card.append(node("strong", String(count)), node("span", label)); totals.append(card);
+  }
+  container.append(totals);
+  const table = node("div", "", "people-overlap-map"), heading = node("div", "", "people-overlap-heading");
+  const headings = node("div", "", "people-relation-dots");
+  for (const label of ["Member", "Course", "External"]) headings.append(node("span", label));
+  heading.append(headings, node("span", "Exact overlap — click a row to explore"));
+  if (!onSelect) heading.children[1].textContent = "This person's connections";
+  table.append(heading);
+  const total = groups.reduce((count, people) => count + people.length, 0);
+  for (const mask of [7, 3, 5, 6, 1, 2, 4, 0]) {
+    const count = groups[mask].length;
+    if (!count) continue;
+    const names = labels.filter((_, index) => mask & (1 << index));
+    const label = names.length ? names.join(" + ") : "Outside these view groups";
+    const row = node(onSelect ? "button" : "div", "", "people-overlap-row");
+    const dots = node("span", "", "people-relation-dots");
+    for (let index = 0; index < 3; index++) {
+      const dot = node("span", "", `people-relation-dot relation-${1 << index}${mask & (1 << index) ? " active" : ""}`);
+      dot.setAttribute("aria-hidden", "true"); dots.append(dot);
+    }
+    const bar = node("span", "", "people-relation-bar"); bar.style.width = `${total ? 100 * count / total : 0}%`;
+    const track = node("span", "", "people-relation-track"); track.append(bar);
+    row.append(dots, node("span", label, "people-overlap-label"), track, node("strong", String(count)));
+    if (onSelect) {
+      row.type = "button"; row.setAttribute("aria-label", `${label}: ${count} people. Show this exact overlap.`);
+      row.setAttribute("aria-pressed", String(selected === String(mask)));
+      row.addEventListener("click", () => onSelect(String(mask)));
+    }
+    table.append(row);
+  }
+  if (!total) table.append(node("p", "No people in this selection. Clear filters to restore the full registry.", "hint"));
+  container.append(table);
+}
+
 function renderMembers() {
   if (!memberState.catalog) return;
   renderCategoryFilters();
-  const category = (memberState.catalog.categories || []).find(category => category.id === $("#member-category-filter").value);
-  const search = $("#member-search").value.trim().toLocaleLowerCase("hu");
-  const filter = $("#member-filter").value;
+  renderPeopleFilterChoices();
+  const filters = peopleViewFilters(), rules = readPeopleViewRules(), definitions = memberState.catalog.role_catalog?.roles || [];
+  const base = filterPeopleView(memberState.catalog.people, filters, definitions);
+  const groups = rules.issue ? null : peopleRelationshipCounts(base, rules, filters, definitions);
+  $("#people-rule-warning").hidden = !rules.issue; $("#people-rule-warning").textContent = rules.issue;
+  $("#people-connection-map").hidden = Boolean(rules.issue);
+  $("#people-scan-warning").hidden = !memberState.catalog.audit.warnings.length;
+  const selected = memberState.connectionFilter || "all";
+  const people = !groups || selected === "all" ? base : selected.startsWith("group:") ?
+    groups.flatMap((entries, mask) => mask & Number(selected.slice(6)) ? entries : []) : groups[Number(selected)];
+  if (groups) renderPeopleConnectionMap($("#people-connection-map"), groups, selected, key => {
+    memberState.connectionFilter = key === memberState.connectionFilter ? "all" : key;
+    renderMembers();
+  });
   const list = $("#member-list");
   list.replaceChildren();
   let count = 0;
   memberState.catalog.groups.forEach((group, groupIndex) => {
-    const entries = memberState.catalog.people.filter(member =>
-      (member.membership ? member.membership.group === groupIndex : groupIndex === memberState.catalog.groups.length - 1) &&
-      (filter !== "current" || member.membership) && (filter !== "nonmembers" || !member.membership) &&
-      (filter !== "review" || member.needs_review) &&
-      (!category || category.people.includes(member.id)) &&
-      [member.id, member.name, member.nickname, member.membership?.role,
-        personAutomaticStatus(member, memberState.catalog.role_catalog?.roles || []), ...(member.aliases || []),
-        ...(member.categories || []).map(category => category.label)].filter(Boolean).join(" ").toLocaleLowerCase("hu").includes(search));
+    const entries = people.filter(member =>
+      member.membership ? member.membership.group === groupIndex : groupIndex === memberState.catalog.groups.length - 1)
+      .sort((first, second) => first.name.localeCompare(second.name, "hu"));
     if (!entries.length) return;
     list.append(node("h3", `${group.label} (${entries.length})`));
     for (const member of entries) {
       count++;
       const button = node("button", "", "secondary");
       button.type = "button";
+      button.title = `${member.name} · ${member.id}`;
       const selected = memberState.original?.id === member.id;
       button.classList.toggle("selected", selected);
       button.setAttribute("aria-pressed", String(selected));
@@ -960,13 +1111,12 @@ function renderMembers() {
         image.alt = "";
         image.loading = "lazy";
         button.append(image);
-      }
+      } else button.append(node("span", member.name.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join(""), "person-identity-avatar"));
       const text = node("span", "");
-      text.append(node("strong", member.name), node("small", [member.id, member.nickname, member.membership?.role,
-        personAutomaticStatus(member, memberState.catalog.role_catalog?.roles || [])].filter(Boolean).join(" · ")));
+      text.append(node("strong", member.name), node("small", [member.nickname, member.membership?.role].filter(Boolean).join(" · ")));
+      text.append(node("small", `${member.membership ? "Current member" : "External · no current membership"}${member.course_participant ? " · Course participant" : ""}`));
       const categories = (member.categories || []).filter(category => category.kind !== "membership");
-      if (categories.length) text.append(node("small", categories.map(category =>
-        `${category.kind === "course" ? "Tanfolyami résztvevő: " : ""}${category.label}`).join(" · ")));
+      if (categories.length) text.append(node("small", `${categories.filter(category => category.kind === "course").length} course groups · ${categories.filter(category => category.kind === "custom").length} custom categories`));
       if (member.needs_review) text.append(node("span", "Needs clarification", "identity-review-flag"));
       button.append(text);
       button.addEventListener("click", () => openMember(member.id));
@@ -974,6 +1124,7 @@ function renderMembers() {
     }
   });
   if (!count) list.append(node("p", "No matching people. Change the search/filter or add a new registry identity."));
+  $("#people-result-count").textContent = `${count} of ${memberState.catalog.people.length} people${rules.issue ? " · Complete the view rules to apply overlap filtering" : selected !== "all" ? " · Overlap filter active" : ""}.${filters.year || filters.course ? " Membership is current, not membership at the selected event date." : ""}`;
   memberControls();
 }
 
@@ -1422,6 +1573,24 @@ window.memberEditor = {
 };
 
 $("#member-search").addEventListener("input", renderMembers);
+document.querySelectorAll("[data-people-view]").forEach(button =>
+  button.addEventListener("click", () => setPeopleView(button.dataset.peopleView)));
+for (const id of ["people-filter-course", "people-filter-year", "people-filter-role"]) $(`#${id}`).addEventListener("change", renderMembers);
+$("#people-show-all-connections").addEventListener("click", () => { memberState.connectionFilter = "all"; renderMembers(); });
+$("#people-reset-filters").addEventListener("click", () => {
+  for (const id of ["member-search", "member-category-filter", "people-filter-course", "people-filter-year", "people-filter-role"]) $(`#${id}`).value = "";
+  $("#member-filter").value = "all"; memberState.connectionFilter = "all"; renderMembers();
+});
+$("#people-view-rules").addEventListener("change", () => {
+  memberState.connectionFilter = "all"; renderMembers();
+  if (memberState.editing) renderPersonOverview();
+});
+$("#people-reset-rules").addEventListener("click", () => {
+  $("#people-rule-course").value = "all"; $("#people-rule-external").value = "nonmembers"; $("#people-rule-external-category").value = "";
+  document.querySelectorAll("#people-view-rules input").forEach(input => { input.checked = false; });
+  memberState.connectionFilter = "all"; renderMembers();
+  if (memberState.editing) renderPersonOverview();
+});
 for (const [selector, title] of [
   ["#member-group", "membership groups"], ["#member-category-filter", "groups and categories"],
   ["#category-select", "custom categories"], ["#member-portrait-choice", "portrait pairs"],
@@ -1454,6 +1623,7 @@ $("#participant-role-discard").addEventListener("click", () => selectRole());
 window.addEventListener("workbench-open-roles", () => action(async () => {
   await loadMembers();
   location.hash = "#portraits";
+  setPeopleView("tools");
   $("#participant-role-manager").open = true;
   $("#participant-role-manager").scrollIntoView({ block: "start" });
 }));
@@ -1476,9 +1646,10 @@ $("#member-social-add").addEventListener("click", () => {
 });
 function switchMemberSection(section) {
   $("#person-editor-dialog").scrollTop = 0;
+  $("#person-dialog-body").scrollTop = 0;
   document.querySelectorAll("[data-member-section]").forEach(panel => {
     panel.hidden = panel.dataset.memberSection !== section;
-    if (panel.tagName === "DETAILS") panel.open = !panel.hidden;
+    if (panel.tagName === "DETAILS" && panel.id !== "member-identity-details") panel.open = !panel.hidden;
   });
   document.querySelectorAll("[data-member-tab]").forEach(button => {
     if (button.dataset.memberTab === section) button.setAttribute("aria-current", "page");
@@ -1520,6 +1691,7 @@ $("#member-delete-portrait").addEventListener("click", () => action(deleteMember
 $("#portrait-workspace").querySelectorAll("button").forEach(button => { button.type = "button"; });
 $("#person-editor-dialog").append($("#portrait-workspace"));
 $("#member-resume").addEventListener("click", () => {
+  $("#member-connection-rules").append($("#people-view-rules"));
   if (!$("#person-editor-dialog").open) $("#person-editor-dialog").showModal();
   $("#member-name").focus();
 });
@@ -1545,7 +1717,10 @@ $("#person-editor-dialog").addEventListener("cancel", event => {
   if (!memberState.busy && !memberState.loading && !state.busy && discardMember()) closeMember();
 });
 window.addEventListener("hashchange", () => {
-  if (location.hash !== "#portraits" && $("#person-editor-dialog").open) $("#person-editor-dialog").close();
+  if (location.hash !== "#portraits" && $("#person-editor-dialog").open) {
+    $("#people-rule-home").append($("#people-view-rules"));
+    $("#person-editor-dialog").close();
+  }
 });
 $("#member-remove-membership").addEventListener("click", () => {
   $("#member-group").value = "";
@@ -1590,7 +1765,7 @@ $("#member-form").addEventListener("invalid", event => {
   }
 }, true);
 $("#member-form").addEventListener("input", event => {
-  if (event.target.dataset.selectSearch || event.target.closest("#member-overview") || event.target.closest("#member-merge") || event.target.closest("#member-rename")) return;
+  if (event.target.dataset.selectSearch || event.target.closest("#member-overview") || event.target.closest("#people-view-rules") || event.target.closest("#member-merge") || event.target.closest("#member-rename")) return;
   memberState.dirty = true;
   clearMemberMergePlan();
   memberDraft();

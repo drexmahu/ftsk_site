@@ -192,10 +192,38 @@ vagy kapcsolattartó. A **Remove membership** csak a Tagjaink listából veszi k
 a régi cikkek és fotók megmaradnak. Véglegesen csak tagság és mentett
 cikkhivatkozás nélküli személy törölhető. Tanfolyami részvétel nem ad tagságot.
 
+A **People** nézet a kereshető személylistát mutatja, névsorrendben a tagsági
+csoportokon belül. A **Connections** nézetben kattintható összesítők és pontos
+átfedési sorok segítik a felfedezést. Alapesetben a tanfolyami csoport minden
+mentett tanfolyami résztvevőt tartalmaz, oktatókat és segítőket is; a külsős
+csoport minden jelenlegi tagság nélküli személyt, korábbi tagokat is.
+A csoportösszesítők átfedhetnek, de minden személy csak egy átfedési sorban
+szerepel, függetlenül részvételei számától. A szerzői és kapcsolattartói
+hivatkozás önmagában nem tanfolyami részvétel.
+
+A **Adjust grouping rules — this view only** részben szerepek szerint
+szűkíthető a tanfolyami csoport, a külsős csoport pedig részvételhez,
+szerepekhez vagy egyéni kategóriához köthető. Ezek ideiglenes nézetszabályok:
+nem adnak tagságot, nem írnak szerepet vagy kategóriát a személyre és nem
+módosítanak cikkeket. A **Restore default rules** visszaállítja az alapokat.
+A keresés, tagsági/kategóriaszűrő, tanfolyam, év és eseményszerep együtt
+használható; a **Clear filters** minden szűrőt töröl, a nézetszabályokat nem.
+Eseményszűréskor a diagram a megfelelő hivatkozásokat vizsgálja, de a
+tagság mindig a jelenlegi mentett állapot, nem történeti tagsági adat.
+A **Checks & cleanup** az ellenőrzéseket és takarítást, a **Categories & roles**
+a közös definíciókat és az önálló portréexportot tartalmazza.
+
 A személy szerkesztője nagy, asztali munkafelületként nyílik meg, legfeljebb
-1600 pixel szélességgel. A felső szakaszgombok külön kezelik a profilt és
+1600 pixel szélességgel. Az oldalsó navigáció (kis képernyőn vízszintesen
+görgethető szakaszsáv) külön kezeli a profilt és
 azonosságot, a portrét, tagságot, kontaktokat, CV-t, részvételi történetet és
-veszélyes műveleteket. A mentés minden szakasz változásait együtt menti.
+veszélyes műveleteket. A mentés minden szakasz változásait együtt menti,
+és a fejléc görgetés közben is elérhető. Az azonosító és aliasok, valamint
+a portréfájl-kezelés részletei külön lenyithatók. A **Connections & history**
+nézetben a keresés mellett típus, év és szerep szerint szűrhető a történet.
+Ugyanazok a nézetszabályok használhatók itt is; a diagram a látható
+történetet és a még nem mentett tagsági választást mutatja. A szűrés nem
+változtatja meg a személy vázlatát vagy a mentett cikkeket.
 A **CV / necrolog** rész **Public document label** mezője személyenként
 állítja a nyilvános modal neve feletti feliratot (`document_label` az oldal frontmatterében), például
 **Nekrológ** vagy **Életút**. Üresen az alapérték **CV**; az előnézet is ezt

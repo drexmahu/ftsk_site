@@ -730,6 +730,30 @@ recommendation pulse; busy/disabled actions remain unhighlighted.
   existing public membership `groups`. Empty courses are discoverable too;
   draft courses are marked, and unspecified/instructor roles are not guessed.
   Reload the registry after course-page changes to update these derived groups.
+  The workspace separates People, Connections, Checks & cleanup and Categories
+  & roles. Registry cards are alphabetized within existing membership groups;
+  saved roster order remains unchanged. The person dialog has section navigation
+  and a fixed save header; advanced identity and portrait-file controls are
+  progressively disclosed without removing their existing safeguards.
+  Connections use an exact overlap matrix rather than implying independent
+  Venn sets: defaults are current membership, every course participant
+  (including instructors/helpers) and its nonmembership complement.
+  `people.js` provides shared pure search/reference/filter/classification helpers;
+  masks use member=1, course=2 and external=4, counting each identity once.
+  Ephemeral view rules can restrict courses to configured roles and define
+  external by nonmember participation, selected membership/event roles or a
+  custom category. Event roles use the existing manual/legacy/automatic resolver.
+  These controls never write registry, role or content files and reset on reload;
+  actual membership/category editing remains in the person form.
+  Population search, status/category, course, year, event-role and overlap
+  filters combine. Counts precede overlap filtering; scoped course/role
+  discovery uses matching saved references, never historical membership inference.
+  Author/contact references can match an event scope but never confer course
+  participation. Invalid incomplete view rules and incomplete reference scans
+  are explicitly reported. Individual history adds type/year/role filtering
+  and uses the same live rule controls, moved into its dialog and restored on
+  close, excluded from dirty tracking. Its matrix reflects visible references
+  and draft membership; saved automatic classification remains separately labeled.
   The shared role vocabulary lives in `data/participant_roles.yaml` (the
   filename is retained for compatibility). Manual duties are seeded from the six
   existing membership duties: elnök, kutatásvezető, elnökségi tag, pénztáros,
