@@ -21,10 +21,18 @@
   style.textContent = `
     .runtime-banner{position:fixed;bottom:16px;right:16px;z-index:900;max-width:min(520px,calc(100vw - 32px));padding:14px 18px;border:1px solid #70c0bf;border-radius:12px;background:#142732;color:#edf3f3;font:14px/1.5 system-ui;box-shadow:0 12px 35px #0006}
     .runtime-banner p{margin:0 0 8px}.runtime-version{display:inline-block;margin:6px 10px;color:#9bcac9;font:12px system-ui}
-    .runtime-dialog{width:min(580px,calc(100vw - 32px));box-sizing:border-box;border:1px solid #70c0bf;border-radius:16px;background:#142732;color:#edf3f3;padding:26px;font:15px/1.6 system-ui}
+    .runtime-dialog{width:min(680px,calc(100vw - 32px));max-height:calc(100vh - 32px);overflow:auto;box-sizing:border-box;border:1px solid #70c0bf;border-radius:16px;background:#142732;color:#edf3f3;padding:26px;font:15px/1.6 system-ui}
     .runtime-dialog::backdrop{background:#081016cf}.runtime-dialog h2{margin-top:0}.runtime-dialog button,.runtime-banner button{margin:6px 8px 0 0;padding:10px 14px;border:1px solid #70c0bf;border-radius:9px;background:#70c0bf;color:#10232d;cursor:pointer;font:600 14px system-ui}
     .runtime-dialog[data-state=failed],.runtime-dialog[data-state=blocked]{border-color:#ed9da7}
+    .runtime-dialog:is([data-state=failed],[data-state=blocked]) h2,.runtime-dialog:is([data-state=failed],[data-state=blocked])>p[role=status]{color:#ffb2bb}
+    .runtime-dialog:is([data-state=failed],[data-state=blocked]) .runtime-progress{border-color:#ed9da780;background:#2b1d24}
+    .runtime-dialog:is([data-state=failed],[data-state=blocked]) progress{accent-color:#ed9da7}
+    .runtime-dialog:is([data-state=failed],[data-state=blocked]) .runtime-technical summary{color:#ffb2bb}
     .runtime-dialog button:disabled,.runtime-banner button:disabled{opacity:.5;cursor:not-allowed}.runtime-dialog p{overflow-wrap:anywhere}
+    .runtime-dialog [hidden]{display:none!important}.runtime-progress{margin:20px 0;padding:16px;border:1px solid #70c0bf40;border-radius:12px;background:#0d1b24}
+    .runtime-progress p{margin:8px 0}.runtime-dialog progress{display:block;width:100%;height:8px;margin:10px 0;accent-color:#70c0bf}
+    .runtime-elapsed{color:#9bcac9;font-size:12px}.runtime-technical summary{cursor:pointer;color:#9bcac9;font-weight:600}
+    .runtime-log{max-height:180px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;padding:14px;border:1px solid #70c0bf40;border-radius:10px;background:#09151d;color:#d4e5e5;font:12px/1.6 ui-monospace,Consolas,monospace}
     body[data-runtime-maintenance]{margin:0;min-height:100vh;background:#0d1b24;color:#edf3f3;font:16px/1.6 system-ui;padding:30px;box-sizing:border-box}
   `;
   document.head.append(style);
@@ -49,11 +57,28 @@
   dialog.setAttribute("aria-labelledby", title.id);
   const detail = make("p", "");
   detail.setAttribute("role", "status");
+  const progressPanel = make("section", "", "runtime-progress");
+  progressPanel.setAttribute("aria-label", "Editor startup progress");
+  const phase = make("strong", "");
+  const overall = make("progress", "");
+  overall.setAttribute("aria-label", "Completed startup stages");
+  const explanation = make("p", "");
+  const activity = make("progress", "");
+  activity.setAttribute("aria-label", "Current startup stage is running");
+  const elapsed = make("p", "", "runtime-elapsed");
+  progressPanel.append(phase, overall, explanation, activity, elapsed);
+  const technical = make("details", "", "runtime-technical");
+  technical.open = true;
+  const technicalTitle = make("summary", "Technical details · live log");
+  const log = make("pre", "", "runtime-log");
+  log.tabIndex = 0;
+  log.setAttribute("aria-label", "Technical startup log");
+  technical.append(technicalTitle, log);
   const drafts = make("p", "");
   const download = make("button", "Download unsaved drafts");
   const reload = make("button", "I saved my drafts · reload");
   const retry = make("button", "Retry startup");
-  dialog.append(title, detail, drafts, download, reload, retry);
+  dialog.append(title, detail, progressPanel, technical, drafts, download, reload, retry);
   document.body.append(banner, dialog);
   dialog.addEventListener("cancel", event => event.preventDefault());
 
@@ -121,6 +146,27 @@
     title.textContent = data.state === "failed" || data.state === "blocked" ? "Editor update needs attention" :
       changed ? "The matching editor is ready" : "Loading the matching editor";
     detail.textContent = changed ? "The checkout now has a different editor. Save a copy of browser-only drafts before reloading. Saved files and Git checkpoints are preserved." : data.message;
+    const running = ["starting", "restarting"].includes(data.state);
+    progressPanel.hidden = !data.progress;
+    if (data.progress) {
+      const { step, total, label, explanation: description, elapsed_seconds: seconds } = data.progress;
+      const completed = data.state === "ready" ? step : step - 1;
+      phase.textContent = `Step ${step} of ${total} · ${label}`;
+      overall.setAttribute("max", String(total));
+      overall.setAttribute("value", String(completed));
+      overall.setAttribute("aria-valuetext", `${completed} of ${total} startup stages completed`);
+      explanation.textContent = description;
+      activity.hidden = !running;
+      elapsed.textContent = running ? `Current stage: ${seconds}s elapsed · duration depends on downloads and local tools` :
+        data.state === "ready" ? "Startup checks completed." : "Paused · see the message above before retrying.";
+    }
+    const lines = (data.logs || []).join("\n");
+    technical.hidden = !lines;
+    if (log.textContent !== lines) {
+      const follow = !log.textContent || log.scrollHeight - log.scrollTop - log.clientHeight < 24;
+      log.textContent = lines;
+      if (follow) log.scrollTop = log.scrollHeight;
+    }
     drafts.textContent = draftNotice || [...blocked.blockers, ...blocked.busy].join(" ");
     download.hidden = !blocked.blockers.length;
     download.disabled = downloading || Boolean(blocked.busy.length);
@@ -167,6 +213,8 @@
       banner.hidden = false;
       restart.hidden = true;
       bannerText.textContent = `Editor launcher disconnected: ${error.message}. Keep drafts safe; reopen site_editor.bat if its window was closed.`;
+      activity.hidden = true;
+      if (dialog.open) elapsed.textContent = "Live updates disconnected · the last progress and log are preserved.";
       if (maintenance) detail.textContent = bannerText.textContent;
     } finally {
       setTimeout(poll, 1000);

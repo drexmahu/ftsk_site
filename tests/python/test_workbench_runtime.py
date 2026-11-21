@@ -16,7 +16,7 @@ from unittest.mock import patch
 
 from tools.workbench.launcher import (
     PUBLIC_PORT_ADAPTER, RuntimeErrorMessage, RuntimeServer, Supervisor, checkout_version,
-    prepare_environment, requirements_files,
+    prepare_environment, requirements_files, run_setup,
 )
 
 
@@ -160,6 +160,64 @@ class RuntimeFixture(unittest.TestCase):
 
 
 class VersionTests(RuntimeFixture):
+    def test_site_builder_failure_preserves_actual_version_and_diagnostics(self):
+        (self.root / ".hugo-version").write_text("0.160.0")
+        logs = []
+        result = subprocess.CompletedProcess(["hugo", "version"], 0, "hugo v0.150.0", "fixture diagnostic")
+        with patch("tools.workbench.launcher.run_setup"), \
+                patch("tools.workbench.launcher.shutil.which", return_value="fixture-hugo"), \
+                patch("tools.workbench.launcher.subprocess.run", return_value=result):
+            with self.assertRaisesRegex(RuntimeErrorMessage, "requires Hugo 0.160.0"):
+                prepare_environment(self.root, False, logs.append)
+        self.assertIn("hugo v0.150.0", logs)
+        self.assertIn("fixture diagnostic", logs)
+
+    def test_command_output_is_live_and_runtime_log_is_bounded(self):
+        supervisor = Supervisor(self.root)
+        self.addCleanup(supervisor.close)
+        supervisor.update_progress(3, "Installing packages", "Preparing project-local tools.")
+        received = threading.Event()
+        release = self.root / "release-command"
+        errors = []
+
+        def log(text):
+            supervisor.log(text)
+            if text == "LIVE OUTPUT":
+                received.set()
+
+        def command():
+            try:
+                run_setup([sys.executable, "-c",
+                           "import pathlib,time\nprint('LIVE OUTPUT',flush=True)\n"
+                           f"while not pathlib.Path({str(release)!r}).exists(): time.sleep(.05)\n"],
+                          self.root, log, supervisor)
+            except Exception as exc:
+                errors.append(exc)
+
+        worker = threading.Thread(target=command)
+        worker.start()
+        try:
+            self.assertTrue(received.wait(5), "Output must arrive before the command exits")
+            self.assertTrue(worker.is_alive())
+            metadata = supervisor.metadata()
+            self.assertEqual(metadata["progress"]["step"], 3)
+            self.assertEqual(metadata["progress"]["explanation"], "Preparing project-local tools.")
+            self.assertGreaterEqual(metadata["progress"]["elapsed_seconds"], 0)
+            self.assertTrue(any("LIVE OUTPUT" in line for line in metadata["logs"]))
+        finally:
+            release.write_text("finish")
+            worker.join(10)
+        self.assertFalse(worker.is_alive())
+        self.assertEqual(errors, [])
+        self.assertIsNone(supervisor.setup_process)
+        for index in range(205):
+            supervisor.log(f"\x1b[31m{index}: " + "x" * 3000 + "\x1b[0m")
+        logs = supervisor.metadata()["logs"]
+        self.assertEqual(len(logs), 200)
+        self.assertTrue(all(len(line) <= 2000 and "\x1b" not in line for line in logs))
+        self.assertIn("204:", logs[-1])
+        self.assertIn("[line truncated]", logs[-1])
+
     def test_same_version_detects_python_support_and_nested_requirements_but_not_content(self):
         initial = checkout_version(self.root)
         (self.root / "page.md").write_text("A content edit")
@@ -348,6 +406,10 @@ class SupervisorTests(RuntimeFixture):
         (self.editor / "__main__.py").write_text("raise RuntimeError('fixture startup failure')\n")
         self.write_status(branch="broken")
         self.wait(lambda: self.supervisor.state == "failed")
+        self.wait(lambda: any("fixture startup failure" in line for line in self.supervisor.metadata()["logs"]))
+        failure = json.loads(self.request("GET", "/api/workbench/runtime")[1])
+        self.assertEqual(failure["progress"]["step"], 7)
+        self.assertTrue(any("fixture startup failure" in line for line in failure["logs"]))
         self.assertEqual(self.request("GET", "/")[0], 200)
         self.assertIn(b"data-runtime-maintenance", self.request("GET", "/")[1])
         self.assertEqual(self.request("GET", "/api/workbench/status")[0], 503)
@@ -355,6 +417,10 @@ class SupervisorTests(RuntimeFixture):
         self.assertEqual(self.request("POST", "/api/workbench/runtime",
                                      {"X-Workbench-Runtime-Token": self.supervisor.token})[0], 202)
         self.wait(lambda: self.supervisor.state == "ready" and self.supervisor.generation > generation)
+        ready = json.loads(self.request("GET", "/api/workbench/runtime")[1])
+        self.assertEqual(ready["progress"]["step"], 8)
+        self.assertFalse(any("fixture startup failure" in line for line in ready["logs"]),
+                         "Retry must start a fresh log history")
 
     def test_transient_status_failure_never_terminates_an_unverified_git_worker(self):
         self.start_runtime()

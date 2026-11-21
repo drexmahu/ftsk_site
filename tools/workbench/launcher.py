@@ -19,6 +19,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
 import webbrowser
+from collections import deque
 
 LOGGER = logging.getLogger("site_workbench.runtime")
 ROOT = Path(__file__).resolve().parents[2]
@@ -111,20 +112,33 @@ def tool(root, name):
     return str(matches[-1])
 
 
+def forward_output(process, log):
+    def read():
+        try:
+            while line := process.stdout.readline(4096):
+                log(line.rstrip("\r\n"))
+        finally:
+            process.stdout.close()
+    thread = threading.Thread(target=read, name="site-editor-output", daemon=True)
+    thread.start()
+    return thread
+
+
 def run_setup(args, root, log, owner=None):
     log("Preparing project-local dependencies: " + " ".join(map(str, args)))
     process = subprocess.Popen(args, cwd=root, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                               encoding="utf-8", errors="replace")
+                               encoding="utf-8", errors="replace",
+                               env={**os.environ, "PYTHONIOENCODING": "utf-8", "PYTHONUNBUFFERED": "1"})
+    output_thread = forward_output(process, log)
     if owner:
         with owner.lock:
             owner.setup_process = process
             if owner.closed:
                 process.terminate()
     try:
-        output, _ = process.communicate(timeout=600)
-        log(output[-12000:])
+        process.wait(timeout=600)
         if process.returncode:
-            raise RuntimeErrorMessage("Project-local dependency preparation failed. See the launcher window for details; run setup-dev-env.bat to repair tools, then click Retry.")
+            raise RuntimeErrorMessage("Project-local dependency preparation failed. See Technical details or the launcher window; run setup-dev-env.bat to repair tools, then click Retry.")
     finally:
         if process.poll() is None:
             process.terminate()
@@ -133,14 +147,24 @@ def run_setup(args, root, log, owner=None):
             except subprocess.TimeoutExpired:
                 process.kill()
                 process.wait(timeout=5)
+        output_thread.join(timeout=5)
+        if output_thread.is_alive():
+            LOGGER.warning("Dependency command output is still closing.")
+        log(f"Command exited with status {process.returncode}.")
         if owner:
             with owner.lock:
                 owner.setup_process = None
 
 
 def prepare_environment(root, developer, log, owner=None):
+    def progress(label, explanation, step=3):
+        if owner:
+            owner.update_progress(step, label, explanation)
     if developer:
+        progress("Using developer tools", "Developer mode uses your current Python and existing editor assets. No dependencies are installed automatically.")
+        log(f"Developer mode: Python {sys.executable}; dependency installation and asset preparation skipped.")
         return sys.executable
+    progress("Checking Python tools", "Checking for local tools that match this editor. Missing tools will be prepared inside this project, not installed system-wide.")
     requirements = requirements_files(root)
     requirements_hash = digest_files(root, requirements)
     key = hashlib.sha256((requirements_hash + sys.version + sys.executable).encode()).hexdigest()
@@ -151,13 +175,19 @@ def prepare_environment(root, developer, log, owner=None):
         raise RuntimeErrorMessage("The editor environment must be a project-local, non-linked directory.")
     if not ready.is_file() or not python.is_file():
         folder.mkdir(parents=True, exist_ok=True)
+        progress("Creating local Python environment", "Creating an isolated home for this editor's Python tools. Your system Python and saved site files are not changed.")
         run_setup([sys.executable, "-m", "venv", str(folder)], root, log, owner)
+        progress("Installing Python packages", "Installing the Python packages this checkout needs. The first download may take a while; command output appears below.")
         run_setup([str(python), "-m", "pip", "install", "--force-reinstall",
                    "-r", str(root / "scripts" / "requirements-dev.txt")], root, log, owner)
+        progress("Validating Python packages", "Checking that the installed packages work together before starting the editor.")
         run_setup([str(python), "-m", "pip", "check"], root, log, owner)
         if digest_files(root, requirements) != requirements_hash:
             raise RuntimeErrorMessage("Requirements changed during installation. Finish the checkout change, then click Retry.")
         ready.write_text(json.dumps({"requirements": key}) + "\n", encoding="utf-8")
+    else:
+        log(f"Reusing matching Python environment: {folder}")
+    progress("Checking browser editor assets", "Checking the browser's editing tools. Only missing or outdated assets need a local rebuild.", 4)
     build = root / "scripts" / "build_workbench_editors.js"
     if build.is_file():
         inputs = ["package-lock.json", "tools/workbench/web/monaco-entry.js", "scripts/build_workbench_editors.js"]
@@ -178,7 +208,9 @@ def prepare_environment(root, developer, log, owner=None):
             npm_cli = npm.parent / "node_modules" / "npm" / "bin" / "npm-cli.js" if os.name == "nt" else npm
             if not npm_cli.is_file():
                 raise RuntimeErrorMessage("npm's launcher is missing. Run setup-dev-env.bat, then click Retry.")
+            progress("Installing browser editor packages", "Downloading the exact browser-editor dependencies recorded in this checkout. This may take longer on the first run.", 4)
             run_setup([node, str(npm_cli), "ci", "--no-audit", "--no-fund"], root, log, owner)
+            progress("Building browser editor assets", "Building the code editor and its language workers so they match this checkout.", 4)
             run_setup([node, str(build)], root, log, owner)
             try:
                 built = json.loads((output / "version.json").read_text(encoding="utf-8"))
@@ -186,6 +218,9 @@ def prepare_environment(root, developer, log, owner=None):
                 raise RuntimeErrorMessage("The editor asset build did not produce valid version metadata. Check the launcher window before retrying.") from exc
             if built != expected or not all((output / name).is_file() for name in outputs):
                 raise RuntimeErrorMessage("The editor asset build did not produce the required matching files. Check the launcher window before retrying.")
+        else:
+            log("Matching browser editor assets are already available.")
+    progress("Checking site builder", "Verifying that the installed Hugo version matches this checkout before enabling site previews.", 5)
     hugo_pin = root / ".hugo-version"
     if hugo_pin.is_file():
         version = hugo_pin.read_text(encoding="utf-8").strip()
@@ -193,7 +228,12 @@ def prepare_environment(root, developer, log, owner=None):
         executable = str(pinned) if pinned.is_file() else shutil.which("hugo")
         if not executable:
             raise RuntimeErrorMessage(f"Hugo {version} is not installed. Run setup-dev-env.bat, then click Retry.")
+        log(f"Checking site builder: {executable} version")
         output = subprocess.run([executable, "version"], cwd=root, capture_output=True, text=True, timeout=30)
+        if output.stdout:
+            log(output.stdout.strip())
+        if output.stderr:
+            log(output.stderr.strip())
         if output.returncode or not re.search(r"\bv" + re.escape(version) + r"(?:\b|[+-])", output.stdout):
             raise RuntimeErrorMessage(f"This checkout requires Hugo {version}. Run setup-dev-env.bat, then click Retry.")
     return str(python)
@@ -207,6 +247,7 @@ class Supervisor:
         self.condition = threading.Condition(self.lock)
         self.closed = False
         self.process = None
+        self.output_thread = None
         self.setup_process = None
         self.prepared_python = None
         self.backend_port = 0
@@ -218,6 +259,10 @@ class Supervisor:
         self.branch = None
         self.state = "starting"
         self.message = "Starting the matching site editor."
+        self.logs = deque(maxlen=200)
+        self.progress = {"step": 1, "total": 8, "label": "Checking editor version",
+                         "explanation": "Identifying the editor shipped with this checkout and checking that existing work can stop safely."}
+        self.stage_started = time.monotonic()
         self.token = secrets.token_urlsafe(32)
         self.restart_requested = False
         self.checkout_transition = False
@@ -227,6 +272,20 @@ class Supervisor:
 
     def log(self, text):
         LOGGER.info("%s", text)
+        with self.lock:
+            for line in str(text).splitlines():
+                line = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", line)
+                line = f"[{time.strftime('%H:%M:%S')}] {line}"
+                if len(line) > 2000:
+                    marker = " ... [line truncated]"
+                    line = line[:2000 - len(marker)] + marker
+                self.logs.append(line)
+
+    def update_progress(self, step, label, explanation):
+        with self.lock:
+            self.progress = {"step": step, "total": 8, "label": label, "explanation": explanation}
+            self.stage_started = time.monotonic()
+            self.log(f"[{step}/8] {label}")
 
     def metadata(self):
         with self.lock:
@@ -234,7 +293,9 @@ class Supervisor:
                     "version": (self.running_version or {}).get("version", ""),
                     "target_version": (self.target_version or {}).get("version", ""),
                     "fingerprint": (self.running_version or {}).get("fingerprint", ""),
-                    "developer": self.developer, "token": self.token}
+                    "developer": self.developer, "token": self.token,
+                    "progress": {**self.progress, "elapsed_seconds": int(time.monotonic() - self.stage_started)},
+                    "logs": list(self.logs)}
 
     def backend_status(self):
         connection = HTTPConnection("127.0.0.1", self.backend_port, timeout=10)
@@ -311,11 +372,19 @@ class Supervisor:
                 process.kill()
                 process.wait(timeout=5)
         self.process = None
+        output_thread = self.output_thread
+        self.output_thread = None
+        if output_thread:
+            output_thread.join(timeout=5)
+            if output_thread.is_alive():
+                LOGGER.warning("Previous editor output is still closing.")
 
     def replace_child(self):
         with self.lock:
             self.state = "restarting" if self.generation else "starting"
             self.message = "Preparing the editor and its project-local dependencies. Keep this window open."
+            self.logs.clear()
+            self.update_progress(1, "Checking editor version", "Identifying the editor shipped with this checkout and waiting for active requests to finish safely.")
             while self.active and not self.closed:
                 self.condition.wait(timeout=1)
         if self.closed:
@@ -333,8 +402,10 @@ class Supervisor:
                     self.state = "pending"
                     self.message = message
                 return
+        self.update_progress(2, "Stopping previous editor", "Closing the previous editor if it is running. Saved files and Git checkpoints are not changed.")
         self.stop_child()
         target = checkout_version(self.root)
+        self.log(f"Target editor: {target['version']} (source {target['fingerprint'][:12]}).")
         self.prepared_python = None
         python = prepare_environment(self.root, self.developer, self.log, self)
         self.prepared_python = Path(python)
@@ -345,7 +416,8 @@ class Supervisor:
         with socket.socket() as reservation:
             reservation.bind(("127.0.0.1", 0))
             port = reservation.getsockname()[1]
-        env = {**os.environ, "PYTHONDONTWRITEBYTECODE": "1", "PYTHONUNBUFFERED": "1",
+        self.update_progress(6, "Starting matching editor", "Starting a fresh editor process with the matching tools. The browser address stays the same.")
+        env = {**os.environ, "PYTHONDONTWRITEBYTECODE": "1", "PYTHONUNBUFFERED": "1", "PYTHONIOENCODING": "utf-8",
                "FTSK_WORKBENCH_PUBLIC_PORT": str(self.public_port)}
         # Never reuse bytecode from a different checkout, even for same-sized files.
         bootstrap = (
@@ -364,10 +436,15 @@ class Supervisor:
         with self.lock:
             if self.closed:
                 return
+            self.log(f"Launching tools.workbench: Python {python}; private port {port}; fresh bytecode and supervised bootstrap.")
             self.process = subprocess.Popen(args, cwd=self.root, env=env,
-                                            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if os.name == "nt" else 0)
+                                            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if os.name == "nt" else 0,
+                                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                            encoding="utf-8", errors="replace")
+            self.output_thread = forward_output(self.process, self.log)
             process = self.process
             self.backend_port = port
+        self.update_progress(7, "Connecting to editor", "Waiting for the new editor to respond and checking its Git status. Editing unlocks only after this check succeeds.")
         deadline = time.monotonic() + 45
         while not self.closed and time.monotonic() < deadline:
             if process.poll() is not None:
@@ -395,6 +472,7 @@ class Supervisor:
             self.checkout_transition = False
             self.state = "ready"
             self.message = ""
+            self.update_progress(8, "Editor ready", "The matching editor is running. Browser drafts remain protected before the page reconnects.")
         self.log(f"Site editor {target['version']} ready ({target['fingerprint'][:12]}).")
 
     def monitor(self):
@@ -437,6 +515,7 @@ class Supervisor:
                             self.replace_child()
             except (OSError, ValueError, subprocess.SubprocessError) as exc:
                 LOGGER.exception("Editor runtime transition failed")
+                self.log(f"ERROR: {exc}")
                 with self.lock:
                     self.state = "failed"
                     self.message = str(exc)

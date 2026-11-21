@@ -576,6 +576,14 @@ pull és rebase után az oldal újratöltődik, hogy az új ág fájljait haszn�
 Ha más program változtatja meg az ágat vagy a commitot, a Workbench zárol,
 és újratöltést kér; előbb készíts másolatot a nem mentett vázlatodról.
 
+A **Loading the matching editor** ablak mutatja az indítás lépéseit és az
+aktuális lépés eltelt idejét. Külön, egyszerű magyarázat jelzi, mi történik;
+a nyitott **Technical details** részben élő parancskimenet és napló látható.
+A felső folyamatjelző a kész lépéseket mutatja, az alsó az éppen futó
+munkát jelzi, nem becsült letöltési százalékot. Hibánál a napló megmarad,
+és a **Retry startup** új próbálkozást indít. Az új indítófelület betöltéséhez
+egyszer zárd be és nyisd meg újra a `site_editor.bat` indítót.
+
 A főoldal **Recover an unsaved editor draft before switching branches** részében zárolt ágon is
 letöltheted a nyitott cikk-, személy- és hero-vázlatot. Ellenőrizd a letöltött
 Markdown/JSON fájlt, mielőtt a **Discard unsaved editor drafts** gombbal,
