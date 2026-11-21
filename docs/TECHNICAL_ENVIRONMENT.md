@@ -348,6 +348,65 @@ Focused regressions (no dependency downloads; disposable Git/editor processes):
 node tests\js\test_workbench_runtime.js
 ```
 
+### Shared image editing and reviewed WebP exports
+
+Site photos, article image uploads/fields (including social previews) and CV
+photos share `web/image-editor.js`. Member portrait uploads retain their
+dedicated square-face/full-image workflow. No additional dependencies or remote
+assets are used: the existing Pillow backend prepares all actual WebP outputs.
+
+An unedited output means the original pixels converted/resized to WebP, not a
+camera-file copy. Each source supports independently named versions with pixel
+crops, free/preset ratios, rectangle/circle/ellipse shapes, brightness, contrast,
+saturation, warmth and per-version maximum dimensions/quality. Circular and
+elliptical masks preserve alpha, with smooth edges. EXIF orientation is corrected
+before coordinates are exposed. Limits remain 30 MiB / 25 MP per source, 100
+queued sources, 64–6000 maximum dimensions and quality 1–100; the editor limits
+each source to 20 versions and each batch to 200 selected outputs; the backend
+allows 200 live prepared previews. Omitting an unedited output releases its
+preview reservation instead of consuming capacity for a file that will not save.
+
+`POST /api/workbench/images/open` stages an existing local raster image.
+`POST .../images/preview` receives the staged `id`, version `key`/monotonic
+`sequence`, destination `context`, dimensions, name, mode and `edit` recipe.
+The context is `photos` with a folder, `page` with a content path, or `cv` with
+a person and roster revision. The server derives/validates owned destinations,
+encodes a temporary WebP and reserves its collision-safe path. The response
+includes the preview URL, nonce `token`, dimensions, byte count and authoritative
+`can_overwrite` / `overwrite_reason` destination guidance.
+`GET .../images/source/{id}` serves the oriented source thumbnail;
+`GET .../images/preview/{token}` serves the **exact** encoded output.
+
+`POST .../images/save` consumes the reviewed token, rather than rerendering client
+parameters. New-copy paths use exclusive creation. Replacement requires an
+existing staged WebP in the permitted folder, explicit `confirm_overwrite`,
+matching source revision and branch, and same-directory atomic replacement.
+Retrying a lost save response returns the verified saved result without creating
+duplicates. Roster/branch changes, stale previews and newly occupied output paths
+fail explicitly. Preview generation sequencing rejects old requests.
+`POST .../images/finish` cleans all temporary versions in one request and removes
+only completed/cancelled owned sources; unfinished site-photo queues survive.
+All endpoints retain localhost/token/branch and isolated-preview-server guards.
+Destination guards are anchored at the checkout root, rejecting linked/junction
+ancestors including `static`, not only links below `static/images`.
+
+The modal reviews every file before writing, retains completed outputs on partial
+failure, and retries only remaining versions. Single image-field callers select
+one reviewed output to assign; other outputs stay available in the page folder.
+Crop changes invalidate previews as soon as dragging starts changing the
+selection; invalid pixel fields block review/save until corrected. Navigation
+finishes an active drag and remains available for already-read batch sources.
+`Refresh preview` retries failed/expired previews without changing their recipes.
+Unread sources remain visible in review and are returned as `sourceErrors`, so
+upload callers do not replace partial-failure feedback with a success message.
+The Site photos library uses an automatically loaded folder grid, clickable
+ancestor breadcrumbs and a fixed Up/Refresh toolbar. Manual paths are a
+separate disclosure, without a navigation dropdown. Sequenced reads prevent
+late folder responses from displaying files under the wrong breadcrumb.
+No image operation saves content/member drafts, commits or publishes. The open
+editor contributes to the shared Git/restart blocker event and warns on browser
+reload. Focused tests: `test_image_workbench.py` and `test_image_editor.js`.
+
 ### Unused-file cleanup
 
 **File cleanup**, directly below **Save & sync**, discovers static files with no
@@ -656,7 +715,8 @@ recommendation pulse; busy/disabled actions remain unhighlighted.
 - **Site photos:** upload/drop a batch, choose maximum dimensions and quality,
   and export WebP into any named/nested folder under `static/images/`. General
   photos default to `gallery`, not `hero`; conversion does not automatically
-  add slideshow entries. No upscaling or cropping. The content studio also
+  add slideshow entries. The shared image editor offers crops and tone controls,
+  still without stretching or upscaling. The content studio also
   supports an optional filename stem for a single conversion.
 - **People & portraits:** search all identities, add/edit permanent IDs, names,
   aliases, biographies and shared image URLs, independently assigning current

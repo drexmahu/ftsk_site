@@ -77,7 +77,15 @@ async function browseMemberImages(container, selectForCV = false) {
     remove.type = "button";
     remove.title = `Review permanent deletion of ${file.name}`;
     remove.addEventListener("click", () => action(() => reviewPortraitDeletion([file.url])));
-    card.append(button, remove);
+    card.append(button);
+    if (selectForCV) {
+      const edit = node("button", "Edit image…", "secondary"); edit.type = "button";
+      edit.disabled = !window.workbenchImages.supports(file.url);
+      edit.title = edit.disabled ? "Only raster photos can be edited here." : "";
+      edit.addEventListener("click", () => action(() => uploadMemberCVImage(file.url)));
+      card.append(edit);
+    }
+    card.append(remove);
     return card;
   }));
   if (!result.files.length) container.append(node("p", "No images in this person's folder yet.", "hint"));
@@ -108,56 +116,32 @@ $("#member-cv-clear-file").addEventListener("click", () => {
 });
 $("#member-images-browse").addEventListener("click", () => action(() => browseMemberImages($("#member-uploaded-images"))));
 
-async function uploadMemberCVImage() {
+async function uploadMemberCVImage(url = "") {
   if (memberState.busy || state.busy) return;
   if (!memberState.original) throw new Error("Save this person before uploading CV images.");
   const files = Array.from($("#member-cv-file").files);
-  if (!files.length) throw new Error("Choose CV photos first.");
+  if (!files.length && !url) throw new Error("Choose CV photos first.");
   const person = memberState.original.id;
   const settings = {
     width: Number($("#member-cv-width").value), height: Number($("#member-cv-height").value),
-    quality: Number($("#member-cv-quality").value),
+    quality: Number($("#member-cv-quality").value), name: `${person}-cv`,
   };
-  memberState.busy = true;
-  memberControls();
-  const progress = conversionProgress("member-cv-upload", files.length);
-  const failures = [], retry = [];
-  let converted = 0;
-  let finished = false;
+  const revision = memberState.catalog.revision;
+  memberState.busy = true; memberControls();
   try {
-    for (const [index, file] of files.entries()) {
-      let stagedID = "";
-      let exported = false;
-      try {
-        progress.update(index, `Uploading ${file.name}…`);
-        const staged = await api("/api/workbench/uploads", { method: "POST", raw: file, filename: file.name });
-        stagedID = staged.id;
-        progress.update(index, `Converting ${file.name}…`);
-        const result = await api("/api/workbench/members/cv-image", { method: "POST", payload: {
-          revision: memberState.catalog.revision, person, id: stagedID, ...settings,
-        } });
-        $("#member-cv-image-url").value = result.files[0].url;
-        exported = true;
-        converted++;
-      } catch (error) {
-        failures.push(`${file.name}: ${error.message}`);
-        if (!exported) retry.push(file);
-      } finally {
-        if (stagedID) {
-          try { await api(`/api/workbench/uploads/${stagedID}`, { method: "DELETE" }); }
-          catch (error) { failures.push(`${file.name}: temporary upload cleanup failed: ${error.message}`); }
-        }
-      }
-      progress.update(index + 1, `${converted} converted${failures.length ? ` · ${failures.length} errors` : ""}`);
+    const outcome = await window.workbenchImages.open({files: url ? undefined : files, url: url || undefined,
+      folder: `members/${person}`, settings, title: "Prepare CV photos", context: {kind: "cv", person, revision},
+      validate() {
+        if (memberState.original?.id !== person || memberState.catalog.revision !== revision) throw new Error("The person or roster changed. Reopen the CV image editor.");
+      }});
+    if (!url) selectMemberCVFiles(outcome.remainingFiles);
+    if (outcome.results.length) {
+      $("#member-cv-image-url").value = outcome.results.at(-1).files[0].url;
+      await browseMemberCVImages();
+      notify(`Saved ${outcome.results.length} reviewed WebP outputs in this person's folder. Insert photos at the cursor, then save the person.${outcome.sourceErrors?.length ? `\n${outcome.sourceErrors.join("\n")}\nThe failed sources remain selected for retry.` : ""}`, outcome.sourceErrors?.length ? "error" : "");
     }
-    selectMemberCVFiles(retry);
-    await browseMemberCVImages();
-    const summary = `Converted ${converted}/${files.length} CV photos.`;
-    progress.finish(`${summary} ${failures.length ? "See errors above; failed photos remain selected for retry." : "Select an image, add alt text and insert it at the cursor."}`, failures.length > 0);
-    finished = true;
-    notify(`${summary}${failures.length ? `\n${failures.join("\n")}` : " Saved in this person's folder. Insert images individually at the cursor, then save person."}`, failures.length ? "error" : "");
+    else if (outcome.sourceErrors?.length) notify(outcome.sourceErrors.join("\n"), "error");
   } finally {
-    if (!finished) progress.finish("CV image operation interrupted. See the error message for details.", true);
     memberState.busy = false;
     memberControls();
   }

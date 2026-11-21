@@ -12,7 +12,7 @@ async function checkMemberCVBatch() {
     if (!controls.has(selector)) controls.set(selector, { value: "", files: [], textContent: "" });
     return controls.get(selector);
   };
-  const updates = [], notices = [], calls = [];
+  const notices = [], calls = [];
   let refreshes = 0, failure = "";
   const context = {
     $: get, state: { busy: false },
@@ -22,21 +22,14 @@ async function checkMemberCVBatch() {
     DataTransfer: class {
       constructor() { this.files = []; this.items = { add: file => this.files.push(file) }; }
     },
-    conversionProgress: (_id, total) => ({
-      update: (completed, message) => updates.push({ total, completed, message }),
-      finish: (message, failed) => updates.push({ message, failed }),
-    }),
     browseMemberCVImages: async () => { refreshes++; },
     notify: (message, kind) => notices.push({ message, kind }),
-    api: async (url, options) => {
-      calls.push({ url, options });
-      if (url === "/api/workbench/uploads") return { id: options.filename };
-      if (url.endsWith("/cv-image")) {
-        if (options.payload.id === failure) throw new Error("Conversion failed");
-        return { files: [{ url: `/images/members/alice/${options.payload.id}.webp` }] };
-      }
-      return {};
-    },
+    window: {workbenchImages: {async open(options) {
+      calls.push(options);
+      return {results: options.files.filter(file => file.name !== failure).map(file => ({
+        files: [{url: `/images/members/alice/${file.name}.webp`}]})),
+        remainingFiles: options.files.filter(file => file.name === failure)};
+    }}},
   };
   vm.runInNewContext(source.slice(source.indexOf("function selectMemberCVFiles("),
     source.indexOf('\nsetupFileDrop("#member-cv-file"')), context);
@@ -50,29 +43,26 @@ async function checkMemberCVBatch() {
   assert.equal(get("#member-cv-file").files.length, 3);
   failure = "two.png";
   await context.uploadMemberCVImage();
-  const conversions = calls.filter(call => call.url.endsWith("/cv-image"));
-  assert.equal(conversions.length, 3, "One failure must not skip later batch photos");
-  for (const call of conversions) {
-    assert.equal(call.options.payload.person, "alice");
-    assert.equal(call.options.payload.revision, "registry-revision");
-    assert.equal(call.options.payload.width, 1600);
-  }
-  assert.equal(calls.filter(call => call.options.method === "DELETE").length, 3);
+  assert.equal(calls[0].files.length, 3);
+  assert.equal(calls[0].context.person, "alice");
+  assert.equal(calls[0].context.revision, "registry-revision");
+  assert.equal(calls[0].settings.width, 1600);
+  assert.equal(calls[0].folder, "members/alice");
+  context.memberState.original.id = "bob";
+  assert.throws(() => calls[0].validate(), /person or roster changed/);
+  context.memberState.original.id = "alice";
   assert.deepEqual(get("#member-cv-file").files.map(file => file.name), ["two.png"]);
   assert.equal(context.memberState.busy, false);
   assert.equal(refreshes, 1);
-  assert.match(notices[0].message, /Converted 2\/3/);
-  assert.match(notices[0].message, /two.png: Conversion failed/);
-  assert.equal(notices[0].kind, "error");
-  assert.ok(updates.some(update => update.total === 3 && update.completed === 3));
+  assert.match(notices[0].message, /Saved 2 reviewed/);
   failure = "";
   await context.uploadMemberCVImage();
   assert.equal(get("#member-cv-file").files.length, 0);
-  assert.match(notices[1].message, /Converted 1\/1/);
+  assert.match(notices[1].message, /Saved 1 reviewed/);
   assert.equal(refreshes, 2);
   await assert.rejects(context.uploadMemberCVImage(), /Choose CV photos first/);
   assert.match(source, /if \(id !== null\) action\(browseMemberCVImages\)/);
-  console.log("PASS: CV batches convert independently, retain failed photos, refresh saved images and clean uploads.");
+  console.log("PASS: CV batches use the shared editor with person/revision guards, retain unfinished photos and refresh saved outputs.");
 }
 
 module.exports = { checkMemberCVBatch };

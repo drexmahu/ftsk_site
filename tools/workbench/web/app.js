@@ -109,7 +109,8 @@ function queueView(kind) {
   container.replaceChildren();
   renderUploadPreviews($(`#${kind === "photos" ? "photo" : "portrait"}-files`), entries.map(entry => ({
     name: entry.name, url: `/api/workbench/uploads/${entry.id}`, selected: state.activePortrait?.id === entry.id,
-    choose: kind === "portraits" ? () => action(() => selectPortrait(entry)) : null,
+    choose: kind === "portraits" ? () => action(() => selectPortrait(entry)) : () => action(() => convertPhotos([entry])),
+    chooseLabel: kind === "portraits" ? "Choose crop" : "Edit photo",
   })), index => action(async () => {
       const entry = entries[index];
       await api(`/api/workbench/uploads/${entry.id}`, { method: "DELETE" });
@@ -164,13 +165,18 @@ async function upload(files, kind) {
   }
 }
 
-function options(prefix) {
-  const result = { folder: $(`#${prefix}-folder`).value.trim() };
+function imageSettings(prefix) {
+  const result = {};
   for (const key of ["width", "height", "quality"]) {
     const input = $(`#${prefix}-${key}`);
     if (!input.reportValidity()) throw new Error(`Check ${prefix} ${key}.`);
     result[key] = Number(input.value);
   }
+  return result;
+}
+
+function options(prefix) {
+  const result = {folder: $(`#${prefix}-folder`).value.trim(), ...imageSettings(prefix)};
   if (!result.folder) throw new Error("Choose an output folder.");
   return result;
 }
@@ -239,37 +245,92 @@ function conversionProgress(buttonId, total) {
   };
 }
 
-async function convertPhotos() {
+async function convertPhotos(entries = [...state.photos]) {
   if (state.busy) return;
   if (!state.photos.length) throw new Error("Choose photos to convert first.");
   const settings = options("photo");
-  const entries = [...state.photos];
-  setBusy(true);
-  const failures = [];
-  let completed = 0;
-  const progress = conversionProgress("convert-photos", entries.length);
-  let finished = false;
-  try {
-    for (const [index, entry] of entries.entries()) {
-      progress.update(index, `Converting ${entry.name}…`);
-      notify(`Converting ${index + 1}/${entries.length}: ${entry.name}`, "busy");
-      try {
-        const result = await api("/api/workbench/convert", { method: "POST", payload: { ...settings, id: entry.id } });
-        showResults("photo", result);
-        completed++;
-        state.photos = state.photos.filter(item => item.id !== entry.id);
-        await api(`/api/workbench/uploads/${entry.id}`, { method: "DELETE" });
-      } catch (error) { failures.push(`${entry.name}: ${error.message}`); }
-      progress.update(index + 1, `${completed} converted${failures.length ? ` · ${failures.length} errors` : ""}`);
-    }
-    notify(`Converted ${completed}/${entries.length} photos.${failures.length ? `\n${failures.join("\n")}` : " Copy the resulting URLs below."}`, failures.length ? "error" : "");
-    progress.finish(`Converted ${completed}/${entries.length} photos.${failures.length ? " Some operations failed; see errors above." : " Ready to use."}`, failures.length > 0);
-    finished = true;
-  } finally {
-    if (!finished) progress.finish("Conversion interrupted. See the error message for details.", true);
-    setBusy(false);
-  }
+  const outcome = await window.workbenchImages.open({entries, settings, context: {kind: "photos", folder: settings.folder},
+    title: "Prepare site photos"});
+  for (const result of outcome.results) showResults("photo", result);
+  state.photos = state.photos.filter(entry => !outcome.completedIds.includes(entry.id));
+  queueView("photos");
+  if (outcome.results.length || outcome.sourceErrors?.length) notify(
+    `Saved ${outcome.results.length} reviewed WebP outputs. Copy their URLs below. Nothing was published.${outcome.sourceErrors?.length ? `\n${outcome.sourceErrors.join("\n")}\nChoose the failed sources again to retry.` : ""}`,
+    outcome.sourceErrors?.length ? "error" : "");
 }
+
+async function visitPhotoFolder(folder) {
+  $("#photo-library-folder").value = folder;
+  return browsePhotoLibrary();
+}
+
+async function browsePhotoLibrary() {
+  const folder = $("#photo-library-folder").value.trim().replace(/\/$/, "");
+  $("#photo-library-folder").value = folder;
+  const sequence = state.photoLibrarySequence = (state.photoLibrarySequence || 0) + 1;
+  const parts = folder ? folder.split("/") : [];
+  const crumbs = [{label: "Images", path: ""}, ...parts.map((label, index) => ({label, path: parts.slice(0, index + 1).join("/")}))];
+  $("#photo-library-breadcrumbs").replaceChildren();
+  for (const [index, item] of crumbs.entries()) {
+    if (index) {
+      const separator = node("span", "›"); separator.setAttribute("aria-hidden", "true");
+      $("#photo-library-breadcrumbs").append(separator);
+    }
+    const button = node("button", item.label, "secondary");
+    button.type = "button"; button.disabled = index === crumbs.length - 1;
+    if (button.disabled) button.setAttribute("aria-current", "page");
+    button.addEventListener("click", () => action(() => visitPhotoFolder(item.path)));
+    $("#photo-library-breadcrumbs").append(button);
+  }
+  $("#photo-library-parent").disabled = !folder;
+  $("#photo-library-note").textContent = `Loading /images/${folder ? folder + "/" : ""}…`;
+  $("#photo-library-folders").replaceChildren();
+  $("#photo-library-files").replaceChildren();
+  $("#photo-library-folder-title").hidden = $("#photo-library-file-title").hidden = true;
+  let library;
+  try {
+    library = await api(`/api/workbench/assets?${new URLSearchParams({folder, kind: "images"})}`);
+  } catch (failure) {
+    if (state.photoLibrarySequence === sequence) $("#photo-library-note").textContent = `Could not open this folder: ${failure.message}`;
+    throw failure;
+  }
+  if (state.photoLibrarySequence !== sequence || $("#photo-library-folder").value !== folder) return;
+  for (const path of library.folders) {
+    const button = node("button", path.split("/").pop(), "image-folder-tile secondary"); button.type = "button";
+    button.addEventListener("click", () => action(() => visitPhotoFolder(path)));
+    $("#photo-library-folders").append(button);
+  }
+  $("#photo-library-folder-title").hidden = !library.folders.length;
+  $("#photo-library-file-title").hidden = !library.files.length;
+  for (const file of library.files) {
+    const button = node("button", "", "secondary");
+    button.type = "button"; button.disabled = !window.workbenchImages.supports(file.url);
+    button.title = button.disabled ? "Editing supports JPG, PNG and WebP. SVG/GIF files remain selectable unchanged in page image fields." : "";
+    const image = node("img"); image.src = file.url; image.alt = file.name; image.loading = "lazy";
+    button.append(image, node("span", file.name), node("small", "Edit · new copy or reviewed replacement"));
+    button.addEventListener("click", () => action(async () => {
+      const settings = imageSettings("photo");
+      const sourceFolder = decodeURIComponent(file.url.slice("/images/".length).split("/").slice(0, -1).join("/"));
+      const outcome = await window.workbenchImages.open({url: file.url, settings, folder: sourceFolder,
+        context: {kind: "photos", folder: sourceFolder}, title: `Edit ${file.name}`});
+      for (const result of outcome.results) showResults("photo", result);
+      if (outcome.sourceErrors?.length) notify(outcome.sourceErrors.join("\n"), "error");
+      if (outcome.results.length) await browsePhotoLibrary();
+    }));
+    $("#photo-library-files").append(button);
+  }
+  $("#photo-library-note").textContent = `${library.folders.length} folder${library.folders.length === 1 ? "" : "s"} · ${library.files.length} image${library.files.length === 1 ? "" : "s"}. ${!library.files.length && !library.folders.length ? "This folder is empty. Use Up or a breadcrumb to return." : "Open a folder or choose an image to edit."} New copies stay in the image's folder.`;
+}
+$("#photo-library-browse").addEventListener("click", () => action(browsePhotoLibrary));
+$("#photo-library-go").addEventListener("click", () => action(browsePhotoLibrary));
+$("#photo-library-folder").addEventListener("keydown", event => {
+  if (event.key === "Enter") { event.preventDefault(); action(browsePhotoLibrary); }
+});
+$("#photo-library-parent").addEventListener("click", () => action(() =>
+  visitPhotoFolder($("#photo-library-folder").value.split("/").slice(0, -1).join("/"))));
+$("#photo-library").addEventListener("toggle", () => {
+  if ($("#photo-library").open) action(browsePhotoLibrary);
+});
 
 function clearCrop() {
   state.activePortrait = null;

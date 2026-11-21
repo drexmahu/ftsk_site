@@ -34,6 +34,7 @@ from tools.workbench.people_registry import member_image_folder
 from tools.workbench.participant_roles import RoleService
 from tools.workbench.git_workbench import GitService
 from tools.workbench.cleanup_workbench import CleanupService
+from tools.workbench.image_workbench import ImageService, output_stem
 from tools.workbench.workbench_files import navigate_file
 from tools.images import portraits
 from tools.images import hero_config as hero
@@ -99,6 +100,7 @@ class Workbench:
         self.workbench_port = 0
         self.git = GitService(self)
         self.cleanup = CleanupService(self, safe_path)
+        self.images = ImageService(self, safe_path, integer)
 
     def hugo_executable(self) -> str:
         version = (self.root / ".hugo-version").read_text(encoding="utf-8").strip()
@@ -122,7 +124,8 @@ class Workbench:
                     with Image.open(io.BytesIO(raw)) as source:
                         if source.width * source.height > MAX_PIXELS:
                             raise ToolError("Photo exceeds 25 million pixels. Resize the original first.")
-                        image = ImageOps.exif_transpose(source).convert("RGB")
+                        image = ImageOps.exif_transpose(source)
+                        image = image.convert("RGBA" if "A" in image.getbands() or "transparency" in image.info else "RGB")
                         image.load()
             except ToolError:
                 raise
@@ -137,7 +140,10 @@ class Workbench:
             image.save(source_path, "PNG")
             preview = image.copy()
             preview.thumbnail((1400, 1400), Image.Resampling.LANCZOS)
-            preview.save(folder / "preview.jpg", "JPEG", quality=90)
+            preview.save(folder / "preview.png", "PNG")
+            background = Image.new("RGB", preview.size, "white")
+            background.paste(preview, mask=preview.getchannel("A") if preview.mode == "RGBA" else None)
+            background.save(folder / "preview.jpg", "JPEG", quality=90)
             entry = {"id": identifier, "name": filename, "stem": name,
                      "width": image.width, "height": image.height}
             self.uploads[identifier] = entry
@@ -151,17 +157,19 @@ class Workbench:
     def remove_upload(self, identifier: str) -> None:
         with self.lock:
             self.upload(identifier)
+            self.images.discard_upload(identifier)
             folder = self.scratch / identifier
             for path in folder.iterdir():
                 path.unlink()
             folder.rmdir()
             del self.uploads[identifier]
 
-    def destination(self, folder: str) -> Path:
+    def destination(self, folder: str, create: bool = True) -> Path:
         if not re.fullmatch(r"[\w-]+(?:/[\w-]+)*", folder):
             raise ToolError("Folder must use letters, numbers, hyphens or underscores (for example turak/2026-trip).")
         path = safe_path(self.root / "static" / "images", folder)
-        path.mkdir(parents=True, exist_ok=True)
+        if create:
+            path.mkdir(parents=True, exist_ok=True)
         return path
 
     def convert(self, payload: dict, portrait: bool = False) -> dict:
@@ -185,14 +193,10 @@ class Workbench:
             width = integer(payload.get("width", 1400 if portrait else 1600), "Maximum width", 64, 6000)
             height = integer(payload.get("height", 1400 if portrait else 1600), "Maximum height", 64, 6000)
             stem = payload["person"] if portrait and "person" in payload else payload.get("name") or entry["stem"]
-            if isinstance(stem, str) and re.fullmatch(
-                    r"[\w-]+\.(?i:jpg|jpeg|png|webp|heif|heic)", stem):
-                stem = stem.rsplit(".", 1)[0]
-            if not isinstance(stem, str) or not re.fullmatch(r"[\w-]+", stem):
-                raise ToolError(
-                    "Output name must use letters, numbers, hyphens or underscores; "
-                    "a supported image extension is optional."
-                )
+            try:
+                stem = output_stem(entry["stem"], stem)
+            except ContentError as exc:
+                raise ToolError(str(exc)) from exc
             base = stem
             suffixes = ("_thumb.webp", "_full.webp") if portrait else (".webp",)
             number = 1
@@ -492,6 +496,7 @@ class Workbench:
                 self.run_command([node, "tests/js/test_pdf_import_workbench.js"], "Reviewed PDF draft imports")
                 self.run_command([node, "tests/js/test_workbench_runtime.js"], "Editor restart and draft protection")
                 self.run_command([node, "tests/js/test_cleanup_workbench.js"], "Reviewed unused-file cleanup")
+                self.run_command([node, "tests/js/test_image_editor.js"], "Reviewed image versions and batch editing")
                 self.run_command([sys.executable, "-m", "unittest", "discover", "-s",
                                   "tests/python", "-p", "test_workbench_runtime.py"],
                                  "Versioned editor restarts")
@@ -679,6 +684,16 @@ class Handler(BaseHTTPRequestHandler):
                 self.json(200, app.cleanup.catalog())
         elif route == "/api/workbench/cleanup/progress":
             self.json(200, app.cleanup.progress_status())
+        elif route.startswith("/api/workbench/images/preview/"):
+            token = route.rsplit("/", 1)[-1]
+            with app.lock:
+                if token not in app.images.previews:
+                    raise ConflictError("Image preview expired. Prepare it again.")
+                self.file(app.images.previews[token]["file"])
+        elif route.startswith("/api/workbench/images/source/"):
+            with app.lock:
+                entry = app.upload(route.rsplit("/", 1)[-1])
+                self.file(app.scratch / entry["id"] / "preview.png")
         elif route == "/api/workbench/content/catalog":
             with app.lock:
                 self.json(200, app.content.catalog())
@@ -791,7 +806,18 @@ class Handler(BaseHTTPRequestHandler):
             app = self.server.app
             parsed = urlsplit(self.path)
             route = parsed.path
-            if method == "POST" and route == "/api/workbench/files/navigate":
+            if method == "POST" and route == "/api/workbench/images/open":
+                result = app.images.open_existing(self.payload())
+            elif method == "POST" and route == "/api/workbench/images/preview":
+                result = app.images.preview(self.payload())
+            elif method == "POST" and route == "/api/workbench/images/save":
+                result = app.images.save(self.payload())
+            elif method == "POST" and route == "/api/workbench/images/finish":
+                result = app.images.finish(self.payload())
+            elif method == "DELETE" and route.startswith("/api/workbench/images/preview/"):
+                app.images.discard(route.rsplit("/", 1)[-1])
+                result = {"discarded": True}
+            elif method == "POST" and route == "/api/workbench/files/navigate":
                 try:
                     result = navigate_file(app.root, self.payload(), safe_path)
                 except ValueError as exc:
