@@ -1,4 +1,5 @@
 ---
+archive: true
 date: 2020-08-01T00:00:00Z
 title: Gortani kutatás (2020)
 categories:

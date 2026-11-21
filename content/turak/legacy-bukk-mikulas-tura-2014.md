@@ -1,4 +1,5 @@
 ---
+archive: true
 date: 2014-12-01T00:00:00Z
 title: Bükk Mikulás túra (2014)
 categories:

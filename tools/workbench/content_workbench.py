@@ -26,6 +26,7 @@ FIELDS = {
     "categories", "article_image_width", "thumbImg", "featuredImg", "seo", "current",
     "milestones", "contacts", "flyer_images", "faq", "slug", "url", "aliases",
     "content_blocks",
+    "archive", "article_paragraph_spacing", "article_text_align",
 }
 
 
@@ -355,7 +356,7 @@ class ContentService:
                 "role_catalog": member_catalog["role_catalog"],
                 "folders": sorted(folders), "templates": [
                     {"id": "trip", "name": "Trip / research / expedition", "section": "turak"},
-                    {"id": "pdf", "name": "Archived PDF report (legacy- filename)", "section": "turak"},
+                    {"id": "pdf", "name": "Archived PDF report", "section": "turak"},
                     {"id": "course", "name": "Current course announcement", "section": "tanfolyamok"},
                     {"id": "course-report", "name": "Archived course report", "section": "tanfolyamok"},
                     {"id": "page", "name": "Other Markdown page (source mode)", "section": ""},
@@ -369,8 +370,6 @@ class ContentService:
             raise ContentError("Trip templates belong under turak/.")
         if kind.startswith("course") and relative.split("/")[0] != "tanfolyamok":
             raise ContentError("Course templates belong under tanfolyamok/.")
-        if kind == "pdf" and not Path(relative).stem.startswith("legacy-"):
-            raise ContentError("Archived PDF report filenames need the legacy- prefix.")
         blocks = re.findall(r"```markdown\r?\n(.*?)```", (self.root / "docs" / "BLOGPOST_TEMPLATES.md").read_text(encoding="utf-8"), re.S)
         index = {"trip": 0, "pdf": 1, "course": 2, "course-report": 3}.get(kind)
         if index is None:
@@ -444,7 +443,7 @@ class ContentService:
                 warnings.append(f"Unresolved person: {name}. Review the People & portraits matching hints; no identity was guessed.")
         if not member_cv and (not isinstance(meta.get("title"), str) or not meta["title"].strip()):
             raise ContentError("A non-empty title is required.")
-        for key in ("draft", "current"):
+        for key in ("draft", "current", "archive"):
             if key in meta and not isinstance(meta[key], bool):
                 raise ContentError(f"{key} must be true or false, not quoted text.")
         for key in ("date", "publishDate", "expiryDate"):
@@ -463,6 +462,12 @@ class ContentService:
             value = meta["article_image_width"]
             if isinstance(value, bool) or not isinstance(value, (int, float)) or not 10 <= value <= 100:
                 raise ContentError("article_image_width must be a number from 10 to 100.")
+        if meta.get("article_paragraph_spacing") is not None:
+            value = meta["article_paragraph_spacing"]
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or not 0 <= value <= 4:
+                raise ContentError("article_paragraph_spacing must be a number from 0 to 4 (rem).")
+        if meta.get("article_text_align") is not None and meta["article_text_align"] not in ("left", "right", "center", "justify"):
+            raise ContentError("article_text_align must be left, right, center or justify.")
         for key in ("thumbImg", "featuredImg", "seo"):
             value = meta.get(key)
             if value is not None and not isinstance(value, dict):

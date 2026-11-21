@@ -245,6 +245,33 @@ class SourceTests(ContentFixture):
             with self.subTest(changes=changes), self.assertRaises(ContentError):
                 self.service.validate(self.document["path"], SOURCE, changes)
 
+    def test_report_formatting_archive_roundtrip_and_validation(self):
+        for gap, align, archive in ((0, "left", True), (1.5, "center", False),
+                                    (4, "right", True), (0.25, "justify", False)):
+            with self.subTest(gap=gap, align=align):
+                result = self.service.validate(self.document["path"], SOURCE, {
+                    "article_paragraph_spacing": gap, "article_text_align": align, "archive": archive})
+                self.assertEqual(result["metadata"]["article_paragraph_spacing"], gap)
+                self.assertEqual(result["metadata"]["article_text_align"], align)
+                self.assertIs(result["metadata"]["archive"], archive)
+                self.assertEqual(result["body"], self.document["body"])
+        for changes in ({"article_paragraph_spacing": -0.1}, {"article_paragraph_spacing": 4.01},
+                        {"article_paragraph_spacing": True}, {"article_paragraph_spacing": "1.5"},
+                        {"article_text_align": "justify; color:red"}, {"article_text_align": []},
+                        {"archive": "false"}, {"archive": 1}):
+            with self.subTest(changes=changes), self.assertRaises(ContentError):
+                self.service.validate(self.document["path"], SOURCE, changes)
+        saved = self.service.save(self.payload(changes={"archive": True, "article_text_align": "justify",
+                                                       "article_paragraph_spacing": 0}))
+        reopened = self.service.read(saved["path"])
+        self.assertIs(reopened["metadata"]["archive"], True)
+        self.assertEqual(reopened["metadata"]["article_paragraph_spacing"], 0)
+        restored = self.service.validate(saved["path"], saved["source"], {
+            "archive": False, "article_paragraph_spacing": None, "article_text_align": None})
+        self.assertIs(restored["metadata"]["archive"], False)
+        self.assertIsNone(restored["metadata"]["article_paragraph_spacing"])
+        self.assertIsNone(restored["metadata"]["article_text_align"])
+
     def test_create_move_collision_and_revision_conflict(self):
         new = self.service.save({"path": "turak/new/index.md", "source": SOURCE, "original": ""})
         self.assertTrue((self.root / "content" / "turak" / "new" / "index.md").is_file())
@@ -358,8 +385,9 @@ class SourceTests(ContentFixture):
                              ("page", "new.md")):
             document = self.service.template(kind, target)
             self.assertTrue(document["metadata"]["draft"])
-        with self.assertRaises(ContentError):
-            self.service.template("pdf", "turak/not-legacy.md")
+        for target in ("turak/not-legacy.md", "turak/archive/index.md"):
+            self.assertIs(self.service.template("pdf", target)["metadata"]["archive"], True)
+        self.assertIs(self.service.template("trip", "turak/legacy-modern.md")["metadata"]["archive"], False)
 
     def test_pdf_upload_collision_validation_and_library(self):
         raw = b"%PDF-1.4\nFixture"
@@ -638,6 +666,7 @@ class ContentHTTPTests(HTTPTests):
             csp = response.getheader("Content-Security-Policy")
             self.assertIn(f"http://127.0.0.1:{self.server.server_port}", csp)
             self.assertIn("https://fonts.googleapis.com", csp)
+            self.assertIn("worker-src 'self' blob:", csp)
         finally:
             connection.close()
         self.assertEqual(self.request(f"/render/{identifier}/")[0], 404)

@@ -1,4 +1,5 @@
 ---
+archive: true
 date: 2021-06-01T00:00:00Z
 title: Gortani szemétszedés (2021)
 categories:

@@ -1,4 +1,5 @@
 ---
+archive: true
 date: 1993-08-01T00:00:00Z
 title: Első Pireneusi Játékok (1993)
 categories:

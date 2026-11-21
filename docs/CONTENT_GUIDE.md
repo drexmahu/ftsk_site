@@ -1174,12 +1174,67 @@ vannak beágyazva, egy régi beszámoló bővítése ennyi:
 módosítani. Szerző, résztvevők vagy alapértelmezett képméret változásakor
 a megfelelő front matter mezőt is frissítsd.
 
-## 6. Régi, csak PDF-es beszámolók (`legacy-*`)
+## 6. Bekezdések, archív beszámolók és PDF-letöltés
+
+A **Pages & posts → Page details → Report appearance & archive** részen
+a túrabeszámoló bekezdéstávolsága és igazítása külön állítható, azonnali
+szövegmintával. A teljes oldal ellenőrzéséhez továbbra is a **Render preview**
+használható. A front matter megfelelő mezői:
+
+```yaml
+article_paragraph_spacing: 1.5
+article_text_align: left
+archive: false
+```
+
+- `article_paragraph_spacing`: 0–4 közötti szám, rem egységben (a weben
+  általában 1 rem = 16 px). A bekezdések alatti tér; a sorközt nem módosítja.
+  Üres mező vagy `null` esetén a korábbi 1.5 rem marad.
+- `article_text_align`: `left` (balra), `right` (jobbra), `center` (középre)
+  vagy `justify` (sorkizárt). Üres mező vagy `null` esetén balra igazított.
+  A külön aláírás shortcode továbbra is jobbra igazított.
+- Az **Archive / legacy report (Archív)** jelölőnégyzet írja az `archive`
+  valódi logikai értékét. `true` esetén megjelenik az Archív jelvény, a cikk
+  nem kerül a Legújabb kiemelésébe, és nem készül új PDF. `false` vagy a mező
+  hiánya esetén normál beszámoló. A fájlnév már nem dönt erről; a meglévő
+  archív cikkek megkapták az `archive: true` értéket, átnevezés nélkül.
+
+A nem archív cikk fejlécében, a szerző mellett a **pdf** és a kis letöltésikon
+helyben készíti el a dokumentumot. A felirat és az elválasztó az olvasási idő
+stílusát követi. Külön A4-es címlapon középen az FTSK-logó,
+a cím, a szerző, a dátum és az **FTSK Barlangkutató Szakosztály** szerepel.
+A weben fehér logó a PDF-ben fekete festékszínnel jelenik meg, hogy
+fehér papíron is jól olvasható legyen.
+Ezután a Markdownból megjelenített szöveg, képek, képaláírások, listák,
+táblázatok, idézetek és a GYIK következik, oldalszámozással és kijelölhető
+magyar szöveggel. A szöveg és a grafikai díszítés fekete/szürke, a fotók
+megtartják színeiket. A fő fejezetek (`#`, `##`) tördelése alkalmazkodó:
+a legalább 220 szavas vagy fotót tartalmazó fejezet új oldalon kezdődik,
+a rövidebb fejezetek megoszthatnak egy oldalt. Ha a nyitó bekezdés már csak
+az oldal utolsó negyedében kezdődne, és átnyúlna a következő oldalra,
+a rövid fejezet is átkerül. Az egyedül maradó főcímeket és alcímeket
+árvacím-védelem kezeli. A bekezdésbeállítások a PDF-ben is érvényesek (1 rem = 12 pt).
+A kép és szöveg melletti elrendezés nyomtatáskor egymás alá kerül;
+a fotókat a rendszer legfeljebb 1600 pixelesre méretezi. A beágyazott régi
+PDF-ek hivatkozásként maradnak meg, tartalmuk nem kerül újra konvertálásra.
+A webes interaktív videó- és hanglejátszók nem kerülnek a PDF-be.
+
+Nem kell külön PDF-et feltölteni vagy buildet futtatni. A könyvtárak és
+betűkészletek a repóból töltődnek be, csak az első PDF-kéréskor; nincs
+CDN vagy külső konvertáló szolgáltatás. A PDF-készítést kis, denevérmotívumos
+ablak jelzi; az oldalra nem kerül állapot- vagy sikerüzenet. Az ablak
+bezárása (X, Escape vagy a háttérre kattintás) megszakítja a folyamatot,
+leállítja a háttérben végzett tördelést, és nem indít letöltést.
+Siker esetén az ablak magától bezáródik. Hiányzó/olvashatatlan kép vagy
+eszközhiba esetén az ablakban jelenik meg a hiba és az újrapróbálás;
+hiányos PDF nem töltődik le.
+
+### Régi, csak PDF-es beszámolók
 
 A `turak` mappa régebbi cikkei nem a fenti napról napra bontott formátumot
 követik - ezek csak egy rövid bevezető bekezdésből állnak, a teljes
-beszámoló pedig egy régi PDF-ben él. Ezeket a fájlneve is megkülönbözteti:
-`legacy-` előtaggal kezdődnek (pl. `legacy-bu56-pireneusok-1998.md`).
+beszámoló pedig egy régi PDF-ben él. Jelöld őket `archive: true` értékkel.
+A meglévő `legacy-` fájlnevek és URL-ek változatlanul maradhatnak.
 
 - A PDF-eket ne külső (ftsk.hu-s) linkként hivatkozd - töltsd le és tedd be
   a repóba a `static/pdfs/<szekció>/<cikk-slug>.pdf` útvonalra (pl.
@@ -1199,5 +1254,5 @@ beszámoló pedig egy régi PDF-ben él. Ezeket a fájlneve is megkülönböztet
   továbbra is a keskenyebb olvasási sávban marad; mobilon a PDF a szövegsávhoz
   igazodik.
 - Ha egy régi cikk nem PDF-re, hanem valamilyen más régi oldalra (pl. `.htm`)
-  hivatkozik, azt nem kell letölteni/beágyazni - elég csak a `legacy-`
-  fájlnév-előtagot alkalmazni rá.
+  hivatkozik, azt nem kell letölteni/beágyazni - elég az **Archive / legacy**
+  jelölőnégyzetet bekapcsolni.

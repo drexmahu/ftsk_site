@@ -1,4 +1,5 @@
 ---
+archive: true
 date: 2017-07-01T00:00:00Z
 title: Kacna-jama kutatás (2017)
 categories:

@@ -1,4 +1,5 @@
 ---
+archive: true
 date: 2010-08-01T00:00:00Z
 title: Predelica kanyontúra és a szabályok (2010)
 categories:

@@ -1,4 +1,5 @@
 ---
+archive: true
 date: 2014-08-01T00:00:00Z
 title: Gortani expedíció (2014)
 categories:

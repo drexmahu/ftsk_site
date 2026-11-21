@@ -1,4 +1,5 @@
 ---
+archive: true
 date: 2018-08-02T00:00:00Z
 title: "Második felvonás: Cantabria túra (2018)"
 categories:

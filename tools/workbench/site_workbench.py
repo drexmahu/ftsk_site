@@ -596,7 +596,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Content-Security-Policy",
                          "default-src 'self'; script-src 'self' 'unsafe-inline'; " +
-                         ("style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; "
+                         ("style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; worker-src 'self' blob:; "
                           if rendered else "style-src 'self' 'unsafe-inline'; font-src 'self' data:; worker-src 'self'; ") +
                          "img-src 'self' data: blob:; "
                          f"frame-src 'self' {self.server.app.render_origin}; connect-src 'self'; object-src 'none'; "

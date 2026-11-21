@@ -1,4 +1,5 @@
 ---
+archive: true
 date: 2025-04-01T00:00:00Z
 title: Tavaszi szlovén túra (2025)
 categories:

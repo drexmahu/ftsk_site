@@ -1,4 +1,5 @@
 ---
+archive: true
 date: 2016-03-01T00:00:00Z
 title: Trieszti túra (2016 március)
 categories:

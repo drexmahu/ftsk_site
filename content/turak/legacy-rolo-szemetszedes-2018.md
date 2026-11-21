@@ -1,4 +1,5 @@
 ---
+archive: true
 date: 2018-07-01T00:00:00Z
 title: "Első felvonás: Rolo szemétszedés (2018)"
 categories:

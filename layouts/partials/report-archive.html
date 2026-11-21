@@ -1,0 +1,9 @@
+{{ $archive := false }}
+{{ if isset .Params "archive" }}
+  {{ if ne (printf "%T" .Params.archive) "bool" }}
+    {{ errorf "Trip report %s: archive must be true or false, not quoted text" .RelPermalink }}
+  {{ else }}
+    {{ $archive = .Params.archive }}
+  {{ end }}
+{{ end }}
+{{ return $archive }}

@@ -1,4 +1,5 @@
 ---
+archive: true
 date: 1998-08-01T00:00:00Z
 title: "BU 56 (Pireneusok, 1998)"
 categories:

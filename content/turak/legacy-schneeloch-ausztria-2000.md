@@ -1,4 +1,5 @@
 ---
+archive: true
 date: 2000-07-01T00:00:00Z
 title: Schneeloch - Ausztria (2000)
 categories:

@@ -1,4 +1,5 @@
 ---
+archive: true
 date: 2018-06-01T00:00:00Z
 title: Gortani kutatás (2018)
 categories:

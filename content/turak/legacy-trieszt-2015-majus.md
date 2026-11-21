@@ -1,4 +1,5 @@
 ---
+archive: true
 date: 2015-05-01T00:00:00Z
 title: Trieszt (2015 május)
 categories:
