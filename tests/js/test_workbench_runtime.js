@@ -7,6 +7,7 @@ function fixture({ maintenance = false } = {}) {
   const elements = [], selected = new Map(), calls = [], timers = [];
   const state = { photos: [], portraits: [], busy: false };
   let drafts = [], busy = [], reloads = 0, exports = 0, discarded = 0;
+  let fetchError = null;
   let reply = { state: "ready", message: "", generation: 1, version: "1.0.0", fingerprint: "abc123", token: "runtime-token" };
   function element(tag) {
     const result = {
@@ -38,6 +39,7 @@ function fixture({ maintenance = false } = {}) {
     window: {
       fetch: async (input, options) => {
         calls.push({ input, options });
+        if (fetchError) throw fetchError;
         return { ok: true, json: async () => reply };
       },
       dispatchEvent(event) {
@@ -63,6 +65,7 @@ function fixture({ maintenance = false } = {}) {
     setDrafts(value) { drafts = value; },
     setBusy(value) { busy = value; },
     setReply(value) { reply = { ...reply, ...value }; },
+    setFetchError(value) { fetchError = value; },
     async poll() { timers.shift()(); await settle(); },
     find(text) { return elements.find(el => el.textContent === text); },
     reloads: () => reloads, exports: () => exports, discarded: () => discarded,
@@ -127,10 +130,43 @@ async function run() {
     "Retrying a failed backend keeps drafts in the current browser");
   assert.equal(f.discarded(), 0);
 
+  f = fixture();
+  await f.settle();
+  f.setReply({ state: "starting", message: "Preparing editor tools.",
+    progress: { step: 3, total: 8, label: "Installing Python packages",
+      explanation: "Packages are prepared inside this project.", elapsed_seconds: 12 },
+    logs: ["$ python -m pip install -r requirements-dev.txt", "Downloading packages..."] });
+  await f.poll();
+  const bars = f.elements.filter(el => el.tag === "progress");
+  const log = f.elements.find(el => el.className === "runtime-log");
+  assert.equal(bars[0].attributes.value, "2", "Only completed stages contribute to overall progress");
+  assert.equal(bars[0].attributes.max, "8");
+  assert.equal(bars[1].hidden, false, "The running command uses an indeterminate activity bar");
+  assert.equal(bars[1].attributes.value, undefined, "Never invent download percentages");
+  assert.ok(f.find("Packages are prepared inside this project."));
+  assert.ok(f.elements.some(el => el.textContent.includes("12s elapsed")));
+  assert.equal(log.textContent, "$ python -m pip install -r requirements-dev.txt\nDownloading packages...");
+  const previousLog = log.textContent;
+  f.setFetchError(new Error("offline"));
+  await f.poll();
+  assert.equal(log.textContent, previousLog, "A disconnect must preserve technical evidence");
+  assert.equal(bars[1].hidden, true, "A disconnected launcher must not appear to be actively reporting progress");
+  f.setFetchError(null);
+  f.setReply({ state: "failed", message: "Package installation failed." });
+  await f.poll();
+  assert.equal(bars[1].hidden, true);
+  assert.equal(log.textContent, previousLog);
+  f.setReply({ state: "starting", progress: { step: 1, total: 8, label: "Checking editor",
+    explanation: "Retrying with the current checkout.", elapsed_seconds: 0 }, logs: ["Fresh startup attempt"] });
+  await f.find("Retry startup").click();
+  assert.equal(bars[0].attributes.value, "0");
+  assert.equal(log.textContent, "Fresh startup attempt");
+  assert.equal(bars[1].hidden, false);
+
   f = fixture({ maintenance: true });
   await f.settle();
   assert.equal(f.reloads(), 1, "The first matching backend replaces the stable startup page");
-  console.log("PASS: Editor runtime guards generations, browser drafts, uploads, developer restart and retry.");
+  console.log("PASS: Editor runtime guards drafts and generations; reports live startup stages, logs, disconnects and retries.");
 }
 
 run().catch(error => { console.error(error); process.exitCode = 1; });

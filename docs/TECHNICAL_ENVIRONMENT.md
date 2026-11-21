@@ -306,7 +306,15 @@ and build sources; `npm ci` affects project-local `node_modules` only. Missing o
 incompatible Node/Hugo/system tools require the explicit setup installer; the
 launcher does not install system tools or change PATH. Installation/startup
 failures remain visible with **Retry startup** and instructions to double-click
-`setup-dev-env.bat`. Keep the launcher window for detailed command output.
+`setup-dev-env.bat`. **Loading the matching editor** shows completed startup
+stages, an indeterminate bar for the running stage, elapsed stage time, and a
+separate plain-language explanation. **Technical details** is expanded by default
+and streams dependency-command and child-editor output while commands are still
+running. The browser polls once per second; the launcher retains the latest 200
+log lines, capped at 2,000 characters each. No download percentage is guessed.
+Errors retain the last stage and log; Retry begins a fresh progress history.
+The launcher window also receives the full output. Close and reopen
+`site_editor.bat` once to load this updated launcher and its in-memory bridge.
 Retry after a failed managed editor start re-prepares only that editor's cached
 Python environment; it does not delete environments or modify the project `.venv`.
 
