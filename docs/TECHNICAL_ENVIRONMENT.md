@@ -380,6 +380,18 @@ ordinary local changes in **Save & sync**, with no automatic commit or publishin
 After deletion, scan again to discover any newly unreferenced dependencies.
 
 `GET /api/workbench/cleanup` returns the current scan and build-job status.
+`GET /api/workbench/cleanup/progress` provides live stage explanations, elapsed
+stage time, actual checked-file counters/current paths and build output. Its
+short-held progress lock is independent of the checkout lock, so both safety
+snapshots remain visible while they read/hash files. The UI polls this endpoint
+first and waits until discovery stops before requesting the candidate catalog.
+The five stages are saved-file inspection, isolated Hugo build, generated
+reference collection, static-file matching and final checkout verification.
+Uncounted work uses an indeterminate bar rather than estimated percentages;
+failed stages retain their evidence and receive red styling. Disconnection
+stops the activity display and blocks review until polling reconnects.
+Deletion shows a waiting indicator during its existing validation/removal
+request, without adding another approval or changing deletion safeguards.
 Start discovery through `POST /api/workbench/jobs` with `{"action":"cleanup-scan"}`.
 `POST /api/workbench/cleanup/delete` accepts `scan`, distinct `paths`,
 `confirm: true` and (for non-media files) `advanced: true`; existing token,
