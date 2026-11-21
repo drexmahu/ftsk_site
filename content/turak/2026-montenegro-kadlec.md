@@ -23,6 +23,8 @@ seo:
 draft: false
 author: ''
 participants: []
+article_text_align: justify
+article_paragraph_spacing: 1
 ---
 
 <!-- PDF page 1 -->

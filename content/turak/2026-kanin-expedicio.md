@@ -36,6 +36,9 @@ participant_ids:
 - sandor-agnes
 - sas-dorottya
 - toth-attila
+article_text_align: justify
+article_paragraph_spacing: 1
+archive: false
 ---
 
 Egészen sokáig vacilláltam azon, hogy mennyi időt legyek fent a hegyen. Idén sajnos a montenegrói tábor is kimaradt nekem és annak ellenére, hogy a nyaram elég zsúfolt volt, a barlangos programokat hiányoltam már. Végül is úgy döntöttem, hogy Atiékkal megyek és ott leszek elejétől a végéig, utólag ez egy nagyon jó döntésnek bizonyult.

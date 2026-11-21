@@ -28,6 +28,7 @@ participant_ids:
 - nemeth-zsolt
 - kiss-timea
 - stieber-bence
+article_text_align: justify
 ---
 
 Majd megyek a Gortaniba, ha nagy leszek…Meghagyom a helyet azoknak, akikre tényleg szükség van…. Mondogattam magamnak minden alkalommal, amikor kiírták a listára, hogy indulna egy csapat. Aztán hirtelen rogyásig megpakolva, az FTSK klubban gyülekező barlangászok között találtam magam az indulás előestéjén. Zeusz egy óriási zöldségtállal koronázta meg a számomra aggodalmakkal teli estét.
