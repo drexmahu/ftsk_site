@@ -40,6 +40,59 @@ window.workbenchContentLibrary = (() => {
     const parts = folder.split("/").filter(Boolean);
     return [{label, folder: ""}, ...parts.map((part, index) => ({label: part, folder: parts.slice(0, index + 1).join("/")}))];
   }
+  function folderBrowser({input, trail, back, forward, up, refresh, label, open, run}) {
+    const element = selector => document.querySelector(selector);
+    let history = [], position = -1;
+    function visit(folder) {
+      element(input).value = folder;
+      return open();
+    }
+    function update() {
+      const folder = element(input).value.trim().replace(/\/+$/, "");
+      element(input).value = folder;
+      if (history[position] !== folder) {
+        history.splice(position + 1);
+        history.push(folder);
+        position = history.length - 1;
+      }
+      const crumbs = folderTrail(folder, typeof label === "function" ? label() : label);
+      element(trail).replaceChildren();
+      crumbs.forEach((item, index) => {
+        if (index) {
+          const separator = document.createElement("span");
+          separator.textContent = "›"; separator.setAttribute("aria-hidden", "true");
+          element(trail).append(separator);
+        }
+        const current = index === crumbs.length - 1;
+        const control = document.createElement(current ? "span" : "button");
+        control.textContent = item.label;
+        if (current) control.setAttribute("aria-current", "location");
+        else {
+          control.type = "button";
+          control.addEventListener("click", () => run(() => visit(item.folder)));
+        }
+        element(trail).append(control);
+      });
+      element(back).disabled = position <= 0;
+      element(forward).disabled = position >= history.length - 1;
+      element(up).disabled = !folder;
+    }
+    for (const [selector, direction] of [[back, -1], [forward, 1]]) {
+      element(selector).addEventListener("click", () => run(() => {
+        const next = position + direction;
+        if (next < 0 || next >= history.length) throw new Error("No folder in that navigation direction.");
+        position = next;
+        return visit(history[position]);
+      }));
+    }
+    element(up).addEventListener("click", () => run(() =>
+      visit(element(input).value.replace(/\/+$/, "").split("/").slice(0, -1).join("/"))));
+    element(refresh).addEventListener("click", () => run(open));
+    element(input).addEventListener("keydown", event => {
+      if (event.key === "Enter") { event.preventDefault(); run(open); }
+    });
+    return {update, reset() { history = []; position = -1; update(); }};
+  }
   function findTextRange(text, query, nearLine = 1) {
     const terms = normalize(query).trim().split(/\s+/).filter(Boolean);
     if (!terms.length) return null;
@@ -57,5 +110,5 @@ window.workbenchContentLibrary = (() => {
     const start = lines.slice(0, best.line - 1).reduce((sum, value) => sum + value.length + 1, 0);
     return {start, end: start + lines.slice(best.line - 1, best.line - 1 + best.span).join("\n").length, line: best.line};
   }
-  return {categories, filter, slug, folderTrail, findTextRange};
+  return {categories, filter, slug, folderTrail, folderBrowser, findTextRange};
 })();

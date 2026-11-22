@@ -159,3 +159,210 @@ async function testMatchNavigation() {
   console.log("PASS: Precise search navigation distinguishes repeated guided settings from unsupported source fields.");
 }
 testMatchNavigation().catch(error => { console.error(error); process.exitCode = 1; });
+
+async function testFailedPreviewRecovery() {
+  const controls = new Map();
+  const getControl = selector => {
+    if (!controls.has(selector)) controls.set(selector, {sandbox: {add() {}}, textContent: "", hidden: true});
+    return controls.get(selector);
+  };
+  const studio = {page: {path: "turak/example.md"}, busy: false, previewID: "old-preview",
+    previewURL: "/old-preview/", previewPath: "turak/example.md", previewSource: "Old draft"};
+  const previewContext = {
+    studio, $: getControl, rootAPI: "/api/workbench/content/",
+    async sync() { return {path: "turak/example.md", source: "New draft"}; },
+    async api() { throw new Error("Preview service unavailable"); },
+    switchPanel() {}, feedback() {}, setBusy: value => { studio.busy = value; },
+    markDirty() { getControl("#content-preview-state").textContent = "Ready"; }
+  };
+  const start = source.indexOf("  async function renderPreview(");
+  vm.runInNewContext(source.slice(start, source.indexOf("\n  async function showNewPage(", start)), previewContext);
+  await assert.rejects(previewContext.renderPreview(), /service unavailable/);
+  previewContext.previewStatus({job: {state: "idle", action: "content-preview", log: "Old build succeeded"},
+    contentPreview: {id: "old-preview", path: "turak/example.md", state: "ready", url: "/old-preview/"}});
+  assert.equal(studio.previewURL, "", "A failed new build must not relabel the old preview as matching the new draft");
+  assert.match(getControl("#content-preview-state").textContent, /Preview could not start/);
+  assert.doesNotMatch(getControl("#content-preview-log").textContent, /Old build succeeded/);
+  console.log("PASS: Failed preview requests reject stale successful build status.");
+}
+testFailedPreviewRecovery().catch(error => { console.error(error); process.exitCode = 1; });
+
+function testFolderNavigation() {
+  class Element {
+    constructor() { this.value = ""; this.children = []; this.events = {}; this.attributes = {}; }
+    replaceChildren() { this.children = []; }
+    append(child) { this.children.push(child); }
+    setAttribute(key, value) { this.attributes[key] = value; }
+    addEventListener(key, handler) { this.events[key] = handler; }
+    click() { return this.events.click(); }
+  }
+  const elements = new Map();
+  const element = selector => {
+    if (!elements.has(selector)) elements.set(selector, new Element());
+    return elements.get(selector);
+  };
+  const context = {window: {}, document: {querySelector: element, createElement: () => new Element()}};
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, "../../tools/workbench/web/content-library.js"), "utf8"), context);
+  let browser;
+  const visited = [];
+  const open = () => { browser.update(); visited.push(element("input").value); };
+  browser = context.window.workbenchContentLibrary.folderBrowser({
+    input: "input", trail: "trail", back: "back", forward: "forward", up: "up", refresh: "refresh",
+    label: "Images", open, run: operation => operation()
+  });
+  browser.reset();
+  element("input").value = "turak"; open();
+  element("input").value = "turak/trip"; open();
+  element("back").click();
+  assert.equal(element("input").value, "turak");
+  element("forward").click();
+  assert.equal(element("input").value, "turak/trip");
+  element("up").click();
+  element("input").value = "hero"; open();
+  assert.equal(element("forward").disabled, true, "Opening a new folder after going back must replace forward history");
+  element("refresh").click(); element("back").click();
+  assert.equal(element("input").value, "turak", "Refresh must not create a history entry");
+  element("trail").children[0].click();
+  assert.equal(element("input").value, "", "The root breadcrumb replaces a redundant All folders button");
+  assert.equal(element("up").disabled, true);
+  browser.reset();
+  assert.equal(element("back").disabled, true, "A new page/picker must not inherit another page's navigation history");
+  element("input").value = "manual/path";
+  element("input").events.keydown({key: "Enter", preventDefault() {}});
+  assert.equal(visited.at(-1), "manual/path", "Advanced path entry must open with Enter in every file browser");
+  assert(visited.includes("hero"));
+  console.log("PASS: Folder navigation supports back, forward, up, root, refresh and independent picker history.");
+}
+testFolderNavigation();
+
+function testPhotoPreparation() {
+  class Transfer {
+    constructor() { this.files = []; this.items = {add: file => this.files.push(file)}; }
+  }
+  const controls = new Map(), storage = new Map(), notices = [];
+  let path = "turak/alpha.md", rejectWrites = false;
+  const element = selector => {
+    if (!controls.has(selector)) controls.set(selector, {value: "", files: [], textContent: "", className: ""});
+    return controls.get(selector);
+  };
+  const state = {git: {branch: "fixture"}};
+  const studio = {page: {}, catalog: {workspace: "C:\\fixture"}, photoScope: "",
+    selected: new Map(), photoWorkspaces: new Map(), missingOriginals: []};
+  const context = {studio, state, $: element, activePath: () => path, DataTransfer: Transfer,
+    renderUploadPreviews() {}, renderSelection() {}, notify: message => notices.push(message),
+    localStorage: {
+      getItem: key => storage.get(key) || null,
+      setItem(key, value) { if (rejectWrites) throw new Error("Quota exceeded"); storage.set(key, value); }
+    }};
+  const start = source.indexOf("  const photoSettings =");
+  vm.runInNewContext(source.slice(start, source.indexOf("\n  function setBusy(", start)), context);
+  context.restorePhotoWorkspace();
+  const alphaScope = studio.photoScope;
+  const first = {url: "/images/hero/one.webp", name: "one.webp", alt: "Entrance", caption: "Written caption"};
+  const second = {url: "/images/hero/two.webp", name: "two.webp", alt: "Exit", caption: ""};
+  studio.selected = new Map([[second.url, second], [first.url, first]]);
+  element("#asset-folder").value = "hero";
+  element("#insert-layout").value = "gallery";
+  element("#content-image-files").files = [{name: "original.jpg"}];
+  context.persistPhotoWorkspace();
+  path = "turak/beta.md"; studio.selected.clear(); context.restorePhotoWorkspace();
+  assert.equal(studio.selected.size, 0, "Photo selection must not leak into another page");
+  assert.equal(element("#insert-layout").value, "image", "Layout settings must not leak either");
+  path = "turak/alpha.md"; context.restorePhotoWorkspace();
+  assert.deepEqual([...studio.selected.keys()], [second.url, first.url]);
+  assert.equal(studio.selected.get(first.url).caption, "Written caption");
+  assert.equal(element("#insert-layout").value, "gallery");
+  assert.equal(element("#asset-folder").value, "hero");
+  assert.equal(element("#content-image-files").files[0].name, "original.jpg", "Original files survive page switches in the same tab");
+  studio.photoWorkspaces.clear(); studio.selected.clear(); context.restorePhotoWorkspace();
+  assert.equal(studio.selected.get(first.url).alt, "Entrance", "Descriptions survive a browser reload");
+  assert.deepEqual(Array.from(studio.missingOriginals), ["original.jpg"], "Unreviewed originals require explicit reselection after reload");
+  state.git.branch = "other"; studio.selected.clear(); context.restorePhotoWorkspace();
+  assert.equal(studio.selected.size, 0, "Another branch must not restore these photos");
+  state.git.branch = "fixture"; studio.catalog.workspace = "C:\\another"; studio.selected.clear(); context.restorePhotoWorkspace();
+  assert.equal(studio.selected.size, 0, "Another repository must not restore these photos");
+  studio.catalog.workspace = "C:\\fixture"; context.restorePhotoWorkspace();
+  rejectWrites = true;
+  studio.selected.get(first.url).caption = "Latest caption";
+  context.persistPhotoWorkspace(); studio.selected.clear(); context.restorePhotoWorkspace();
+  assert.equal(studio.selected.get(first.url).caption, "Latest caption", "A failed browser backup must retain preparation in this tab");
+  assert(notices.some(message => message.includes("Quota exceeded")));
+  rejectWrites = false;
+  context.forgetPhotoWorkspace(path);
+  studio.selected.clear(); context.restorePhotoWorkspace();
+  assert.equal(studio.selected.size, 0, "Deleted pages must not restore obsolete preparation");
+  storage.set(alphaScope, "{broken"); studio.photoWorkspaces.clear();
+  context.restorePhotoWorkspace(); context.persistPhotoWorkspace();
+  assert.equal(storage.get(alphaScope), "{broken", "An unreadable backup must not be silently overwritten");
+  assert.match(element("#photo-workspace-status").textContent, /backup needs attention/);
+  console.log("PASS: Photo descriptions, order, settings and originals survive navigation, with repository/branch isolation and explicit backup failures.");
+}
+testPhotoPreparation();
+
+function testLayoutValidation() {
+  const controls = new Map();
+  const element = selector => {
+    if (!controls.has(selector)) controls.set(selector, {value: "", reportValidity: () => false});
+    return controls.get(selector);
+  };
+  let inserted;
+  const selected = new Map(["one", "two"].map(name => [`/images/${name}.webp`,
+    {url: `/images/${name}.webp`, name, alt: `${name} description`, caption: ""}]));
+  const context = {studio: {selected}, $: element, insertText: value => { inserted = value; }, feedback() {}};
+  const start = source.indexOf("  const shortcodeEscape =");
+  vm.runInNewContext(source.slice(start, source.indexOf("\n  function pdfStatus(", start)), context);
+  element("#insert-layout").value = "gallery";
+  context.insertPhotos();
+  assert.match(inserted, /\{\{< gallery >\}\}/);
+  assert(inserted.indexOf('src="/images/one.webp"') < inserted.indexOf('src="/images/two.webp"'));
+  selected.delete("/images/two.webp");
+  element("#insert-layout").value = "markdown";
+  context.insertPhotos();
+  assert.match(inserted, /!\[one description\]\(\/images\/one.webp\)/);
+  element("#insert-layout").value = "image";
+  element("#insert-width").value = "60";
+  assert.throws(() => context.insertPhotos(), /layout dimensions/, "Visible standalone-image dimensions must still be validated");
+  element("#insert-width").reportValidity = () => true;
+  element("#insert-width").focus = () => {};
+  element("#insert-width").value = "";
+  assert.throws(() => context.insertPhotos(), /Fill in all visible/, "Blank dimensions must not become zero-width images");
+  console.log("PASS: Gallery and Markdown ignore hidden sizing fields while supported image dimensions remain validated.");
+}
+testLayoutValidation();
+
+async function testStalePageFiles() {
+  const controls = new Map(), requests = [];
+  const element = selector => {
+    if (!controls.has(selector)) controls.set(selector, {value: "", textContent: "", replaceChildren() {}});
+    return controls.get(selector);
+  };
+  let path = "turak/alpha.md", rendered = [];
+  const studio = {page: {source: "Alpha story"}, changes: {}, mediaRead: 0, pageMedia: []};
+  const context = {studio, $: element, rootAPI: "/content/", normalized: value => value,
+    activePath: () => path, bodySource: () => studio.page.source,
+    pageFileBrowsers: {images: {update() {}}}, run: operation => operation(),
+    sync: async () => ({path, source: studio.page.source}),
+    api: () => new Promise((resolve, reject) => requests.push({resolve, reject})),
+    renderPageMedia() { rendered = studio.pageMedia.map(file => file.name); }
+  };
+  const start = source.indexOf("  async function refreshPageMedia(");
+  vm.runInNewContext(source.slice(start, source.indexOf("\n  function renderPageMedia(", start)), context);
+  const tick = () => new Promise(resolve => setImmediate(resolve));
+  const response = name => ({files: [{name}], image_folders: [], pdf_folders: []});
+  const first = context.refreshPageMedia(); await tick();
+  element("#page-media-image-folder").value = "hero";
+  const second = context.refreshPageMedia(); await tick();
+  requests[1].resolve(response("current folder")); await second;
+  requests[0].resolve(response("previous folder")); await first;
+  assert.deepEqual(Array.from(rendered), ["current folder"], "Late responses must not replace the current folder's files");
+  const edited = context.refreshPageMedia(); await tick();
+  studio.page.source = "Changed story";
+  requests[2].resolve(response("outdated draft")); await edited;
+  assert.match(element("#page-media-status").textContent, /page changed/);
+  const anotherPage = context.refreshPageMedia(); await tick();
+  path = "turak/beta.md";
+  requests[3].resolve(response("Alpha files")); await anotherPage;
+  assert.deepEqual(Array.from(rendered), ["current folder"], "Files from a previous page must never be rendered in the newly opened page");
+  console.log("PASS: File-usage browsing rejects stale folder, draft and page responses.");
+}
+testStalePageFiles().catch(error => { console.error(error); process.exitCode = 1; });

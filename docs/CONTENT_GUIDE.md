@@ -19,11 +19,35 @@ cikkeket ehhez a struktúrához képest.
 
 ## Böngészős szerkesztés
 
-A **Choose your workspace** sávban az **Edit page** gombbal térhetsz vissza
-az utoljára használt szerkesztési részhez. A többi gomb külön oldal-eszközt
-nyit meg; az aktív gomb színe megegyezik az alatta látható munkafelület
-keretével. Az **EDITING / TOOL ACTIVE** jelzés szöveggel is mutatja a módot,
-nem csak színnel. A módváltás megőrzi a vázlatot, de nem menti automatikusan.
+A bal oldali szerkesztőnavigáció külön csoportban mutatja az oldal részeit,
+a fotó- és PDF-eszközöket, valamint az **Advanced** forrás- és útvonalkezelést.
+A **Return to editing** gomb az utoljára használt szerkesztési részhez visz
+vissza. A **Course & FAQ** csak tanfolyamoknál jelenik meg; a túrák meglévő
+FAQ-forrását ez nem törli. A módváltás megőrzi a vázlatot, de nem menti automatikusan.
+
+### Képtári navigáció és félkész fotómunka
+
+Az oldalképtár, a fájlválasztó, az oldal fájlkezelője és a **Site photos**
+ugyanazt a mappanavigációt használja: vissza/előre, egy szinttel feljebb,
+kattintható útvonal és **Refresh**. A gyökér **Images / PDFs** elem minden
+mappához hozzáférést ad. A mappacsempék megnyitják a következő szintet;
+a **Quick access** alatt az oldal saját vagy az aktuális fájl mappája érhető el.
+Ez soha nem módosítja az új feltöltések célmappáját.
+
+A kijelölt fotók sorrendje, leírása, képaláírása és elrendezése oldalanként,
+helyi repónként és Git-áganként megmarad ebben a böngészőben. Másik oldalra
+váltás és frissítés után visszaállnak. A **Continue preparing photos**
+közvetlenül ehhez a munkához visz vissza. A **Save page** nem szúrja be és nem
+dobja el a kijelölt képeket: külön **Insert into story** vagy
+**Clear photo preparation** szükséges. A törlés itt csak a kijelölést és
+félkész leírásokat törli, nem az oldal szövegét vagy a mentett képfájlokat.
+
+A még nem feldolgozott eredeti fájlok ugyanabban a böngészőfülben oldalváltáskor
+megmaradnak, de frissítés után újra ki kell választani őket; erre név szerinti
+figyelmeztetés jelenik meg. Böngészőtár-hibánál a fotómunka a nyitott fülben
+marad meg, és az eszköz jelzi, hogy a fül bezárása előtt gondoskodj róla.
+A leírás egy fotónál egyszer, több fotónál képenként jelenik meg; az elrendezés
+csak az alkalmazható méret- és szövegbeállításokat mutatja.
 
 A helyi munkafelületen a fájlok mellett két kis ikon segíti a navigációt:
 **Open in VS Code** megnyitja a mentett szöveget vagy képet VS Code-ban,
@@ -672,7 +696,7 @@ a <http://127.0.0.1:8879/#content> címen érhető el.
   **Save & continue**, **Discard & continue**, vagy **Keep editing** választható.
   Sikertelen mentés nem engedi elveszni a vázlatot.
 - Az oldalsó **Story**, **Page details & cover**, **People & contacts**,
-  **Sharing & search** és **Course & FAQ** szakaszok
+  **Sharing & search** és (csak tanfolyamoknál) **Course & FAQ** szakaszok
   kezelik a történetet, képeket, résztvevőket, keresési adatokat, tanfolyami
   mezőket. Az eszközök külön munkapanelt nyitnak:
   **Files used by this page**, **Add photos & PDFs**, **Read a PDF**, **File & URL** és

@@ -7,8 +7,9 @@
     assets: [], selected: new Map(), deletePlan: null, previewSource: "", previewPath: "",
     previewURL: "", previewID: "", initialized: false, lastJob: "idle", restoreKey: "",
     mediaTarget: null, pickerFiles: [], pageMedia: [], mediaReview: null, assetDelete: null,
-    pdfImport: null, pdfApplied: false, screen: "library", section: "", assetRead: 0, pickerRead: 0,
-    navigationResolve: null, newSlugTouched: false, routeEditing: "", searchOrigin: false
+    pdfImport: null, pdfApplied: false, screen: "library", section: "", assetRead: 0, pickerRead: 0, mediaRead: 0,
+    navigationResolve: null, newSlugTouched: false, routeEditing: "", searchOrigin: false,
+    photoScope: "", photoWorkspaces: new Map(), missingOriginals: []
   };
   const rootAPI = "/api/workbench/content/";
   const feedback = (message, error = false) => {
@@ -40,6 +41,88 @@
     const folder = pageAssetFolder({ path: activePath() });
     for (const selector of ["#post-image-folder", "#content-image-folder", "#pdf-folder", "#pdf-import-folder"]) $(selector).value = folder;
     return folder;
+  }
+
+  const photoSettings = {
+    "insert-layout": "image", "insert-width": "60", "insert-mobile-width": "100",
+    "insert-side": "center", "insert-font": "1", "content-image-width": "1600",
+    "content-image-height": "1600", "content-image-quality": "82", "content-image-name": ""
+  };
+  function photoWorkspaceScope() {
+    if (!studio.catalog?.workspace || !state.git?.branch) throw new Error("The page's repository and branch are not known. Reload before preparing photos.");
+    return `ftsk-content-photos:${JSON.stringify([studio.catalog.workspace, state.git.branch])}`;
+  }
+  function photoWorkspaces() {
+    if (!studio.photoWorkspaces.has(studio.photoScope)) {
+      const record = {pages: {}, originals: new Map(), error: ""};
+      studio.photoWorkspaces.set(studio.photoScope, record);
+      try {
+        const stored = JSON.parse(localStorage.getItem(studio.photoScope) || "{}");
+        if (!stored || typeof stored !== "object" || Array.isArray(stored)) throw new Error("Invalid photo workspace backup.");
+        record.pages = stored;
+      } catch (error) {
+        record.error = error.message;
+        notify(`Photo preparation backup could not be read: ${error.message}. New preparation is kept in this tab only; the unreadable backup was not overwritten.`, "error");
+      }
+    }
+    return studio.photoWorkspaces.get(studio.photoScope);
+  }
+  function persistPhotoWorkspace() {
+    if (!studio.page || !studio.photoScope) return;
+    const record = photoWorkspaces(), path = activePath();
+    const originals = [...$("#content-image-files").files];
+    record.originals.set(path, originals);
+    record.pages[path] = {
+      selected: [...studio.selected.values()].map(({url, name, alt, caption}) => ({url, name, alt, caption})),
+      folder: $("#asset-folder").value,
+      settings: Object.fromEntries(Object.keys(photoSettings).map(id => [id, $(`#${id}`).value])),
+      originals: [...originals.map(file => file.name), ...studio.missingOriginals]
+    };
+    if (record.error) {
+      $("#photo-workspace-status").textContent = `Browser backup needs attention: ${record.error}. Preparation is kept in this tab only; the unreadable backup was not overwritten.`;
+      $("#photo-workspace-status").className = "notice error";
+      return;
+    }
+    try { localStorage.setItem(studio.photoScope, JSON.stringify(record.pages)); }
+    catch (error) {
+      notify(`Photo preparation could not be backed up: ${error.message}. It is still kept in this tab; do not close the browser before inserting or copying your descriptions.`, "error");
+      $("#photo-workspace-status").textContent = "Browser backup failed. Preparation is kept in this tab only; do not close it yet.";
+      $("#photo-workspace-status").className = "notice error";
+    }
+  }
+  function restorePhotoWorkspace() {
+    studio.photoScope = photoWorkspaceScope();
+    const record = photoWorkspaces(), saved = record.pages[activePath()];
+    studio.missingOriginals = [];
+    for (const [id, value] of Object.entries(photoSettings)) $(`#${id}`).value = value;
+    const transfer = new DataTransfer();
+    for (const file of record.originals.get(activePath()) || []) transfer.items.add(file);
+    $("#content-image-files").files = transfer.files;
+    renderUploadPreviews($("#content-image-files"));
+    if (saved) {
+      try {
+        if (!Array.isArray(saved.selected) || saved.selected.some(entry => !entry || typeof entry.url !== "string" ||
+            !entry.url.startsWith("/images/") || ["name", "alt", "caption"].some(key => typeof entry[key] !== "string")))
+          throw new Error("Invalid selected-photo backup.");
+        studio.selected = new Map(saved.selected.map(entry => [entry.url, {...entry}]));
+        for (const id of Object.keys(photoSettings)) if (typeof saved.settings?.[id] === "string") $(`#${id}`).value = saved.settings[id];
+        if (typeof saved.folder === "string") $("#asset-folder").value = saved.folder;
+        if (Array.isArray(saved.originals) && !transfer.files.length) studio.missingOriginals = saved.originals.filter(name => typeof name === "string");
+      } catch (error) {
+        record.error = error.message;
+        notify(`This page's photo preparation could not be restored: ${error.message}. Its saved backup was not overwritten.`, "error");
+      }
+    }
+    renderSelection();
+  }
+  function forgetPhotoWorkspace(path) {
+    if (!studio.photoScope) return;
+    const record = photoWorkspaces();
+    delete record.pages[path]; record.originals.delete(path);
+    if (!record.error) {
+      try { localStorage.setItem(studio.photoScope, JSON.stringify(record.pages)); }
+      catch (error) { notify(`Photo preparation cleanup failed: ${error.message}. Its browser backup may reappear.`, "error"); }
+    }
   }
 
   function setBusy(value) {
@@ -155,6 +238,7 @@
 
   function persistDraft() {
     if (!studio.page) return;
+    persistPhotoWorkspace();
     try {
       localStorage.setItem("ftsk-content-draft", JSON.stringify({
         page: studio.page, original: studio.original, revision: studio.revision,
@@ -255,6 +339,7 @@
     if (type === "markdown") input.dataset.monacoLanguage = "markdown";
     input.dataset.field = path;
     input.id = `field-${prefix}${path.replaceAll(".", "-")}`;
+    input.setAttribute("aria-label", title);
     if (type === "boolean") {
       input.type = "checkbox";
       input.checked = Boolean(get(meta, path));
@@ -540,7 +625,7 @@
   const repeaters = {
     milestones: { label: "Course milestones", course: true, fields: [["label", "Phase label"], ["date", "Date (YYYY-MM-DD)"], ["estimated", "Estimated date", "boolean"]] },
     flyer_images: { label: "Course flyers", course: true, fields: [["image_path", "Local flyer image URL", "image"]], hint: "Posters and leaflets appear as overlapping cards in the page heading. Click a flyer to open the original image. They do not replace the banner or social image. Choose an existing image or upload a new one." },
-    faq: { label: "Frequently asked questions", fields: [["question", "Question"], ["answer", "Answer (Markdown)", "markdown"]] }
+    faq: { label: "Frequently asked questions", course: true, fields: [["question", "Question"], ["answer", "Answer (Markdown)", "markdown"]] }
   };
 
   function addRepeater(key) {
@@ -707,6 +792,7 @@
   }
 
   function renderForms() {
+    updateCourseNavigation();
     const meta = currentMeta();
     renderContactAssignments();
     for (const [container, fields] of Object.entries(definitions)) {
@@ -743,6 +829,13 @@
     $("#course-note").hidden = !course;
     renderRepeaters();
     updateSocialNote();
+  }
+
+  function updateCourseNavigation() {
+    const course = studio.page?.guided && !studio.page.error && activePath().startsWith("tanfolyamok/");
+    $(`[data-editor-tab="course"]`).hidden = !course;
+    $(`[data-editor-tab="course"]`).disabled = !course;
+    document.querySelectorAll("[data-add-faq]").forEach(button => { button.hidden = !course; button.disabled = !course; });
   }
 
   function updateSocialNote() {
@@ -846,6 +939,7 @@
   }
 
   function loadPage(page, saved) {
+    persistPhotoWorkspace();
     if (studio.page?.path !== page.path) $("#content-match-note").hidden = true;
     if (studio.page?.path !== page.path) studio.searchOrigin = false;
     studio.page = page;
@@ -893,11 +987,14 @@
     for (const tab of ["metadata", "course", "seo"]) {
       $(`[data-editor-tab="${tab}"]`).disabled = !page.guided || Boolean(page.error);
     }
+    updateCourseNavigation();
     $(`[data-editor-tab="contacts"]`).disabled = Boolean(page.error);
     $("#page-people-editing").hidden = !page.guided || Boolean(page.error);
-    document.querySelectorAll("[data-add-faq]").forEach(button => { button.disabled = !page.guided || Boolean(page.error); });
     $(`[data-editor-tab="write"]`).disabled = Boolean(page.error);
     if (!page.error) renderForms();
+    restorePhotoWorkspace();
+    assetBrowser.reset();
+    for (const browser of Object.values(pageFileBrowsers)) browser.reset();
     setBusy(false);
     switchPanel(page.guided && !page.error ? "write" : "source");
     feedback(page.error || (page.warnings || []).join("\n"), Boolean(page.error));
@@ -936,14 +1033,14 @@
   }
 
   function switchPanel(tab) {
+    if (tab === "course" && !activePath().startsWith("tanfolyamok/")) tab = "write";
     studio.tab = tab;
     const content = ["write", "metadata", "contacts", "course", "seo"].includes(tab);
     if (content) studio.contentTab = tab;
     $("#editor-content-navigation").hidden = false;
+    $("#content-photo-note").hidden = tab === "media" || (!studio.selected.size && !studio.missingOriginals.length);
     $("#editor-return-content").hidden = content;
     $("#content-editor").dataset.workspace = content ? "edit" : tab;
-    $("#editor-workspace-kind").textContent = content ? "Editing mode" : "Page tool mode";
-    $("#editor-workspace-badge").textContent = content ? "EDITING" : "TOOL ACTIVE";
     $("#editor-workspace-detail").textContent = content ? "Changes stay in this draft until you save. Use Preview to check the actual page." :
       "Your story and settings are kept while you use this tool. Save page applies all sections.";
     $("#editor-tool-title").textContent = {
@@ -1036,6 +1133,7 @@
       const message = [`Saved ${result.path}. Changes are local, not published.`, ...(result.warnings || [])].join("\n");
       feedback(message);
       notify(message);
+      if (payload.original && payload.original !== payload.path) forgetPhotoWorkspace(payload.original);
       await refreshCatalog();
     } finally { setBusy(false); }
     if (studio.tab === "page-media") await refreshPageMedia();
@@ -1048,10 +1146,11 @@
     $("#content-preview-state").className = "notice busy";
     $("#content-preview-state").textContent = "Starting an isolated Hugo build from your unsaved draft. No site files are being changed.";
     $("#content-preview-progress").hidden = false;
+    $("#content-preview-log").textContent = "Waiting for this preview build to start.";
     $("#content-preview-frame").hidden = true;
     $("#content-social-frame").hidden = true;
     $("#preview-external").hidden = true;
-    studio.previewURL = ""; studio.previewSource = payload.source; studio.previewPath = payload.path;
+    studio.previewURL = ""; studio.previewID = ""; studio.previewSource = payload.source; studio.previewPath = payload.path;
     setBusy(true);
     try {
       const job = await api(rootAPI + "preview", { method: "POST", payload });
@@ -1073,8 +1172,8 @@
     const running = status.job.state === "running";
     $("#preview-page").disabled = running;
     $("#preview-page-again").disabled = running;
-    $("#content-preview-log").textContent = status.job.action === "content-preview" ? status.job.log || "Preparing Hugo…" : $("#content-preview-log").textContent;
     if (preview.id !== studio.previewID || preview.path !== studio.previewPath || !studio.previewSource) return;
+    $("#content-preview-log").textContent = status.job.action === "content-preview" ? status.job.log || "Preparing Hugo…" : $("#content-preview-log").textContent;
     $("#content-preview-progress").hidden = preview.state === "ready" || preview.state === "failed";
     if (preview.state === "failed") {
       $("#content-preview-state").className = "notice error";
@@ -1152,6 +1251,8 @@
     $("#media-picker-image-upload").hidden = kind !== "images";
     $("#media-picker-image-files").value = "";
     renderUploadPreviews($("#media-picker-image-files"));
+    pickerBrowser.reset();
+    $("#media-picker-borrow").hidden = studio.mediaTarget.borrowedFolder === undefined || studio.mediaTarget.borrowedFolder === folder;
     $("#media-picker").showModal();
     await browsePicker();
   }
@@ -1167,15 +1268,12 @@
     $("#media-picker-folders").replaceChildren();
     try {
       const folder = $("#media-picker-folder").value.trim().replace(/\/$/, "");
-      renderFolderTrail("#media-picker-breadcrumbs", folder, target.kind, name => {
-        $("#media-picker-folder").value = name; return browsePicker();
-      });
-      $("#media-picker-parent").disabled = !folder;
+      pickerBrowser.update();
       const result = await api(`/api/workbench/assets?${new URLSearchParams({ folder, kind: target.kind })}`);
       if (request !== studio.pickerRead || studio.mediaTarget !== target || $("#media-picker-folder").value.trim().replace(/\/$/, "") !== folder) return;
       studio.pickerFiles = result.files;
       $("#media-picker-folders").replaceChildren(...result.folders.map(name => {
-        const button = node("button", `Folder · ${name.split("/").pop()}`, "secondary");
+        const button = node("button", name.split("/").pop(), "image-folder-tile secondary");
         button.type = "button";
         button.addEventListener("click", () => run(async () => {
           $("#media-picker-folder").value = name;
@@ -1247,20 +1345,10 @@
     if ($("#media-picker").open) $("#media-picker").close();
   }
 
-  function renderFolderTrail(selector, folder, kind, open) {
-    const items = window.workbenchContentLibrary.folderTrail(folder, kind === "pdfs" ? "All PDFs" : "All images");
-    $(selector).replaceChildren(...items.map((item, index) => {
-      if (index === items.length - 1) { const label = node("span", item.label); label.setAttribute("aria-current", "location"); return label; }
-      const button = node("button", item.label, "secondary"); button.type = "button";
-      button.addEventListener("click", () => run(() => open(item.folder))); return button;
-    }));
-  }
-
   async function browseAssets() {
     const request = ++studio.assetRead;
     const folder = $("#asset-folder").value.trim().replace(/\/$/, "");
-    renderFolderTrail("#asset-breadcrumbs", folder, "images", name => { $("#asset-folder").value = name; return browseAssets(); });
-    $("#asset-parent").disabled = !folder;
+    assetBrowser.update();
     $("#asset-count").textContent = "Loading this folder…";
     $("#asset-grid").replaceChildren(); $("#asset-folders").replaceChildren();
     let result;
@@ -1273,7 +1361,7 @@
     if (request !== studio.assetRead || $("#asset-folder").value.trim().replace(/\/$/, "") !== folder) return;
     studio.assets = result.files;
     $("#asset-folders").replaceChildren(...result.folders.map(name => {
-      const button = node("button", `Folder · ${name.split("/").pop()}`, "secondary");
+      const button = node("button", name.split("/").pop(), "image-folder-tile secondary");
       button.addEventListener("click", () => run(async () => { $("#asset-folder").value = name; await browseAssets(); }));
       return button;
     }));
@@ -1289,6 +1377,7 @@
       card.dataset.workbenchFile = `static${file.url}`;
       const check = document.createElement("input");
       check.type = "checkbox"; check.checked = studio.selected.has(file.url);
+      check.setAttribute("aria-label", `Select ${file.name}`);
       const image = document.createElement("img");
       image.src = file.url; image.alt = file.name; image.loading = "lazy";
       const name = node("span", file.name);
@@ -1317,20 +1406,38 @@
     const container = $("#selected-photo-details");
     container.replaceChildren();
     const selected = [...studio.selected.values()];
+    const single = selected.length === 1, layout = $("#insert-layout").value;
+    for (const id of ["insert-alt", "insert-caption"]) $(`#${id}`).closest("label").hidden = !single;
+    $("#insert-alt").value = single ? selected[0].alt : "";
+    $("#insert-caption").value = single ? selected[0].caption : "";
+    for (const id of ["insert-width", "insert-mobile-width", "insert-side"]) $(`#${id}`).closest("label").hidden = !["image", "media"].includes(layout);
+    $("#insert-font").closest("label").hidden = layout !== "media";
+    $("#insert-width").max = layout === "media" ? "90" : "100";
+    $("#insert-side").querySelector('[value="center"]').disabled = layout === "media";
+    if (layout === "media" && $("#insert-side").value === "center") $("#insert-side").value = "right";
+    $("#clear-selected-photos").disabled = !selected.length && !$("#content-image-files").files.length && !studio.missingOriginals.length;
+    $("#content-photo-note").hidden = studio.tab === "media" || (!selected.length && !studio.missingOriginals.length);
+    $("#content-photo-description").textContent = `${selected.length} prepared photo${selected.length === 1 ? "" : "s"} kept for this page. They are not inserted automatically.${studio.missingOriginals.length ? ` Choose these original files again after reloading: ${studio.missingOriginals.join(", ")}.` : ""}`;
+    $("#photo-workspace-status").className = "hint";
+    $("#photo-workspace-status").textContent = `Photo selection, order, descriptions and layout are remembered per page and branch in this browser. Save page does not insert or discard them.${studio.missingOriginals.length ? ` Select these original files again after reloading: ${studio.missingOriginals.join(", ")}.` : ""}`;
     selected.forEach((entry, index) => {
       const row = node("div", "", "selected-asset");
       const image = document.createElement("img"); image.src = entry.url; image.alt = entry.name;
       const details = node("div", "");
+      image.addEventListener("error", () => {
+        details.prepend(node("p", "This photo could not be loaded. It may have been moved or deleted; check its folder before inserting or assigning it.", "notice error"));
+      }, {once: true});
       details.append(node("code", `${index + 1}. ${entry.url}`));
       row.dataset.workbenchFile = `static${entry.url}`;
-      const alt = node("label", "Alt text for this photo");
+      const alt = node("label", "Photo description (required)");
       const altInput = document.createElement("input"); altInput.value = entry.alt;
-      altInput.addEventListener("input", () => { entry.alt = altInput.value; });
+      altInput.addEventListener("input", () => { entry.alt = altInput.value; persistPhotoWorkspace(); });
       alt.append(altInput);
       const caption = node("label", "Caption");
       const captionInput = document.createElement("input"); captionInput.value = entry.caption;
-      captionInput.addEventListener("input", () => { entry.caption = captionInput.value; });
+      captionInput.addEventListener("input", () => { entry.caption = captionInput.value; persistPhotoWorkspace(); });
       caption.append(captionInput);
+      alt.hidden = caption.hidden = single;
       details.append(alt, caption);
       const controls = node("div", "", "actions");
       if (studio.mediaTarget?.kind === "images") {
@@ -1379,6 +1486,7 @@
       row.append(image, details);
       container.append(row);
     });
+    persistPhotoWorkspace();
   }
 
   function rememberCursor() { studio.selection = [$("#post-body").selectionStart, $("#post-body").selectionEnd]; }
@@ -1405,8 +1513,15 @@
     const width = Number($("#insert-width").value);
     const mobile = Number($("#insert-mobile-width").value);
     const font = Number($("#insert-font").value);
-    for (const selector of ["#insert-width", "#insert-mobile-width", "#insert-font"]) {
-      if (!$(selector).reportValidity()) throw new Error("Check layout dimensions.");
+    const dimensions = ["image", "media"].includes(layout) ? ["#insert-width", "#insert-mobile-width"] : [];
+    if (layout === "media") dimensions.push("#insert-font");
+    for (const selector of dimensions) {
+      const input = $(selector);
+      if (!input.value.trim()) {
+        input.focus();
+        throw new Error("Fill in all visible image layout dimensions.");
+      }
+      if (!input.reportValidity()) throw new Error("Check layout dimensions.");
     }
     if (layout === "media" && (width > 90 || $("#insert-side").value === "center")) {
       throw new Error("Media needs left/right placement and an image width from 10 to 90%.");
@@ -1690,24 +1805,34 @@
   }
 
   async function refreshPageMedia() {
+    const request = ++studio.mediaRead;
     const payload = await sync();
+    const folder = $("#page-media-image-folder").value.trim(), pdfFolder = $("#page-media-pdf-folder").value.trim();
+    const current = () => request === studio.mediaRead && studio.page && activePath() === payload.path &&
+      $("#page-media-image-folder").value.trim() === folder && $("#page-media-pdf-folder").value.trim() === pdfFolder;
+    for (const browser of Object.values(pageFileBrowsers)) browser.update();
     $("#page-media-status").textContent = "Checking files and saved references…";
     $("#page-media-files").replaceChildren();
     studio.pageMedia = [];
     let result;
     try {
       result = await api(rootAPI + "page-media", { method: "POST", payload: {
-        source: payload.source, folder: $("#page-media-image-folder").value.trim(),
-        pdf_folder: $("#page-media-pdf-folder").value.trim()
+        source: payload.source, folder, pdf_folder: pdfFolder
       } });
     } catch (error) {
+      if (!current()) return;
       $("#page-media-status").textContent = `Could not refresh files: ${error.message}`;
       throw error;
+    }
+    if (!current()) return;
+    if (normalized(payload.source) !== normalized(bodySource()) || Object.keys(studio.changes).length) {
+      $("#page-media-status").textContent = "The page changed while checking files. Refresh files & references to check the current draft.";
+      return;
     }
     studio.pageMedia = result.files;
     for (const [kind, folders] of [["image", result.image_folders], ["pdf", result.pdf_folders]]) {
       $(`#page-media-${kind}-folders`).replaceChildren(...folders.map(folder => {
-        const button = node("button", folder.split("/").pop(), "secondary");
+        const button = node("button", folder.split("/").pop(), "image-folder-tile secondary");
         button.addEventListener("click", () => run(async () => {
           $(`#page-media-${kind}-folder`).value = folder;
           await refreshPageMedia();
@@ -1817,6 +1942,7 @@
         url: file.url, revision: file.revision, confirm: $("#delete-media-confirm").value, source: payload.source
       } });
       studio.selected.delete(file.url);
+      renderSelection();
       if ($("#insert-pdf-url").value === file.url) $("#insert-pdf-url").value = "";
       $("#delete-media-dialog").close();
       studio.assetDelete = null;
@@ -1864,6 +1990,9 @@
       path: studio.original, revision: studio.revision, confirm: $("#delete-confirm").value, assets
     } });
     $("#delete-page-dialog").close();
+    forgetPhotoWorkspace(studio.original);
+    studio.photoScope = "";
+    studio.selected.clear();
     studio.page = null; studio.dirty = false;
     localStorage.removeItem("ftsk-content-draft");
     $("#content-editor").hidden = true; $("#content-resume").hidden = true;
@@ -1976,7 +2105,7 @@
     studio.page.source = $("#post-source").value.replaceAll("\n", studio.page.newline || "\n");
     markDirty();
   });
-  $("#post-path").addEventListener("input", () => { updateOwnedMediaFolders(); markDirty(); });
+  $("#post-path").addEventListener("input", () => { updateOwnedMediaFolders(); updateCourseNavigation(); markDirty(); });
   document.querySelectorAll("[data-editor-tab]").forEach(button => button.addEventListener("click", () => run(() => showTab(button.dataset.editorTab))));
   document.querySelectorAll("[data-editor-tool]").forEach(button => button.addEventListener("click", () => run(() => showTab(button.dataset.editorTool))));
   $("#editor-return-content").addEventListener("click", () => run(async () => showTab(studio.contentTab)));
@@ -1986,9 +2115,21 @@
     $("#content-search").value = ""; $("#content-status-filter").value = ""; $("#content-sort").value = "date"; renderLibrary();
   });
   $("#refresh-content").addEventListener("click", () => run(refreshCatalog));
-  $("#asset-refresh").addEventListener("click", () => run(browseAssets));
-  $("#asset-root").addEventListener("click", () => run(async () => { $("#asset-folder").value = ""; await browseAssets(); }));
-  $("#media-picker-refresh").addEventListener("click", () => run(browsePicker));
+  const assetBrowser = window.workbenchContentLibrary.folderBrowser({
+    input: "#asset-folder", trail: "#asset-breadcrumbs", back: "#asset-back", forward: "#asset-forward",
+    up: "#asset-parent", refresh: "#asset-refresh", label: "Images", open: browseAssets, run
+  });
+  const pickerBrowser = window.workbenchContentLibrary.folderBrowser({
+    input: "#media-picker-folder", trail: "#media-picker-breadcrumbs", back: "#media-picker-back", forward: "#media-picker-forward",
+    up: "#media-picker-parent", refresh: "#media-picker-refresh",
+    label: () => studio.mediaTarget?.kind === "pdfs" ? "PDFs" : "Images", open: browsePicker, run
+  });
+  const pageFileBrowsers = Object.fromEntries(["image", "pdf"].map(kind => [kind, window.workbenchContentLibrary.folderBrowser({
+    input: `#page-media-${kind}-folder`, trail: `#page-media-${kind}-breadcrumbs`,
+    back: `#page-media-${kind}-back`, forward: `#page-media-${kind}-forward`,
+    up: `#page-media-${kind}-parent`, refresh: `#page-media-${kind}-refresh`,
+    label: kind === "pdf" ? "PDFs" : "Images", open: refreshPageMedia, run
+  })]));
   $("#new-page").addEventListener("click", () => run(showNewPage));
   $("#back-content-library").addEventListener("click", () => {
     if (studio.searchOrigin) location.hash = "#search"; else showContentScreen("library");
@@ -2020,7 +2161,7 @@
   document.querySelectorAll("[data-open-syntax]").forEach(button => button.addEventListener("click", () => {
     $("#syntax-help-dialog").querySelectorAll("[data-insert-layout], [data-add-faq]").forEach(control => {
       control.disabled = !studio.page || studio.busy || Boolean(studio.page.error) ||
-        (control.hasAttribute("data-add-faq") && !studio.page.guided);
+        (control.hasAttribute("data-add-faq") && (!studio.page.guided || !activePath().startsWith("tanfolyamok/")));
     });
     $("#syntax-help-dialog").showModal();
     $("#syntax-search").focus();
@@ -2028,7 +2169,7 @@
   $("#syntax-search").addEventListener("input", filterSyntax);
   document.querySelectorAll("[data-insert-layout]").forEach(button => button.addEventListener("click", () => run(() => openLayout(button.dataset.insertLayout))));
   document.querySelectorAll("[data-add-faq]").forEach(button => button.addEventListener("click", () => run(async () => {
-    if (!studio.page?.guided || studio.busy) throw new Error("FAQ controls require an open trip/course page and an idle editor.");
+    if (!studio.page?.guided || !activePath().startsWith("tanfolyamok/") || studio.busy) throw new Error("FAQ controls require an open course page and an idle editor.");
     if ($("#syntax-help-dialog").open) $("#syntax-help-dialog").close();
     await showTab("course");
     addRepeater("faq");
@@ -2045,20 +2186,10 @@
   document.querySelectorAll("[data-open-page-media]").forEach(button => button.addEventListener("click", () => run(async () => showTab("page-media"))));
   $("#page-media-refresh").addEventListener("click", () => run(refreshPageMedia));
   $("#page-media-search").addEventListener("input", renderPageMedia);
-  for (const kind of ["image", "pdf"]) {
-    $(`#page-media-${kind}-parent`).addEventListener("click", () => run(async () => {
-      const input = $(`#page-media-${kind}-folder`);
-      input.value = input.value.replace(/\/$/, "").split("/").slice(0, -1).join("/");
-      await refreshPageMedia();
-    }));
-  }
   $("#remove-media-apply").addEventListener("click", () => run(applyMediaRemoval));
   $("#delete-media-apply").addEventListener("click", () => run(deleteMediaFile));
   $("#browse-assets").addEventListener("click", () => run(browseAssets));
   $("#asset-search").addEventListener("input", renderAssets);
-  $("#asset-parent").addEventListener("click", () => run(async () => {
-    $("#asset-folder").value = $("#asset-folder").value.split("/").slice(0, -1).join("/"); await browseAssets();
-  }));
   $("#content-convert").addEventListener("click", () => run(convertImages));
   $("#pdf-import-source").addEventListener("change", updatePDFSource);
   $("#pdf-import-borrow").addEventListener("click", () => run(async () => {
@@ -2086,7 +2217,11 @@
   }
   renderUploadPreviews($("#content-image-files"));
   const dropzone = $("#content-image-files").closest(".upload-drop-area");
-  $("#content-image-files").addEventListener("change", () => renderUploadPreviews($("#content-image-files")));
+  $("#content-image-files").addEventListener("change", () => {
+    studio.missingOriginals = [];
+    renderUploadPreviews($("#content-image-files"));
+    renderSelection();
+  });
   dropzone.addEventListener("dragover", event => { event.preventDefault(); dropzone.classList.add("dragging"); });
   dropzone.addEventListener("dragleave", () => dropzone.classList.remove("dragging"));
   dropzone.addEventListener("drop", event => {
@@ -2096,8 +2231,20 @@
       return;
     }
     $("#content-image-files").files = event.dataTransfer.files;
+    studio.missingOriginals = [];
     renderUploadPreviews($("#content-image-files"));
-    feedback(`${event.dataTransfer.files.length} original photos chosen. Review the destination, then click Convert.`);
+    renderSelection();
+    feedback(`${event.dataTransfer.files.length} original photos chosen. Review the destination, then click Edit & add images.`);
+  });
+  for (const [id, property] of [["insert-alt", "alt"], ["insert-caption", "caption"]]) $(`#${id}`).addEventListener("input", () => {
+    if (studio.selected.size === 1) { [...studio.selected.values()][0][property] = $(`#${id}`).value; persistPhotoWorkspace(); }
+  });
+  for (const id of Object.keys(photoSettings)) $(`#${id}`).addEventListener("change", renderSelection);
+  $("#clear-selected-photos").addEventListener("click", () => {
+    studio.selected.clear(); studio.missingOriginals = []; $("#content-image-files").value = "";
+    renderUploadPreviews($("#content-image-files"));
+    renderAssets();
+    feedback("Photo preparation cleared for this page. No site files or story content were removed.");
   });
   $("#insert-photos").addEventListener("click", () => run(async () => insertPhotos()));
   $("#media-picker-browse").addEventListener("click", () => run(browsePicker));
@@ -2107,10 +2254,6 @@
   }));
   $("#media-picker-borrow").addEventListener("click", () => run(async () => {
     $("#media-picker-folder").value = studio.mediaTarget.borrowedFolder ?? "";
-    await browsePicker();
-  }));
-  $("#media-picker-parent").addEventListener("click", () => run(async () => {
-    $("#media-picker-folder").value = $("#media-picker-folder").value.replace(/\/$/, "").split("/").slice(0, -1).join("/");
     await browsePicker();
   }));
   $("#media-picker-search").addEventListener("input", renderPicker);
