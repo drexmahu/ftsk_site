@@ -268,7 +268,7 @@ async function checkReferenceNavigation(reference, expected, allowOpen = true) {
   await handler(event);
   assert.equal(opened, expected);
   assert.equal(event.detail.path, reference, "Reference/scanner paths must not be mutated");
-  assert.equal(location.hash, allowOpen ? "#content" : "#portraits");
+  assert.equal(location.hash, allowOpen ? `#content/${expected.includes("/") ? expected.split("/")[0] : "pages"}` : "#portraits");
 }
 
 function element(tag, text = "", className = "") {
@@ -633,12 +633,12 @@ async function checkMediaPicker() {
   };
   get("#post-image-folder").value = "tanfolyamok/2020";
   get("#pdf-folder").value = "turak/old";
-  const studio = { tab: "course", mediaTarget: null, pickerFiles: [] };
+  const studio = { tab: "course", mediaTarget: null, pickerFiles: [], pickerRead: 0 };
   let assigned, origin;
   const requests = [];
   const context = {
     studio, $: get, node: element, document: { createElement: element },
-    window: {workbenchImages: {supports: () => true}},
+    window: {workbenchImages: {supports: () => true}, workbenchContentLibrary: {folderTrail: folder => [{label: folder, folder}]}},
     renderUploadPreviews() {},
     updateOwnedMediaFolders: () => "tanfolyamok/2020",
     URLSearchParams, run: operation => operation(), feedback() {}, renderForms() {},
@@ -760,7 +760,7 @@ function checkEditorWorkspaceNavigation() {
     assert.equal(get("#editor-content-navigation").hidden, false);
     context.switchPanel("media");
     assert.equal(studio.contentTab, "metadata", "Page tools preserve the last content section");
-    assert.equal(get("#editor-content-navigation").hidden, true);
+    assert.equal(get("#editor-content-navigation").hidden, false, "Primary editing navigation stays available inside tools");
     assert.equal(get("#editor-tool-title").textContent, "Add images & PDFs");
     assert.equal(tools[1].attributes["aria-pressed"], "true");
     assert.equal(get("#content-editor").dataset.workspace, "media");
@@ -774,7 +774,7 @@ function checkEditorWorkspaceNavigation() {
     assert.equal(get("#post-source").value, "current source");
     context.switchPanel(studio.contentTab);
     assert.equal(get("#editor-content-navigation").hidden, false);
-    assert.equal(get("#editor-tool-title").textContent, "Edit page");
+    assert.equal(get("#editor-tool-title").textContent, "Page details & cover");
     assert.equal(get("#content-editor").dataset.workspace, "edit");
     assert.equal(contentTabs[1].attributes["aria-selected"], "true");
     context.switchPanel("pdf-import");
@@ -1512,6 +1512,7 @@ async function checkGitDraftRecovery() {
     window: { addEventListener: (name, callback) => { handlers[name] = callback; } },
     studio, $: get, localStorage: { removeItem: key => removed.push(key) },
     activePath: () => "turak/draft.md", renderLibrary() {},
+    showContentScreen: screen => { studio.screen = screen; },
     downloadWorkbenchDraft: (name, source) => downloads.push({ name, source }),
     api: () => { throw new Error("Draft recovery must not write saved files."); },
   };

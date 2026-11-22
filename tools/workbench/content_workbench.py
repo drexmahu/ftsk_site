@@ -10,6 +10,7 @@ import re
 import secrets
 import shutil
 import tempfile
+import unicodedata
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import quote, unquote, urlsplit
@@ -301,7 +302,7 @@ class ContentService:
         raw = file.read_bytes()
         source = raw.decode("utf-8")
         result = {"path": relative, "source": source, "revision": revision(raw),
-                  "guided": self.guided(relative), "bytes": len(raw)}
+                  "guided": self.guided(relative), "bytes": len(raw), "title": Path(relative).stem}
         try:
             frontmatter, body, newline = split_source(source)
             result.update(frontmatter=frontmatter, body=body, newline=newline,
@@ -313,7 +314,10 @@ class ContentService:
 
     def display_title(self, relative: str, meta: dict) -> str:
         if meta.get("type") != "member-cv":
-            return meta.get("title", Path(relative).stem)
+            title = meta.get("title", "Homepage" if relative == "_index.md" else Path(relative).stem)
+            if not isinstance(title, str):
+                raise ContentError("Page title must be text. Open Full source to correct it.")
+            return title or Path(relative).stem
         from tools.workbench.member_documents import validate_page
         from tools.workbench.people_registry import person_index
         people = person_index(self.app.members.read()[2])
@@ -331,11 +335,16 @@ class ContentService:
             relative = file.relative_to(self.root / "content").as_posix()
             page = self.read(relative)
             meta = page["metadata"]
+            thumbnail = meta.get("thumbImg")
+            image = thumbnail.get("image_path", "") if isinstance(thumbnail, dict) else ""
+            if not isinstance(image, str) or not image.startswith("/images/"):
+                image = ""
             result.append({"path": relative, "title": page["title"],
                            "date": meta.get("date", ""), "draft": meta.get("draft", False),
                            "current": meta.get("current", False), "guided": page["guided"],
                            "error": page["error"], "revision": page["revision"],
-                           "section": relative.split("/")[0] if "/" in relative else "pages"})
+                           "section": relative.split("/")[0] if "/" in relative else "pages",
+                           "image": image, "archive": meta.get("archive", Path(relative).stem.startswith("legacy-"))})
         return result
 
     def catalog(self) -> dict:
@@ -361,6 +370,72 @@ class ContentService:
                     {"id": "course-report", "name": "Archived course report", "section": "tanfolyamok"},
                     {"id": "page", "name": "Other Markdown page (source mode)", "section": ""},
                 ]}
+
+    def search(self, query: str, scope: str = "all", offset: int = 0) -> dict:
+        if not isinstance(query, str) or not 1 <= len(query.strip()) <= 256:
+            raise ContentError("Enter between 1 and 256 characters of site text to search.")
+        if scope not in ("all", "pages", "shared"):
+            raise ContentError("Choose pages, shared site text, or both.")
+        if isinstance(offset, bool) or not isinstance(offset, int) or not 0 <= offset <= 100000:
+            raise ContentError("Search offset must be an integer between 0 and 100000.")
+        query = query.strip()
+
+        def folded(text):
+            return "".join(character for character in unicodedata.normalize("NFKD", text)
+                           if not unicodedata.combining(character)).lower()
+
+        words = folded(query).split()
+        if not words:
+            raise ContentError("Enter searchable text, not combining marks alone.")
+        pattern = re.compile(r"\s+".join(re.escape(word) for word in words))
+        candidates = []
+        if scope != "shared":
+            candidates.extend((file, "page") for file in sorted((self.root / "content").rglob("*.md")))
+        if scope != "pages":
+            suffixes = {".html", ".xml", ".txt", ".yaml", ".yml", ".json", ".toml", ".csv"}
+            for folder in ("config", "data", "i18n", "layouts"):
+                candidates.extend((file, folder) for file in sorted((self.root / folder).rglob("*"))
+                                  if file.is_file() and file.suffix.lower() in suffixes)
+            candidates.extend((file, "config") for file in sorted(self.root.iterdir())
+                              if file.is_file() and file.stem in ("hugo", "config")
+                              and file.suffix.lower() in suffixes)
+        results, warnings = [], []
+        for candidate, kind in candidates:
+            relative = candidate.relative_to(self.root).as_posix()
+            if candidate.is_symlink():
+                warnings.append(f"Skipped symbolic link: {relative}")
+                continue
+            file = self.guard(self.root, relative)
+            if file.stat().st_size > MAX_SOURCE:
+                warnings.append(f"Skipped source larger than 2 MiB: {relative}")
+                continue
+            try:
+                source = file.read_text(encoding="utf-8")
+            except UnicodeDecodeError:
+                warnings.append(f"Skipped source that is not UTF-8 text: {relative}")
+                continue
+            text = folded(source)
+            snippets, count, position, line = [], 0, 0, 1
+            source_lines = source.splitlines()
+            for match in pattern.finditer(text):
+                count += 1
+                if len(snippets) >= 5:
+                    continue
+                line += text.count("\n", position, match.start())
+                position = match.start()
+                span = text.count("\n", match.start(), match.end()) + 1
+                excerpt = "\n".join(source_lines[line - 1:line - 1 + span]).strip()
+                snippets.append({"line": line, "lines": span, "excerpt": excerpt[:400]})
+            if not count:
+                continue
+            page = self.read(relative.removeprefix("content/")) if kind == "page" else None
+            results.append({"path": relative, "kind": kind, "title": page["title"] if page else file.name,
+                            "error": page["error"] if page else "", "count": count, "matches": snippets})
+        for warning in warnings:
+            LOGGER.warning("Site text search: %s", warning)
+        return {"query": query, "scope": scope, "files": results[offset:offset + 25],
+                "total_files": len(results), "total_matches": sum(item["count"] for item in results),
+                "next_offset": offset + 25 if offset + 25 < len(results) else None, "warnings": warnings}
 
     def template(self, kind: str, relative: str) -> dict:
         self.path(relative)

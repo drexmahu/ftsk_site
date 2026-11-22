@@ -82,6 +82,61 @@ class PDFImportTests(Fixture):
             self.assertGreater(preview.getpixel((200, 30))[0], 200)
             self.assertGreater(preview.getpixel((200, 300))[2], 200)
 
+    def reviewed_photos(self, folder="turak/archive"):
+        destination = self.root / "static" / "images" / folder
+        destination.mkdir(parents=True, exist_ok=True)
+        files = []
+        for name, size in (("original.webp", (240, 180)), ("cropped.webp", (120, 120))):
+            Image.new("RGB", size, "green").save(destination / name, "WEBP")
+            files.append(f"/images/{folder}/{name}")
+        return files
+
+    def test_reviewed_variants_are_inserted_without_reconversion_or_duplicate_exports(self):
+        result = self.inspect()
+        files = self.reviewed_photos()
+        identifier = result["images"][0]["id"]
+        payload = {"id": result["id"], "path": result["path"], "images": [identifier],
+                   "image_files": {identifier: files}, "keep_pdf": False}
+        with patch.object(self.app, "convert", side_effect=AssertionError("Must not reconvert reviewed photos")):
+            exported = self.app.pdf_import.export(payload)
+            self.assertEqual(self.app.pdf_import.export(payload), exported)
+        self.assertEqual([file["url"] for file in exported["images"]], files)
+        self.assertEqual([(file["width"], file["height"]) for file in exported["images"]], [(240, 180), (120, 120)])
+        self.assertTrue(all(file["id"] == identifier for file in exported["images"]))
+        for url in files:
+            self.assertEqual(exported["markdown"].count(url), 1)
+        with self.assertRaises(ConflictError):
+            self.app.pdf_import.export({**payload, "image_files": {identifier: files[:1]}})
+
+    def test_reviewed_files_require_matching_sources_valid_webp_and_exact_owned_folder(self):
+        result = self.inspect()
+        identifier = result["images"][0]["id"]
+        owned = self.reviewed_photos()
+        elsewhere = self.reviewed_photos("turak/archive/nested")
+        malformed = self.root / "static" / "images" / "turak" / "archive" / "bad.webp"
+        malformed.write_bytes(b"not an image")
+        wrong_type = malformed.with_suffix(".png")
+        Image.new("RGB", (120, 120), "red").save(wrong_type, "PNG")
+        payload = {"id": result["id"], "path": result["path"], "images": [identifier], "keep_pdf": False}
+        for mapping in ({}, {"missing": owned}, {identifier: []}, {identifier: owned * 2},
+                        {identifier: elsewhere}, {identifier: ["/images/turak/archive/bad.webp"]},
+                        {identifier: ["/images/turak/archive/bad.png"]}, {identifier: [{}]}):
+            with self.subTest(mapping=mapping), self.assertRaises(ValueError):
+                self.app.pdf_import.export({**payload, "image_files": mapping})
+        self.assertTrue(all(self.app.content.asset_path(url).is_file() for url in owned + elsewhere))
+
+    def test_pdf_export_failure_keeps_already_reviewed_images_for_retry(self):
+        result = self.inspect()
+        files = self.reviewed_photos()
+        identifier = result["images"][0]["id"]
+        payload = {"id": result["id"], "path": result["path"], "images": [identifier],
+                   "image_files": {identifier: files}}
+        with patch.object(self.app.content, "upload_page_pdf", side_effect=OSError("disk full")):
+            with self.assertRaisesRegex(OSError, "disk full"):
+                self.app.pdf_import.export(payload)
+        self.assertTrue(all(self.app.content.asset_path(url).is_file() for url in files))
+        self.assertEqual(len(self.app.pdf_import.export(payload)["images"]), 2)
+
     def test_repeated_photo_resources_are_deduplicated_without_black_render_bands(self):
         result = self.inspect(duplicate=True)
         self.assertEqual(len(result["images"]), 1)

@@ -46,6 +46,61 @@ class ContentFixture(Fixture):
 
 
 class SourceTests(ContentFixture):
+    def test_site_text_search_finds_ordinary_page_blocks_shared_text_and_literal_phrases(self):
+        homepage = self.root / "content" / "_index.md"
+        homepage.write_text("---\ncontent_blocks:\n- type: text\n  content: |\n    Árvíztűrő\n    tükörfúrógép\n---\nLiteral a+b, not a regex.\n", encoding="utf-8")
+        shared = self.root / "i18n" / "hu.yaml"
+        shared.parent.mkdir()
+        shared.write_text("label: Árvíztűrő tükörfúrógép\n", encoding="utf-8")
+        generated = self.root / "public" / "index.html"
+        generated.parent.mkdir()
+        generated.write_text("Árvíztűrő tükörfúrógép", encoding="utf-8")
+        result = self.service.search("ARVIZTURO tukorfurogep")
+        self.assertEqual({file["path"] for file in result["files"]}, {"content/_index.md", "i18n/hu.yaml"})
+        page = next(file for file in result["files"] if file["kind"] == "page")
+        self.assertEqual(page["title"], "Homepage")
+        self.assertEqual((page["matches"][0]["line"], page["matches"][0]["lines"]), (5, 2))
+        self.assertEqual(self.service.search("a+b")["total_matches"], 1)
+        self.assertEqual(self.service.search("arvizturo", "pages")["total_files"], 1)
+        self.assertEqual(self.service.search("arvizturo", "shared")["total_files"], 1)
+        self.assertEqual(homepage.read_text(encoding="utf-8").count("Árvíztűrő"), 1, "Search never rewrites source")
+
+    def test_site_text_search_paginates_files_limits_snippets_and_rejects_invalid_queries(self):
+        for index in range(26):
+            file = self.root / "content" / "turak" / f"search-{index:02}.md"
+            file.write_text("---\ntitle: Search page\n---\n" + "distinctive needle\n" * 7, encoding="utf-8")
+        first = self.service.search("distinctive needle")
+        second = self.service.search("distinctive needle", offset=first["next_offset"])
+        self.assertEqual((first["total_files"], first["total_matches"]), (26, 182))
+        self.assertEqual((len(first["files"]), len(second["files"])), (25, 1))
+        self.assertIsNone(second["next_offset"])
+        self.assertEqual(len(first["files"][0]["matches"]), 5)
+        self.assertEqual(first["files"][0]["count"], 7)
+        for query in ("", " ", "\u0301", "x" * 257, []):
+            with self.subTest(query=query), self.assertRaises(ContentError):
+                self.service.search(query)
+        for offset in (-1, True, "0"):
+            with self.subTest(offset=offset), self.assertRaises(ContentError):
+                self.service.search("needle", offset=offset)
+        with self.assertRaises(ContentError):
+            self.service.search("needle", scope="../private")
+
+    def test_catalog_keeps_malformed_pages_visible_and_exposes_local_cover_previews(self):
+        broken = self.root / "content" / "turak" / "broken.md"
+        raw = "---\ntitle: [unfinished\n---\nUnchanged story.\n"
+        broken.write_text(raw, encoding="utf-8")
+        invalid_title = broken.with_name("invalid-title.md")
+        invalid_title.write_text("---\ntitle: [not, text]\n---\nStory.\n", encoding="utf-8")
+        covered = broken.with_name("covered.md")
+        covered.write_text('---\ntitle: Covered\nthumbImg: {image_path: "/images/hero/one.webp"}\narchive: true\n---\nStory.\n', encoding="utf-8")
+        pages = {page["path"]: page for page in self.service.pages()}
+        self.assertEqual(pages["turak/broken.md"]["title"], "broken")
+        self.assertTrue(pages["turak/broken.md"]["error"])
+        self.assertIn("title must be text", pages["turak/invalid-title.md"]["error"])
+        self.assertEqual(pages["turak/covered.md"]["image"], "/images/hero/one.webp")
+        self.assertTrue(pages["turak/covered.md"]["archive"])
+        self.assertEqual(broken.read_text(encoding="utf-8"), raw)
+
     def test_page_owned_media_destinations_are_derived_and_cannot_be_overridden(self):
         for relative, expected in (("tanfolyamok/tanfolyam-2022.md", "tanfolyamok/tanfolyam-2022"),
                                    ("turak/trip/index.md", "turak/trip"),

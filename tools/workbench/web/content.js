@@ -7,7 +7,8 @@
     assets: [], selected: new Map(), deletePlan: null, previewSource: "", previewPath: "",
     previewURL: "", previewID: "", initialized: false, lastJob: "idle", restoreKey: "",
     mediaTarget: null, pickerFiles: [], pageMedia: [], mediaReview: null, assetDelete: null,
-    pdfImport: null, pdfApplied: false
+    pdfImport: null, pdfApplied: false, screen: "library", section: "", assetRead: 0, pickerRead: 0,
+    navigationResolve: null, newSlugTouched: false, routeEditing: "", searchOrigin: false
   };
   const rootAPI = "/api/workbench/content/";
   const feedback = (message, error = false) => {
@@ -15,6 +16,12 @@
     element.hidden = !message;
     element.textContent = message;
     element.className = `notice ${error ? "error" : ""}`;
+    for (const [dialog, notice] of [["#new-page-dialog", "#new-page-error"], ["#content-draft-dialog", "#content-draft-error"], ["#media-picker", "#media-picker-error"]]) {
+      if ($(dialog).open) {
+        $(notice).hidden = !message || !error;
+        $(notice).textContent = error ? message : "";
+      }
+    }
   };
   const run = operation => action(async () => {
     try { await operation(); }
@@ -43,22 +50,107 @@
     });
     $("#content-editor").inert = value;
     $(".content-library").inert = value;
-    for (const selector of ["#save-page", "#validate-page", "#delete-page", "#new-page", "#new-page-toolbar", "#new-page-empty", "#reload-page", "#confirm-delete-page"]) {
+    $("#content-category-navigation").inert = value;
+    for (const selector of ["#save-page", "#validate-page", "#delete-page", "#new-page", "#new-page-empty", "#reload-page", "#confirm-delete-page", "#back-content-library", "#content-resume-page", "#content-draft-save", "#content-draft-discard", "#content-draft-cancel"]) {
       $(selector).disabled = value;
     }
     $("#delete-page").disabled = value || !studio.original;
   }
 
-  function setLibraryCollapsed(collapsed, persist = false) {
-    $("#content-library").hidden = collapsed;
-    $(".content-shell").classList.toggle("library-collapsed", collapsed);
-    $("#toggle-content-library").textContent = collapsed ? "Show page library" : "Hide page library";
-    $("#toggle-content-library").setAttribute("aria-expanded", String(!collapsed));
-    $("#new-page-toolbar").hidden = !collapsed;
-    if (persist) {
-      try { localStorage.setItem("ftsk-content-library-collapsed", String(collapsed)); }
-      catch (error) { feedback(`Library preference could not be stored: ${error.message}`, true); }
+  function showContentScreen(screen) {
+    studio.screen = screen;
+    $('[data-panel="content"]').dataset.saveTarget = screen === "editor" ? "save-page" : "";
+    $("#content-library").hidden = screen !== "library";
+    $("#content-library-heading").hidden = screen !== "library";
+    $(".content-detail").hidden = screen !== "editor";
+    $("#back-content-library").textContent = studio.searchOrigin ? "Back to results" : "Back to library";
+    renderLibrary();
+    if (location.hash.startsWith("#content")) $("#main").scrollIntoView({block: "start"});
+  }
+
+  function renderCategoryNavigation() {
+    const categories = window.workbenchContentLibrary.categories(studio.catalog);
+    const build = category => {
+      const link = node("a", "");
+      link.href = category.href;
+      link.dataset.view = "content"; link.dataset.contentLabel = category.label;
+      link.append(node("span", category.icon), node("span", category.label), node("small", String(category.count)));
+      link.addEventListener("click", event => {
+        if (!state.git?.editable || studio.busy) {
+          event.preventDefault(); feedback("Choose a working branch and finish the current operation before opening content.", true); return;
+        }
+        showContentScreen("library");
+      });
+      return link;
+    };
+    $("#content-category-navigation").replaceChildren(...categories.map(build));
+    $("#content-categories").replaceChildren(...categories.map(category => {
+      const link = build(category); link.className = "content-category-card";
+      link.append(node("p", category.description)); return link;
+    }));
+    const category = categories.find(item => item.href === location.hash);
+    studio.section = category?.id || "";
+    $("#content-category-title").textContent = category?.label || "Content library";
+    $("#content-category-description").textContent = category?.description || "Choose a category, find a page, or start a new draft. Saving changes local files only.";
+    $("#content-categories").hidden = Boolean(category);
+    $("#content-all-categories").hidden = !category;
+    if (location.hash.startsWith("#content/") && !category) feedback("This content category no longer exists. Choose one of the available categories.", true);
+    navigate();
+  }
+
+  function activateEditorRoute() {
+    const path = activePath(), section = path.includes("/") ? path.split("/")[0] : "pages";
+    const route = window.workbenchContentLibrary.categories(studio.catalog).find(category => category.id === section)?.href || "#content";
+    if (location.hash !== route) { studio.routeEditing = route; location.hash = route; }
+  }
+
+  async function openSearchMatch(file, match, query) {
+    if (!state.git?.editable || studio.busy) throw new Error("Choose a working branch and finish current operations before editing a search result.");
+    const path = file.path.replace(/^content\//, "");
+    if (!studio.catalog?.pages.some(page => page.path === path)) await refreshCatalog();
+    if (activePath() !== path || !studio.dirty) await openPage(path);
+    if (activePath() !== path || !studio.page) return false;
+    studio.searchOrigin = true;
+    activateEditorRoute();
+    showContentScreen("editor");
+    if (!studio.page.error) { await sync(); renderForms(); }
+    const find = window.workbenchContentLibrary.findTextRange;
+    const sourceText = normalized(studio.page.source);
+    const sourceRange = find(sourceText, query, match.line);
+    let tab = "source", target = $("#post-source"), range = sourceRange;
+    const bodyStart = sourceText.length - normalized(studio.page.body).length;
+    if (!studio.page.error && sourceRange && sourceRange.start >= bodyStart) {
+      tab = "write"; target = $("#post-body");
+      const headerLines = sourceText.slice(0, bodyStart).split("\n").length - 1;
+      range = find(target.value, query, Math.max(1, sourceRange.line - headerLines));
+    } else if (studio.page.guided && !studio.page.error && sourceRange) {
+      const lines = sourceText.split("\n"), matchLine = lines[sourceRange.line - 1];
+      const rootField = matchLine.trimStart().startsWith("#") ? "" :
+        lines.slice(0, sourceRange.line).reverse().map(line => /^([\w-]+)\s*:/.exec(line)?.[1]).find(Boolean);
+      const candidates = [...document.querySelectorAll("[data-editor-panel] [data-field]")].filter(input => {
+        const section = input.closest("[data-editor-panel]").dataset.editorPanel;
+        return rootField && input.dataset.field.split(".")[0] === rootField &&
+          ["metadata", "contacts", "course", "seo"].includes(section) && input.type !== "checkbox" && find(input.value, query);
+      });
+      const candidate = candidates.length === 1 ? candidates[0] : null;
+      if (candidate) {
+        tab = candidate.closest("[data-editor-panel]").dataset.editorPanel;
+        target = candidate; range = find(target.value, query);
+      }
     }
+    switchPanel(tab);
+    $("#content-match-note").hidden = false;
+    $("#content-match-description").textContent = range ?
+      `Search match in ${$("#editor-tool-title").textContent}. Saving here changes the page, not your search results.` :
+      "This text was found in saved files but no longer matches this draft. Your unsaved work was kept; review the source before changing it.";
+    $("#content-match-note").className = range ? "notice" : "notice busy";
+    if (range) {
+      target.focus();
+      if (target.tagName === "TEXTAREA" || ["text", "search", "url", "email", "tel"].includes(target.type))
+        target.setSelectionRange(range.start, range.end);
+      (target.closest(".monaco-source") || target).scrollIntoView({block: "center"});
+    }
+    return true;
   }
 
   function persistDraft() {
@@ -83,12 +175,18 @@
       activePath() !== studio.savedPath || Object.keys(studio.changes).length > 0 || !studio.original;
     $("#editor-state").textContent = studio.dirty ? "Unsaved draft" : "Saved";
     $("#editor-state").className = `badge ${studio.dirty ? "unsaved" : "passed"}`;
-    $("#editing-title").textContent = currentMeta().title || "Untitled";
+    $("#editing-title").textContent = currentMeta().title || studio.page.title || "Untitled";
     $("#editing-path").textContent = activePath();
     $("#word-count").textContent = `${$("#post-body").value.trim().split(/\s+/).filter(Boolean).length} words`;
-    if (studio.previewURL) $("#content-preview-state").textContent =
-      studio.previewSource === bodySource() && studio.previewPath === activePath() && !Object.keys(studio.changes).length ?
-        "Preview matches the current editor source." : "Preview is from an earlier draft. Render again to see current changes.";
+    $("#content-resume").hidden = !studio.page;
+    $("#content-resume-title").textContent = currentMeta().title || studio.page.title || "Untitled page";
+    $("#content-resume-state").textContent = studio.dirty ? "Unsaved changes are kept here. Continue editing when you are ready." : "Your last opened page. You can return without reopening it.";
+    if (studio.previewURL) {
+      const matches = studio.previewSource === bodySource() && studio.previewPath === activePath() && !Object.keys(studio.changes).length;
+      $("#content-preview-state").textContent = matches ?
+        "Ready — this preview matches your draft. It is not saved or published." : "Outdated preview — your draft has changed. Build it again to see those changes.";
+      $("#content-preview-state").className = matches ? "notice" : "notice busy";
+    }
     persistDraft();
   }
 
@@ -196,9 +294,21 @@
           "thumbImg.image_path": "Card thumbnail", "featuredImg.image_path": "Page banner",
           "seo.social_image": "Social preview image", "seo.featured_image": "Social card background",
         }[path] || title;
-        await openMediaPicker("images", imageTitle, input.value, url => onChange(path, url));
+        await openMediaPicker("images", imageTitle, input.value, url => { input.value = url; onChange(path, url); update(); });
       }));
       wrapper.append(choose);
+      const preview = node("img", "", "content-field-image");
+      preview.alt = `${title} preview`; preview.hidden = true;
+      const status = node("span", "", "hint");
+      const update = () => {
+        status.className = "hint";
+        preview.hidden = !input.value.startsWith("/images/");
+        status.textContent = !input.value ? "No image selected." : preview.hidden ? "Choose a local image to preview it here." : "Preview of the selected image. Save the page to keep changes.";
+        if (!preview.hidden) preview.src = input.value;
+      };
+      preview.addEventListener("error", () => { preview.hidden = true; status.textContent = "This image could not be loaded. Choose another file or check its path."; status.className = "notice error"; });
+      input.addEventListener("change", update);
+      wrapper.append(preview, status); update();
     }
     return wrapper;
   }
@@ -668,6 +778,7 @@
     $("#new-page-template").replaceChildren(...studio.catalog.templates.map(template => {
       const option = node("option", template.name); option.value = template.id; return option;
     }));
+    renderCategoryNavigation();
     renderLibrary();
   }
 
@@ -679,41 +790,64 @@
 
   function renderLibrary() {
     if (!studio.catalog) return;
-    const search = $("#content-search").value.trim().toLocaleLowerCase();
-    const type = $("#content-filter").value;
-    const status = $("#content-status-filter").value;
-    const sort = $("#content-sort").value;
-    let pages = studio.catalog.pages.filter(page =>
-      `${page.title} ${page.path} ${page.date}`.toLocaleLowerCase().includes(search) &&
-      (!type || (type === "other" ? !["turak", "tanfolyamok"].includes(page.section) : page.section === type)) &&
-      (!status || (status === "draft" ? page.draft : !page.draft)));
-    pages.sort((a, b) => sort === "date" ? String(b.date).localeCompare(String(a.date)) :
-      String(a[sort]).localeCompare(String(b[sort]), "hu"));
-    $("#content-count").textContent = `${pages.length} / ${studio.catalog.pages.length} pages. “Not draft” may still be future/expired.`;
+    const pages = window.workbenchContentLibrary.filter(studio.catalog.pages, {
+      section: studio.section, search: $("#content-search").value, status: $("#content-status-filter").value, sort: $("#content-sort").value,
+    });
+    const count = studio.catalog.pages.filter(page => !studio.section || page.section === studio.section).length;
+    $("#content-count").textContent = `${pages.length} of ${count} pages`;
+    $("#content-empty").hidden = pages.length > 0;
     $("#content-list").replaceChildren();
     for (const page of pages) {
       const button = node("button", "", "content-list-item");
+      button.type = "button";
       button.dataset.workbenchFile = `content/${page.path}`;
       button.classList.toggle("selected", page.path === studio.original);
-      button.append(node("strong", page.title), node("code", page.path),
-        node("small", `${String(page.date).slice(0, 10)} · ${page.draft ? "Draft" : "Not draft"}${page.current ? " · Current course" : ""}${page.error ? " · Source error" : ""}`));
+      if (page.image) { const image = node("img", "", "content-card-image"); image.src = page.image; image.alt = ""; image.loading = "lazy"; button.append(image); }
+      button.append(node("strong", page.title),
+        node("small", `${String(page.date).slice(0, 10)}${page.date ? " · " : ""}${page.draft ? "Draft" : "Not a draft"}${page.current ? " · Current course" : ""}${page.archive ? " · Archive" : ""}`));
+      if (page.error) button.append(node("span", "Needs attention — open to review the source", "content-card-error"));
+      button.append(node("code", page.path));
       button.addEventListener("click", () => run(() => openPage(page.path)));
       $("#content-list").append(button);
     }
   }
 
-  function allowDiscard() {
-    return !studio.dirty || confirm("Discard the current unsaved page draft? Download it or save first if you want to keep it.");
+  async function allowDiscard() {
+    if (!studio.dirty) return true;
+    if (studio.navigationResolve) throw new Error("Finish the current draft decision first.");
+    $("#content-draft-title").textContent = currentMeta().title || studio.page.title || "Untitled page";
+    $("#content-draft-error").hidden = true;
+    $("#content-draft-dialog").showModal();
+    return new Promise(resolve => { studio.navigationResolve = resolve; });
+  }
+
+  function finishDraftDecision(proceed) {
+    if (studio.busy) return;
+    const resolve = studio.navigationResolve;
+    studio.navigationResolve = null;
+    $("#content-draft-dialog").close();
+    if (!proceed) {
+      if ($("#new-page-dialog").open) $("#new-page-dialog").close();
+      showContentScreen("editor");
+      if (location.hash === "#search") activateEditorRoute();
+    }
+    if (resolve) resolve(proceed);
   }
 
   async function openPage(path) {
-    if (studio.busy || !allowDiscard()) return;
+    if (studio.busy || !await allowDiscard()) return;
     setBusy(true);
-    try { loadPage(await api(`${rootAPI}page?${new URLSearchParams({ path })}`), true); }
+    try {
+      const page = await api(`${rootAPI}page?${new URLSearchParams({ path })}`);
+      studio.searchOrigin = false;
+      loadPage(page, true);
+    }
     finally { setBusy(false); }
   }
 
   function loadPage(page, saved) {
+    if (studio.page?.path !== page.path) $("#content-match-note").hidden = true;
+    if (studio.page?.path !== page.path) studio.searchOrigin = false;
     studio.page = page;
     studio.original = saved ? page.path : "";
     studio.revision = saved ? page.revision : "";
@@ -730,7 +864,6 @@
     $("#content-social-frame").hidden = true;
     $("#preview-external").hidden = true;
     $("#content-preview-state").textContent = "Render an unsaved preview to see the actual site.";
-    $("#content-empty").hidden = true;
     $("#content-editor").hidden = false;
     $("#post-path").value = page.path;
     $("#post-path").dataset.workbenchFile = saved ? `content/${page.path}` : "";
@@ -770,6 +903,7 @@
     feedback(page.error || (page.warnings || []).join("\n"), Boolean(page.error));
     markDirty();
     renderLibrary();
+    showContentScreen("editor");
   }
 
   function bodySource() {
@@ -805,22 +939,24 @@
     studio.tab = tab;
     const content = ["write", "metadata", "contacts", "course", "seo"].includes(tab);
     if (content) studio.contentTab = tab;
-    $("#editor-content-navigation").hidden = !content;
+    $("#editor-content-navigation").hidden = false;
+    $("#editor-return-content").hidden = content;
     $("#content-editor").dataset.workspace = content ? "edit" : tab;
     $("#editor-workspace-kind").textContent = content ? "Editing mode" : "Page tool mode";
     $("#editor-workspace-badge").textContent = content ? "EDITING" : "TOOL ACTIVE";
-    $("#editor-workspace-detail").textContent = content ?
-      "Write your story and manage page details below." :
-      "You are in a dedicated page tool. Choose Edit page above to return to your last editing section.";
+    $("#editor-workspace-detail").textContent = content ? "Changes stay in this draft until you save. Use Preview to check the actual page." :
+      "Your story and settings are kept while you use this tool. Save page applies all sections.";
     $("#editor-tool-title").textContent = {
       "page-media": "Files & usage", media: "Add images & PDFs", "pdf-import": "Read a PDF",
       placement: "File & URL placement", source: "Full source",
-      preview: "Whole-page preview", syntax: "Syntax help"
+      preview: "Whole-page preview", syntax: "Syntax help",
+      write: "Story", metadata: "Page details & cover", contacts: "People & contacts", course: "Course & FAQ", seo: "Sharing & search"
     }[tab] || "Edit page";
     const back = $(`[data-editor-tab="${studio.contentTab}"]`);
     $("#editor-return-content").disabled = Boolean(back?.disabled);
     $("#editor-return-content").classList.toggle("active", content);
     $("#editor-return-content").setAttribute("aria-pressed", String(content));
+    $("#editor-return-content").textContent = "Return to editing";
     document.querySelectorAll("[data-editor-panel]").forEach(panel => { panel.hidden = panel.dataset.editorPanel !== tab; });
     document.querySelectorAll("[data-editor-tab]").forEach(button => {
       const active = button.dataset.editorTab === tab;
@@ -897,7 +1033,9 @@
         $("#content-social-frame").hidden = !previous.socialShown;
       }
       markDirty();
-      feedback([`Saved ${result.path}.`, ...(result.warnings || [])].join("\n"));
+      const message = [`Saved ${result.path}. Changes are local, not published.`, ...(result.warnings || [])].join("\n");
+      feedback(message);
+      notify(message);
       await refreshCatalog();
     } finally { setBusy(false); }
     if (studio.tab === "page-media") await refreshPageMedia();
@@ -906,21 +1044,27 @@
   async function renderPreview() {
     if (studio.busy) return;
     const payload = await sync();
+    switchPanel("preview");
+    $("#content-preview-state").className = "notice busy";
+    $("#content-preview-state").textContent = "Starting an isolated Hugo build from your unsaved draft. No site files are being changed.";
+    $("#content-preview-progress").hidden = false;
+    $("#content-preview-frame").hidden = true;
+    $("#content-social-frame").hidden = true;
+    $("#preview-external").hidden = true;
+    studio.previewURL = ""; studio.previewSource = payload.source; studio.previewPath = payload.path;
     setBusy(true);
     try {
       const job = await api(rootAPI + "preview", { method: "POST", payload });
       studio.previewID = job.preview_id;
+      $("#content-preview-state").textContent = "Building the actual page and checking its URL. Larger sites can take a little longer; the technical log below shows Hugo's output.";
+      feedback("Rendering the actual Hugo page. Your unsaved Markdown stays out of the checkout.");
+    } catch (error) {
+      $("#content-preview-progress").hidden = true;
+      $("#content-preview-state").className = "notice error";
+      $("#content-preview-state").textContent = `Preview could not start: ${error.message}. Your draft is safe. Review the details and try Build current draft again.`;
+      throw error;
     }
     finally { setBusy(false); }
-    studio.previewSource = payload.source;
-    studio.previewPath = payload.path;
-    studio.previewURL = "";
-    $("#content-preview-frame").hidden = true;
-    $("#content-social-frame").hidden = true;
-    $("#preview-external").hidden = true;
-    $("#content-preview-state").textContent = "Building an isolated snapshot. The page has not been saved.";
-    switchPanel("preview");
-    feedback("Rendering the actual Hugo page. Your unsaved Markdown stays out of the checkout.");
   }
 
   function previewStatus(status) {
@@ -931,8 +1075,10 @@
     $("#preview-page-again").disabled = running;
     $("#content-preview-log").textContent = status.job.action === "content-preview" ? status.job.log || "Preparing Hugo…" : $("#content-preview-log").textContent;
     if (preview.id !== studio.previewID || preview.path !== studio.previewPath || !studio.previewSource) return;
+    $("#content-preview-progress").hidden = preview.state === "ready" || preview.state === "failed";
     if (preview.state === "failed") {
-      $("#content-preview-state").textContent = `Preview failed: ${preview.error}. Fix the source and render again.`;
+      $("#content-preview-state").className = "notice error";
+      $("#content-preview-state").textContent = `Preview failed: ${preview.error}. Your draft has not been lost. Review the technical log, fix the reported content, then Build current draft again.`;
       $("#content-preview-frame").hidden = true;
       $("#content-social-frame").hidden = true;
       $("#preview-external").hidden = true;
@@ -952,17 +1098,29 @@
   }
 
   async function showNewPage() {
-    if (studio.busy || !allowDiscard()) return;
+    if (studio.busy) return;
     if (!studio.catalog) await refreshCatalog();
+    const choices = studio.catalog.templates.filter(template => studio.section ?
+      template.section === studio.section || (!template.section && !["turak", "tanfolyamok"].includes(studio.section)) : true);
+    $("#new-page-template").replaceChildren(...choices.map(template => { const option = node("option", template.name); option.value = template.id; return option; }));
+    $("#new-page-title").value = ""; $("#new-page-slug").value = ""; studio.newSlugTouched = false;
+    $("#new-page-error").hidden = true;
+    selectTemplate();
     $("#new-page-dialog").showModal();
-    $("#new-page-slug").focus();
+    $("#new-page-title").focus();
   }
 
   function selectTemplate() {
     const template = studio.catalog.templates.find(item => item.id === $("#new-page-template").value);
-    $("#new-page-folder").value = template.section;
+    $("#new-page-folder").value = template.section || (studio.section === "pages" ? "" : studio.section);
     $("#new-page-bundle").checked = false;
-    if (template.id.startsWith("course") && !$("#new-page-slug").value) $("#new-page-slug").value = "tanfolyam-";
+    suggestNewSlug();
+  }
+
+  function suggestNewSlug() {
+    if (studio.newSlugTouched) return;
+    const slug = window.workbenchContentLibrary.slug($("#new-page-title").value);
+    $("#new-page-slug").value = $("#new-page-template").value === "pdf" && slug ? `legacy-${slug}` : slug;
   }
 
   async function createPage(event) {
@@ -970,8 +1128,12 @@
     const slug = $("#new-page-slug").value.trim();
     const folder = $("#new-page-folder").value.trim().replace(/\/$/, "");
     const path = (folder ? folder + "/" : "") + slug + ($("#new-page-bundle").checked ? "/index.md" : ".md");
-    const page = await api(rootAPI + "template", { method: "POST", payload: { path, template: $("#new-page-template").value } });
-    if (studio.catalog.pages.some(item => item.path === path)) throw new Error("That page already exists. Open it or choose a different path.");
+    const title = $("#new-page-title").value.trim();
+    if (!title || !slug) throw new Error("Give this page a title and a usable filename in Advanced placement.");
+    if (studio.catalog.pages.some(item => item.path === path)) throw new Error("A page already uses this filename. Change it in Advanced placement, or cancel and open the existing page.");
+    let page = await api(rootAPI + "template", { method: "POST", payload: { path, template: $("#new-page-template").value } });
+    page = {...page, ...await api(rootAPI + "compose", {method: "POST", payload: {source: page.source, changes: {title}}})};
+    if (!await allowDiscard()) return;
     $("#new-page-dialog").close();
     loadPage(page, false);
     feedback("New draft loaded from the site template. Replace placeholders; nothing has been written yet.");
@@ -997,17 +1159,24 @@
   async function browsePicker() {
     const target = studio.mediaTarget;
     if (!target) return;
+    const request = ++studio.pickerRead;
     $("#media-picker-status").textContent = "Loading files…";
+    $("#media-picker-error").hidden = true;
     studio.pickerFiles = [];
     $("#media-picker-files").replaceChildren();
     $("#media-picker-folders").replaceChildren();
     try {
       const folder = $("#media-picker-folder").value.trim().replace(/\/$/, "");
+      renderFolderTrail("#media-picker-breadcrumbs", folder, target.kind, name => {
+        $("#media-picker-folder").value = name; return browsePicker();
+      });
+      $("#media-picker-parent").disabled = !folder;
       const result = await api(`/api/workbench/assets?${new URLSearchParams({ folder, kind: target.kind })}`);
-      if (studio.mediaTarget !== target || $("#media-picker-folder").value.trim().replace(/\/$/, "") !== folder) return;
+      if (request !== studio.pickerRead || studio.mediaTarget !== target || $("#media-picker-folder").value.trim().replace(/\/$/, "") !== folder) return;
       studio.pickerFiles = result.files;
       $("#media-picker-folders").replaceChildren(...result.folders.map(name => {
-        const button = node("button", name.split("/").pop(), "secondary");
+        const button = node("button", `Folder · ${name.split("/").pop()}`, "secondary");
+        button.type = "button";
         button.addEventListener("click", () => run(async () => {
           $("#media-picker-folder").value = name;
           await browsePicker();
@@ -1016,7 +1185,10 @@
       }));
       renderPicker();
     } catch (error) {
+      if (request !== studio.pickerRead || studio.mediaTarget !== target) return;
       $("#media-picker-status").textContent = `Could not load files: ${error.message}`;
+      $("#media-picker-error").hidden = false;
+      $("#media-picker-error").textContent = `Folder could not be opened: ${error.message}. Try Refresh folder or go up one folder.`;
       throw error;
     }
   }
@@ -1075,12 +1247,33 @@
     if ($("#media-picker").open) $("#media-picker").close();
   }
 
+  function renderFolderTrail(selector, folder, kind, open) {
+    const items = window.workbenchContentLibrary.folderTrail(folder, kind === "pdfs" ? "All PDFs" : "All images");
+    $(selector).replaceChildren(...items.map((item, index) => {
+      if (index === items.length - 1) { const label = node("span", item.label); label.setAttribute("aria-current", "location"); return label; }
+      const button = node("button", item.label, "secondary"); button.type = "button";
+      button.addEventListener("click", () => run(() => open(item.folder))); return button;
+    }));
+  }
+
   async function browseAssets() {
+    const request = ++studio.assetRead;
     const folder = $("#asset-folder").value.trim().replace(/\/$/, "");
-    const result = await api(`/api/workbench/assets?${new URLSearchParams({ folder })}`);
+    renderFolderTrail("#asset-breadcrumbs", folder, "images", name => { $("#asset-folder").value = name; return browseAssets(); });
+    $("#asset-parent").disabled = !folder;
+    $("#asset-count").textContent = "Loading this folder…";
+    $("#asset-grid").replaceChildren(); $("#asset-folders").replaceChildren();
+    let result;
+    try { result = await api(`/api/workbench/assets?${new URLSearchParams({ folder })}`); }
+    catch (error) {
+      if (request !== studio.assetRead) return;
+      $("#asset-count").textContent = "Folder could not be opened. Try Refresh folder or go up.";
+      throw error;
+    }
+    if (request !== studio.assetRead || $("#asset-folder").value.trim().replace(/\/$/, "") !== folder) return;
     studio.assets = result.files;
     $("#asset-folders").replaceChildren(...result.folders.map(name => {
-      const button = node("button", name.split("/").pop(), "secondary");
+      const button = node("button", `Folder · ${name.split("/").pop()}`, "secondary");
       button.addEventListener("click", () => run(async () => { $("#asset-folder").value = name; await browseAssets(); }));
       return button;
     }));
@@ -1280,6 +1473,7 @@
         await api(rootAPI + "pdf-import", { method: "POST", raw: file, filename: file.name, contentPath: path }) :
         await api(rootAPI + "pdf-import/inspect", { method: "POST", payload: { path, url } });
       studio.pdfImport = result;
+      result.reviewed = {}; result.reviewedDone = [];
       studio.pdfApplied = false;
       $("#pdf-import-summary").textContent = `${result.filename} · ${result.pages.length} pages · ${result.images.length} photos`;
       $("#pdf-import-text").value = result.markdown;
@@ -1297,32 +1491,127 @@
         check.type = "checkbox";
         check.value = image.id;
         check.checked = true;
+        check.addEventListener("change", renderPDFOutputs);
         line.append(check, node("span", `Page ${image.page} · photo ${image.number}`));
         card.append(preview, line, node("small", `${image.width} × ${image.height}${image.parts > 1 ? ` · ${image.parts} joined strips` : ""}`));
         $("#pdf-import-images").append(card);
-        $("#pdf-import-cover").add(new Option(`Page ${image.page} · photo ${image.number}`, image.id));
       }
       $("#pdf-import-review").hidden = false;
       $("#pdf-import-discard").disabled = false;
-      $("#pdf-import-apply").disabled = false;
-      pdfStatus("Extraction ready. Review the text and choose photos below. Nothing has been saved to the site.");
+      renderPDFOutputs();
+      pdfStatus("Extraction ready. Select photos, prepare them in the shared image editor, then review the saved versions before adding the story.");
     } catch (error) {
       pdfStatus(error.message, true);
       throw error;
     } finally { setBusy(false); }
   }
 
+  function selectedPDFImages() {
+    return [...$("#pdf-import-images").querySelectorAll("input:checked")].map(input => input.value);
+  }
+
+  function renderPDFOutputs() {
+    if (!studio.pdfImport) return;
+    const extraction = studio.pdfImport, selected = selectedPDFImages();
+    const done = extraction.reviewedDone || [];
+    const incomplete = selected.filter(id => !done.includes(id));
+    const partial = incomplete.filter(id => extraction.reviewed[id]?.length);
+    const cover = $("#pdf-import-cover").value;
+    const options = [new Option("Keep the current page photos", "")], cards = [];
+    for (const id of selected) {
+      const source = extraction.images.find(image => image.id === id);
+      for (const [index, file] of (extraction.reviewed[id] || []).entries()) {
+        const title = `Page ${source.page} · photo ${source.number} · version ${index + 1}`;
+        options.push(new Option(`${title} — ${file.url.split("/").pop()}`, file.url));
+        const card = node("div", "", "pdf-import-image"), image = node("img", "");
+        image.src = file.url; image.alt = title; image.loading = "lazy";
+        card.append(image, node("strong", title), node("small", `${file.width} × ${file.height}`), node("code", file.url));
+        cards.push(card);
+      }
+    }
+    $("#pdf-import-cover").replaceChildren(...options);
+    $("#pdf-import-cover").value = options.some(option => option.value === cover) ? cover : "";
+    $("#pdf-import-outputs").replaceChildren(...cards);
+    $("#pdf-import-output-summary").textContent = `${selected.length - incomplete.length} of ${selected.length} selected source photos reviewed · ${cards.length} saved versions.${incomplete.length ? " Prepare the remaining photos before adding them to the draft." : " Ready to add to the draft."}`;
+    $("#pdf-import-prepare").disabled = studio.pdfApplied || !incomplete.length || Boolean(partial.length);
+    $("#pdf-import-apply").disabled = studio.pdfApplied || Boolean(incomplete.length);
+    $("#pdf-import-use-saved").hidden = !partial.length || studio.pdfApplied;
+  }
+
+  async function preparePDFPhotos() {
+    const extraction = studio.pdfImport;
+    if (!extraction || studio.pdfApplied || studio.busy) throw new Error("Extract a PDF and finish the current operation first.");
+    if (activePath() !== extraction.path) throw new Error("The page path changed. Extract the PDF again for this destination.");
+    const selected = selectedPDFImages();
+    const pending = selected.filter(id => !extraction.reviewedDone.includes(id));
+    if (pending.some(id => extraction.reviewed[id]?.length)) throw new Error("Some versions are already saved. Use the saved versions below, or discard this extraction; reopening those originals could create duplicates.");
+    const settings = {};
+    for (const key of ["width", "height", "quality"]) {
+      if (!$(`#pdf-import-${key}`).reportValidity()) throw new Error(`Check PDF image ${key}.`);
+      settings[key] = Number($(`#pdf-import-${key}`).value);
+    }
+    await sync();
+    setBusy(true);
+    const branch = state.git.branch;
+    const validate = () => {
+      if (studio.pdfImport !== extraction || activePath() !== extraction.path || state.git.branch !== branch)
+        throw new Error("The PDF destination changed. Saved photos remain in their original page folder; extract again for the current page.");
+    };
+    try {
+      for (let offset = 0; offset < pending.length; offset += 100) {
+        const batch = pending.slice(offset, offset + 100), files = [], names = new Map();
+        for (const [index, id] of batch.entries()) {
+          validate();
+          pdfStatus(`Reading photo ${offset + index + 1} of ${pending.length}. Next: crop, resize, adjust tones and choose the exact versions to save.`);
+          const source = extraction.images.find(image => image.id === id);
+          const response = await fetch(source.preview);
+          if (!response.ok) throw new Error(`Could not read PDF photo ${source.number} (HTTP ${response.status}). Try preparing the remaining photos again.`);
+          const file = new File([await response.blob()], `pdf-${id}.png`, {type: "image/png"});
+          files.push(file); names.set(file.name, id);
+        }
+        validate();
+        const outcome = await window.workbenchImages.open({
+          files, folder: extraction.folder, settings, context: {kind: "page", path: extraction.path}, validate,
+          title: `Prepare PDF photos · batch ${Math.floor(offset / 100) + 1} of ${Math.ceil(pending.length / 100)}`,
+        });
+        for (const result of outcome.results) {
+          const id = names.get(result.sourceName);
+          if (!id) throw new Error("A saved image could not be matched to its PDF source. No story was inserted; the saved files remain in the page folder.");
+          extraction.reviewed[id] ||= [];
+          extraction.reviewed[id].push(...result.files);
+        }
+        for (const name of outcome.completedNames) {
+          const id = names.get(name);
+          if (!id) throw new Error("A reviewed photo could not be matched to its PDF source. No story was inserted.");
+          if (!extraction.reviewedDone.includes(id)) extraction.reviewedDone.push(id);
+        }
+        validate();
+        renderPDFOutputs();
+        if (batch.some(id => !extraction.reviewedDone.includes(id))) {
+          pdfStatus(`Photo preparation stopped. No story was inserted. Already saved versions are shown below. ${outcome.sourceErrors?.join(" ") || "Prepare the remaining photos, or explicitly use saved versions if an unfinished source has partial results."}`, Boolean(outcome.sourceErrors?.length || outcome.results.length));
+          return;
+        }
+      }
+      pdfStatus("Photos are saved and reviewed. Inspect the exact outputs below, choose a heading version if needed, then Add reviewed result to draft. The page itself is still unsaved.");
+    } catch (error) { pdfStatus(error.message, true); throw error; }
+    finally { setBusy(false); renderPDFOutputs(); }
+  }
+
   async function applyPDFImport() {
     if (!studio.pdfImport || studio.pdfApplied || studio.busy) throw new Error("Extract a PDF first, or discard the completed extraction to start another.");
     const extraction = studio.pdfImport;
     if (activePath() !== extraction.path) throw new Error("The page path changed. Extract the PDF again for this destination.");
-    const images = [...$("#pdf-import-images").querySelectorAll("input:checked")].map(input => input.value);
+    const selected = selectedPDFImages();
+    if (selected.some(id => !extraction.reviewedDone?.includes(id))) throw new Error("Prepare all selected photos in the shared image editor before adding the reviewed result.");
+    const images = selected.filter(id => extraction.reviewed[id]?.length);
     const cover = $("#pdf-import-cover").value;
-    if (cover && !images.includes(cover)) throw new Error("Select the chosen heading photo for export, or keep the current page photos.");
+    if (cover && !images.some(id => extraction.reviewed[id].some(file => file.url === cover))) throw new Error("Select the chosen heading photo for export, or keep the current page photos.");
     const mode = $("#pdf-import-mode").value;
     if (mode === "images" && !images.length) throw new Error("Select at least one photo to export.");
     if (mode === "replace" && !confirm("Replace this draft's story with extracted PDF text and selected photos? Metadata is kept. The saved page stays unchanged until you save.")) return;
-    const payload = { id: extraction.id, path: activePath(), images, keep_pdf: $("#pdf-import-keep-pdf").checked };
+    const payload = { id: extraction.id, path: activePath(), images,
+      image_files: Object.fromEntries(images.map(id => [id, extraction.reviewed[id].map(file => file.url)])),
+      keep_pdf: $("#pdf-import-keep-pdf").checked };
     for (const key of ["width", "height", "quality"]) {
       if (!$(`#pdf-import-${key}`).reportValidity()) throw new Error(`Check PDF image ${key}.`);
       payload[key] = Number($(`#pdf-import-${key}`).value);
@@ -1332,17 +1621,18 @@
       payload.keep_pdf = false;
     }
     setBusy(true);
-    pdfStatus(`Converting ${images.length} selected photos through the site converter…`);
+    pdfStatus("Checking the reviewed photos and preparing the extracted story. Already saved image versions will not be converted again.");
     try {
       const result = await api(rootAPI + "pdf-import/export", { method: "POST", payload });
+      if (studio.pdfImport !== extraction || activePath() !== extraction.path) throw new Error("The PDF destination changed. No extracted story was inserted; saved files remain in their original folder.");
+      if (cover && !result.images.some(file => file.url === cover)) throw new Error("The chosen heading version was not returned. Review the saved photos before adding the story again.");
       if (mode !== "images") {
         const body = $("#post-body");
         body.value = mode === "replace" ? result.markdown : `${body.value.trimEnd()}\n\n${result.markdown}`;
       }
       if (cover) {
-        const file = result.images.find(image => image.id === cover);
-        change("thumbImg.image_path", file.url);
-        change("featuredImg.image_path", file.url);
+        change("thumbImg.image_path", cover);
+        change("featuredImg.image_path", cover);
       }
       studio.pdfApplied = true;
       $("#pdf-import-apply").disabled = true;
@@ -1576,8 +1866,9 @@
     $("#delete-page-dialog").close();
     studio.page = null; studio.dirty = false;
     localStorage.removeItem("ftsk-content-draft");
-    $("#content-editor").hidden = true; $("#content-empty").hidden = false;
+    $("#content-editor").hidden = true; $("#content-resume").hidden = true;
     await refreshCatalog();
+    showContentScreen("library");
     notify(`${result.message}\nDeleted ${result.deleted}${assets.length ? ` and ${assets.length} selected assets` : "; all assets kept"}.`);
   }
 
@@ -1648,8 +1939,7 @@
   async function initialize() {
     if (studio.initialized) return;
     studio.initialized = true;
-    try { setLibraryCollapsed(localStorage.getItem("ftsk-content-library-collapsed") === "true"); }
-    catch (error) { feedback(`Library preference could not be read: ${error.message}`, true); }
+    showContentScreen("library");
     try { await refreshCatalog(); }
     catch (error) { studio.initialized = false; throw error; }
     let draft;
@@ -1691,13 +1981,36 @@
   document.querySelectorAll("[data-editor-tool]").forEach(button => button.addEventListener("click", () => run(() => showTab(button.dataset.editorTool))));
   $("#editor-return-content").addEventListener("click", () => run(async () => showTab(studio.contentTab)));
   document.querySelectorAll("[data-close-dialog]").forEach(button => button.addEventListener("click", () => button.closest("dialog").close()));
-  for (const selector of ["#content-search", "#content-filter", "#content-sort", "#content-status-filter"]) $(selector).addEventListener("input", renderLibrary);
+  for (const selector of ["#content-search", "#content-sort", "#content-status-filter"]) $(selector).addEventListener("input", renderLibrary);
+  $("#content-clear-filters").addEventListener("click", () => {
+    $("#content-search").value = ""; $("#content-status-filter").value = ""; $("#content-sort").value = "date"; renderLibrary();
+  });
   $("#refresh-content").addEventListener("click", () => run(refreshCatalog));
+  $("#asset-refresh").addEventListener("click", () => run(browseAssets));
+  $("#asset-root").addEventListener("click", () => run(async () => { $("#asset-folder").value = ""; await browseAssets(); }));
+  $("#media-picker-refresh").addEventListener("click", () => run(browsePicker));
   $("#new-page").addEventListener("click", () => run(showNewPage));
-  $("#new-page-toolbar").addEventListener("click", () => run(showNewPage));
-  $("#toggle-content-library").addEventListener("click", () => setLibraryCollapsed(!$("#content-library").hidden, true));
+  $("#back-content-library").addEventListener("click", () => {
+    if (studio.searchOrigin) location.hash = "#search"; else showContentScreen("library");
+  });
+  $("#content-resume-page").addEventListener("click", () => { studio.searchOrigin = false; activateEditorRoute(); showContentScreen("editor"); });
+  $("#content-back-search").addEventListener("click", () => { location.hash = "#search"; });
   $("#new-page-empty").addEventListener("click", () => run(showNewPage));
   $("#new-page-template").addEventListener("change", selectTemplate);
+  $("#new-page-title").addEventListener("input", suggestNewSlug);
+  $("#new-page-slug").addEventListener("input", () => { studio.newSlugTouched = true; });
+  $("#new-page-slug").addEventListener("invalid", () => { $("#new-page-slug").closest("details").open = true; });
+  $("#content-draft-save").addEventListener("click", () => run(async () => {
+    await savePage();
+    if (!studio.dirty) finishDraftDecision(true);
+    else feedback("Your draft is still unsaved. Finish the save before continuing, or keep editing.", true);
+  }));
+  $("#content-draft-discard").addEventListener("click", () => finishDraftDecision(true));
+  $("#content-draft-cancel").addEventListener("click", () => finishDraftDecision(false));
+  $("#content-draft-dialog").addEventListener("cancel", event => { event.preventDefault(); finishDraftDecision(false); });
+  $("#content-draft-dialog").addEventListener("close", () => {
+    const resolve = studio.navigationResolve; studio.navigationResolve = null; if (resolve) resolve(false);
+  });
   $("#new-page-form").addEventListener("submit", event => run(() => createPage(event)));
   $("#validate-page").addEventListener("click", () => run(validatePage));
   $("#save-page").addEventListener("click", () => run(savePage));
@@ -1754,12 +2067,21 @@
   $("#pdf-import-read").addEventListener("click", () => run(readPDFImport));
   $("#pdf-import-discard").addEventListener("click", () => run(discardPDFImport));
   $("#pdf-import-apply").addEventListener("click", () => run(applyPDFImport));
+  $("#pdf-import-prepare").addEventListener("click", () => run(preparePDFPhotos));
+  $("#pdf-import-use-saved").addEventListener("click", () => {
+    if (!studio.pdfImport || studio.busy) return;
+    for (const id of selectedPDFImages()) if (studio.pdfImport.reviewed[id]?.length && !studio.pdfImport.reviewedDone.includes(id))
+      studio.pdfImport.reviewedDone.push(id);
+    renderPDFOutputs();
+    pdfStatus("Only the already saved versions will be used for these partially completed photos. Any unsaved versions were omitted. Prepare other remaining photos before adding the draft.");
+  });
   $("#pdf-import-download").addEventListener("click", () => {
     downloadWorkbenchDraft("pdf-extracted-text.md", $("#pdf-import-text").value);
   });
   for (const [id, checked] of [["#pdf-import-all", true], ["#pdf-import-none", false]]) {
     $(id).addEventListener("click", () => {
       $("#pdf-import-images").querySelectorAll("input").forEach(input => { input.checked = checked; });
+      renderPDFOutputs();
     });
   }
   renderUploadPreviews($("#content-image-files"));
@@ -1848,7 +2170,7 @@
   }));
   $("#reload-page").addEventListener("click", () => run(async () => {
     if (!studio.original) throw new Error("This new page has not been saved yet.");
-    if (!allowDiscard()) return;
+    if (!await allowDiscard()) return;
     loadPage(await api(`${rootAPI}page?${new URLSearchParams({ path: studio.original })}`), true);
   }));
   document.querySelectorAll("[data-markdown]").forEach(button => button.addEventListener("click", () => {
@@ -1875,6 +2197,16 @@
       },
     });
   }
+  window.workbenchContent = {openMatch: openSearchMatch};
+  window.addEventListener("hashchange", () => {
+    if ((location.hash !== "#content" && !location.hash.startsWith("#content/")) || !state.git?.editable) return;
+    run(async () => {
+      await initialize();
+      renderCategoryNavigation();
+      if (studio.routeEditing !== location.hash) showContentScreen("library");
+      studio.routeEditing = "";
+    });
+  });
   window.addEventListener("beforeunload", event => {
     if (!studio.dirty) return;
     persistDraft(); event.preventDefault(); event.returnValue = "";
@@ -1902,11 +2234,12 @@
     studio.changes = {};
     studio.selected.clear();
     $("#content-editor").hidden = true;
-    $("#content-empty").hidden = false;
-    renderLibrary();
+    $("#content-resume").hidden = true;
+    showContentScreen("library");
   });
   window.addEventListener("keydown", event => {
-    if (location.hash !== "#content" || !studio.page) return;
+    if ((location.hash !== "#content" && !location.hash.startsWith("#content/")) || studio.screen !== "editor" ||
+        !studio.page || document.querySelector("dialog[open]")) return;
     if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === "p") { event.preventDefault(); run(renderPreview); }
   });
   window.addEventListener("workbench-status", event => {
@@ -1930,7 +2263,11 @@
   window.addEventListener("workbench-open-page", event => run(async () => {
     const path = event.detail.path.replace(/^content\//, "");
     await openPage(path);
-    if (studio.original === path) location.hash = "#content";
+    if (studio.original === path) {
+      const section = path.includes("/") ? path.split("/")[0] : "pages";
+      const route = `#content/${encodeURIComponent(section)}`;
+      if (location.hash !== route) { studio.routeEditing = route; location.hash = route; }
+    }
   }));
   syntaxHelp();
 })();

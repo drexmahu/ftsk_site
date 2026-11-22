@@ -22,7 +22,8 @@ function fixture({ mode = "append", body = "Original story.", cover = "", select
     "#pdf-import-text": { value: "" },
   };
   const state = {
-    pdfImport: { id: "review", path: "turak/report.md", pdf_url: "/pdfs/report.pdf" },
+    pdfImport: { id: "review", path: "turak/report.md", pdf_url: "/pdfs/report.pdf",
+      reviewedDone: [...selected], reviewed: Object.fromEntries(selected.map(id => [id, [{url: `/images/turak/report/${id}.webp`}]])) },
     pdfApplied: false,
     busy: false,
   };
@@ -36,6 +37,7 @@ function fixture({ mode = "append", body = "Original story.", cover = "", select
       return fields[selector];
     },
     activePath: () => "turak/report.md",
+    selectedPDFImages: () => selected,
     rootAPI: "/api/workbench/content/",
     confirm: () => confirm,
     sync: async () => {},
@@ -48,7 +50,7 @@ function fixture({ mode = "append", body = "Original story.", cover = "", select
       calls.push({ url, ...JSON.parse(JSON.stringify(options)) });
       return {
         markdown: "Recovered story." + (options.payload.keep_pdf ? '\n{{< pdf src="/pdfs/report.pdf" >}}' : ""),
-        images: selected.map(id => ({ id, url: `/images/turak/report/${id}.webp` })),
+        images: Object.entries(options.payload.image_files).flatMap(([id, urls]) => urls.map(url => ({id, url}))),
         folder: "turak/report",
       };
     },
@@ -76,10 +78,26 @@ async function main() {
   assert(fresh.fields["#post-body"].value.includes("/pdfs/report.pdf"));
   assert.equal(fresh.calls[0].payload.width, 1600);
 
-  const photos = fixture({ mode: "images", cover: "photo-1" });
+  const photos = fixture({ mode: "images", cover: "/images/turak/report/photo-1.webp" });
   await photos.apply();
   assert.equal(photos.fields["#post-body"].value, "Original story.");
   assert.deepEqual(photos.changes.map(([key]) => key), ["thumbImg.image_path", "featuredImg.image_path"]);
+  assert.deepEqual(photos.calls[0].payload.image_files, {"photo-1": ["/images/turak/report/photo-1.webp"]});
+
+  const unreviewed = fixture();
+  unreviewed.state.pdfImport.reviewedDone = [];
+  await assert.rejects(unreviewed.apply(), /Prepare all selected photos/);
+  assert.equal(unreviewed.calls.length, 0);
+
+  const variants = fixture({cover: "/images/turak/report/cropped.webp"});
+  variants.state.pdfImport.reviewed["photo-1"].push({url: "/images/turak/report/cropped.webp"});
+  await variants.apply();
+  assert.deepEqual(variants.calls[0].payload.image_files["photo-1"], [
+    "/images/turak/report/photo-1.webp", "/images/turak/report/cropped.webp",
+  ]);
+  assert.equal(variants.changes[0][1], "/images/turak/report/cropped.webp", "Heading selection uses the exact reviewed version, not the first source output");
+
+  await checkPhotoPreparation();
 
   const replace = fixture({ mode: "replace" });
   await replace.apply();
@@ -100,6 +118,47 @@ async function main() {
   assert.equal(stale.calls.length, 0);
 
   console.log("PASS: PDF imports preserve stories and links, require reviewed covers, guard stale/repeated exports and honor append/replace/images-only modes.");
+}
+
+async function checkPhotoPreparation() {
+  const begin = source.indexOf("  async function preparePDFPhotos()");
+  const finish = source.indexOf("\n  async function applyPDFImport()", begin);
+  const ids = Array.from({length: 101}, (_, index) => `photo-${index + 1}`);
+  const extraction = {id: "session", path: "turak/report.md", folder: "turak/report", reviewed: {}, reviewedDone: [],
+    images: ids.map((id, index) => ({id, number: index + 1, preview: `/preview/${id}.png`}))};
+  const studio = {pdfImport: extraction, pdfApplied: false, busy: false};
+  const batches = [], downloads = [], notices = [];
+  let cancel = true;
+  const prepare = vm.runInNewContext(`(${source.slice(begin, finish).trim()})`, {
+    studio, state: {git: {branch: "fixture"}}, activePath: () => extraction.path, selectedPDFImages: () => ids,
+    $: () => ({reportValidity: () => true, value: "1600"}), sync: async () => {},
+    setBusy: value => {studio.busy = value;}, pdfStatus: (text, error) => notices.push({text, error}), renderPDFOutputs() {},
+    File: class {constructor(_, name) {this.name = name;}},
+    fetch: async url => {downloads.push(url); return {ok: true, blob: async () => ({})};},
+    window: {workbenchImages: {open: async options => {
+      options.validate(); batches.push(options.files.length);
+      if (batches.length === 2 && cancel) return {results: [], completedNames: [], sourceErrors: []};
+      return {
+        results: options.files.map(file => ({sourceName: file.name, files: [{url: `/images/turak/report/${file.name}.webp`}]})),
+        completedNames: options.files.map(file => file.name), sourceErrors: [],
+      };
+    }}},
+  });
+  await prepare();
+  assert.deepEqual(batches, [100, 1], "PDF selections exceeding 100 must use bounded shared-editor batches");
+  assert.equal(extraction.reviewedDone.length, 100, "Cancelling a later batch keeps earlier reviewed results");
+  assert(notices.at(-1).text.includes("No story was inserted"));
+  cancel = false;
+  await prepare();
+  assert.deepEqual(batches, [100, 1, 1], "Retry must prepare only unfinished sources, never duplicate saved batches");
+  assert.equal(downloads.length, 102);
+  assert.equal(extraction.reviewedDone.length, 101);
+  assert.equal(studio.busy, false);
+
+  extraction.reviewedDone.splice(extraction.reviewedDone.indexOf(ids[0]), 1);
+  const count = downloads.length;
+  await assert.rejects(prepare(), /Some versions are already saved/);
+  assert.equal(downloads.length, count, "Partial source results need an explicit saved-output decision before retry");
 }
 
 main().catch(error => { console.error(error); process.exitCode = 1; });

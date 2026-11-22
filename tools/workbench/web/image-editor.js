@@ -322,6 +322,7 @@ if (typeof document !== "undefined") {
       dialog.close();
       model = null;
       owner.resolve({results: owner.results, completedIds: [...owner.completed], sourceErrors: [...owner.stageErrors],
+        completedNames: owner.photos.filter(photo => owner.completed.has(photo.entry.id)).map(photo => photo.file?.name || photo.entry.name),
         primary: owner.results.find(result => result.key === owner.primary)?.files[0].url || "",
         remainingFiles: (owner.options.files || []).filter(file => !owner.photos.some(photo => photo.file === file && owner.completed.has(photo.entry.id)))});
       if (failures.length) notify(`Images saved/cancelled, but temporary cleanup needs attention:\n${failures.join("\n")}`, "error");
@@ -350,7 +351,7 @@ if (typeof document !== "undefined") {
               }});
             } catch (failure) { v.saveError = failure.message; throw failure; }
             v.saveError = "";
-            v.saved = result.files[0]; owner.results.push({...result, id: photo.entry.id, key: v.key});
+            v.saved = result.files[0]; owner.results.push({...result, id: photo.entry.id, key: v.key, sourceName: photo.file?.name || photo.entry.name});
             if (photo.versions.filter(item => item.enabled).every(item => item.saved)) owner.completed.add(photo.entry.id);
             review();
           }
