@@ -5,28 +5,9 @@
     const dialogs = [...document.querySelectorAll("dialog[open]")];
     const dialog = document.activeElement?.closest("dialog[open]") || dialogs.at(-1);
     const report = message => {
-      notify(message, "error");
-      if (!dialog || ["person-editor-dialog", "member-files-dialog"].includes(dialog.id)) return;
-      if (dialog.id?.startsWith("git-")) {
-        gitNotice(message, true);
-        return;
-      }
-      let banner = dialog.querySelector(".shortcut-notice");
-      if (!banner) {
-        banner = document.createElement("div");
-        banner.className = "notice error member-dialog-error shortcut-notice";
-        banner.setAttribute("role", "alert");
-        const text = document.createElement("span");
-        const dismiss = document.createElement("button");
-        dismiss.type = "button";
-        dismiss.className = "secondary";
-        dismiss.textContent = "Dismiss error";
-        dismiss.addEventListener("click", () => { banner.hidden = true; });
-        banner.append(text, dismiss);
-        dialog.prepend(banner);
-      }
-      banner.querySelector("span").textContent = message;
-      banner.hidden = false;
+      // Toasts are hosted inside the open dialog, so one notification serves dialogs and pages alike.
+      if (dialog?.id?.startsWith("git-")) gitNotice(message, true);
+      else notify(message, "error", { key: "save-shortcut" });
     };
     const focused = document.activeElement?.closest("[data-save-target]");
     const scope = dialog || focused || document.querySelector(`[data-panel="${location.hash.slice(1).split("/")[0] || "overview"}"]`);

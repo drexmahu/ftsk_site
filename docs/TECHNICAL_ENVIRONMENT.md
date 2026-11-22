@@ -546,6 +546,27 @@ The previously truncated Cantabria 2018 archive PDF was restored from
 were an exact prefix of the complete 55,250,442-byte, 13-page original.
 Its existing local URL is unchanged. Other original archive PDFs were not modified.
 
+### Notifications
+
+Every Workbench tool reports through one notification system
+(`tools/workbench/web/notifications.js`), never through banners inserted at the top
+of a page. `notify(message, kind, options)` (kinds: info, success, warning, error, busy;
+`options.key` makes a message replace its predecessor, `options.dedupe` ignores an identical
+repeat such as a polling failure) shows a toast at the bottom right and records it in the
+notification center behind the bell in the header.
+
+- Problems and warnings stay until dismissed; results and info expire after a few
+  seconds (longer for long messages; hovering or focusing a toast pauses the timer).
+- The bell lists everything from this session (kept across a reload within the tab) with
+  time and area, a Problems filter, per-entry copy/remove and Clear all. A red badge counts
+  unread problems; opening the center or dismissing a toast acknowledges them.
+- Toasts move into the open modal dialog, so they stay visible and clickable above it.
+  Errors that belong to a dialog's own form still appear inline in that dialog.
+- Status text that describes a page state (for example the cleanup status line or the
+  Git lock explanation) stays on the page; outcomes and errors never do.
+- The hero editor (an iframe) forwards its errors to the parent through
+  `window.workbenchNotify`; standalone it keeps its own status line.
+
 ### Other Workbench tools
 
 On startup, a loading screen keeps workspace controls inert until the first
@@ -1203,25 +1224,32 @@ all upload/delete operations are permitted.
 
 Take a backup of the server before the first real replacement. A real deploy:
 
-1. Publishes a temporary `index.html` and `404.html` announcing deployment.
-   The centered error illustration and hanging/standing cave borders are
-   embedded SVG data, so purging image/style directories cannot break them.
+1. Publishes a temporary `index.html`, `404.html` and `.htaccess`. The page is
+   just the centered crashing-bat picture and a short message; the picture is
+   embedded SVG data, so purging image/style directories cannot break it. The
+   temporary `.htaccess` answers **every** URL (HTTP 503 with `Retry-After`)
+   with that page, so no half-uploaded article can be reached. The page keeps
+   the visited URL and reloads itself every 20 seconds.
 2. Deletes every prior artifact inside `SFTP_SERVER_DIR`, including dotfiles
-   and subdirectories, while preserving those two newly published temporary pages.
-3. Uploads all remaining fresh artifacts, then replaces `404.html` and finally
-   `index.html`. The homepage switches back only after the other uploads succeed.
+   and subdirectories, while preserving those three newly published temporary files.
+3. Uploads all remaining fresh artifacts (HTML pages last), then replaces `404.html`,
+   then `.htaccess` (the build's `static/.htaccess`; the temporary one is removed
+   if the build has none) and finally `index.html`.
+4. Checks the live site (`SITE_URL`, default `PRODUCTION_BASE_URL`): the home page
+   must be served and a missing URL must show the FTSK 404 page. If the home page
+   answers HTTP 5xx the freshly published `.htaccess` is removed again and the job
+   fails; if only the 404 page is missing the job prints a warning annotation.
 
 The target directory itself remains. Symlinks inside it are removed, not
 followed. Empty/incomplete builds, linked files, or missing maintenance
 artwork are rejected before remote modification. Dry run checks maintenance
 page generation as well, without publishing or purging anything.
 
-The temporary page refreshes every 20 seconds using a cache-busting URL.
-It is shown at the homepage and, when the host's custom-404 rule is active,
-at missing URLs. Existing/new article URLs are not globally intercepted:
-some can become accessible during upload. A uniform maintenance response
-for **every** URL, or HTTP **503 / Retry-After**, requires a web-server or
-reverse-proxy rule configured outside the directory being purged.
+The rewrite rule needs an Apache-compatible server that honours `.htaccess`
+(Plesk in Apache mode does). On a server that ignores it, visited pages that
+no longer exist fall through to the host's own handling and uploaded pages can
+become reachable early; a uniform maintenance response or **503 / Retry-After**
+then needs a rule in the web-server configuration outside the purged directory.
 
 This is still a **purge then upload**, not an atomic release swap. Interrupted
 artifact uploads leave the temporary homepage/404 in place, but can leave
@@ -1248,18 +1276,22 @@ incoming links or unlinked documents must keep working.
 ## 404 handling
 
 Hugo generates `404.html`; uploading it alone does not configure every
-production web server to use it. Configure the host to serve this page with
-HTTP status **404**, not redirect all missing pages to the homepage with 200.
-For an Apache site mounted at the domain root, a rule is:
+production web server to use it. The production host (Plesk behind nginx)
+answered missing URLs with its own default error page, because nothing told it
+to use `404.html`. `static/.htaccess` therefore ships the rule
 
 ```apache
 ErrorDocument 404 /404.html
 ```
 
-For a subpath, use that subpath in the rule. If this rule belongs in
-`.htaccess`, add the reviewed file under `static/.htaccess` before the first
-purge; this repository does not assume the host is Apache. On nginx/IIS,
-configure the equivalent rule through the host or server administrator.
+which keeps HTTP status **404** (not a redirect to the homepage). It is part of
+every build, survives the purge-and-upload deployment and is checked by the live
+check at the end of the production deploy. If that check warns that the FTSK 404
+page is still missing, the host ignores `.htaccess`: in Plesk enable Apache
+mode/overrides for the site, or add `error_page 404 /404.html;` (with
+`proxy_intercept_errors on;` when nginx proxies Apache) under Apache & nginx
+Settings → Additional nginx directives. For a site under a subpath, use that
+subpath in the rule. Other hosts need the equivalent server rule.
 
 GitHub Pages uses the root `404.html` for missing PR-preview URLs, not each
 preview's own 404 file. The Pages-specific 404 script rewrites navigation

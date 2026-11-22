@@ -47,9 +47,16 @@
     });
   }
   window.addEventListener("DOMContentLoaded", () => {
+    // Inside Workbench the hero page explains this itself and problems arrive as notifications.
+    if (window.parent !== window) return;
     const notice = document.createElement("p");
     notice.textContent = "Workbench mode: Save updates the real slideshow. Remove takes a photo out of the slideshow but keeps its file for existing posts.";
     notice.style.cssText = "padding:12px 18px;margin:0;background:#16303f;color:#f2ede1;font:14px/1.5 system-ui";
     document.body.prepend(notice);
   });
+  // The hero editor reports problems through the Workbench notification center when embedded.
+  window.workbenchNotify = (message, kind) => {
+    try { window.parent.workbenchNotifications?.notify(message, kind, { key: "hero", area: "Hero slideshow" }); }
+    catch { /* Standalone tab: the editor's own status line stays the only report. */ }
+  };
 })();

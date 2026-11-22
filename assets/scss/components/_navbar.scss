@@ -354,6 +354,17 @@
               transform-origin: 0 0 0;
            }
         }
+
+        // js/menu.js holds the menu shut after a choice until the pointer leaves it.
+        &.ftsk-menu-closed,
+        &.ftsk-menu-closed:hover {
+           .dropdown-menu {
+              opacity: 0;
+              visibility: hidden;
+              transform: scaleY(0);
+              pointer-events: none;
+           }
+        }
      }
   }
 

@@ -19,11 +19,11 @@ function startupStatus(error = "") {
   for (const selector of [".sidebar", ".workspace", ".skip-link"]) $(selector).inert = !ready;
 }
 
-function notify(message, kind = "") {
-  const element = $("#message");
-  element.textContent = message;
-  element.className = `notice ${kind}`;
-  element.hidden = !message;
+function notify(message, kind = "", options = {}) {
+  if (typeof window !== "undefined" && window.workbenchNotifications) {
+    const area = options.area || $("#breadcrumb")?.textContent || "";
+    window.workbenchNotifications.notify(message, kind, { ...options, area });
+  }
   if ($("#person-editor-dialog")?.open && (kind === "error" || kind === true)) {
     const notice = $("#person-dialog-notice");
     $("#person-dialog-error-text").textContent = message;
@@ -146,7 +146,7 @@ async function upload(files, kind) {
   try {
     for (const [index, file] of Array.from(files).entries()) {
       progress.update(index, `Uploading ${file.name}…`);
-      notify(`Uploading ${index + 1}/${files.length}: ${file.name}`, "busy");
+      notify(`Uploading ${index + 1}/${files.length}: ${file.name}`, "busy", { key: "upload" });
       try {
         const entry = await api("/api/workbench/uploads", { method: "POST", raw: file, filename: file.name });
         if (kind === "portraits") entry.owner = owner;
@@ -157,7 +157,7 @@ async function upload(files, kind) {
     }
     queueView(kind);
     if (kind === "portraits" && !state.activePortrait && portraitQueue().length) await selectPortrait(portraitQueue()[0]);
-    notify(failures.length ? `Some uploads failed:\n${failures.join("\n")}` : "Photos queued. Originals are temporary; conversion writes the final files.", failures.length ? "error" : "");
+    notify(failures.length ? `Some uploads failed:\n${failures.join("\n")}` : "Photos queued. Originals are temporary; conversion writes the final files.", failures.length ? "error" : "success", { key: "upload" });
     progress.finish(`Uploaded ${files.length - failures.length}/${files.length} photos.${failures.length ? " See errors above." : " Choose a photo to convert."}`, failures.length > 0);
     finished = true;
   } finally {
@@ -480,7 +480,7 @@ function updateStatus(status) {
       (job.state === "passed" ? "File discovery complete. Review candidates in File cleanup; nothing was deleted." :
         "File discovery failed. See discovery details in File cleanup; nothing was deleted.") :
       `${job.action}: ${job.state}. See Build & checks for the complete log.`;
-    notify(message, job.state === "failed" ? "error" : "");
+    notify(message, job.state === "failed" ? "error" : "success", { key: "job" });
   }
   state.jobState = job.state;
   $("#job-state").textContent = job.state === "idle" ? "Idle" : `${job.action}: ${job.state}`;
@@ -494,11 +494,11 @@ async function poll() {
   try {
     updateStatus(await api("/api/workbench/status"));
     startupStatus();
-    if ($("#message").dataset.disconnected) { notify(""); delete $("#message").dataset.disconnected; }
+    if (state.disconnected) { state.disconnected = false; notify("Workspace reconnected.", "success", { key: "connection" }); }
   } catch (error) {
     if (window.updateGitState) window.updateGitState(null);
-    notify(`Workspace disconnected: ${error.message}`, "error");
-    $("#message").dataset.disconnected = "true";
+    notify(`Workspace disconnected: ${error.message}`, "error", { key: "connection", dedupe: true, area: "Connection" });
+    state.disconnected = true;
     startupStatus(error.message);
   } finally { setTimeout(poll, 2000); }
 }

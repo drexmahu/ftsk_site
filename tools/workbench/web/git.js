@@ -501,11 +501,8 @@ function renderRebaseIllustration(action, extra) {
     `${commits.length} candidate checkpoint(s) visible in this bounded snapshot. This is not an exact replay plan: Git may skip equivalent changes or stop at conflicts. ${action === "pull" ? "Receive fetches fresh server history first. " : ""}Only your local branch changes; publishing is separate.`;
 }
 
-function gitNotice(message, error = false) {
-  const notice = $("#git-action-notice");
-  notice.hidden = !message;
-  notice.textContent = message;
-  notice.className = `notice ${error ? "error" : ""}`;
+function gitNotice(message, error = false, kind = "") {
+  notify(message, error ? "error" : kind, { key: "git", area: "Save & sync" });
   for (const dialog of document.querySelectorAll('dialog[id^="git-"]')) {
     if (!dialog.open) continue;
     let local = dialog.querySelector(".git-dialog-notice");
@@ -701,7 +698,7 @@ window.updateGitState = function(raw) {
     gitNotice(data.job.state === "failed" ?
       `${data.job.action} did not finish: ${data.job.error}${data.rebase ? " Resolve the rebase conflicts below, or abort." : " Refresh and review before retrying."}` :
       `${data.job.action === "terminal" ? "Recovery terminal closed. Inspect the refreshed state; manual Git commands were not audited. " : `${data.job.action} completed. `}${data.job.action === "fetch" ? "All remotes fetched and stale remote-tracking branches pruned; working files were not changed. " : ""}${gitGuidance(data, gitDraftBlockers(), locked).message}`,
-    data.job.state === "failed");
+    data.job.state === "failed", "success");
     if (data.job.manual_rebase) {
       const manual = data.job.manual_rebase;
       $("#git-manual-context").textContent = `Branch: ${manual.branch}. Private backup: ${manual.backup}.`;

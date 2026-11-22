@@ -21,6 +21,7 @@
     <script src="{{ relURL `js/404.js` }}" defer></script>
     {{ end }}
     <script src="{{ relURL `js/hero-framing.js` }}" defer></script>
+    <script src="{{ relURL `js/menu.js` }}" defer></script>
     {{ $siteScript := resources.FromString "js/site.js" (os.ReadFile "static/js/script.js") | resources.Minify | resources.Fingerprint }}
     <script src="{{ $siteScript.RelPermalink }}" defer></script>
     <title>{{print (partial "page-title.html" .) " | " .Site.Title}}</title>
