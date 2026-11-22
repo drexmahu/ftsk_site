@@ -1,4 +1,0 @@
-# Missing pages show the site's own 404 page and keep the HTTP 404 status.
-# Apache-compatible hosts (including Plesk in Apache mode) read this file. If the host
-# ignores it, set the 404 page in the server settings - see docs/TECHNICAL_ENVIRONMENT.md.
-ErrorDocument 404 /404.html
