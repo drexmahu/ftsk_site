@@ -36,7 +36,7 @@ async function checkConversionProgress() {
   };
   const context = {
     renderUploadPreviews() {},
-    document: { getElementById: id => controls.get(id), createElement: tag => Object.assign(control(), { tag }) },
+    document: { getElementById: id => controls.get(id), querySelector: get, createElement: tag => Object.assign(control(), { tag }) },
     node: (tag, textContent = "") => Object.assign(get(`node-${controls.size}`), { tag, textContent }),
   };
   for (const id of ["convert-photos", "convert-portrait", "content-convert"]) get(id);
@@ -65,7 +65,14 @@ async function checkConversionProgress() {
       return {results: [{files: []}], completedIds: ["one"]};
     }}},
   });
-  vm.runInNewContext(app.slice(app.indexOf("async function convertPhotos("), app.indexOf('\n$("#photo-library-browse")')), context);
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "..", "tools", "workbench", "web", "content-library.js"), "utf8"), context);
+  context.photoBrowser = context.window.workbenchContentLibrary.folderBrowser({
+    input: "#photo-library-folder", trail: "#photo-library-breadcrumbs",
+    back: "#photo-library-back", forward: "#photo-library-forward", up: "#photo-library-parent",
+    refresh: "#photo-library-browse", label: "Images",
+    open: () => context.browsePhotoLibrary(), run: operation => context.action(operation)
+  });
+  vm.runInNewContext(app.slice(app.indexOf("async function convertPhotos("), app.indexOf("\nconst photoBrowser =")), context);
   await context.convertPhotos();
   assert.equal(context.state.photos.length, 1);
   assert.equal(context.state.photos[0].id, "two", "Only completed sources are removed from the photo queue");

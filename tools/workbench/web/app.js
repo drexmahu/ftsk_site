@@ -269,21 +269,7 @@ async function browsePhotoLibrary() {
   const folder = $("#photo-library-folder").value.trim().replace(/\/$/, "");
   $("#photo-library-folder").value = folder;
   const sequence = state.photoLibrarySequence = (state.photoLibrarySequence || 0) + 1;
-  const parts = folder ? folder.split("/") : [];
-  const crumbs = [{label: "Images", path: ""}, ...parts.map((label, index) => ({label, path: parts.slice(0, index + 1).join("/")}))];
-  $("#photo-library-breadcrumbs").replaceChildren();
-  for (const [index, item] of crumbs.entries()) {
-    if (index) {
-      const separator = node("span", "›"); separator.setAttribute("aria-hidden", "true");
-      $("#photo-library-breadcrumbs").append(separator);
-    }
-    const button = node("button", item.label, "secondary");
-    button.type = "button"; button.disabled = index === crumbs.length - 1;
-    if (button.disabled) button.setAttribute("aria-current", "page");
-    button.addEventListener("click", () => action(() => visitPhotoFolder(item.path)));
-    $("#photo-library-breadcrumbs").append(button);
-  }
-  $("#photo-library-parent").disabled = !folder;
+  photoBrowser.update();
   $("#photo-library-note").textContent = `Loading /images/${folder ? folder + "/" : ""}…`;
   $("#photo-library-folders").replaceChildren();
   $("#photo-library-files").replaceChildren();
@@ -322,13 +308,12 @@ async function browsePhotoLibrary() {
   }
   $("#photo-library-note").textContent = `${library.folders.length} folder${library.folders.length === 1 ? "" : "s"} · ${library.files.length} image${library.files.length === 1 ? "" : "s"}. ${!library.files.length && !library.folders.length ? "This folder is empty. Use Up or a breadcrumb to return." : "Open a folder or choose an image to edit."} New copies stay in the image's folder.`;
 }
-$("#photo-library-browse").addEventListener("click", () => action(browsePhotoLibrary));
-$("#photo-library-go").addEventListener("click", () => action(browsePhotoLibrary));
-$("#photo-library-folder").addEventListener("keydown", event => {
-  if (event.key === "Enter") { event.preventDefault(); action(browsePhotoLibrary); }
+const photoBrowser = window.workbenchContentLibrary.folderBrowser({
+  input: "#photo-library-folder", trail: "#photo-library-breadcrumbs",
+  back: "#photo-library-back", forward: "#photo-library-forward", up: "#photo-library-parent",
+  refresh: "#photo-library-browse", label: "Images", open: browsePhotoLibrary, run: action
 });
-$("#photo-library-parent").addEventListener("click", () => action(() =>
-  visitPhotoFolder($("#photo-library-folder").value.split("/").slice(0, -1).join("/"))));
+$("#photo-library-go").addEventListener("click", () => action(browsePhotoLibrary));
 $("#photo-library").addEventListener("toggle", () => {
   if ($("#photo-library").open) action(browsePhotoLibrary);
 });

@@ -361,7 +361,7 @@ class ContentService:
                 if folder.is_dir():
                     self.guard(base, folder.relative_to(base).as_posix())
                     folders.add(folder.relative_to(base).as_posix())
-        return {"pages": self.pages(), "categories": tags, "members": members, "people": people,
+        return {"workspace": str(self.root), "pages": self.pages(), "categories": tags, "members": members, "people": people,
                 "role_catalog": member_catalog["role_catalog"],
                 "folders": sorted(folders), "templates": [
                     {"id": "trip", "name": "Trip / research / expedition", "section": "turak"},

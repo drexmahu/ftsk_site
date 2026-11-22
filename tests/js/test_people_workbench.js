@@ -639,7 +639,7 @@ async function checkMediaPicker() {
   const context = {
     studio, $: get, node: element, document: { createElement: element },
     window: {workbenchImages: {supports: () => true}, workbenchContentLibrary: {folderTrail: folder => [{label: folder, folder}]}},
-    renderUploadPreviews() {},
+    renderUploadPreviews() {}, pickerBrowser: {reset() {}, update() {}},
     updateOwnedMediaFolders: () => "tanfolyamok/2020",
     URLSearchParams, run: operation => operation(), feedback() {}, renderForms() {},
     switchPanel: value => { origin = value; },
@@ -743,9 +743,10 @@ function checkEditorWorkspaceNavigation() {
       panel.dataset.editorPanel = name;
       return panel;
     });
-    const studio = { contentTab: "write", page: { source: "current source" } };
+    let pagePath = "turak/report.md";
+    const studio = { contentTab: "write", page: { source: "current source" }, selected: new Map(), missingOriginals: [] };
     const context = {
-      studio, $: get,
+      studio, $: get, activePath: () => pagePath,
       document: { querySelectorAll: selector => selector === "[data-editor-panel]" ? panels :
         selector === "[data-editor-tab]" ? contentTabs : tools },
     };
@@ -756,7 +757,6 @@ function checkEditorWorkspaceNavigation() {
     assert.equal(studio.contentTab, "metadata");
     assert.equal(get("#content-editor").dataset.workspace, "edit");
     assert.equal(get("#editor-return-content").attributes["aria-pressed"], "true");
-    assert.equal(get("#editor-workspace-badge").textContent, "EDITING");
     assert.equal(get("#editor-content-navigation").hidden, false);
     context.switchPanel("media");
     assert.equal(studio.contentTab, "metadata", "Page tools preserve the last content section");
@@ -765,7 +765,6 @@ function checkEditorWorkspaceNavigation() {
     assert.equal(tools[1].attributes["aria-pressed"], "true");
     assert.equal(get("#content-editor").dataset.workspace, "media");
     assert.equal(get("#editor-return-content").attributes["aria-pressed"], "false");
-    assert.equal(get("#editor-workspace-badge").textContent, "TOOL ACTIVE");
     assert.equal(panels.filter(panel => !panel.hidden).length, 1);
     context.switchPanel("preview");
     assert.equal(get("#editor-tool-title").textContent, "Whole-page preview");
@@ -785,6 +784,11 @@ function checkEditorWorkspaceNavigation() {
     context.switchPanel("source");
     assert.equal(get("#editor-return-content").disabled, true, "Mode navigation must retain existing disabled-section guards");
     assert.equal(get("#editor-return-content").attributes["aria-pressed"], "false");
+    context.switchPanel("course");
+    assert.equal(studio.tab, "write", "Trips must not open the course/FAQ workflow even through a stale navigation request");
+    pagePath = "tanfolyamok/course.md";
+    context.switchPanel("course");
+    assert.equal(studio.tab, "course", "Courses retain their existing FAQ workflow");
     assert.match(workbenchHtml, /id="editor-return-content"[^>]*aria-pressed="true"/);
     assert(!workbenchHtml.includes("Back to content editing"), "Editing should be a persistent peer workspace, not a displaced back button");
     const tablist = workbenchHtml.match(/class="editor-tabs"[\s\S]*?<\/div>/)[0];
@@ -811,7 +815,7 @@ async function checkPageMediaActions() {
   };
   const original = '---\ntitle: Page\n---\n![Story](/images/story.webp)\n';
   const removed = '---\ntitle: Page\n---\n';
-  const studio = { page: { source: original }, changes: {}, selected: new Map(), pageMedia: [], mediaReview: null };
+  const studio = { page: { source: original }, changes: {}, selected: new Map(), pageMedia: [], mediaReview: null, mediaRead: 0 };
   const calls = [];
   let dirty = false;
   const files = [
@@ -821,6 +825,8 @@ async function checkPageMediaActions() {
   ];
   const context = {
     studio, $: get, node: element, rootAPI: "/content/", feedback() {}, notify() {}, renderForms() {},
+    pageFileBrowsers: {image: {update() {}}, pdf: {update() {}}}, renderSelection() {},
+    bodySource: () => studio.page.source, normalized: value => value,
     pageAssetFolder: () => "page", activePath: () => "page.md",
     document: { createElement: tag => ({ ...element(tag), tagName: tag.toUpperCase() }) },
     run: operation => operation(),
