@@ -35,7 +35,7 @@ protokollkezelője és a helyi Windows munkafelület szükséges hozzájuk.
 
 ### PDF-beszámoló beolvasása
 
-A **Pages & posts → oldal → Read a PDF** eszköz helyben olvassa ki a PDF
+A **Trips / Courses → oldal → Read a PDF** eszköz helyben olvassa ki a PDF
 szövegét és képeit. Választhatsz meglévő PDF-et a fájltárból, vagy feltölthetsz
 legfeljebb **64 MiB** méretű dokumentumot. A célmappa az oldal útvonalából
 származik, nem kell kézzel megadni.
@@ -45,10 +45,17 @@ származik, nem kell kézzel megadni.
 2. Nézd át a szöveget és jelöld ki a megtartandó képeket. Az összetartozó
    képcsíkokat összeilleszti, az ismétlődő fotókat csak egyszer exportálja.
    A **Download extracted text.md** külön Markdown-vázlatot tölt le.
-3. Állítsd be a méretet, minőséget és opcionálisan a kártya/fejléc képét.
-   A meglévő konverter WebP-t készít, aránytartóan, felnagyítás nélkül:
-   alapból legfeljebb 1600 × 1600 pixel, 82-es minőség.
-4. Választhatsz hozzáfűzést, megerősítést igénylő szövegcserét, vagy csak
+3. **Prepare selected photos:** a közös képszerkesztőben vágj, méretezz át,
+   állíts fényerőt és tónusokat. Megtarthatod a változatlan kinézetű WebP-t,
+   több szerkesztett változatot, vagy mindkettőt. Egy ablak legfeljebb 100
+   forrásképet kezel; nagyobb kijelölés több adagban nyílik meg.
+4. Az **Exact saved outputs** alatt nézd át a ténylegesen mentett változatokat,
+   és válaszd ki a kártya/fejléc pontos képét. Megszakítás után nincs automatikus
+   szövegbeszúrás. Ha egy fotó néhány változata már elmentődött, a **Use already
+   saved versions** külön döntéssel kihagyja a befejezetlen változatokat;
+   újrapróbáláskor a kész adagok nem konvertálódnak újra.
+5. **Add reviewed result to draft:** választhatsz hozzáfűzést,
+   megerősítést igénylő szövegcserét, vagy csak
    képexportot. A metaadatok megmaradnak. **Save page** csak az átnézés és
    előnézet után szükséges; a beolvasás/export önmagában nem menti a cikket.
 
@@ -232,7 +239,7 @@ A dokumentum `type: member-cv` és `person: <személy-id>` frontmatterrel
 kapcsolódik a személyhez. A név, becenév és portré mindig a registryből
 származik, nem kell megismételni az oldalban. Személyenként legfeljebb egy
 ilyen oldal lehet. A **Save person** a profiladatokat és a külön dokumentumot
-együtt menti, mindkettőnél ütközésellenőrzéssel. Az oldal a **Pages & posts**
+együtt menti, mindkettőnél ütközésellenőrzéssel. Az oldal a **People documents**
 teljes forrásszerkesztőjéből is szerkeszthető; az egyéb frontmatter és SEO
 beállítások a személy szerkesztőjében történő mentéskor megmaradnak.
 Üresre törölt dokumentum mentése eltávolítja az oldalfájlt, de a képeket nem.
@@ -403,7 +410,7 @@ Az email és telefon a közös személyrekord **Contact email / Contact phone**
 mezőiben szerkeszthető. Csak egyeztetett, publikálható elérhetőségeket adj meg.
 A normál tag- és résztvevőkártya, valamint a profilablak nem jeleníti meg
 ezeket. Csak a kapcsolatkártya tartalmaz email- és telefonlinket.
-A **Pages & posts → People & contacts** fülön kereshető személyválasztóval
+A megnyitott oldal **People & contacts** fülén kereshető személyválasztóval
 állíthatod be a tanfolyam és a globális Kapcsolat oldal kapcsolattartóit,
 sorrendjüket és oldalankénti szerepüket. A jelvény képpel vagy monogrammal
 jelenik meg; rákattintva a személy szerkesztője nyílik meg.
@@ -634,27 +641,56 @@ beállítja a Gitben. A Workbench nem kér és nem tárol GitHub-jelszót vagy t
 Sikertelen hálózati műveletnél nem jelzi azt, hogy a munkaváltozat szinkronban van.
 
 Indítsd el a főmappában lévő `site_editor.bat` alkalmazást, majd nyisd meg a
-**Pages & posts** részt a <http://127.0.0.1:8879/#content> címen.
+**Trips**, **Courses**, vagy a többi tartalomkategóriát. Az összes kategória
+a <http://127.0.0.1:8879/#content> címen érhető el.
 
-- A kereshető könyvtárból nyiss meg egy cikket, vagy a **New** gombbal válassz
-  egy fenntartott mintát. Az új oldal mentésig nem kerül a lemezre.
-  A **Hide page library / Show page library** gombbal a könyvtár elrejthető,
-  így a szerkesztő a teljes munkaterületet használja. A böngésző megjegyzi
-  ezt a választást; rejtett könyvtár mellett a **New page** gomb is elérhető.
-- Az **Edit content** rész **Story**, **Page details**, **People & contacts**,
-  **SEO & sharing** és **Course & FAQ** fülei
+- A kezdő **Start here** lapon található **Search the site**, illetve a
+  navigáció **Find site text** pontja ugyanazt a globális keresést nyitja meg.
+  A mentett cikkekben, közönséges oldalakban és a kezdőlap YAML-blokkjaiban is
+  keres, továbbá a megosztott konfigurációban, adatokban, fordításokban és
+  sablonokban. Az ékezet, kis/nagybetű és eltérő szóköz nem akadály.
+  **Edit this match** a megfelelő oldalt és szövegrészletet nyitja meg;
+  a szövegtörzs a **Story**, az ismert mező a saját szerkesztési szakasza,
+  az egyéb YAML pedig a **Full source** felületen jelenik meg.
+  Az aktuális vázlat megőrzésére ugyanaz a mentés/eldobás döntés vonatkozik.
+  **Back to results** visszavisz a megtartott keresési eredményekhez.
+  A megosztott források külön jelölést kapnak: ha még nincs saját oldalszerkesztőjük,
+  a csempén belüli fájlműveletekkel nyithatók meg VS Code-ban vagy Intézőben.
+  A keresés nem vizsgál böngészőben tárolt vázlatot, generált HTML-t, illetve
+  kép- vagy PDF-fájlba ágyazott szöveget.
+- A teljes szélességű könyvtár kategóriánként mutatja a cikkeket. A keresés
+  több szót és ékezet nélküli gépelést is kezel; külön szűrhető a vázlat és a
+  **Needs attention** forráshiba. Új tartalommappák automatikusan új
+  kategóriaként jelennek meg; a kezdőlapok, szekciólapok és személyi dokumentumok
+  is elérhetők maradnak.
+- **New draft:** először címet és mintát válassz. A fájlnév automatikus;
+  az **Advanced placement** alatt továbbra is megadható egyedi fájlnév,
+  mappa vagy bundle. Mentésig nem jön létre oldalfájl.
+- A szerkesztő külön munkafelület. **Back to library** és kategóriaváltás
+  megőrzi az aktuális vázlatot; **Continue editing** visszavisz hozzá.
+  Másik oldal megnyitása vagy új vázlatra váltás előtt a nem mentett munkához
+  **Save & continue**, **Discard & continue**, vagy **Keep editing** választható.
+  Sikertelen mentés nem engedi elveszni a vázlatot.
+- Az oldalsó **Story**, **Page details & cover**, **People & contacts**,
+  **Sharing & search** és **Course & FAQ** szakaszok
   kezelik a történetet, képeket, résztvevőket, keresési adatokat, tanfolyami
-  mezőket. A külön **Page tools** rész az egész oldal eszközeit tartalmazza:
-  **Files & usage** (Page media), **Add images & PDFs**, **File & URL** és
+  mezőket. Az eszközök külön munkapanelt nyitnak:
+  **Files used by this page**, **Add photos & PDFs**, **Read a PDF**, **File & URL** és
   **Full source**. Ezek saját munkapanelt nyitnak, nem tartalmi fülek.
-  **Back to content editing** az előző tartalmi szakaszhoz tér vissza.
-  A szerkesztősáv **Preview page**, **Validate** és **Save page** gombjai az egész
-  oldalra vonatkoznak; az előnézet külön munkapanelben jelenik meg.
+  A tartalmi navigáció az eszközökben is elérhető marad.
+  A rögzített szerkesztősáv **Preview** és **Save page** gombjai az egész
+  oldalra vonatkoznak. **More actions** alatt található az ellenőrzés és törlés.
+  Az előnézet épülő, kész, elavult vagy hibás állapotát külön jelzés mutatja;
+  a részletes Hugo-napló lenyitható. Az előnézet nem mentés és nem publikálás.
   Az egyéb oldalak és tetszőleges YAML
   mezők a **Full source** fülön szerkeszthetők. Az alkalmazás nem WYSIWYG szerkesztő;
   a Markdown és shortcode-ok forrásként maradnak meg.
-- A **Page tools → Add images & PDFs** eszközben meglévő képet választhatsz, vagy az eredetit
+- Az **Add photos & PDFs** eszközben meglévő képet választhatsz, vagy az eredetit
   WebP-vé konvertálhatod.
+  A mappák morzsamenüvel, mappacsempékkel és **Up one folder / Refresh folder**
+  gombokkal böngészhetők. A kézi útvonal külön lenyitható beállítás.
+  A borító-, megosztási és más képmezők ugyanazt a közös képszerkesztőt használják,
+  és helyi előnézetet mutatnak; a PDF-ből kinyert képek sem kerülik meg azt.
   JPG, PNG, WebP és HEIF/HEIC eredetik is használhatók a fotó- és
   portrékonvertálóban. Többképes HEIF-ből az elsődleges kép készül el;
   a kimenet 8 bites WebP, nem őriz HDR-t, mozgást vagy mélységtérképet.
@@ -941,7 +977,7 @@ jelennek meg. A sorrend és az eseményen betöltött
 szerep itt állítható, nem a személy általános profiljában:
 
 A fotóra, monogramra vagy névre kattintva a személy szerkesztője nyílik meg.
-A megnyitott cikk nem mentett vázlata megmarad; a **Pages & posts** menüvel
+A megnyitott cikk nem mentett vázlata megmarad; a saját kategóriájának menüjével
 visszatérhetsz hozzá. A személy szerkesztésekor egy másik nem mentett
 személyvázlat elvetéséhez külön megerősítés kell.
 
@@ -971,7 +1007,7 @@ Ugyanez fut a CI-ban is minden pull requestnél.
 ### Fotók konvertálása
 
 Indítsd a `site_editor.bat` munkafelületet. A **Site photos** köteges
-konvertálást kínál; cikkhez a **Pages & posts → Add images & PDFs**,
+konvertálást kínál; cikkhez a saját kategóriában megnyitott oldal **Add photos & PDFs**,
 személyhez a **People & portraits** eszközeit használd. Állítsd be a
 célmappát, méretet és minőséget, majd kérj explicit WebP-konvertálást.
 Soha ne commitolj eredeti kamera-/telefonfotókat, azok messze túl nagyok.
@@ -1274,7 +1310,7 @@ a megfelelő front matter mezőt is frissítsd.
 
 ## 6. Bekezdések, archív beszámolók és PDF-letöltés
 
-A **Pages & posts → Page details → Report appearance & archive** részen
+A megnyitott cikk **Page details & cover → Report appearance & archive** részén
 a túrabeszámoló bekezdéstávolsága és igazítása külön állítható, azonnali
 szövegmintával. A teljes oldal ellenőrzéséhez továbbra is a **Render preview**
 használható. A front matter megfelelő mezői:

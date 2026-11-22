@@ -153,10 +153,11 @@ def compose_markdown(pages: list[dict], files: dict[str, dict]) -> str:
         content = [f'<!-- PDF page {page["number"]} -->', page["text"]]
         for identifier in dict.fromkeys(page["images"]):
             if identifier in files:
-                file = files[identifier]
-                alt = f'PDF: {page["number"]}. oldal, {file["number"]}. kép'
-                content.append('{{< image src=' + json.dumps(file["url"], ensure_ascii=False)
-                               + ' alt=' + json.dumps(alt, ensure_ascii=False) + ' >}}')
+                image = files[identifier]
+                for file in image.get("files", [image]):
+                    alt = f'PDF: {page["number"]}. oldal, {image["number"]}. kép'
+                    content.append('{{< image src=' + json.dumps(file["url"], ensure_ascii=False)
+                                   + ' alt=' + json.dumps(alt, ensure_ascii=False) + ' >}}')
         sections.append("\n\n".join(item for item in content if item))
     return "\n\n".join(sections) + "\n"
 
@@ -234,12 +235,41 @@ class PDFImportService:
         keep_pdf = payload.get("keep_pdf", True)
         if not isinstance(keep_pdf, bool):
             raise ContentError("keep_pdf must be true or false.")
+        reviewed = payload.get("image_files")
+        reviewed_files = {}
+        if reviewed is not None:
+            if not isinstance(reviewed, dict) or set(reviewed) != set(selected):
+                raise ContentError("Reviewed image files must match the selected PDF photographs.")
+            destination = self.app.content.guard(self.app.content.root / "static" / "images", session["folder"])
+            urls = set()
+            for image_id, outputs in reviewed.items():
+                if not isinstance(outputs, list) or not outputs or len(outputs) > 200:
+                    raise ContentError("Choose between 1 and 200 reviewed versions for each PDF photograph.")
+                reviewed_files[image_id] = []
+                for url in outputs:
+                    file = self.app.content.asset_path(url)
+                    if not url.startswith("/images/") or file.suffix.lower() != ".webp" or file.parent != destination:
+                        raise ContentError("Reviewed PDF photos must be WebP files in this page's exact owned image folder.")
+                    if url in urls or len(urls) >= 400:
+                        raise ContentError("Choose at most 400 distinct reviewed image files.")
+                    urls.add(url)
+                    try:
+                        with Image.open(file) as image:
+                            if image.format != "WEBP" or image.width * image.height > MAX_PIXELS:
+                                raise ContentError("Reviewed PDF photos must be valid WebP images within the pixel limit.")
+                            dimensions = {"width": image.width, "height": image.height}
+                            image.verify()
+                    except (OSError, ValueError) as exc:
+                        raise ContentError(f"Cannot read reviewed PDF photo {url}: {exc}") from exc
+                    reviewed_files[image_id].append({"url": url, "bytes": file.stat().st_size, **dimensions})
         settings = {key: integer(payload.get(key, default), label, low, high)
                     for key, default, label, low, high in (
                         ("width", 1600, "Maximum width", 64, 6000),
                         ("height", 1600, "Maximum height", 64, 6000),
                         ("quality", 82, "Quality", 1, 100))}
         request = {"images": selected, "keep_pdf": keep_pdf, **settings}
+        if reviewed is not None:
+            request["image_files"] = reviewed
         if session["exported"]:
             if session["exported"]["request"] != request:
                 raise ConflictError("This extraction was already exported with different settings. Extract again to change the selection.")
@@ -257,6 +287,9 @@ class PDFImportService:
         pdf_url = session["pdf_url"]
         try:
             for image_id in selected:
+                if reviewed is not None:
+                    converted[image_id] = {**known[image_id], "files": reviewed_files[image_id]}
+                    continue
                 raw = self.preview(session["id"], image_id).read_bytes()
                 entry = self.app.stage(image_id + ".png", raw)
                 try:
@@ -275,7 +308,10 @@ class PDFImportService:
             markdown = compose_markdown(session["pages"], converted)
             if keep_pdf and pdf_url:
                 markdown += '\n{{< pdf src=' + json.dumps(pdf_url, ensure_ascii=False) + ' title="Eredeti PDF beszámoló" >}}\n'
-            result = {"markdown": markdown, "images": list(converted.values()), "pdf_url": pdf_url,
+            exported_images = [{**known[image_id], **file}
+                               for image_id, image in converted.items()
+                               for file in image.get("files", [image])]
+            result = {"markdown": markdown, "images": exported_images, "pdf_url": pdf_url,
                       "warnings": session["warnings"], "folder": session["folder"]}
         except (ContentError, ToolError, OSError, ValueError):
             for file in reversed(written):

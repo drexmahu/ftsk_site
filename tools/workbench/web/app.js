@@ -2,7 +2,7 @@
 
 const $ = selector => document.querySelector(selector);
 const state = { token: "", git: null, photos: [], portraits: [], activePortrait: null, crop: null, image: null, busy: false, preview: null, initialized: false, jobState: "idle" };
-const viewNames = { overview: "Git · Start here", cleanup: "File cleanup", content: "Pages & posts", photos: "Site photos", portraits: "People & portraits", hero: "Hero slideshow", social: "Social previews", checks: "Build & checks", help: "Help & workflow" };
+const viewNames = { overview: "Git · Start here", cleanup: "File cleanup", content: "Content library", search: "Find site text", photos: "Site photos", portraits: "People & portraits", hero: "Hero slideshow", social: "Social previews", checks: "Build & checks", help: "Help & workflow" };
 
 function startupStatus(error = "") {
   const blocker = $("#workbench-startup");
@@ -57,18 +57,19 @@ async function action(operation) {
 }
 
 function navigate() {
-  let view = location.hash.slice(1) || "overview";
+  let view = location.hash.slice(1).split("/")[0] || "overview";
   if (!viewNames[view]) view = "overview";
   if (["content", "photos", "portraits", "hero"].includes(view) && !state.git?.editable) view = "overview";
   document.querySelectorAll("[data-panel]").forEach(panel => { panel.hidden = panel.dataset.panel !== view; });
   document.querySelectorAll("[data-view]").forEach(link => {
-    const active = link.dataset.view === view;
+    const active = link.dataset.view === view && (view !== "content" || link.getAttribute("href") === location.hash);
     link.classList.toggle("active", active);
     if (active) link.setAttribute("aria-current", "page");
     else link.removeAttribute("aria-current");
   });
-  $("#breadcrumb").textContent = viewNames[view];
-  document.title = `${viewNames[view]} | FTSK Site Workbench`;
+  const title = view === "content" ? document.querySelector('[data-content-label][aria-current="page"]')?.dataset.contentLabel || viewNames[view] : viewNames[view];
+  $("#breadcrumb").textContent = title;
+  document.title = `${title} | FTSK Site Workbench`;
   if (view === "hero" && !$("#hero-frame").getAttribute("src")) $("#hero-frame").src = "/hero/hero_focus_picker.html";
   if (view === "social" && !$("#social-frame").getAttribute("src")) renderSocial();
 }

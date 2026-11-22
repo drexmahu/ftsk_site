@@ -694,6 +694,14 @@ class Handler(BaseHTTPRequestHandler):
             with app.lock:
                 entry = app.upload(route.rsplit("/", 1)[-1])
                 self.file(app.scratch / entry["id"] / "preview.png")
+        elif route == "/api/workbench/content/search":
+            query = parse_qs(parsed.query)
+            raw_offset = query.get("offset", ["0"])[0]
+            if not re.fullmatch(r"\d{1,6}", raw_offset):
+                raise ToolError("Search offset must be a non-negative integer.")
+            with app.lock:
+                self.json(200, app.content.search(query.get("query", [""])[0],
+                                                query.get("scope", ["all"])[0], int(raw_offset)))
         elif route == "/api/workbench/content/catalog":
             with app.lock:
                 self.json(200, app.content.catalog())

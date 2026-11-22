@@ -55,16 +55,19 @@
       const group = controls(path);
       let row = null;
       if (target.matches("button, a, input, code, label")) {
-        if (target.matches("button, label") && !target.parentElement.classList.contains("file-navigation-row")) {
+        if (target.matches("button, a, label") && !target.parentElement.classList.contains("file-navigation-row")) {
           row = node("div", "", "file-navigation-row");
           target.before(row);
           row.append(target);
         }
-        if (target.matches("button, label")) {
+        if (target.matches("button, a, label")) {
           row = target.parentElement;
           row.hidden = target.hidden;
+          row.setAttribute("role", "group");
+          row.setAttribute("aria-label", `File card: ${path}`);
         }
-        (target.matches("input") ? target.closest("label") || target : target).after(group);
+        if (row) row.append(group);
+        else (target.matches("input") ? target.closest("label") || target : target).after(group);
       } else target.append(group);
       bindings.set(target, { path, group, row });
     });

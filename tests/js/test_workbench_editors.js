@@ -9,7 +9,7 @@ const source = fs.readFileSync(path.join(__dirname, "..", "..", "tools", "workbe
 const notices = [], clicks = [], events = [];
 const buttons = new Map();
 let dialogs = [], focus = null, panel = { dataset: { saveTarget: "save-page" } };
-let handler;
+let handler, queriedPanel;
 const context = {
   location: { hash: "#content" },
   notify: message => notices.push(message),
@@ -22,8 +22,11 @@ const context = {
   document: {
     get activeElement() { return { closest: selector => selector === "[data-save-target]" ? focus : null }; },
     querySelectorAll: () => dialogs,
-    querySelector: selector => selector === "#hero-frame" ?
-      { contentWindow: { dispatchEvent: event => events.push(event.type) } } : panel,
+    querySelector: selector => {
+      if (selector === "#hero-frame") return { contentWindow: { dispatchEvent: event => events.push(event.type) } };
+      queriedPanel = selector;
+      return panel;
+    },
     getElementById: id => buttons.get(id),
   },
 };
@@ -43,6 +46,11 @@ vm.runInNewContext(source, context);
 button("save-page");
 assert.deepEqual(press(), { prevented: true, stopped: true });
 assert.deepEqual(clicks, ["save-page"]);
+context.location.hash = "#content/turak";
+press();
+assert.equal(queriedPanel, '[data-panel="content"]', "Category routes must resolve the editor save scope");
+assert.equal(clicks.at(-1), "save-page");
+context.location.hash = "#content";
 button("member-save");
 dialogs = [{ dataset: { saveTarget: "member-save" } }];
 press({ ctrlKey: false, metaKey: true });

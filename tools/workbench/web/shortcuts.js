@@ -29,7 +29,7 @@
       banner.hidden = false;
     };
     const focused = document.activeElement?.closest("[data-save-target]");
-    const scope = dialog || focused || document.querySelector(`[data-panel="${location.hash.slice(1) || "overview"}"]`);
+    const scope = dialog || focused || document.querySelector(`[data-panel="${location.hash.slice(1).split("/")[0] || "overview"}"]`);
     if (!dialog && location.hash === "#hero") {
       const frame = document.querySelector("#hero-frame");
       if (frame?.contentWindow) frame.contentWindow.dispatchEvent(new Event("workbench-save"));

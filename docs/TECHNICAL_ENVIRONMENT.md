@@ -469,8 +469,13 @@ Focused tests:
 
 ### PDF import API and archive batches
 
-**Pages & posts → Read a PDF** provides staged local text/image extraction,
-photo selection and WebP conversion through the existing site converter.
+**Trips / Courses → Read a PDF** provides staged local text/image extraction,
+photo selection and the same shared image editor used by ordinary uploads.
+Photo preparation saves exact reviewed variants first; a separate action
+adds the reviewed text/files to the unsaved page draft. Selections above 100
+sources are processed in bounded batches. Cancelled batches retain completed
+results; partially saved sources require an explicit saved-version decision
+before continuing, rather than silently duplicating or inserting partial work.
 See the [editor workflow](CONTENT_GUIDE.md#pdf-beszámoló-beolvasása).
 Existing installations need the updated Python dependencies:
 
@@ -488,7 +493,7 @@ request to the branch shown by Workbench. Do not expose this server publicly.
 | `POST pdf-import` | Raw PDF bytes; URL-encoded `X-Filename` and `X-Content-Path` headers. Returns extraction metadata, page text, image IDs/previews, warnings and `markdown`. |
 | `POST pdf-import/inspect` | JSON `{"path":"turak/report.md","url":"/pdfs/turak/report.pdf"}` for an existing local PDF. Same result; no site writes. |
 | `GET pdf-import/{id}/{image-id}.png` | Temporary image preview, valid until discard or server shutdown. |
-| `POST pdf-import/export` | JSON with `id`, matching `path`, selected `images` IDs, optional `width`, `height`, `quality`, `keep_pdf`. Returns `markdown`, exported `images` with local URLs, `pdf_url`, `warnings`, `folder`. Does not save a content page. |
+| `POST pdf-import/export` | JSON with `id`, matching `path`, selected `images` IDs, optional `width`, `height`, `quality`, `keep_pdf`, and `image_files` mapping each selected source ID to reviewed WebP URLs. Reviewed files must exist in the exact page-owned image folder; multiple variants are supported, with at most 400 distinct files. Omitting the map preserves legacy converter-based exports. Returns `markdown`, exported `images` with local URLs, `pdf_url`, `warnings`, `folder`. Does not save a content page. |
 | `DELETE pdf-import/{id}` | Discards staging only; exported assets remain. |
 
 Example export JSON:
@@ -702,7 +707,15 @@ recommendation pulse; busy/disabled actions remain unhighlighted.
   remain explicitly last-known until the user fetches again.
   Tests use disposable checkouts and local bare remotes only; they never fetch,
   commit, push or switch the actual site checkout.
-- **Pages & posts:** search/filter the content library; create drafts from the
+- **Category content workspaces:** Trips and Courses have dedicated navigation;
+  additional sections are derived automatically from catalog paths and their
+  `_index.md` titles. `#content` remains the all-category library, while
+  `#content/{encoded-section}` opens a category. Known labels, accented multi-term
+  search, filtering and filename suggestions live in `content-library.js`.
+  Root pages, section indexes and people documents remain accessible.
+  The full-width library and focused editor are separate screens: browsing keeps
+  the active draft, while replacing it offers Save/Discard/Keep editing. Failed
+  saves never approve replacement. Create title-first drafts from the
   maintained trip, archived-PDF and course templates; edit Markdown, frontmatter,
   SEO, participant/FAQ cards and course milestones/contacts/flyers. Other
   Markdown pages are editable in source mode, including component-driven pages.
@@ -711,6 +724,27 @@ recommendation pulse; busy/disabled actions remain unhighlighted.
   source mode; unchanged source, comments and newline conventions are preserved.
   The media tab connects conversion, existing-image selection, image metadata,
   image/media/gallery/Markdown insertion, and PDF upload/insertion.
+  Media browsers use breadcrumbs/folder tiles and sequenced reads to reject stale
+  folder responses, without changing fixed page-owned upload destinations.
+  Preview status distinguishes building, ready, outdated and failed snapshots,
+  with a separate technical log. Malformed pages retain a filename title and
+  their explicit source error so they cannot break the entire catalog.
+  **Find site text** and the Start here search form share one global search
+  workflow. `GET /api/workbench/content/search?query=...&scope=all|pages|shared&offset=0`
+  searches saved Markdown, configuration, data, translations and templates,
+  ignoring case/accents and normalizing phrase whitespace. Queries are literal,
+  not regular expressions. Results contain repository paths, source kinds,
+  match counts and up to five line-numbered excerpts per file; pages of 25 files
+  return `next_offset`. Non-UTF-8, symbolic-link and over-2-MiB sources are
+  explicitly reported as skipped. Generated output, tool code and binary assets
+  are excluded. Page results use draft-safe `workbenchContent.openMatch` and
+  reveal the selected occurrence in Story, an existing guided field, or Full
+  source. Shared sources are labelled as requiring source editing until a
+  dedicated workflow exists. Search never writes files or replaces a draft.
+  Shared file-action controls form card footers rather than sibling icons;
+  interactive cards are wrapped to avoid nested buttons/links.
+  Workbench layouts target small laptops through intermediate desktop sizes
+  and ultrawide monitors; public-site mobile behavior is unchanged.
   Shared accessible typeahead controls show saved choices while typing, with
   arrow-key/Enter selection and Escape dismissal. Person suggestions include
   portraits/initials, stable IDs, aliases and membership context; already

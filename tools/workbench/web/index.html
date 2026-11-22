@@ -14,12 +14,14 @@
   <link rel="stylesheet" href="/workbench/files.css">
   <link rel="stylesheet" href="/workbench/uploads.css">
   <script src="/workbench/uploads.js" defer></script>
+  <script src="/workbench/content-library.js" defer></script>
   <script src="/workbench/app.js" defer></script>
   <link rel="stylesheet" href="/workbench/image-editor.css">
   <script src="/workbench/image-editor.js" defer></script>
   <script src="/workbench/people.js" defer></script>
   <script src="/workbench/autocomplete.js" defer></script>
   <script src="/workbench/content.js" defer></script>
+  <script src="/workbench/site-search.js" defer></script>
   <script src="/workbench/members.js" defer></script>
   <script src="/workbench/git.js" defer></script>
   <script src="/workbench/cleanup.js" defer></script>
@@ -48,7 +50,11 @@
       <a href="#cleanup" data-view="cleanup"><span aria-hidden="true">↳</span> File cleanup</a>
       <p class="git-nav-hint">Choose a branch before editing.<br>Return here to save &amp; publish.</p>
       <p class="nav-label workspace-nav-heading">Your workspace</p>
-      <a href="#content" data-view="content"><span aria-hidden="true">✎</span> Pages &amp; posts</a>
+      <div id="content-category-navigation" class="content-category-navigation" aria-label="Content categories">
+        <a href="#content/turak" data-view="content" data-content-label="Trips"><span aria-hidden="true">TR</span> Trips</a>
+        <a href="#content/tanfolyamok" data-view="content" data-content-label="Courses"><span aria-hidden="true">CR</span> Courses</a>
+      </div>
+      <a href="#search" data-view="search"><span aria-hidden="true">⌕</span> Find site text</a>
       <p class="nav-label">Images &amp; presentation</p>
       <a href="#photos" data-view="photos"><span aria-hidden="true">02</span> Site photos</a>
       <a href="#portraits" data-view="portraits"><span aria-hidden="true">03</span> People &amp; portraits</a>
@@ -105,6 +111,7 @@
       </section>
       <section data-panel="overview" data-save-target="git-review">
         <div class="page-heading"><p class="eyebrow">Git / Start here · Return here to save &amp; sync</p><h1>Your work, safely connected.</h1><p>Start a working branch here before using the workspace tools. Edit the site, then return here to save a checkpoint and send it to GitHub. Main is read-only. Nothing is sent automatically.</p></div>
+        <form id="start-site-search-form" class="panel site-quick-search" data-save-target=""><div><h2>Find content to edit</h2><p class="hint">Search every page, including ordinary site pages, plus shared site text.</p></div><label class="sr-only" for="start-site-search-query">Text to find across the site</label><input id="start-site-search-query" type="search" required maxlength="256" placeholder="A heading, label or sentence from the site"><button type="submit">Search the site</button></form>
         <div id="git-lock-notice" class="notice" role="status">Connecting to Git. Editing is locked until the branch is known.</div>
         <section class="panel git-dashboard" aria-label="Git workspace">
           <div class="section-heading"><h2>Where is your work?</h2><button id="git-refresh" type="button" class="secondary">Refresh local state</button></div>
@@ -209,7 +216,7 @@
         </dialog>
         <dialog id="git-conflict-dialog" aria-labelledby="git-conflict-heading" data-save-target="git-resolve-confirm"><h2 id="git-conflict-heading">Resolve text conflict</h2><p>Keep the intended final content and remove &lt;&lt;&lt;&lt;&lt;&lt;&lt;, ======= and &gt;&gt;&gt;&gt;&gt;&gt;&gt; markers. Ask the maintainer if unsure; Abort rebase remains available.</p><label>Final file contents<textarea id="git-conflict-source" rows="20" spellcheck="false" data-monaco-language="plaintext"></textarea></label><div class="actions"><button id="git-resolve-confirm">Accept this resolution</button><button id="git-conflict-cancel" class="secondary">Cancel</button></div></dialog>
         <div class="tool-grid">
-          <a class="tool-card" href="#content"><span class="card-number">CONTENT STUDIO</span><h2>Pages &amp; posts</h2><p>Create and edit trip reports, PDF archives and courses. Metadata, photos, shortcodes and real unsaved Hugo previews.</p><span class="card-link">Open content studio →</span></a>
+          <a class="tool-card" href="#content"><span class="card-number">SITE CONTENT</span><h2>Choose a content category</h2><p>Trips, courses, ordinary pages and future sections. Find a page, open a focused editor and preview your draft before saving.</p><span class="card-link">Browse content categories →</span></a>
           <a class="tool-card" href="#photos"><span class="card-number">01</span><h2>Site photos</h2><p>Batch WebP conversion. Keep proportions, reduce file size, choose a site image folder.</p><span class="card-link">Prepare photos →</span></a>
           <a class="tool-card" href="#portraits"><span class="card-number">02</span><h2>Members &amp; portraits</h2><p>Add, edit and remove roster entries. Choose portraits and face crops in the same workspace.</p><span class="card-link">Manage members →</span></a>
           <a class="tool-card" href="#hero"><span class="card-number">03</span><h2>Hero slideshow</h2><p>Subject placement, motion, mirroring and responsive framing in the existing live editor.</p><span class="card-link">Compose the hero →</span></a>
@@ -540,41 +547,60 @@
         </div>
         <div class="panel"><div class="section-heading"><h2>Activity log</h2><span id="job-state" class="badge">Idle</span></div><pre id="job-log" aria-live="off">Choose a check above. One job runs at a time.</pre></div>
       </section>
+      <section data-panel="search" hidden>
+        <div class="page-heading"><p class="eyebrow">Find your way to the right editor</p><h1>Find site text</h1><p>Search headings, story text, page settings and shared site sources. Pick a page match to edit it in context.</p></div>
+        <form id="site-search-form" class="panel site-search-form"><label>Text shown on the site<input id="site-search-query" type="search" required maxlength="256" placeholder="A word, heading or sentence"></label><label>Search in<select id="site-search-scope"><option value="all">All pages &amp; shared text</option><option value="pages">Page content only</option><option value="shared">Shared site text only</option></select></label><button id="site-search-submit" type="submit">Search</button></form>
+        <p class="hint">Searches saved Markdown and YAML page content, configuration, data, translations and templates. Ignores case, accents and whitespace differences. Generated output, editor code, unsaved drafts and text inside image/PDF files are not searched.</p>
+        <p id="site-search-status" class="notice" role="status" aria-live="polite">Enter text to find the page or shared source that owns it.</p><progress id="site-search-progress" aria-label="Searching saved site sources" hidden></progress>
+        <h2 id="site-search-title">Search results</h2><div id="site-search-results" class="site-search-results"></div><button id="site-search-more" type="button" class="secondary" hidden>Show more matching files</button>
+      </section>
       <section data-panel="content" data-save-target="save-page" hidden>
-        <div class="page-heading"><p class="eyebrow">Content studio / Write, compose, verify</p><h1>Pages &amp; posts</h1><p>Guided editing for trips, PDF archives and courses. Source editing for every Markdown page. Preview unsaved changes through the real Hugo layouts.</p><div class="actions"><button id="toggle-content-library" class="secondary" aria-expanded="true" aria-controls="content-library">Hide page library</button><button id="new-page-toolbar" class="secondary" hidden>+ New page</button><button class="secondary" data-open-syntax aria-haspopup="dialog" aria-controls="syntax-help-dialog">Markdown &amp; syntax help</button></div></div>
+        <div id="content-library-heading" class="page-heading"><p class="eyebrow">Your content</p><h1 id="content-category-title">Content library</h1><p id="content-category-description">Choose a category, find a page, or start a new draft. Saving changes local files only.</p></div>
+        <div id="content-feedback" class="notice" role="status" aria-live="polite" hidden></div>
         <div class="content-shell">
           <aside id="content-library" class="content-library panel" aria-label="Content library">
-            <div class="section-heading"><h2>Your pages</h2><button id="new-page">+ New</button></div>
-            <label>Search<input id="content-search" type="search" placeholder="Title, filename, year…"></label>
-            <div class="field-pair"><label>Type<select id="content-filter"><option value="">All pages</option><option value="turak">Trips / PDF archives</option><option value="tanfolyamok">Courses</option><option value="other">Other pages</option></select></label><label>Status<select id="content-status-filter"><option value="">All</option><option value="draft">Draft</option><option value="published">Not draft</option></select></label></div>
-            <div class="actions"><label class="library-sort">Sort<select id="content-sort"><option value="date">Newest date</option><option value="title">Title</option><option value="path">Path</option></select></label><button class="secondary" id="refresh-content">Refresh</button></div>
-            <p id="content-count" class="hint"></p><div id="content-list" class="content-list"></div>
+            <div class="section-heading"><div><a href="#content" id="content-all-categories" hidden>All categories</a><h2 id="content-library-title">Find a page</h2></div><button id="new-page">New draft</button></div>
+            <div id="content-categories" class="content-category-grid"></div>
+            <div id="content-resume" class="content-resume" hidden><div><strong id="content-resume-title"></strong><p id="content-resume-state" class="hint"></p></div><button id="content-resume-page" type="button" class="secondary">Continue editing</button></div>
+            <div class="content-library-filters">
+              <label>Find a page<input id="content-search" type="search" placeholder="Title, filename or year"></label>
+              <label>Status<select id="content-status-filter"><option value="">Every status</option><option value="draft">Drafts</option><option value="published">Not a draft</option><option value="attention">Needs attention</option></select></label>
+              <label>Sort<select id="content-sort"><option value="date">Newest first</option><option value="title">Title A–Z</option><option value="path">File path</option></select></label>
+            </div>
+            <div class="section-heading"><p id="content-count" class="hint" role="status" aria-live="polite"></p><div class="actions"><button class="secondary" id="content-clear-filters" type="button">Clear filters</button><button class="secondary" id="refresh-content">Reload library</button></div></div>
+            <p class="hint">“Not a draft” does not guarantee publication: dates and site settings also apply.</p>
+            <div id="content-list" class="content-list"></div>
+            <div id="content-empty" class="empty-editor" hidden><h3>No matching pages</h3><p>Clear filters to see more, or create a draft in this category.</p><button id="new-page-empty" type="button">Create a draft</button></div>
           </aside>
-          <div class="content-detail">
-            <div id="content-empty" class="panel empty-editor"><span class="eyebrow">Start with a page</span><h2>Your next story belongs here.</h2><p>Open an existing page or create a draft from the maintained site templates. Nothing is written until you save.</p><button id="new-page-empty">Create a draft</button></div>
+          <div class="content-detail" hidden>
             <div id="content-editor" hidden>
-              <div class="editor-bar panel"><div><strong id="editing-title">Untitled</strong><code id="editing-path"></code><span id="editor-state" class="badge">Saved</span></div><div class="actions" aria-label="Whole-page actions"><button class="secondary" id="validate-page">Validate</button><button class="secondary" id="preview-page">Preview page</button><button id="save-page">Save page</button><button class="danger secondary" id="delete-page">Delete page…</button></div></div>
-              <div id="content-feedback" class="notice" role="status" aria-live="polite" hidden></div>
+              <div class="editor-bar panel"><div class="editor-identity"><button id="back-content-library" type="button" class="secondary">Back to library</button><div><strong id="editing-title">Untitled</strong><code id="editing-path"></code></div><span id="editor-state" class="badge">Saved</span></div><div class="actions" aria-label="Whole-page actions"><button class="secondary" id="preview-page">Preview</button><button id="save-page">Save page</button><details class="editor-more"><summary>More actions</summary><button class="secondary" id="validate-page">Check page details</button><button class="danger secondary" id="delete-page">Delete page…</button></details></div></div>
+              <div id="content-match-note" class="notice" hidden><p id="content-match-description"></p><button id="content-back-search" type="button" class="secondary">Return to search results</button></div>
+              <div class="content-editor-body">
+              <nav class="content-editor-navigation" aria-label="Page editor sections">
+              <div id="editor-content-navigation">
+                <p class="nav-label">Edit your page</p>
+                <div class="editor-tabs" role="tablist" aria-label="Content sections" aria-orientation="vertical">
+                  <button role="tab" aria-selected="true" data-editor-tab="write">Story</button><button role="tab" aria-selected="false" data-editor-tab="metadata">Page details &amp; cover</button><button role="tab" aria-selected="false" data-editor-tab="contacts">People &amp; contacts</button><button role="tab" aria-selected="false" data-editor-tab="course">Course &amp; FAQ</button><button role="tab" aria-selected="false" data-editor-tab="seo">Sharing &amp; search</button>
+                </div>
+              </div>
               <section class="editor-page-tools" aria-label="Page workspace modes">
-                <div><p class="eyebrow">Choose your workspace</p><p class="hint">Edit the page or switch to a dedicated tool. Your draft stays with you; the highlighted workspace is active below.</p></div>
+                <p class="nav-label">Photos &amp; files</p>
                 <div class="page-tool-actions">
-                  <button type="button" id="editor-return-content" class="secondary" aria-pressed="true"><strong>Edit page</strong><span>Story, details &amp; people</span></button>
-                  <button type="button" class="secondary" data-editor-tool="page-media" aria-pressed="false"><strong>Files &amp; usage</strong><span>Page media · remove &amp; delete</span></button>
-                  <button type="button" class="secondary" data-editor-tool="media" aria-pressed="false"><strong>Add images &amp; PDFs</strong><span>Upload, borrow &amp; insert</span></button>
+                  <button type="button" class="secondary" data-editor-tool="media" aria-pressed="false"><strong>Add photos &amp; PDFs</strong><span>Prepare, choose and insert</span></button>
+                  <button type="button" class="secondary" data-editor-tool="page-media" aria-pressed="false"><strong>Files used by this page</strong><span>Check usage or remove files</span></button>
                   <button type="button" class="secondary" data-editor-tool="pdf-import" aria-pressed="false"><strong>Read a PDF</strong><span>Extract text &amp; review photos</span></button>
                   <button type="button" class="secondary" data-editor-tool="placement" aria-pressed="false"><strong>File &amp; URL</strong><span>Path, aliases &amp; upload folders</span></button>
                   <button type="button" class="secondary" data-editor-tool="source" aria-pressed="false"><strong>Full source</strong><span>Advanced Markdown &amp; YAML</span></button>
                 </div>
               </section>
+              <button type="button" class="secondary" data-open-syntax aria-haspopup="dialog" aria-controls="syntax-help-dialog">Writing help &amp; examples</button>
+              </nav>
+              <div class="content-editor-panels">
               <div id="editor-tool-heading" class="section-heading editor-tool-heading" role="status" aria-live="polite">
                 <div><p id="editor-workspace-kind" class="eyebrow">Editing mode</p><h2 id="editor-tool-title">Edit page</h2><p id="editor-workspace-detail" class="hint">Write your story and manage page details below.</p></div>
                 <span id="editor-workspace-badge" class="badge">EDITING</span>
-              </div>
-              <div id="editor-content-navigation">
-                <p class="eyebrow">Edit content</p>
-                <div class="editor-tabs" role="tablist" aria-label="Content sections">
-                  <button role="tab" aria-selected="true" data-editor-tab="write">Story</button><button role="tab" aria-selected="false" data-editor-tab="metadata">Page details</button><button role="tab" aria-selected="false" data-editor-tab="contacts">People &amp; contacts</button><button role="tab" aria-selected="false" data-editor-tab="course">Course &amp; FAQ</button><button role="tab" aria-selected="false" data-editor-tab="seo">SEO &amp; sharing</button>
-                </div>
+                <button type="button" id="editor-return-content" class="secondary" aria-pressed="true" hidden>Return to story</button>
               </div>
               <div class="panel" data-editor-panel="write" role="tabpanel">
                 <div class="section-heading"><h2>Markdown story</h2><span id="word-count" class="hint"></span></div>
@@ -614,7 +640,7 @@
                 <div id="media-target" class="notice" hidden><span id="media-target-label"></span> <button type="button" id="media-target-cancel" class="secondary">Cancel assignment</button></div>
                 <div class="section-heading"><h2>Choose existing images · page-owned or borrowed</h2><button class="secondary" id="use-page-folder">Browse page's own images</button></div>
                 <p class="hint">Browse this page's folder, or borrow existing files from any other folder below. Browsing and assigning a borrowed image does not copy it or change where new uploads go.</p>
-                <div class="field-pair"><label>Browse folder under static/images/<input id="asset-folder" list="image-folders" placeholder="gallery or turak/slug"></label><label>Filter filenames<input id="asset-search" type="search" placeholder="Search this folder"></label></div><div class="actions"><button class="secondary" id="browse-assets">Browse</button><button class="secondary" id="asset-parent">Parent folder</button><span id="asset-count" class="hint"></span></div><div id="asset-folders" class="folder-chips"></div><div id="asset-grid" class="asset-grid"></div>
+                <nav id="asset-breadcrumbs" class="asset-breadcrumbs" aria-label="Image folder"></nav><div class="actions"><button class="secondary" id="asset-parent">Up one folder</button><button class="secondary" id="asset-root">Browse all folders</button><button class="secondary" id="asset-refresh">Refresh folder</button><span id="asset-count" class="hint" role="status" aria-live="polite"></span></div><div id="asset-folders" class="folder-chips"></div><label>Find a file in this folder<input id="asset-search" type="search" placeholder="Filename"></label><details><summary>Go to an image folder by path</summary><label>Folder under static/images/<input id="asset-folder" placeholder="gallery or turak/slug"></label><button class="secondary" id="browse-assets">Open folder</button></details><div id="asset-grid" class="asset-grid"></div>
                 <details open class="media-converter"><summary>Upload new images · page-owned files only</summary><p class="hint">New files always go to this page's fixed folder, even while browsing borrowed images. Crop, adjust tones and create versions in the shared editor; only reviewed WebP outputs are written. Names get suffixes on collision. Closing never undoes files already saved; the page draft is separate. Custom names may include the original image extension.</p><label>Fixed destination under static/images/<input id="content-image-folder" readonly></label><div class="crop-settings"><label>Max width<input id="content-image-width" type="number" min="64" max="6000" value="1600"></label><label>Max height<input id="content-image-height" type="number" min="64" max="6000" value="1600"></label><label>Quality<input id="content-image-quality" type="number" min="1" max="100" value="82"></label><label>Output name (single file, optional)<input id="content-image-name" placeholder="01-cave-entrance.png"></label></div><label class="dropzone" for="content-image-files"><strong>Choose or drop original photos</strong><span>JPG, PNG, WebP, HEIF/HEIC</span><input id="content-image-files" type="file" accept="image/jpeg,image/png,image/webp,image/heif,image/heic,.heif,.heic" multiple></label><button id="content-convert">Edit &amp; add images</button><div id="content-conversion-results" class="hint"></div></details>
                 <h3>Insert images / site shortcodes</h3><p class="hint">Select photos above in gallery order. Use a chosen photo as the banner/card/social override or insert a layout at the last Markdown cursor position.</p><div class="form-grid"><label>Layout<select id="insert-layout"><option value="image">Standalone image shortcode</option><option value="markdown">Markdown image</option><option value="media">Text next to a photo</option><option value="gallery">Gallery (all selected photos)</option></select></label><label>Alt text (required)<input id="insert-alt" placeholder="Describe the photo"></label><label>Caption (optional)<input id="insert-caption"></label><label>Desktop width (%)<input id="insert-width" type="number" min="10" max="100" value="60"></label><label>Mobile width (%)<input id="insert-mobile-width" type="number" min="10" max="100" value="100"></label><label>Image alignment / side<select id="insert-side"><option value="center">Center (image)</option><option value="right">Right</option><option value="left">Left</option></select></label><label>Media font multiplier<input id="insert-font" type="number" min="0.8" max="1.5" step="0.1" value="1"></label></div><div id="selected-photo-details"></div><button id="insert-photos">Insert into story</button><pre id="shortcode-output" hidden></pre>
                 <details class="media-converter"><summary>PDF reports</summary><button type="button" class="secondary" id="choose-pdf">Choose / borrow existing PDF…</button><label>Existing local PDF URL (manual entry also supported)<input id="insert-pdf-url" placeholder="/pdfs/turak/legacy-trip.pdf"></label><label>PDF title<input id="insert-pdf-title" placeholder="Full report"></label><button class="secondary" id="insert-pdf">Insert PDF shortcode</button><h3>Upload a new PDF · page-owned</h3><label>Fixed destination under static/pdfs/<input id="pdf-folder" readonly></label><label>PDF file<input id="pdf-file" type="file" accept="application/pdf,.pdf"></label><button class="secondary" id="upload-pdf">Upload PDF to page folder</button><p class="hint">30 MiB maximum. Borrowed PDFs stay where they are. New uploads always use the page-owned folder and persist independently of saving the page. Existing PDFs are never overwritten.</p></details>
@@ -622,7 +648,7 @@
               <div class="panel pdf-import-panel" data-editor-panel="pdf-import" role="region" aria-label="PDF to Markdown import" hidden>
                 <p class="eyebrow">PDF → review → Markdown draft</p>
                 <p>Recover the story and photographs from a report. Extraction stays temporary until you choose to export. Your existing page is never automatically saved or replaced.</p>
-                <div class="pdf-import-steps" aria-label="Import workflow"><span>1 · Read locally</span><span>2 · Review text &amp; photos</span><span>3 · Convert &amp; add to draft</span></div>
+                <div class="pdf-import-steps" aria-label="Import workflow"><span>1 · Extract</span><span>2 · Select &amp; prepare photos</span><span>3 · Review saved versions</span><span>4 · Add to draft</span></div>
                 <div class="form-grid">
                   <label>PDF source<select id="pdf-import-source"><option value="existing">Existing site PDF</option><option value="upload">PDF from my computer</option></select></label>
                   <label>Fixed image destination under static/images/<input id="pdf-import-folder" readonly></label>
@@ -637,18 +663,20 @@
                   <p id="pdf-import-warnings" class="notice"></p>
                   <details open><summary>Extracted text · page order</summary><textarea id="pdf-import-text" class="source-editor" readonly aria-label="Extracted Markdown text"></textarea></details>
                   <div class="section-heading"><h3>Photographs · select the ones to keep</h3><div class="actions"><button type="button" class="secondary" id="pdf-import-all">Select all</button><button type="button" class="secondary" id="pdf-import-none">Select none</button></div></div>
-                  <p class="hint">Exports use the site converter: WebP, original aspect ratio, no upscale. Image descriptions start as page-number placeholders; replace them with meaningful descriptions in the draft.</p>
+                  <p class="hint">Use the same image editor as normal uploads: crop, resize and adjust tones; keep original-looking WebPs, edited versions, or both. Larger selections open in batches of up to 100. Image descriptions start as page-number placeholders; replace them in the draft.</p>
                   <div id="pdf-import-images" class="pdf-import-images"></div>
                   <div class="form-grid">
-                    <label>Maximum width<input id="pdf-import-width" type="number" min="64" max="6000" value="1600"></label>
-                    <label>Maximum height<input id="pdf-import-height" type="number" min="64" max="6000" value="1600"></label>
+                    <label>Default width for next batch<input id="pdf-import-width" type="number" min="64" max="6000" value="1600"></label>
+                    <label>Default height for next batch<input id="pdf-import-height" type="number" min="64" max="6000" value="1600"></label>
                     <label>WebP quality<input id="pdf-import-quality" type="number" min="1" max="100" value="82"></label>
                     <label>Card &amp; heading photo<select id="pdf-import-cover"><option value="">Keep the current page photos</option></select></label>
                     <label>Add extracted story<select id="pdf-import-mode"><option value="append">Append to the current story</option><option value="replace">Replace the story after confirmation</option><option value="images">Export images only · keep story</option></select></label>
                     <label class="check-label"><input id="pdf-import-keep-pdf" type="checkbox" checked> Keep the original PDF link (uploads also save the original)</label>
                   </div>
+                  <div class="actions"><button type="button" id="pdf-import-prepare">Prepare selected photos</button><button type="button" class="secondary" id="pdf-import-use-saved" hidden>Use already saved versions · omit unfinished versions</button></div>
+                  <h3>Exact saved outputs</h3><p id="pdf-import-output-summary" class="hint" role="status" aria-live="polite"></p><div id="pdf-import-outputs" class="pdf-import-images"></div>
                   <p class="notice">Exported images and uploaded originals persist on disk even if you discard the Markdown draft. No existing files are overwritten. Review the draft, render a preview, then save explicitly.</p>
-                  <button type="button" id="pdf-import-apply">Convert selected photos &amp; add to draft</button>
+                  <button type="button" id="pdf-import-apply">Add reviewed result to draft</button>
                 </section>
               </div>
               <div class="panel" data-editor-panel="page-media" role="region" aria-label="Page files and usage workspace" hidden>
@@ -662,14 +690,16 @@
                 <p id="page-media-status" class="hint" role="status" aria-live="polite"></p><div id="page-media-files"></div>
               </div>
               <div class="panel" data-editor-panel="preview" role="region" aria-label="Whole-page preview workspace" hidden>
-                <div class="section-heading"><div><h2>Actual Hugo preview</h2><p id="content-preview-state">Render an unsaved preview to see the actual site.</p></div><button class="secondary" id="preview-page-again">Render current draft</button></div>
+                <div class="section-heading"><div><h2>Page preview</h2><p id="content-preview-state" role="status" aria-live="polite">Build a preview to see your unsaved draft. This does not publish or save the page.</p></div><button class="secondary" id="preview-page-again">Build current draft</button></div><progress id="content-preview-progress" aria-label="Building draft preview" hidden></progress>
                 <div class="actions preview-toolbar"><label>Viewport<select id="content-preview-width"><option value="100%">Fit workspace</option><option value="375px">Phone · 375 px</option><option value="768px">Tablet · 768 px</option><option value="1200px">Desktop · 1200 px</option><option value="1920px">Wide · 1920 px</option></select></label><button class="secondary" id="preview-social">Inspect this draft's social card</button><a id="preview-external" target="_blank" rel="noopener" hidden>Open preview ↗</a></div>
                 <div class="content-preview-container"><iframe id="content-preview-frame" title="Unsaved page rendered by Hugo" sandbox="allow-scripts allow-forms allow-popups allow-downloads" hidden></iframe></div>
-                <iframe id="content-social-frame" title="Social card of the unsaved draft" hidden></iframe><details open><summary>Build &amp; validation log</summary><pre id="content-preview-log">No preview build yet.</pre></details>
+                <iframe id="content-social-frame" title="Social card of the unsaved draft" hidden></iframe><details><summary>Technical build &amp; validation log</summary><pre id="content-preview-log">No preview build yet.</pre></details>
               </div>
               <div class="panel" data-editor-panel="source" role="region" aria-label="Full source workspace" hidden><h2>Complete Markdown &amp; YAML</h2><p class="notice">All frontmatter—including unknown fields, component blocks and comments—is accessible here. Unchanged blocks are preserved; edited guided blocks are serialized as YAML. Raw edits take precedence when returning to guided forms.</p><label class="sr-only" for="post-source">Full Markdown source</label><textarea id="post-source" class="source-editor" rows="32" spellcheck="false" data-monaco-language="hugo-markdown"></textarea><div class="actions"><button class="secondary" id="download-source">Download draft .md</button><button class="secondary" id="reload-page">Reload disk version…</button></div></div>
               <div class="panel prose" data-editor-panel="syntax" role="region" aria-label="Syntax help workspace" hidden>
                 <h2>Markdown &amp; site shortcode help</h2><p>Use ## for story sections; the template prints the page title separately. Participant/author cards, FAQ and course details come from frontmatter.</p><div id="syntax-examples"></div><h3>Maintained site guides</h3><div class="actions"><button class="secondary" data-content-guide="CONTENT_GUIDE.md">Content &amp; image guide</button><button class="secondary" data-content-guide="BLOGPOST_TEMPLATES.md">Full article templates</button><button class="secondary" data-content-guide="TANFOLYAM_GUIDE.md">Course publishing workflow</button></div><pre id="content-guide" hidden></pre>
+              </div>
+              </div>
               </div>
             </div>
           </div>
@@ -679,11 +709,13 @@
       <dialog id="media-picker" aria-labelledby="media-picker-title">
         <div class="section-heading"><h2 id="media-picker-title">Choose a file</h2><button type="button" id="media-picker-cancel" class="secondary">Cancel</button></div>
         <p class="hint">Start with this page's own files, or use Borrow existing file to browse elsewhere. Choosing a file only creates a reference; it never copies or moves the file. New uploads always go to the page-owned folder.</p>
-        <label><span id="media-picker-folder-label">Folder</span><input id="media-picker-folder"></label>
-        <div class="actions"><button type="button" id="media-picker-owned" class="secondary">This page's own files</button><button type="button" id="media-picker-borrow" class="secondary">Borrow existing file…</button><button type="button" id="media-picker-browse" class="secondary">Browse</button><button type="button" id="media-picker-parent" class="secondary">Parent folder</button><button type="button" id="media-picker-upload" class="secondary">Upload new file to page folder…</button></div>
+        <nav id="media-picker-breadcrumbs" class="asset-breadcrumbs" aria-label="Current file folder"></nav>
+        <div class="actions"><button type="button" id="media-picker-owned" class="secondary">This page's files</button><button type="button" id="media-picker-borrow" class="secondary">Browse all folders</button><button type="button" id="media-picker-parent" class="secondary">Up one folder</button><button type="button" id="media-picker-refresh" class="secondary">Refresh folder</button><button type="button" id="media-picker-upload" class="secondary">Upload to this page…</button></div>
+        <details><summary>Go to a folder by path</summary><label><span id="media-picker-folder-label">Folder path</span><input id="media-picker-folder"></label><button type="button" id="media-picker-browse" class="secondary">Open folder</button></details>
         <div id="media-picker-folders" class="folder-chips"></div>
         <label>Filter filenames<input type="search" id="media-picker-search"></label>
         <p id="media-picker-status" class="hint" role="status" aria-live="polite"></p>
+        <p id="media-picker-error" class="notice error" role="alert" hidden></p>
         <label id="media-picker-image-upload" class="dropzone">Upload &amp; edit new images for this field<input id="media-picker-image-files" type="file" accept="image/jpeg,image/png,image/webp,image/heif,image/heic,.heif,.heic" multiple></label>
         <div id="media-picker-files" class="asset-grid"></div>
       </dialog>
@@ -703,7 +735,8 @@
         <button type="button" id="delete-media-apply" class="danger">Delete this file permanently</button>
       </dialog>
       <dialog id="syntax-help-dialog" aria-labelledby="syntax-help-title"><div class="section-heading"><h2 id="syntax-help-title">Markdown &amp; site syntax</h2><button class="secondary" data-close-dialog>Close</button></div><p class="hint">Copy an example, then adapt its text, paths and alt descriptions. The writing toolbar formats selected text; image layouts are inserted at the remembered Markdown cursor. Ctrl+S saves, Ctrl+Shift+P renders, and Escape closes this window.</p><label>Find syntax<input id="syntax-search" type="search" placeholder="Gallery, FAQ, table, image…"></label><p id="syntax-result-count" class="hint" role="status"></p><div class="actions syntax-builders"><button class="secondary" data-insert-layout="image">Build image…</button><button class="secondary" data-insert-layout="gallery">Build gallery…</button><button class="secondary" data-insert-layout="media">Build text &amp; photo…</button><button class="secondary" data-insert-layout="pdf">Upload / insert PDF…</button><button class="secondary" data-add-faq>Add FAQ…</button></div><p class="hint">Image builders include the library, conversion and your chosen output folder. FAQ cards belong to YAML frontmatter, not an inline shortcode.</p><div id="syntax-dialog-examples"></div></dialog>
-      <dialog id="new-page-dialog"><form id="new-page-form"><div class="section-heading"><h2>Start a new draft</h2><button type="button" class="secondary" data-close-dialog>Cancel</button></div><label>Template<select id="new-page-template"></select></label><label>Filename / slug<input id="new-page-slug" required placeholder="2026-trip-name" pattern="[\p{L}\p{N}_\-]+"></label><label>Folder under content/<input id="new-page-folder" value="turak"></label><label class="check-label"><input id="new-page-bundle" type="checkbox"> Leaf bundle (slug/index.md)</label><p class="notice">Maintained templates start as drafts with explicit placeholders. Replace them before publishing. PDF archives require legacy- filenames.</p><button>Create in editor</button></form></dialog>
+      <dialog id="new-page-dialog" aria-labelledby="new-page-heading"><form id="new-page-form"><div class="section-heading"><h2 id="new-page-heading">Start a new draft</h2><button type="button" class="secondary" data-close-dialog>Cancel</button></div><label>Page title<input id="new-page-title" required placeholder="Give your story a name"></label><label>What are you creating?<select id="new-page-template"></select></label><p id="template-description" class="hint"></p><details><summary>Advanced placement · filename &amp; folder</summary><label>Filename<input id="new-page-slug" required pattern="[\p{L}\p{N}_\-]+" placeholder="my-new-story"></label><label>Content folder<input id="new-page-folder"></label><label class="check-label"><input id="new-page-bundle" type="checkbox"> Use a page bundle (folder/index.md)</label><p class="hint">PDF archive filenames start with legacy-. Placement controls the URL and owned upload folders.</p></details><p class="notice">This opens a draft, not a published page. No page file is created until you save. Replace template placeholders before publishing.</p><p id="new-page-error" class="notice error" role="alert" hidden></p><button type="submit">Start writing</button></form></dialog>
+      <dialog id="content-draft-dialog" data-save-target="content-draft-save" aria-labelledby="content-draft-heading"><h2 id="content-draft-heading">Keep your current work?</h2><p><strong id="content-draft-title"></strong> has unsaved changes. Save them before opening another page, discard them, or keep editing.</p><p id="content-draft-error" class="notice error" role="alert" hidden></p><div class="actions"><button id="content-draft-save" type="button">Save &amp; continue</button><button id="content-draft-cancel" type="button" class="secondary">Keep editing</button><button id="content-draft-discard" type="button" class="danger secondary">Discard &amp; continue</button></div></dialog>
       <dialog id="delete-page-dialog"><div class="section-heading"><h2>Delete page &amp; chosen assets</h2><button class="secondary" data-close-dialog>Cancel</button></div><p class="notice error">This permanently removes selected files from the checkout. Git can recover tracked versions only—not untracked files or unsaved edits. Nothing is deleted by default except the confirmed Markdown page.</p><p id="delete-page-path"></p><div id="delete-assets" class="deletion-assets"></div><p id="delete-incoming" class="hint"></p><label>Type the full Markdown path to confirm<input id="delete-confirm"></label><button id="confirm-delete-page" class="danger">Delete selected files</button></dialog>
       <section data-panel="help" hidden>
         <div class="page-heading"><p class="eyebrow">How it fits together</p><h1>A simple workflow</h1><p>This workspace combines the existing tools and a file-backed content studio. It does not configure production credentials or deploy the site.</p></div>
