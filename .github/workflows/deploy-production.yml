@@ -59,6 +59,7 @@ jobs:
           SFTP_KNOWN_HOSTS: ${{ secrets.SFTP_KNOWN_HOSTS }}
           SFTP_PORT: ${{ vars.SFTP_PORT || '22' }}
           DRY_RUN: ${{ inputs.dry_run }}
+          SITE_URL: ${{ vars.PRODUCTION_BASE_URL || 'https://www.ftsk.hu/' }}
         run: |
           set -euo pipefail
           args=(--source public)

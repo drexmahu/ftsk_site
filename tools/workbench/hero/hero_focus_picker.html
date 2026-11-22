@@ -1217,6 +1217,7 @@
   function setStatus(text, isError) {
     connectedStatus.textContent = text;
     connectedStatus.classList.toggle('is-error', !!isError);
+    if (isError && window.workbenchNotify) window.workbenchNotify(text, 'error');
   }
 
   function filenameOf(path) {

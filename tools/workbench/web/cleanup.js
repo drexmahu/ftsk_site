@@ -116,15 +116,17 @@ async function cleanupRefresh() {
   cleanupRenderProgress(progress);
   $("#cleanup-log").textContent = progress.log || "No cleanup scan yet.";
   if (progress.state === "running") {
+    if (cleanupUI.disconnected) notify("", "", { key: "cleanup-connection" });
     cleanupUI.disconnected = false;
     cleanupUI.job = { state: "running", action: "cleanup-scan" };
-    $("#cleanup-notice").className = `notice${cleanupUI.error ? " error" : ""}`;
-    $("#cleanup-notice").textContent = cleanupUI.error || "Discovery is running. Follow the stages below; nothing is being deleted.";
+    $("#cleanup-notice").className = "status-line";
+    $("#cleanup-notice").textContent = "Discovery is running. Follow the stages below; nothing is being deleted.";
     cleanupButtons();
     $("#cleanup-summary").textContent = "Discovery is in progress. Candidates are only approved after the final checkout verification.";
     return;
   }
   const data = await api("/api/workbench/cleanup");
+  if (cleanupUI.disconnected) notify("", "", { key: "cleanup-connection" });
   cleanupUI.disconnected = false;
   cleanupUI.job = data.job;
   const changed = data.scan?.id !== cleanupUI.scan?.id;
@@ -132,10 +134,10 @@ async function cleanupRefresh() {
   if (changed) { cleanupUI.selected.clear(); cleanupRenderFiles(); }
   const job = data.job.action === "cleanup-scan" ? data.job : null;
   $("#cleanup-log").textContent = job?.log || "No cleanup scan yet.";
-  $("#cleanup-notice").className = `notice${cleanupUI.error || job?.state === "failed" ? " error" : ""}`;
-  $("#cleanup-notice").textContent = cleanupUI.error || (job?.state === "running" ? "Discovering references and building the site. Nothing is being deleted." :
+  $("#cleanup-notice").className = "status-line";
+  $("#cleanup-notice").textContent = job?.state === "running" ? "Discovering references and building the site. Nothing is being deleted." :
     job?.state === "failed" ? "Discovery failed. No candidates are approved for deletion. Read the build details and try again." :
-    data.scan ? "Discovery complete. Review candidates carefully; files with uncommitted changes stay protected." : "Run discovery to begin. Nothing is deleted automatically.");
+    data.scan ? "Discovery complete. Review candidates carefully; files with uncommitted changes stay protected." : "Run discovery to begin. Nothing is deleted automatically.";
   $("#cleanup-summary").textContent = data.scan ?
     `${data.scan.checked} static files checked · ${data.scan.used} referenced · ${data.scan.files.length} candidates before filters · branch ${data.scan.branch}` :
     "No current scan. Content pages, application source and build/cache folders are never deletion targets.";
@@ -147,13 +149,16 @@ async function cleanupOperation(operation) {
   cleanupUI.busy = true; cleanupUI.error = ""; cleanupButtons();
   try { await operation(); }
   catch (error) {
-    const notice = $("#cleanup-dialog").open ? $("#cleanup-dialog-notice") : $("#cleanup-notice");
-    if (!$("#cleanup-dialog").open) cleanupUI.error = cleanupUI.job?.action === "cleanup-scan" && cleanupUI.job.state === "running" ? "" : error.message;
-    if (!$("#cleanup-dialog").open && cleanupUI.progress?.state === "running") {
+    const inDialog = $("#cleanup-dialog").open;
+    if (!inDialog) cleanupUI.error = cleanupUI.job?.action === "cleanup-scan" && cleanupUI.job.state === "running" ? "" : error.message;
+    if (!inDialog && cleanupUI.progress?.state === "running") {
       cleanupUI.disconnected = true;
       cleanupRenderProgress({ ...cleanupUI.progress, state: "disconnected", error: error.message });
     }
-    notice.textContent = error.message; notice.className = "notice error"; notice.hidden = false;
+    if (inDialog) {
+      const notice = $("#cleanup-dialog-notice");
+      notice.textContent = error.message; notice.className = "notice error"; notice.hidden = false;
+    } else notify(error.message, "error", { key: "cleanup", area: "File cleanup" });
   } finally { cleanupUI.busy = false; cleanupButtons(); }
 }
 
@@ -209,7 +214,7 @@ $("#cleanup-confirm").addEventListener("click", () => {
     }
     $("#cleanup-dialog").close(); cleanupUI.scan = null; cleanupUI.selected.clear();
     cleanupRenderFiles();
-    notify(`Deleted ${result.deleted.length} file(s) · ${cleanupBytes(result.bytes)}. Review the deletions in Save & sync and create a checkpoint. Nothing was published.`);
+    notify(`Deleted ${result.deleted.length} file(s) · ${cleanupBytes(result.bytes)}. Review the deletions in Save & sync and create a checkpoint. Nothing was published.`, "success", { area: "File cleanup" });
     await refreshGit();
     await cleanupRefresh();
   });
@@ -220,7 +225,7 @@ async function cleanupPoll() {
     try { await cleanupRefresh(); }
     catch (error) {
       cleanupUI.disconnected = true;
-      $("#cleanup-notice").textContent = error.message; $("#cleanup-notice").className = "notice error";
+      notify(`Live cleanup status is unavailable: ${error.message}`, "error", { key: "cleanup-connection", dedupe: true, area: "File cleanup" });
       if (cleanupUI.progress && cleanupUI.progress.state !== "idle") {
         cleanupRenderProgress({ ...cleanupUI.progress, state: "disconnected",
           error: `Live progress is unavailable: ${error.message}. The last reported stage is preserved; wait for reconnection before reviewing files.` });

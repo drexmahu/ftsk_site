@@ -12,11 +12,8 @@
     photoScope: "", photoWorkspaces: new Map(), missingOriginals: []
   };
   const rootAPI = "/api/workbench/content/";
-  const feedback = (message, error = false) => {
-    const element = $("#content-feedback");
-    element.hidden = !message;
-    element.textContent = message;
-    element.className = `notice ${error ? "error" : ""}`;
+  const feedback = (message, error = false, kind = "") => {
+    notify(message, error ? "error" : kind, { key: "content" });
     for (const [dialog, notice] of [["#new-page-dialog", "#new-page-error"], ["#content-draft-dialog", "#content-draft-error"], ["#media-picker", "#media-picker-error"]]) {
       if ($(dialog).open) {
         $(notice).hidden = !message || !error;
@@ -997,7 +994,7 @@
     for (const browser of Object.values(pageFileBrowsers)) browser.reset();
     setBusy(false);
     switchPanel(page.guided && !page.error ? "write" : "source");
-    feedback(page.error || (page.warnings || []).join("\n"), Boolean(page.error));
+    feedback(page.error || (page.warnings || []).join("\n"), Boolean(page.error), "warning");
     markDirty();
     renderLibrary();
     showContentScreen("editor");
@@ -1130,9 +1127,8 @@
         $("#content-social-frame").hidden = !previous.socialShown;
       }
       markDirty();
-      const message = [`Saved ${result.path}. Changes are local, not published.`, ...(result.warnings || [])].join("\n");
-      feedback(message);
-      notify(message);
+      feedback(`Saved ${result.path}. Changes are local, not published.`, false, "success");
+      if (result.warnings?.length) notify(result.warnings.join("\n"), "warning", { key: "content-warnings" });
       if (payload.original && payload.original !== payload.path) forgetPhotoWorkspace(payload.original);
       await refreshCatalog();
     } finally { setBusy(false); }
@@ -1948,7 +1944,6 @@
       studio.assetDelete = null;
       await refreshPageMedia();
       feedback(`Deleted file: ${file.url}. The page was not deleted.`);
-      notify(`Deleted file: ${file.url}. The page was not deleted.`);
     } catch (error) {
       $("#delete-media-error").textContent = error.message;
       $("#delete-media-error").hidden = false;

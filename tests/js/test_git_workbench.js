@@ -39,8 +39,10 @@ function fixture() {
   const links = new Map();
   const state = { token: "fixture-token", git: null, photos: [], portraits: [] };
   let reloads = 0, requests = 0, blockers = [], busyBlockers = [];
+  const notices = [];
   const context = {
     $: get, node, state,
+    notify: (message, kind, options) => { notices.push({ message, kind, options }); },
     document: {
       createElementNS: (namespace, tag) => node(tag),
       querySelector: get,
@@ -81,7 +83,8 @@ function fixture() {
     ], remote: true, rebase: false, conflicts: [], history: [], reasons: [], revision: "initial",
     job: { state: "idle", action: "", log: "", error: "" },
   };
-  return { context, get, panels, links, data,
+  return { context, get, panels, links, data, notices,
+    notice: () => notices.at(-1)?.message ?? "",
     update: value => context.window.updateGitState(value),
     block: value => { blockers = value; },
     activity: value => { busyBlockers = value; },
@@ -232,7 +235,8 @@ async function run() {
   await f.context.startGit({ action: "terminal", confirm: true, revision: f.data.revision });
   f.update({ ...f.data, job: { action: "terminal", state: "passed", log: "Closed" } });
   assert.equal(f.reloads(), 1, "Closing the owned terminal reloads actual checkout state");
-  assert.ok(f.get("#git-action-notice").textContent.includes("not audited"));
+  assert.ok(f.notice().includes("not audited"));
+  assert.equal(f.notices.at(-1).options.key, "git", "Git results replace each other instead of stacking");
   f = fixture();
   assert.equal(guidance({}, [], true).target, "git-branch-controls");
   assert.equal(guidance().level, "synced");
@@ -398,11 +402,11 @@ async function run() {
   assert.equal(f.get("#git-map").dataset.suggestedFlow, "");
   assert.equal(f.get("#git-guidance-action").dataset.suggested, "false");
   f.update({ ...f.data, last_fetch: new Date().toISOString(), job: { state: "passed", action: "fetch" } });
-  assert.ok(f.get("#git-action-notice").textContent.includes("matches"));
+  assert.ok(f.notice().includes("matches"));
   assert.equal(f.get("#git-fetch").dataset.suggested, "false", "Synced state does not urge another immediate fetch");
   f.update({ ...f.data, busy: true, job: { state: "running", action: "fetch" } });
   f.update({ ...f.data, behind: 1, last_fetch: new Date().toISOString(), job: { state: "passed", action: "fetch" } });
-  assert.ok(f.get("#git-action-notice").textContent.includes("pull --rebase"), "Each repeated fetch reports the new next step");
+  assert.ok(f.notice().includes("pull --rebase"), "Each repeated fetch reports the new next step");
   assert.equal(f.get("#git-pull").dataset.suggested, "true");
   assert.equal(f.get("#git-map").dataset.suggestedFlow, "receive");
   f.update({ ...f.data, last_fetch: null });
@@ -446,7 +450,7 @@ async function run() {
   assert.equal(f.get("#git-continue").disabled, true);
   assert.equal(f.get("#git-abort").disabled, false);
   assert.equal(f.get("#git-conflicts").children.length, 1);
-  assert.ok(f.get("#git-action-notice").textContent.includes("Conflict in shared.txt"));
+  assert.ok(f.notice().includes("Conflict in shared.txt"));
   assert.equal(f.reloads(), 0, "Failures do not reload or hide recovery state");
 
   f = fixture();
@@ -529,7 +533,7 @@ async function run() {
   f.get("#git-commit-message").handlers.input();
   await f.get("#git-commit-confirm").handlers.click();
   assert.equal(f.requests(), 1, "Empty messages never send a commit request");
-  assert.ok(f.get("#git-action-notice").textContent.includes("short description"));
+  assert.ok(f.notice().includes("short description"));
   f.get("#git-select-none").handlers.click();
   assert.ok(files.every(input => !input.checked));
   assert.equal(f.get("#git-selection-count").textContent, "0 of 50 files selected");
@@ -582,7 +586,7 @@ async function run() {
   f.activity(["Wait for the current page operation."]);
   await f.get("#git-discard-drafts").handlers.click();
   assert.equal(discardCount, 0, "Busy editors cannot have their state discarded");
-  assert.ok(f.get("#git-action-notice").textContent.includes("page operation"));
+  assert.ok(f.notice().includes("page operation"));
   f.activity([]);
   await f.get("#git-discard-drafts").handlers.click();
   assert.equal(discardCount, 1);

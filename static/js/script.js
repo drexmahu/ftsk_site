@@ -294,19 +294,7 @@ els.forEach(el => {
    });
 
 
-   $('.nav-item.dropdown > .dropdown-link').on('click', function(e) {
-      if($(window).width() < 991.98) {
-        e.preventDefault();
-        var dropdownOpened = $(this).parent().hasClass('show');
-        $('.dropdown').removeClass('show');
-        $('.dropdown-menu').removeClass('show');
-        
-        if (!dropdownOpened) {
-          $(this).next('.dropdown-menu').addClass('show');
-          $(this).parent('.dropdown').addClass('show');
-        }
-      }
-    });
+   // Dropdown opening/closing lives in js/menu.js.
 
    // Add active class to the current accordionExample
    var header = document.getElementById('accordionExample');

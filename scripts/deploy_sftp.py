@@ -7,25 +7,41 @@ import os
 import posixpath
 import stat
 import tempfile
+import urllib.error
+import urllib.parse
+import urllib.request
 import uuid
 from pathlib import Path
+
+PROTECTED_PAGES = ("index.html", "404.html", ".htaccess")
 
 
 def deployment_page(source):
     root = Path(source)
     page = Path(__file__).with_name("deployment-page.html").read_text(encoding="utf-8")
-    artwork = {
-        "__ERROR_IMAGE__": "images/404/error.svg",
-        "__HANGING_MOTIF__": "images/motifs/hanging.svg",
-        "__STANDING_MOTIF__": "images/motifs/standing.svg",
-    }
-    for token, relative in artwork.items():
-        image = root / relative
-        if not image.is_file() or image.is_symlink():
-            raise ValueError(f"Deployment page artwork is missing or linked: {relative}")
-        encoded = base64.b64encode(image.read_bytes()).decode("ascii")
-        page = page.replace(token, f"data:image/svg+xml;base64,{encoded}")
-    return page
+    image = root / "images/404/error.svg"
+    if not image.is_file() or image.is_symlink():
+        raise ValueError("Deployment page artwork is missing or linked: images/404/error.svg")
+    encoded = base64.b64encode(image.read_bytes()).decode("ascii")
+    return page.replace("__ERROR_IMAGE__", f"data:image/svg+xml;base64,{encoded}")
+
+
+def maintenance_rules(base_path="/"):
+    """Apache rules answering every URL with the deployment page (HTTP 503) until the deploy ends."""
+    prefix = "/" + base_path.strip("/") if base_path.strip("/") else ""
+    return f"""# Temporary FTSK deployment rules: replaced by the real rules when the deployment finishes.
+ErrorDocument 404 {prefix}/404.html
+ErrorDocument 503 {prefix}/index.html
+<IfModule mod_headers.c>
+  Header always set Retry-After "60"
+  Header always set Cache-Control "no-store"
+</IfModule>
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{{REQUEST_URI}} !^{prefix}/(index|404)\\.html$
+  RewriteRule ^ - [R=503,L]
+</IfModule>
+"""
 
 
 def local_manifest(source):
@@ -106,28 +122,80 @@ def publish_page(sftp, source, destination):
             pass
 
 
-def replace_site(sftp, source, remote_directory, dry_run=False):
+def verify_site(site_url, opener=urllib.request.urlopen):
+    """Return (fatal, warnings) after checking the home page and a missing URL on the live site."""
+    base = site_url.rstrip("/") + "/"
+
+    def fetch(url):
+        request = urllib.request.Request(url, headers={"User-Agent": "ftsk-deploy-check", "Cache-Control": "no-cache"})
+        try:
+            with opener(request, timeout=20) as response:
+                return response.status, response.read(400000).decode("utf-8", "replace")
+        except urllib.error.HTTPError as exc:
+            return exc.code, exc.read(400000).decode("utf-8", "replace")
+
+    fatal, warnings = None, []
+    try:
+        status, body = fetch(base)
+        if status >= 500:
+            fatal = f"The live home page answered HTTP {status} after the deployment."
+        elif status != 200 or "Frissítés alatt" in body:
+            warnings.append(f"The live home page did not show the new site yet (HTTP {status}); a cache may still serve the deployment page.")
+        status, body = fetch(urllib.parse.urljoin(base, f"ftsk-missing-{uuid.uuid4().hex}/"))
+        if status != 404 or "data-error-home" not in body:
+            warnings.append(
+                f"A missing URL answered HTTP {status} without the FTSK 404 page. The web server ignores the published "
+                ".htaccess rule; configure the host to serve /404.html for missing pages (see docs/TECHNICAL_ENVIRONMENT.md, 404 handling).")
+    except (OSError, urllib.error.URLError) as exc:
+        warnings.append(f"The live site could not be checked: {exc}")
+    return fatal, warnings
+
+
+def replace_site(sftp, source, remote_directory, dry_run=False, site_url=None, opener=urllib.request.urlopen):
     root, directories, files = local_manifest(source)
     target = site_directory(sftp, remote_directory)
     maintenance = deployment_page(root)
+    base_path = urllib.parse.urlsplit(site_url).path if site_url else "/"
     if dry_run:
         print(f"Dry run: would publish the temporary deployment page, purge old artifacts, upload {len(files)} files, and switch to the completed site; no remote changes made.")
         return
+    destination = lambda name: posixpath.join(target, name)
     with tempfile.TemporaryDirectory(prefix="ftsk-deployment-page-") as temporary:
         page = Path(temporary) / "index.html"
         page.write_text(maintenance, encoding="utf-8")
+        rules = Path(temporary) / ".htaccess"
+        rules.write_text(maintenance_rules(base_path), encoding="utf-8")
         for name in ("index.html", "404.html"):
-            publish_page(sftp, page, posixpath.join(target, name))
-    purge_directory(sftp, target, keep=("index.html", "404.html"))
+            publish_page(sftp, page, destination(name))
+        publish_page(sftp, rules, destination(".htaccess"))
+    purge_directory(sftp, target, keep=PROTECTED_PAGES)
     for relative in directories:
-        sftp.mkdir(posixpath.join(target, relative))
-    for relative in files:
-        if relative in ("index.html", "404.html"):
+        sftp.mkdir(destination(relative))
+    # Pages go last so almost nothing real is reachable before the final switch.
+    for relative in sorted(files, key=lambda name: (name.endswith(".html"), name)):
+        if relative in PROTECTED_PAGES:
             continue
-        sftp.put(str(root / relative), posixpath.join(target, relative), confirm=True)
-    publish_page(sftp, root / "404.html", posixpath.join(target, "404.html"))
-    publish_page(sftp, root / "index.html", posixpath.join(target, "index.html"))
+        sftp.put(str(root / relative), destination(relative), confirm=True)
+    publish_page(sftp, root / "404.html", destination("404.html"))
+    has_rules = (root / ".htaccess").is_file()
+    if has_rules:
+        publish_page(sftp, root / ".htaccess", destination(".htaccess"))
+    else:
+        sftp.remove(destination(".htaccess"))
+    publish_page(sftp, root / "index.html", destination("index.html"))
     print(f"Replaced the dedicated site directory with {len(files)} build artifacts.")
+    if not site_url:
+        print("Live check skipped: set SITE_URL or --site-url to verify the home page and the 404 page.")
+        return
+    fatal, warnings = verify_site(site_url, opener)
+    for warning in warnings:
+        print(f"::warning::{warning}")
+    if fatal:
+        if has_rules:
+            sftp.remove(destination(".htaccess"))
+        raise RuntimeError(f"{fatal} The published .htaccess was removed so the site can serve again; fix the server rules before redeploying.")
+    if not warnings:
+        print("Live check passed: the home page is served and missing URLs show the FTSK 404 page.")
 
 
 def required_environment(name):
@@ -143,6 +211,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source", default="public")
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--site-url", default=os.environ.get("SITE_URL", ""),
+                        help="Public site URL used for the live check after publishing.")
     args = parser.parse_args()
     local_manifest(args.source)
     host = required_environment("SFTP_SERVER").strip()
@@ -165,7 +235,7 @@ def main():
                            banner_timeout=30, auth_timeout=30)
             with client.open_sftp() as sftp:
                 sftp.get_channel().settimeout(60)
-                replace_site(sftp, args.source, directory, args.dry_run)
+                replace_site(sftp, args.source, directory, args.dry_run, args.site_url.strip() or None)
         finally:
             client.close()
 

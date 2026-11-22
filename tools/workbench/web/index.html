@@ -13,6 +13,8 @@
   <link rel="stylesheet" href="/workbench/editors.css">
   <link rel="stylesheet" href="/workbench/files.css">
   <link rel="stylesheet" href="/workbench/uploads.css">
+  <link rel="stylesheet" href="/workbench/notifications.css">
+  <script src="/workbench/notifications.js" defer></script>
   <script src="/workbench/uploads.js" defer></script>
   <script src="/workbench/content-library.js" defer></script>
   <script src="/workbench/app.js" defer></script>
@@ -71,6 +73,7 @@
       <span>FTSK / <strong id="breadcrumb">Overview</strong></span>
       <strong id="git-branch-banner" class="branch-banner locked">Connecting · editing locked</strong>
       <a id="git-attention-link" class="git-attention-link" href="#overview" aria-live="polite">Checking save &amp; sync status…</a>
+      <button id="notification-center-toggle" type="button" class="secondary notify-bell" aria-haspopup="dialog" aria-expanded="false" aria-controls="notification-center" aria-label="Notifications" title="Notifications · results and problems from this session"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9a6 6 0 1 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg><span class="notify-badge" hidden>0</span></button>
       <div class="preview-controls" role="group" aria-label="Local site preview">
         <span id="preview-state" class="badge">Connecting</span>
         <button type="button" data-action="start-preview" title="Start Hugo or connect to an existing preview">Start preview</button>
@@ -79,14 +82,13 @@
       </div>
     </header>
     <main id="main" tabindex="-1">
-      <div id="message" class="notice" role="status" aria-live="polite" hidden></div>
       <section data-panel="cleanup" hidden>
         <div class="page-heading"><p class="eyebrow">Workspace / File cleanup</p><h1>Make room for what matters.</h1><p>Discover abandoned images, PDFs and downloads. Scan first, inspect the results, then delete only the files you choose.</p></div>
         <section class="panel cleanup-intro">
           <div><h2>Find files with no internal references</h2><p>Checks saved content, configuration, templates, scripts and a fresh site build, including drafts, future and expired pages. Source images used by Hugo's image pipeline are protected too.</p><p class="hint">External links, bookmarks and paths assembled at runtime cannot always be detected. Treat results as candidates, not proof that nobody uses a file.</p></div>
           <button id="cleanup-scan" type="button">Discover unused files</button>
         </section>
-        <div id="cleanup-notice" class="notice" role="status" aria-live="polite">Nothing is selected or deleted automatically.</div>
+        <p id="cleanup-notice" class="status-line" role="status" aria-live="polite">Nothing is selected or deleted automatically.</p>
         <section id="cleanup-progress" class="panel conversion-progress cleanup-progress" aria-label="File discovery progress" hidden>
           <strong id="cleanup-progress-title" role="status" aria-live="polite"></strong>
           <progress id="cleanup-progress-overall" max="5" value="0" aria-label="Completed discovery stages"></progress>
@@ -166,7 +168,6 @@
           </section>
           <dialog id="git-checkpoint-dialog" aria-labelledby="git-checkpoint-heading"><div class="section-heading"><h2 id="git-checkpoint-heading">Checkpoint details</h2><button id="git-checkpoint-close" type="button" class="secondary">Close</button></div><p class="hint">Read-only history. Nothing is restored, switched or published here.</p><p id="git-checkpoint-notice" class="notice" role="status"></p><p id="git-checkpoint-meta"></p><pre id="git-checkpoint-message"></pre><p id="git-checkpoint-comparison" class="hint"></p><ul id="git-checkpoint-files"></ul></dialog>
           <details><summary>All local &amp; last-known server branches</summary><div id="git-branch-map" class="git-branch-map" aria-label="Local and last-known server branches"></div></details>
-          <div id="git-action-notice" class="notice" role="status" hidden></div>
           <section id="git-recovery" class="notice error" hidden><h3>Rebase needs attention</h3><p>Your checkpoints are preserved. Resolve text conflicts below and continue, or abort to return to the pre-rebase state. Binary/deletion conflicts need maintainer help.</p><div id="git-conflicts"></div><button id="git-continue">Continue rebase</button><button id="git-abort" class="secondary">Abort rebase · restore previous branch state</button></section>
           <details id="git-advanced-recovery"><summary>Advanced recovery · native Git terminal</summary><p>For experienced maintainers when this limited UI cannot resolve a situation. Text rebase conflicts can be edited above; binary/deletion conflicts, external merges and other Git problems may need manual commands or your own editor.</p><p class="notice">This opens Windows PowerShell in the real checkout. Commands can overwrite files or history and bypass all Workbench protection, including main and force-push restrictions. No command is run for you. Download/save browser drafts first. GUI editing, builds and Git operations stay locked until this terminal closes. Close child editors and type <code>exit</code>, then Workbench reloads the actual state. Do not restart Workbench while the terminal remains open.</p><p class="hint">Manual commands are not audited and do not certify a GUI recovery lease. Keep existing backups; if you finish a published rebase by hand, you may also need to complete its carefully reviewed publication in the terminal.</p><button id="git-terminal" type="button" class="danger">Review opening a native Git terminal</button><p id="git-terminal-note" class="hint" role="status"></p></details>
           <section id="git-backup-info" class="notice" hidden><h3>Local rebase recovery backup</h3><p id="git-backup-description"></p><p>Keep this backup until the published result has been checked. It is private and excluded from Git. RESTORE.txt explains how a maintainer can recover the original history onto a new branch without overwriting current work. Backups are never automatically deleted.</p></section>
@@ -529,7 +530,7 @@
         </div>
       </section>
       <section data-panel="hero" hidden>
-        <div class="page-heading"><p class="eyebrow">Presentation / Motion &amp; framing</p><h1>Hero slideshow <span data-workbench-file="data/hero_images.yaml"></span></h1><p>The existing editor, connected to the real site. Save writes data/hero_images.yaml. Removing a slide here keeps its image file for other pages.</p></div>
+        <div class="page-heading"><p class="eyebrow">Presentation / Motion &amp; framing</p><h1>Hero slideshow <span data-workbench-file="data/hero_images.yaml"></span></h1><p>The existing editor, connected to the real site. Save writes data/hero_images.yaml and updates the real slideshow. Remove takes a slide out of the slideshow but keeps its image file for other pages.</p></div>
         <div class="embed-actions"><a href="/hero/hero_focus_picker.html" target="_blank" rel="noopener">Open editor in a full tab ↗</a><button class="secondary" id="reload-hero">Reload editor</button><span class="hint">Save your changes before reloading.</span></div>
         <iframe id="hero-frame" title="Hero slideshow editor" class="hero-frame"></iframe>
       </section>
@@ -558,7 +559,6 @@
       </section>
       <section data-panel="content" data-save-target="save-page" hidden>
         <div id="content-library-heading" class="page-heading"><p class="eyebrow">Your content</p><h1 id="content-category-title">Content library</h1><p id="content-category-description">Choose a category, find a page, or start a new draft. Saving changes local files only.</p></div>
-        <div id="content-feedback" class="notice" role="status" aria-live="polite" hidden></div>
         <div class="content-shell">
           <aside id="content-library" class="content-library panel" aria-label="Content library">
             <div class="section-heading"><div><a href="#content" id="content-all-categories" hidden>All categories</a><h2 id="content-library-title">Find a page</h2></div><button id="new-page">New draft</button></div>

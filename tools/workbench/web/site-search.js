@@ -6,6 +6,7 @@
   function status(message, error = false) {
     $("#site-search-status").textContent = message;
     $("#site-search-status").className = error ? "notice error" : "notice";
+    if (error) notify(message, "error", { key: "search", area: "Find site text" });
   }
   function resultCard(file, query) {
     const card = node("article", "", "site-search-result");
@@ -44,7 +45,7 @@
     const query = $("#site-search-query").value.trim(), scope = $("#site-search-scope").value;
     if (!query) throw new Error("Enter a word, heading or sentence from the site.");
     const sequence = ++request, offset = append ? nextOffset : 0;
-    notify("");
+    notify("", "", { key: "search" });
     searching = true;
     if (!append) $("#site-search-results").replaceChildren();
     $("#site-search-more").hidden = true;
