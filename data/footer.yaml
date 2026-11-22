@@ -27,6 +27,8 @@ sections:
         text: "Túrabeszámolók"
       - link: "/tanfolyamok"
         text: "Tanfolyamaink"
+      - link: "/media"
+        text: "Média"
       - link: "/linkek"
         text: "Linkek"
   -

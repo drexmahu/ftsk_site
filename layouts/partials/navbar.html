@@ -11,15 +11,26 @@
             </a>
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul class="navbar-nav mx-auto mb-20 mb-xl-0">
-                    {{ range .items }}
+                    {{ range $navIndex, $nav := .items }}
                         {{ $url := .link }}
+                        {{ $inSection := and .dropdown_section (eq $current.Section .dropdown_section) }}
+                        {{ $sectionPages := slice }}
+                        {{ if .dropdown_section }}
+                            {{ $sectionPages = (where site.RegularPages "Section" .dropdown_section) }}
+                            {{ $sectionPages = (where $sectionPages "Params.hide_from_menu" "ne" true).ByWeight }}
+                        {{ end }}
                         <li class="nav-item dropdown">
-                            {{ if and .enable_dropdown .dropdown }}
-                                <a class="nav-link dropdown-link {{ if eq $current.Permalink $url }}active{{ end }}" href="{{ partial `url.html` .link }}" id="navbarDropdown" role="button" aria-expanded="false">{{ .text }}</a>
-                                <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            {{ if and .enable_dropdown (or .dropdown $sectionPages) }}
+                                <a class="nav-link dropdown-link {{ if or (eq $current.Permalink $url) $inSection }}active{{ end }}" href="{{ partial `url.html` .link }}" id="navbarDropdown{{ $navIndex }}" role="button" aria-expanded="false">{{ .text }}</a>
+                                <ul class="dropdown-menu" aria-labelledby="navbarDropdown{{ $navIndex }}">
                                     {{ range .dropdown }}
                                         <li>
                                             <a class="dropdown-item" href="{{ partial `url.html` .dropdown_link }}">{{ .dropdown_text }}</a>
+                                        </li>
+                                    {{ end }}
+                                    {{ range $sectionPages }}
+                                        <li>
+                                            <a class="dropdown-item" href="{{ .RelPermalink }}"{{ if eq $current.RelPermalink .RelPermalink }} aria-current="page"{{ end }}>{{ .Params.menu_title | default .Title }}</a>
                                         </li>
                                     {{ end }}
                                 </ul>

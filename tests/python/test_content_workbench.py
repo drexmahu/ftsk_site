@@ -534,6 +534,121 @@ class DeletionTests(ContentFixture):
         self.assertTrue((self.root / "content" / plan["path"]).is_file())
 
 
+class MediaPageTests(ContentFixture):
+    PAGE = """---
+title: Fotók
+weight: 10
+draft: true
+media_page:
+  width: wide
+media_sections:
+  - id: reel
+    title: Reel
+    layout: reel
+    height: 320
+    items:
+      - type: photo
+        src: /images/hero/one.webp
+        title: First
+        credit: Someone
+        text: One. Two. Three.
+      - type: video
+        video: https://youtu.be/dQw4w9WgXcQ
+        title: Clip
+        credit: Someone
+        text: Short.
+---
+"""
+
+    def setUp(self):
+        super().setUp()
+        (self.root / "content" / "media").mkdir()
+        (self.root / "static" / "images" / "hero").mkdir(parents=True, exist_ok=True)
+        (self.root / "static" / "images" / "hero" / "one.webp").write_bytes(b"x")
+
+    def changed(self, **changes):
+        return self.service.validate("media/photos.md", self.PAGE, changes)
+
+    def sections(self, **section):
+        base = {"id": "reel", "title": "Reel", "items": [{"type": "photo", "src": "/images/hero/one.webp"}]}
+        return {"media_sections": [{**base, **section}]}
+
+    def test_media_pages_are_flagged_and_do_not_need_trip_fields(self):
+        page = self.service.validate("media/photos.md", self.PAGE)
+        self.assertTrue(page["media"])
+        self.assertFalse(page["guided"])
+        self.assertFalse(self.service.is_media("media/_index.md"))
+        self.assertFalse(self.service.validate(self.document["path"], SOURCE)["media"])
+        self.assertFalse(any("featured image" in warning for warning in page["warnings"]))
+
+    def test_media_fields_roundtrip_through_guided_patching(self):
+        sections = self.sections(layout="rows", gap=8, ratio="3:2")["media_sections"]
+        source = patched_source(self.PAGE, {"media_sections": sections, "weight": 5, "media_page": {"width": "full"}})
+        meta = parse_frontmatter(split_source(source)[0])
+        self.assertEqual(meta["media_sections"], sections)
+        self.assertEqual((meta["weight"], meta["media_page"]), (5, {"width": "full"}))
+        self.assertEqual(meta["title"], "Fotók")
+
+    def test_build_breaking_media_mistakes_are_rejected_with_their_location(self):
+        photo = {"type": "photo", "src": "/images/hero/one.webp"}
+        cases = (
+            {"media_sections": "reel"}, {"media_sections": ["x"]},
+            self.sections(layout="carousel"),
+            self.sections(caption="side"), self.sections(height=50), self.sections(height="360"),
+            self.sections(columns=9), self.sections(gap=True), self.sections(ratio="wide"),
+            self.sections(id="has space"), self.sections(items=[{"type": "photo"}]),
+            self.sections(items=[{"type": "photo", "src": "/images/missing.webp"}]),
+            self.sections(items=[{"type": "photo", "src": "/pdfs/a.pdf"}]),
+            self.sections(items=[{"type": "gif", "src": "/images/hero/one.webp"}]),
+            self.sections(items=[{"type": "video"}]),
+            self.sections(items=[{"type": "video", "video": "not a link"}]),
+            self.sections(items=[{"type": "video", "video": "/videos/clip.exe"}]),
+            self.sections(items=[{"type": "video", "video": "/videos/clip.mp4", "poster": "/x.jpg"}]),
+            self.sections(items=[{**photo, "text": 5}]),
+            {"media_sections": [self.sections()["media_sections"][0]] * 2},
+            {"media_page": {"width": "huge"}}, {"weight": "10"}, {"hide_from_menu": "yes"},
+        )
+        for changes in cases:
+            with self.subTest(changes=changes), self.assertRaises(ContentError):
+                self.changed(**changes)
+        with self.assertRaisesRegex(ContentError, r'Section 1 "Reel", item 2'):
+            self.changed(**self.sections(items=[photo, {"type": "video"}]))
+
+    def test_editorial_gaps_are_warnings_not_blockers(self):
+        warnings = self.changed(**self.sections(items=[
+            {"type": "photo", "src": "/images/hero/one.webp"},
+            {"type": "video", "video": "/videos/missing.mp4", "title": "V", "text": "A. B. C. D. E."},
+        ]))["warnings"]
+        joined = "\n".join(warnings)
+        for fragment in ("No alt text", "No description text", "longer than 4 sentences", "photographer/author credit",
+                         "without a poster", "Video file not found"):
+            self.assertIn(fragment, joined)
+        self.assertIn("no items yet", self.changed(**self.sections(items=[]))["warnings"][0])
+
+    def test_media_templates_are_valid_and_confined_to_the_media_section(self):
+        for kind in ("media-photos", "media-videos"):
+            document = self.service.template(kind, "media/new.md")
+            self.assertTrue(document["media"] and document["metadata"]["draft"])
+            self.service.validate("media/new.md", document["source"])
+            with self.assertRaises(ContentError):
+                self.service.template(kind, "turak/new.md")
+        with self.assertRaises(ContentError):
+            self.service.template("trip", "media/new.md")
+        kinds = {template["id"] for template in self.service.catalog()["templates"] if template["section"] == "media"}
+        self.assertEqual(kinds, {"media-photos", "media-videos"})
+
+    def test_media_helpers_match_the_site_parsers(self):
+        from tools.workbench.media_pages import parse_ratio, sentence_count, youtube_id
+        for value in ("https://www.youtube.com/watch?v=dQw4w9WgXcQ", "https://youtu.be/dQw4w9WgXcQ?t=4",
+                      "https://www.youtube.com/shorts/dQw4w9WgXcQ", "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ",
+                      "dQw4w9WgXcQ"):
+            self.assertEqual(youtube_id(value), "dQw4w9WgXcQ")
+        self.assertEqual(youtube_id("https://vimeo.com/12345678901"), "")
+        self.assertEqual((parse_ratio("3:2"), parse_ratio("1.5"), parse_ratio("9:0"), parse_ratio("x")), (1.5, 1.5, 0.0, 0.0))
+        self.assertEqual((parse_ratio("100:1"), parse_ratio("1:100")), (5.0, 0.2))
+        self.assertEqual((sentence_count(""), sentence_count("Egy. Kettő! Három?")), (0, 3))
+
+
 @unittest.skipUnless(shutil.which("hugo"), "Hugo is required for real unsaved preview tests.")
 class MemberCvContentTests(ContentFixture):
     def setUp(self):

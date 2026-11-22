@@ -4,13 +4,14 @@ window.workbenchContentLibrary = (() => {
   const names = {
     turak: ["Trips", "Trip reports, research and expeditions.", "TR"],
     tanfolyamok: ["Courses", "Announcements, participants and course reports.", "CR"],
+    media: ["Media", "Photo galleries and video pages: Fotók, Videók and more.", "ME"],
     pages: ["Site pages", "Homepage, section pages and other site information.", "PG"],
     tagok: ["People documents", "CVs and memorial pages linked to the people registry.", "PE"],
   };
   const normalize = value => String(value || "").normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("hu");
   function categories(catalog) {
-    const ids = new Set(["turak", "tanfolyamok", ...(catalog.pages || []).map(page => page.section),
+    const ids = new Set(["turak", "tanfolyamok", "media", ...(catalog.pages || []).map(page => page.section),
       ...(catalog.templates || []).map(template => template.section).filter(Boolean)]);
     return [...ids].map(id => {
       const pages = (catalog.pages || []).filter(page => page.section === id);
@@ -20,7 +21,7 @@ window.workbenchContentLibrary = (() => {
       const [label, description, icon] = names[id] || [index?.title && index.title !== "_index" ? index.title : fallback, "Pages in this content section.", "PG"];
       return {id, label, description, icon, count: pages.length, href: `#content/${encodeURIComponent(id)}`};
     }).sort((first, second) => {
-      const order = id => id === "turak" ? 0 : id === "tanfolyamok" ? 1 : 2;
+      const order = id => id === "turak" ? 0 : id === "tanfolyamok" ? 1 : id === "media" ? 2 : 3;
       return order(first.id) - order(second.id) || first.label.localeCompare(second.label, "hu");
     });
   }

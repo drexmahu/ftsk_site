@@ -205,6 +205,81 @@ class ImageEditorTests(Fixture):
         with self.assertRaises(ContentError):
             self.preview(context=cv, mode="overwrite")
 
+    def stage_marked(self):
+        """A 160x120 image with a green marker in the top-left corner on a red field."""
+        image = Image.new("RGB", (160, 120), (255, 0, 0))
+        image.paste((0, 255, 0), (0, 0, 20, 20))
+        stream = io.BytesIO()
+        image.save(stream, "PNG")
+        self.entry = self.app.stage("marked.png", stream.getvalue())
+
+    def marker(self, result):
+        """Where the green marker ended up, as a corner name, plus the output size."""
+        image = self.pixels(result).convert("RGB")
+        width, height = image.size
+        spots = {"top-left": (4, 4), "top-right": (width - 5, 4), "bottom-left": (4, height - 5), "bottom-right": (width - 5, height - 5)}
+        return [name for name, point in spots.items() if image.getpixel(point)[1] > 180 and image.getpixel(point)[0] < 90], image.size
+
+    def test_rotation_and_flip_move_pixels_and_validate_the_crop_in_the_rotated_image(self):
+        self.stage_marked()
+        self.assertEqual(self.marker(self.preview()), (["top-left"], (160, 120)))
+        self.assertEqual(self.marker(self.preview(width=200, height=200, edit={"rotate": 90})), (["top-right"], (120, 160)))
+        self.assertEqual(self.marker(self.preview(edit={"rotate": 180})), (["bottom-right"], (160, 120)))
+        self.assertEqual(self.marker(self.preview(width=200, height=200, edit={"rotate": 270})), (["bottom-left"], (120, 160)))
+        self.assertEqual(self.marker(self.preview(edit={"flip": True})), (["top-right"], (160, 120)))
+        self.assertEqual(self.marker(self.preview(width=200, height=200, edit={"flip": True, "rotate": 90})), (["bottom-right"], (120, 160)))
+        # A crop of the full rotated height only fits after the quarter turn.
+        cropped = self.preview(width=200, height=200, edit={"rotate": 90, "crop": [0, 0, 100, 160]})
+        self.assertEqual(self.pixels(cropped).size, (100, 160))
+        for edit in ({"crop": [0, 0, 100, 160]}, {"rotate": 45}, {"rotate": True}, {"flip": 1}, {"rotate": "90"}):
+            with self.subTest(edit=edit), self.assertRaises(ContentError):
+                self.preview(edit=edit)
+
+    def test_media_pages_may_replace_borrowed_webps_but_other_pages_may_not(self):
+        source = self.root / "static/images/hero/one.webp"
+        original = source.read_bytes()
+        (self.root / "content/turak").mkdir(parents=True, exist_ok=True)
+        (self.root / "content/turak/user.md").write_text("---\ntitle: User\n---\n![x](/images/hero/one.webp)\n", encoding="utf-8")
+        self.entry = self.service.open_existing({"url": "/images/hero/one.webp"})
+        self.assertIn("content/turak/user.md", self.entry["references"])
+        media = {"kind": "page", "path": "media/fotok.md"}
+        trip = {"kind": "page", "path": "turak/trip.md"}
+        self.assertFalse(self.preview(context=trip)["can_overwrite"])
+        with self.assertRaises(ContentError):
+            self.preview(context=trip, mode="overwrite")
+        result = self.preview(context=media, mode="overwrite", edit={"brightness": 60})
+        self.assertTrue(result["can_overwrite"])
+        self.assertEqual(result["url"], "/images/hero/one.webp")
+        with self.assertRaises(ConflictError):
+            self.service.save({"token": result["token"]})
+        self.assertEqual(source.read_bytes(), original, "Replacing needs explicit approval")
+        raw = self.service.previews[result["token"]]["file"].read_bytes()
+        saved = self.service.save({"token": result["token"], "confirm_overwrite": True})
+        self.assertTrue(saved["replaced"])
+        self.assertEqual(source.read_bytes(), raw)
+        self.assertFalse((self.root / "static/images/media").exists(), "Replacing never creates the page-owned folder")
+        self.assertEqual(list(source.parent.glob(".image-*")), [])
+        copied = self.preview(context=media)
+        self.assertFalse(self.service.save({"token": copied["token"]})["replaced"])
+        self.assertTrue((self.root / "static/images/media/fotok/test.webp").is_file())
+
+    def test_embedded_colour_profiles_are_converted_to_srgb(self):
+        profile_path = r"C:\Windows\System32\spool\drivers\color\AdobeRGB1998.icc"
+        if not os.path.exists(profile_path):
+            self.skipTest("No wide-gamut ICC profile is installed.")
+        profile = open(profile_path, "rb").read()
+        stream = io.BytesIO()
+        Image.new("RGB", (32, 32), (70, 160, 70)).save(stream, "JPEG", quality=100, icc_profile=profile)
+        entry = self.app.stage("wide.jpg", stream.getvalue())
+        staged = Image.open(self.app.scratch / entry["id"] / (entry["stem"] + ".png")).convert("RGB").getpixel((16, 16))
+        self.assertNotIn("icc_profile", Image.open(self.app.scratch / entry["id"] / (entry["stem"] + ".png")).info)
+        self.assertLess(staged[0], 40, "Adobe RGB greens are more saturated than sRGB, so the red channel must drop")
+        plain = io.BytesIO()
+        Image.new("RGB", (32, 32), (70, 160, 70)).save(plain, "JPEG", quality=100)
+        untouched = self.app.stage("plain.jpg", plain.getvalue())
+        pixel = Image.open(self.app.scratch / untouched["id"] / (untouched["stem"] + ".png")).convert("RGB").getpixel((16, 16))
+        self.assertLess(abs(pixel[0] - 70), 8, "Untagged images are assumed to be sRGB and stay unchanged")
+
 
 class ImageEditorHTTPTests(HTTPTests):
     def test_image_preparation_requires_tokens_and_preview_server_is_isolated(self):

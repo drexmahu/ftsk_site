@@ -6,6 +6,7 @@
   <title>FTSK Site Workbench</title>
   <link rel="stylesheet" href="/workbench/style.css">
   <link rel="stylesheet" href="/workbench/content.css">
+  <link rel="stylesheet" href="/workbench/media-editor.css">
   <link rel="stylesheet" href="/workbench/autocomplete.css">
   <link rel="stylesheet" href="/workbench/git.css">
   <link rel="stylesheet" href="/workbench/cleanup.css">
@@ -22,6 +23,7 @@
   <script src="/workbench/image-editor.js" defer></script>
   <script src="/workbench/people.js" defer></script>
   <script src="/workbench/autocomplete.js" defer></script>
+  <script src="/workbench/media-editor.js" defer></script>
   <script src="/workbench/content.js" defer></script>
   <script src="/workbench/site-search.js" defer></script>
   <script src="/workbench/members.js" defer></script>
@@ -55,6 +57,7 @@
       <div id="content-category-navigation" class="content-category-navigation" aria-label="Content categories">
         <a href="#content/turak" data-view="content" data-content-label="Trips"><span aria-hidden="true">TR</span> Trips</a>
         <a href="#content/tanfolyamok" data-view="content" data-content-label="Courses"><span aria-hidden="true">CR</span> Courses</a>
+        <a href="#content/media" data-view="content" data-content-label="Media"><span aria-hidden="true">ME</span> Media</a>
       </div>
       <a href="#search" data-view="search"><span aria-hidden="true">⌕</span> Find site text</a>
       <p class="nav-label">Images &amp; presentation</p>
@@ -584,7 +587,7 @@
               <div id="editor-content-navigation">
                 <p class="nav-label">Edit your page</p>
                 <div class="editor-tabs" role="tablist" aria-label="Content sections" aria-orientation="vertical">
-                  <button role="tab" aria-selected="true" data-editor-tab="write">Story</button><button role="tab" aria-selected="false" data-editor-tab="metadata">Page details &amp; cover</button><button role="tab" aria-selected="false" data-editor-tab="contacts">People &amp; contacts</button><button role="tab" aria-selected="false" data-editor-tab="course">Course &amp; FAQ</button><button role="tab" aria-selected="false" data-editor-tab="seo">Sharing &amp; search</button>
+                  <button role="tab" aria-selected="false" data-editor-tab="gallery" hidden>Galleries</button><button role="tab" aria-selected="true" data-editor-tab="write">Story</button><button role="tab" aria-selected="false" data-editor-tab="metadata">Page details &amp; cover</button><button role="tab" aria-selected="false" data-editor-tab="contacts">People &amp; contacts</button><button role="tab" aria-selected="false" data-editor-tab="course">Course &amp; FAQ</button><button role="tab" aria-selected="false" data-editor-tab="seo">Sharing &amp; search</button>
                 </div>
               </div>
               <section class="editor-page-tools" aria-label="Page workspace modes">
@@ -608,6 +611,10 @@
               <div id="editor-tool-heading" class="section-heading editor-tool-heading" role="status" aria-live="polite">
                 <div><h2 id="editor-tool-title">Edit page</h2><p id="editor-workspace-detail" class="hint">Write your story and manage page details below.</p></div>
                 <button type="button" id="editor-return-content" class="secondary" aria-pressed="true" hidden>Return to story</button>
+              </div>
+              <div class="panel" data-editor-panel="gallery" role="tabpanel" hidden>
+                <p class="hint">Build the page from sections. Click a photo or video to edit its text, drag to reorder, and use “Look &amp; sizes” to tune each section. “Preview” in the bar above shows exactly what visitors will see.</p>
+                <div id="gallery-editor"></div>
               </div>
               <div class="panel" data-editor-panel="write" role="tabpanel">
                 <div class="section-heading"><h2>Markdown story</h2><span id="word-count" class="hint"></span></div>
@@ -773,18 +780,18 @@
               <label class="image-check"><input id="image-keep" type="checkbox" checked> Also save an unedited WebP output</label>
               <div class="image-version-actions"><label>Version to edit<select id="image-versions"></select></label><button id="image-create" type="button">Create edited version</button><button id="image-duplicate" type="button" class="secondary">Duplicate version</button><button id="image-remove" type="button" class="secondary">Remove version</button></div>
               <div class="image-adjust-layout">
-                <div><h3>Source &amp; crop</h3><canvas id="image-canvas" width="900" height="680" aria-label="Crop selection; use pixel controls below for keyboard editing"></canvas><p id="image-crop-note" class="hint"></p><div class="image-preview-heading"><h3>Exact WebP output preview</h3><button id="image-refresh" type="button" class="secondary">Refresh preview</button></div><div class="image-exact-preview"><img id="image-preview" alt="Exact prepared WebP output" hidden></div><p id="image-preview-detail" class="image-preview-detail" role="status"></p></div>
+                <div><h3>Source &amp; crop</h3><canvas id="image-canvas" width="900" height="680" tabindex="0" aria-label="Crop selection. Arrow keys move it, Shift plus arrows move it further. Pixel controls are also available."></canvas><p id="image-crop-note" class="hint"></p><div class="image-preview-heading"><h3>Exact WebP output preview</h3><button id="image-refresh" type="button" class="secondary">Refresh preview</button></div><div class="image-exact-preview"><img id="image-preview" alt="Exact prepared WebP output" hidden></div><p id="image-preview-detail" class="image-preview-detail" role="status"></p></div>
                 <div class="image-settings">
-                  <fieldset><legend>Crop selection</legend><div class="field-pair"><label>Shape<select id="image-shape"><option value="rectangle">Rectangle / square</option><option value="circle">Circle · transparent corners</option><option value="ellipse">Ellipse · transparent corners</option></select></label><label>Aspect ratio<select id="image-ratio"><option value="free">Free</option><option value="source">Original ratio</option><option value="1">Square · 1:1</option><option value="1.7777777777777777">Landscape · 16:9</option><option value="1.5">Landscape · 3:2</option><option value="1.3333333333333333">Landscape · 4:3</option><option value="0.6666666666666666">Portrait · 2:3</option><option value="0.5625">Portrait · 9:16</option></select></label></div><div class="field-pair"><label>Left (px)<input id="image-crop-x" type="number" min="0"></label><label>Top (px)<input id="image-crop-y" type="number" min="0"></label></div><div class="field-pair"><label>Width (px)<input id="image-crop-width" type="number" min="1"></label><label>Height (px)<input id="image-crop-height" type="number" min="1"></label></div></fieldset>
-                  <fieldset><legend>Tone &amp; brightness</legend><label>Brightness <output id="image-brightness-value">100%</output><input id="image-brightness" type="range" min="0" max="200" value="100"></label><label>Contrast <output id="image-contrast-value">100%</output><input id="image-contrast" type="range" min="0" max="200" value="100"></label><label>Colour <output id="image-saturation-value">100%</output><input id="image-saturation" type="range" min="0" max="200" value="100"></label><label>Warmth <output id="image-warmth-value">0</output><input id="image-warmth" type="range" min="-100" max="100" value="0"></label><button id="image-reset" type="button" class="secondary">Reset crop &amp; tones</button></fieldset>
-                  <fieldset><legend>WebP output · no stretching or enlargement</legend><label>Output name<input id="image-name"></label><div class="field-pair"><label>Max width (px)<input id="image-width" type="number" min="64" max="6000"></label><label>Max height (px)<input id="image-height" type="number" min="64" max="6000"></label></div><label>Quality (1–100)<input id="image-quality" type="number" min="1" max="100"></label><label>Save mode<select id="image-mode"><option value="copy">Save a new copy · no overwriting</option><option id="image-overwrite-option" value="overwrite">Replace the existing WebP</option></select></label><p id="image-mode-note" class="hint"></p></fieldset>
+                  <fieldset><legend>Crop selection</legend><div class="image-transform" role="group" aria-label="Rotate and flip"><button id="image-rotate-left" type="button" class="secondary" title="Rotate a quarter turn to the left">⟲ Rotate left</button><button id="image-rotate-right" type="button" class="secondary" title="Rotate a quarter turn to the right">⟳ Rotate right</button><button id="image-flip" type="button" class="secondary" title="Mirror the photo left to right">⇋ Flip</button></div><div class="field-pair"><label>Shape<select id="image-shape"><option value="rectangle">Rectangle / square</option><option value="circle">Circle · transparent corners</option><option value="ellipse">Ellipse · transparent corners</option></select></label><label>Aspect ratio<select id="image-ratio"><option value="free">Free</option><option value="source">Original ratio</option><option value="1">Square · 1:1</option><option value="1.7777777777777777">Landscape · 16:9</option><option value="1.5">Landscape · 3:2</option><option value="1.3333333333333333">Landscape · 4:3</option><option value="0.75">Portrait · 3:4</option><option value="0.6666666666666666">Portrait · 2:3</option><option value="0.5625">Portrait · 9:16</option></select></label></div><div class="field-pair"><label>Left (px)<input id="image-crop-x" type="number" min="0"></label><label>Top (px)<input id="image-crop-y" type="number" min="0"></label></div><div class="field-pair"><label>Width (px)<input id="image-crop-width" type="number" min="1"></label><label>Height (px)<input id="image-crop-height" type="number" min="1"></label></div></fieldset>
+                  <fieldset><legend>Tone &amp; brightness</legend><label>Brightness <output id="image-brightness-value">100%</output><input id="image-brightness" type="range" min="0" max="200" value="100"></label><label>Contrast <output id="image-contrast-value">100%</output><input id="image-contrast" type="range" min="0" max="200" value="100"></label><label>Colour <output id="image-saturation-value">100%</output><input id="image-saturation" type="range" min="0" max="200" value="100"></label><label>Warmth <output id="image-warmth-value">0</output><input id="image-warmth" type="range" min="-100" max="100" value="0"></label><button id="image-reset" type="button" class="secondary">Reset crop, rotation &amp; tones</button></fieldset>
+                  <fieldset class="image-output-settings"><legend>WebP output · no stretching or enlargement</legend><label>Save mode<select id="image-mode"><option value="copy">Save as a new copy · original stays untouched</option><option id="image-overwrite-option" value="overwrite">Replace the original file</option></select></label><p id="image-mode-note" class="hint"></p><label>Output name<input id="image-name"></label><div class="field-pair"><label>Max width (px)<input id="image-width" type="number" min="64" max="6000"></label><label>Max height (px)<input id="image-height" type="number" min="64" max="6000"></label></div><label>Quality (1–100)<input id="image-quality" type="number" min="1" max="100"></label></fieldset>
                 </div>
               </div>
             </section>
           </div>
           <section id="image-review" hidden><h3>Review every output</h3><p id="image-review-note" class="hint"></p><div id="image-outputs" class="image-output-grid"></div></section>
         </div>
-        <footer class="image-editor-footer"><label id="image-approval" class="image-check" hidden><input id="image-approve" type="checkbox"> I approve replacing the listed existing WebPs. Every place using those URLs will see the changes.</label><div class="actions"><button id="image-back" type="button" class="secondary" hidden>← Back to editing</button><button id="image-save" type="button">Review outputs</button></div><p id="image-status" class="hint" role="status" aria-live="polite"></p><div class="conversion-progress" id="image-activity" hidden><progress aria-label="Preparing or saving reviewed images"></progress></div></footer>
+        <footer class="image-editor-footer"><label id="image-approval" class="image-check" hidden><input id="image-approve" type="checkbox"> <span>I approve replacing the listed existing WebPs. Every place using those files will show the new version.</span></label><div class="actions"><button id="image-back" type="button" class="secondary" hidden>← Back to editing</button><button id="image-save" type="button">Review outputs</button></div><p id="image-status" class="hint" role="status" aria-live="polite"></p><div class="conversion-progress" id="image-activity" hidden><progress aria-label="Preparing or saving reviewed images"></progress></div></footer>
       </div>
     </dialog>
     <footer class="workspace-footer">FTSK Site Workbench <span>Local files. Explicit saves. No automatic publishing.</span></footer>

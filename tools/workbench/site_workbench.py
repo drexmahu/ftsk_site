@@ -23,7 +23,7 @@ from urllib.parse import parse_qs, unquote, urlsplit
 from urllib.request import urlopen
 from urllib.error import URLError
 
-from PIL import Image, ImageOps, UnidentifiedImageError
+from PIL import Image, ImageCms, ImageOps, UnidentifiedImageError
 import yaml
 
 import tools.social_preview as social_preview
@@ -57,6 +57,36 @@ def integer(value: object, label: str, minimum: int, maximum: int) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or not minimum <= value <= maximum:
         raise ToolError(f"{label} must be an integer between {minimum} and {maximum}.")
     return value
+
+
+def to_srgb(image: Image.Image) -> Image.Image:
+    """Convert an embedded ICC profile (Display P3, Adobe RGB, CMYK...) to sRGB.
+
+    The web and the WebP encoder assume sRGB, so ignoring the profile makes
+    wide-gamut photos look flat. Unreadable profiles leave the pixels unchanged.
+    """
+    profile = image.info.get("icc_profile")
+    image.info.pop("icc_profile", None)
+    if not profile or image.mode in ("L", "LA", "1"):
+        return image
+    try:
+        source = ImageCms.ImageCmsProfile(io.BytesIO(profile))
+        alpha = None
+        base = image
+        if image.mode not in ("RGB", "CMYK"):
+            rgba = image.convert("RGBA")
+            base = rgba.convert("RGB")
+            if rgba.getchannel("A").getextrema() != (255, 255):
+                alpha = rgba.getchannel("A")
+        converted = ImageCms.profileToProfile(base, source, ImageCms.createProfile("sRGB"), outputMode="RGB",
+                                              renderingIntent=ImageCms.Intent.PERCEPTUAL)
+        if alpha:
+            converted.putalpha(alpha)
+        converted.info.pop("icc_profile", None)
+        return converted
+    except (ImageCms.PyCMSError, OSError, ValueError):
+        LOGGER.warning("Ignoring an unreadable embedded colour profile.")
+        return image
 
 
 def safe_path(root: Path, relative: str) -> Path:
@@ -125,6 +155,7 @@ class Workbench:
                         if source.width * source.height > MAX_PIXELS:
                             raise ToolError("Photo exceeds 25 million pixels. Resize the original first.")
                         image = ImageOps.exif_transpose(source)
+                        image = to_srgb(image)
                         image = image.convert("RGBA" if "A" in image.getbands() or "transparency" in image.info else "RGB")
                         image.load()
             except ToolError:
@@ -497,6 +528,7 @@ class Workbench:
                 self.run_command([node, "tests/js/test_workbench_runtime.js"], "Editor restart and draft protection")
                 self.run_command([node, "tests/js/test_cleanup_workbench.js"], "Reviewed unused-file cleanup")
                 self.run_command([node, "tests/js/test_image_editor.js"], "Reviewed image versions and batch editing")
+                self.run_command([node, "tests/js/test_site_media.js"], "Media pages and gallery editor")
                 self.run_command([sys.executable, "-m", "unittest", "discover", "-s",
                                   "tests/python", "-p", "test_workbench_runtime.py"],
                                  "Versioned editor restarts")

@@ -12,7 +12,7 @@ function fixture() {
   let count = 0;
   function node(tag, text = "", className = "") {
     return {tag, textContent: text, className, children: [], handlers: {}, hidden: false, disabled: false,
-      value: "", checked: false, open: false, style: {}, scrollLeft: 0, scrollTop: 0,
+      value: "", checked: false, open: false, style: {}, dataset: {}, scrollLeft: 0, scrollTop: 0,
       append(...items) { this.children.push(...items); }, replaceChildren(...items) { this.children = items; },
       addEventListener(name, fn) { this.handlers[name] = fn; }, showModal() { this.open = true; }, close() { this.open = false; },
       getBoundingClientRect() { return {left: 0, top: 0, width: 900, height: 680}; },
@@ -23,7 +23,7 @@ function fixture() {
   const get = id => { if (!elements.has(id)) elements.set(id, node("div")); return elements.get(id); };
   get("image-canvas").width = 900; get("image-canvas").height = 680;
   const context = {
-    document: {getElementById: get}, node, crypto: {randomUUID}, structuredClone,
+    document: {getElementById: get, createElement: () => node("canvas")}, node, crypto: {randomUUID}, structuredClone,
     Option: function(text, value) { return {...node("option", text), value}; },
     Image: class { async decode() {} },
     window: {addEventListener(name, fn) { events.set(name, fn); }},
@@ -158,6 +158,51 @@ async function reviewUseCases() {
   await f.get("image-close").handlers.click(); await done;
 }
 
+async function transformUseCases() {
+  const f = fixture();
+  const done = f.open([{id: "turn", name: "turn.jpg", stem: "turn", width: 160, height: 120}]);
+  await f.tick(); f.get("image-create").handlers.click(); await f.tick();
+  const crop = box => { f.get("image-crop-x").value = box[0]; f.get("image-crop-y").value = box[1];
+    f.get("image-crop-width").value = box[2] - box[0]; f.get("image-crop-height").value = box[3] - box[1];
+    f.get("image-crop-x").handlers.change(); };
+  const last = () => f.calls.filter(call => call.url.endsWith("/preview")).at(-1).payload.edit;
+  crop([20, 10, 100, 90]); await f.tick();
+  f.get("image-rotate-right").handlers.click(); await f.tick();
+  assert.deepEqual([Array.from(last().crop), last().rotate, last().flip], [[30, 20, 110, 100], 90, false],
+    "A quarter turn keeps the framing and expresses the crop in the rotated photo");
+  f.get("image-rotate-left").handlers.click(); await f.tick();
+  assert.deepEqual([Array.from(last().crop), last().rotate], [[20, 10, 100, 90], 0], "Rotating back restores the exact crop");
+  f.get("image-flip").handlers.click(); await f.tick();
+  assert.deepEqual([Array.from(last().crop), last().rotate, last().flip], [[60, 10, 140, 90], 0, true]);
+  f.get("image-rotate-right").handlers.click(); await f.tick();
+  f.get("image-flip").handlers.click(); await f.tick();
+  assert.deepEqual([last().rotate, last().flip], [270, false], "Mirroring a turned photo mirrors the displayed image, so the turn reverses");
+  f.get("image-rotate-left").handlers.click(); f.get("image-rotate-left").handlers.click(); await f.tick();
+  assert.deepEqual([last().rotate, last().flip], [90, false]);
+
+  f.get("image-reset").handlers.click(); await f.tick();
+  assert.deepEqual([Array.from(last().crop), last().rotate, last().flip], [[0, 0, 160, 120], 0, false], "Reset also clears rotation and flip");
+  f.get("image-ratio").value = "1.5"; f.get("image-ratio").handlers.change(); await f.tick();
+  f.get("image-rotate-right").handlers.click(); await f.tick();
+  assert.equal(f.get("image-ratio").value, "0.6666666666666666", "A fixed ratio turns with the photo: 3:2 becomes 2:3");
+  crop([0, 0, 120, 160]); await f.tick();
+  assert.ok(last().crop[2] <= 120 && last().crop[3] <= 160 && last().crop[3] - last().crop[1] === 160, "Crop limits follow the rotated dimensions and rounding never leaves the photo");
+
+  f.get("image-reset").handlers.click(); await f.tick();
+  crop([20, 10, 100, 90]); await f.tick();
+  const nudge = (key, shiftKey = false) => f.get("image-canvas").handlers.keydown({key, shiftKey, preventDefault() {}});
+  nudge("ArrowRight"); nudge("ArrowDown"); await f.tick();
+  assert.deepEqual(Array.from(last().crop), [21, 11, 101, 91], "Arrow keys nudge the crop by one step");
+  nudge("ArrowLeft", true); await f.tick();
+  assert.deepEqual(Array.from(last().crop), [11, 11, 91, 91], "Shift moves ten steps");
+  for (let index = 0; index < 5; index++) nudge("ArrowLeft", true);
+  assert.deepEqual(Array.from(f.calls.filter(call => call.url.endsWith("/preview")).at(-1).payload.edit.crop).slice(0, 1), [11],
+    "Previews are debounced while keys repeat");
+  await f.tick();
+  assert.equal(last().crop[0], 0, "The crop stops at the photo edge");
+  await f.get("image-close").handlers.click(); await done;
+}
+
 async function run() {
   assert.deepEqual(geometry.fit(160, 120, 1), [20, 0, 140, 120]);
   assert.deepEqual(geometry.move([20, 10, 100, 90], 1000, -1000, 160, 120), [80, 0, 160, 80]);
@@ -199,10 +244,16 @@ async function run() {
 
   f = fixture();
   const replacement = f.open([{id: "existing", name: "old.webp", stem: "old", width: 160, height: 120,
-    source_url: "/images/gallery/old.webp"}]);
+    source_url: "/images/gallery/old.webp", references: ["content/media/fotok.md", "content/turak/a.md", "content/turak/b.md"]}],
+  {context: {kind: "page", path: "media/fotok.md", folder: "gallery"}});
   await f.tick();
   f.get("image-mode").value = "overwrite"; f.get("image-mode").handlers.change(); await f.tick();
+  assert.match(f.get("image-mode-note").textContent, /2 other files: content\/turak\/a\.md, content\/turak\/b\.md/,
+    "The page being edited is not listed as another user of the file");
+  assert.equal(f.get("image-edit").dataset.existing, "true", "Editing an existing file puts the save mode first");
   await f.get("image-save").handlers.click();
+  assert.ok(f.get("image-outputs").children[0].children.some(child => String(child.className).includes("used-by")),
+    "The review names the other files that will change");
   assert.equal(f.get("image-save").disabled, true, "Replacement cannot be saved before explicit approval");
   f.get("image-approve").checked = true; f.get("image-approve").handlers.change();
   assert.equal(f.get("image-save").disabled, false);
@@ -282,6 +333,7 @@ async function run() {
   assert.equal(f.get("image-notice").textContent, "", "A late source-decoding failure cannot contaminate a reopened editor");
   await f.get("image-close").handlers.click(); await newSource;
   await reviewUseCases();
+  await transformUseCases();
   console.log("PASS: Shared image editor crops, variants, batch navigation, exact output review, approval and cancellation.");
 }
 

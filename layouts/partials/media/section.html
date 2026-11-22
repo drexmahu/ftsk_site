@@ -1,0 +1,77 @@
+{{- /*
+  One titled block of a media page. Receives a prepared section (media/prepare.html).
+  Title (centered, with an optional smaller subtitle) sits above the media, which is
+  laid out as a scrolling reel, a uniform grid, justified rows or a video showcase.
+*/ -}}
+{{- $section := . -}}
+{{- $layout := $section.layout -}}
+<section class="ftsk-media-section ftsk-media-section--{{ $layout }}" id="{{ $section.id }}"
+         data-media-section="{{ $section.id }}" data-layout="{{ $layout }}"
+         style="--media-h: {{ $section.height }}px; --media-h-sm: {{ $section.heightMobile }}px; --media-gap: {{ $section.gap }}px; --media-cols: {{ $section.columns }}; --media-cols-sm: {{ $section.columnsMobile }}; --media-ratio: {{ printf "%.4f" $section.ratio }};"
+         {{- if $section.title }} aria-labelledby="{{ $section.id }}-title"{{ end }}>
+  {{- if or $section.title $section.subtitle }}
+  <header class="ftsk-media-head">
+    {{- with $section.title }}<h2 id="{{ $section.id }}-title">{{ . }}</h2>{{ end }}
+    {{- with $section.subtitle }}<p>{{ . | markdownify }}</p>{{ end }}
+  </header>
+  {{- end }}
+
+  {{- if eq $layout "reel" }}
+  <div class="ftsk-reel" data-media-reel>
+    <button type="button" class="ftsk-reel-nav ftsk-reel-nav--prev" data-reel-prev aria-label="Előző elemek" disabled>
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <ul class="ftsk-media-list ftsk-reel-track" tabindex="0" role="list" aria-label="{{ $section.title | default "Média" }}" data-reel-track>
+      {{- range $index, $item := $section.items }}
+        {{- partial "media/card.html" (dict "item" $item "caption" $section.caption "eager" (lt $index 3)) }}
+      {{- end }}
+    </ul>
+    <button type="button" class="ftsk-reel-nav ftsk-reel-nav--next" data-reel-next aria-label="Következő elemek">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="ftsk-reel-progress" aria-hidden="true"><span data-reel-progress></span></div>
+  </div>
+
+  {{- else if eq $layout "showcase" }}
+  {{- $first := index $section.items 0 }}
+  <div class="ftsk-showcase" data-media-showcase>
+    <div class="ftsk-showcase-stage">
+      <div class="ftsk-showcase-player" data-showcase-player style="--ratio: {{ printf "%.4f" $first.ratio }}">
+        <a class="ftsk-showcase-open" href="{{ $first.watch | default $first.src }}" data-media-id="{{ $first.id }}" data-showcase-open
+           aria-label="{{ $first.title | default $first.alt }} – {{ if eq $first.type "video" }}lejátszás{{ else }}nagyobb nézet{{ end }}">
+          {{- if $first.thumb }}<img src="{{ $first.thumb }}" alt="" decoding="async"{{ if eq $first.provider "youtube" }} referrerpolicy="no-referrer"{{ end }}>{{ end }}
+          {{- if eq $first.type "video" }}<span class="ftsk-media-play ftsk-media-play--large" aria-hidden="true"><svg viewBox="0 0 24 24" width="34" height="34" focusable="false"><path d="M8 5.2v13.6a1 1 0 0 0 1.5.86l11-6.8a1 1 0 0 0 0-1.72l-11-6.8A1 1 0 0 0 8 5.2z" fill="currentColor"/></svg></span>{{ end }}
+        </a>
+      </div>
+      <div class="ftsk-showcase-info" data-showcase-info aria-live="polite">
+        {{- with $first.title }}<h3>{{ . }}</h3>{{ end }}
+        {{- with $first.credit }}<p class="ftsk-media-credit">{{ $first.label }}: {{ . }}</p>{{ end }}
+        {{- with $first.text }}<div class="ftsk-media-text">{{ . }}</div>{{ end }}
+      </div>
+    </div>
+    <ul class="ftsk-showcase-list ftsk-media-list" role="list" aria-label="{{ $section.title | default "Lejátszási lista" }}">
+      {{- range $index, $item := $section.items }}
+      <li>
+        <a class="ftsk-showcase-item{{ if eq $index 0 }} is-active{{ end }}" href="{{ $item.watch | default $item.src }}" data-media-id="{{ $item.id }}" data-showcase-item{{ if eq $index 0 }} aria-current="true"{{ end }}>
+          <span class="ftsk-showcase-thumb" style="--ratio: {{ printf "%.4f" $item.ratio }}">
+            {{- if $item.thumb }}<img src="{{ $item.thumb }}" alt="" loading="lazy" decoding="async"{{ if eq $item.provider "youtube" }} referrerpolicy="no-referrer"{{ end }}>{{ end }}
+            {{- if eq $item.type "video" }}<span class="ftsk-media-play ftsk-media-play--small" aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14" focusable="false"><path d="M8 5.2v13.6a1 1 0 0 0 1.5.86l11-6.8a1 1 0 0 0 0-1.72l-11-6.8A1 1 0 0 0 8 5.2z" fill="currentColor"/></svg></span>{{ end }}
+          </span>
+          <span class="ftsk-showcase-text">
+            {{- with $item.title }}<strong>{{ . }}</strong>{{ end }}
+            {{- with $item.credit }}<small>{{ . }}</small>{{ end }}
+          </span>
+        </a>
+      </li>
+      {{- end }}
+    </ul>
+  </div>
+
+  {{- else }}
+  <ul class="ftsk-media-list ftsk-media-{{ $layout }}" role="list" aria-label="{{ $section.title | default "Média" }}">
+    {{- range $index, $item := $section.items }}
+      {{- partial "media/card.html" (dict "item" $item "caption" $section.caption "eager" (lt $index 4)) }}
+    {{- end }}
+  </ul>
+  {{- end }}
+</section>

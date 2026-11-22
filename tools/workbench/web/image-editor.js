@@ -28,6 +28,34 @@ if (typeof document !== "undefined") {
     const currentVersion = () => currentPhoto()?.versions.find(version => version.key === model.version);
     const outputs = () => model.photos.flatMap(photo => photo.versions.filter(v => v.enabled).map(version => ({photo, version})));
     const error = message => { get("notice").textContent = message; get("notice").hidden = !message; };
+    // Values of the aspect-ratio select; a quarter turn swaps each with its inverse.
+    const RATIOS = ["1", "1.7777777777777777", "1.5", "1.3333333333333333", "0.75", "0.6666666666666666", "0.5625"];
+    // Crop coordinates live in the flipped and rotated photo, so a quarter turn swaps its dimensions.
+    const dims = (photo, v) => (v?.edit.rotate || 0) % 180 ? {width: photo.entry.height, height: photo.entry.width} : {width: photo.entry.width, height: photo.entry.height};
+    const otherFiles = photo => (photo.entry.references || []).filter(path => path !== `content/${model.context.path}`);
+    const usedBy = photo => {
+      const files = otherFiles(photo);
+      return files.length ? `Also used by ${files.length} other file${files.length === 1 ? "" : "s"}: ${files.slice(0, 4).join(", ")}${files.length > 4 ? ", …" : ""}` : "";
+    };
+
+    function oriented(photo, v) {
+      const {rotate = 0, flip = false} = v.edit;
+      if (!rotate && !flip) return photo.image;
+      const key = `${rotate}:${flip}`;
+      photo.oriented ||= new Map();
+      if (!photo.oriented.has(key)) {
+        const source = photo.image, quarter = rotate % 180 !== 0, canvas = document.createElement("canvas");
+        canvas.width = quarter ? source.naturalHeight : source.naturalWidth;
+        canvas.height = quarter ? source.naturalWidth : source.naturalHeight;
+        const context = canvas.getContext("2d");
+        context.translate(canvas.width / 2, canvas.height / 2);
+        context.rotate(rotate * Math.PI / 180);
+        if (flip) context.scale(-1, 1);
+        context.drawImage(source, -source.naturalWidth / 2, -source.naturalHeight / 2);
+        photo.oriented.set(key, canvas);
+      }
+      return photo.oriented.get(key);
+    }
 
     function version(photo, edited, recipe = null) {
       return {
@@ -36,7 +64,7 @@ if (typeof document !== "undefined") {
         width: model.settings.width, height: model.settings.height, quality: model.settings.quality,
         mode: "copy", ratio: "free", edit: recipe ? structuredClone(recipe) : {
           crop: [0, 0, photo.entry.width, photo.entry.height], shape: "rectangle",
-          brightness: 100, contrast: 100, saturation: 100, warmth: 0,
+          brightness: 100, contrast: 100, saturation: 100, warmth: 0, rotate: 0, flip: false,
         },
         waiting: true, error: "", cropError: "", saveError: "", ticket: null, timer: null, running: false, pending: null,
       };
@@ -57,13 +85,14 @@ if (typeof document !== "undefined") {
     }
 
     function modeControls() {
-      const v = currentVersion();
+      const v = currentVersion(), photo = currentPhoto();
       if (!v) return;
       const allowed = v.ticket?.can_overwrite === true;
       get("mode").disabled = model.saving || model.closing || Boolean(v.saved) || !allowed;
       get("overwrite-option").disabled = !allowed;
+      const shared = usedBy(photo);
       get("mode-note").textContent = v.ticket?.overwrite_reason ||
-        (allowed ? "Replacing this WebP changes every page using its URL. Approval is required in the output review." :
+        (allowed ? `Replacing overwrites this file, so every place using it shows the new version. ${shared ? shared + ". " : ""}Approval is required in the output review.` :
           "Preparing destination checks. New copies never replace existing files.");
     }
 
@@ -86,7 +115,7 @@ if (typeof document !== "undefined") {
       get("shape").value = v.edit.shape;
       get("ratio").value = v.edit.shape === "circle" ? "1" : v.ratio;
       get("ratio").disabled = !v.edited || model.saving || Boolean(v.saved) || v.edit.shape === "circle";
-      for (const id of ["shape", "crop-x", "crop-y", "crop-width", "crop-height", "brightness", "contrast", "saturation", "warmth", "reset"]) {
+      for (const id of ["shape", "crop-x", "crop-y", "crop-width", "crop-height", "brightness", "contrast", "saturation", "warmth", "reset", "rotate-left", "rotate-right", "flip"]) {
         get(id).disabled = !v.edited || model.saving || Boolean(v.saved);
       }
       for (const id of ["name", "width", "height", "quality", "mode", "versions", "duplicate", "create"]) get(id).disabled = model.saving;
@@ -98,8 +127,8 @@ if (typeof document !== "undefined") {
       get("duplicate").disabled ||= get("create").disabled;
       get("create").title = get("duplicate").title = "Up to 20 versions per photo and 200 selected outputs per batch. Remove a version or omit an unedited output to make room.";
       get("duplicate").disabled ||= !v.edited;
-      get("crop-note").textContent = v.edited ? "Drag the selection to move it; drag a corner to resize. Coordinates are source pixels. The output preview shows the actual WebP." :
-        "Unedited means no crop or tone changes, converted to WebP with the size limits below. Create an edited version to crop or adjust this photo.";
+      get("crop-note").textContent = v.edited ? "Drag the selection to move it; drag a corner to resize; arrow keys nudge it (Shift for bigger steps). Coordinates are source pixels. The output preview shows the actual WebP." :
+        "Unedited means no crop, rotation or tone changes, converted to WebP with the size limits below. Create an edited version to crop, rotate or adjust this photo.";
       if (v.cropError) for (const [id, value] of Object.entries(v.cropInputs)) get(id).value = value;
       else cropFields();
       get("canvas").style.touchAction = v.edited && !v.saved ? "none" : "pan-y";
@@ -185,18 +214,18 @@ if (typeof document !== "undefined") {
       if (model.review) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       if (!photo?.image || !v) return;
-      const {width, height} = photo.entry;
+      const {width, height} = dims(photo, v), source = oriented(photo, v);
       const scale = Math.min(canvas.width / width, canvas.height / height);
       const x = (canvas.width - width * scale) / 2, y = (canvas.height - height * scale) / 2;
       photo.geometry = {x, y, scale};
-      ctx.drawImage(photo.image, x, y, width * scale, height * scale);
+      ctx.drawImage(source, x, y, width * scale, height * scale);
       if (!v.edited) return;
       const [l, t, r, b] = v.edit.crop, left = x + l * scale, top = y + t * scale, w = (r - l) * scale, h = (b - t) * scale;
       ctx.fillStyle = "rgba(0,0,0,.6)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.save(); ctx.beginPath();
       if (v.edit.shape === "rectangle") ctx.rect(left, top, w, h);
       else ctx.ellipse(left + w / 2, top + h / 2, w / 2, h / 2, 0, 0, Math.PI * 2);
-      ctx.clip(); ctx.drawImage(photo.image, x, y, width * scale, height * scale); ctx.restore();
+      ctx.clip(); ctx.drawImage(source, x, y, width * scale, height * scale); ctx.restore();
       ctx.strokeStyle = "#bea070"; ctx.lineWidth = 2; ctx.strokeRect(left, top, w, h);
       ctx.fillStyle = "#bea070";
       const handle = 7 * canvas.width / Math.max(1, canvas.getBoundingClientRect().width);
@@ -283,10 +312,12 @@ if (typeof document !== "undefined") {
         const card = node("section", "", "image-output");
         const img = node("img"); img.alt = `${photo.entry.name}: ${v.edited ? v.name : "unedited"}`;
         if (v.ticket && !v.waiting && !v.error) img.src = v.saved ? v.saved.url : v.ticket.preview;
+        const shared = v.mode === "overwrite" ? usedBy(photo) : "";
         card.append(img, node("strong", v.edited ? v.name : "Unedited WebP"), node("small", photo.entry.name),
           node("code", v.ticket?.url || "Preview not ready"),
-          node("p", v.saved ? "Saved" : v.cropError || v.error || (v.saveError ? `Save not confirmed: ${v.saveError}. Retry the same output.` : v.waiting ? "Preparing preview…" :
+          node("p", v.saved ? (v.mode === "overwrite" ? "Replaced" : "Saved") : v.cropError || v.error || (v.saveError ? `Save not confirmed: ${v.saveError}. Retry the same output.` : v.waiting ? "Preparing preview…" :
             `${v.ticket?.width} × ${v.ticket?.height} · ${((v.ticket?.bytes || 0) / 1024).toFixed(1)} KiB · ${v.mode === "overwrite" ? "REPLACES existing file" : "New file"}`), v.error || v.cropError || v.saveError ? "error" : "hint"));
+        if (shared) card.append(node("p", shared, "hint used-by"));
         if (model.options.field) {
           const label = node("label", "", "image-check");
           const radio = node("input"); radio.type = "radio"; radio.name = "image-primary";
@@ -378,11 +409,14 @@ if (typeof document !== "undefined") {
       get("title").textContent = options.title || "Prepare site images";
       get("destination").textContent = `/images/${owner.folder ? owner.folder + "/" : ""}`;
       get("field-note").textContent = options.field ? `Select one reviewed output for ${options.field}.` : "Keep an unedited WebP, any edited versions, or both.";
-      get("storage-note").textContent = owner.context.kind === "page" ?
+      get("storage-note").textContent = owner.context.kind === "page" && owner.context.path.startsWith("media/") ?
+        "This media page owns the destination folder for new copies. Borrowed photos are saved as copies there by default; choose “Replace the original file” to improve a photo everywhere it is used." :
+        owner.context.kind === "page" ?
         "This page owns the destination folder. Browsing another folder does not change where new images are saved; borrowed images are copied here." :
         owner.context.kind === "cv" ? "Images are saved only in the selected person's folder. Images borrowed from other folders are copied here, never replaced there." :
         options.url ? "New copies stay beside this existing image. To save in a different folder, use the Site photos upload workflow." :
         "This is your chosen Site photos folder. New copies receive a numeric suffix if their name already exists.";
+      get("edit").dataset.existing = "false";
       get("edit").hidden = false; get("review").hidden = true; get("workspace").hidden = true;
       get("approve").checked = false; error(""); get("photos").replaceChildren();
       dialog.showModal(); footer();
@@ -403,6 +437,7 @@ if (typeof document !== "undefined") {
             owner.photos.push(photo);
             photo.versions.push(version(photo, false));
             if (entry.source_url) {
+              get("edit").dataset.existing = "true";
               photo.versions[0].enabled = false;
               photo.versions.push(version(photo, true));
             }
@@ -459,22 +494,23 @@ if (typeof document !== "undefined") {
     function ratio() {
       const photo = currentPhoto(), v = currentVersion();
       if (v.edit.shape === "circle") return 1;
-      return v.ratio === "source" ? photo.entry.width / photo.entry.height : v.ratio === "free" ? null : Number(v.ratio);
+      const {width, height} = dims(photo, v);
+      return v.ratio === "source" ? width / height : v.ratio === "free" ? null : Number(v.ratio);
     }
     for (const id of ["shape", "ratio"]) get(id).addEventListener("change", () => {
-      const photo = currentPhoto(), v = currentVersion(), b = v.edit.crop;
+      const photo = currentPhoto(), v = currentVersion(), b = v.edit.crop, size = dims(photo, v);
       v.cropError = "";
       if (id === "shape") v.edit.shape = get(id).value; else v.ratio = get(id).value;
       const r = ratio();
       if (r) {
         const width = Math.min(b[2]-b[0], (b[3]-b[1])*r);
-        const percent = 100*width/Math.min(photo.entry.width, photo.entry.height*r);
-        v.edit.crop = imageGeometry.fit(photo.entry.width, photo.entry.height, r, percent, (b[0]+b[2])/2, (b[1]+b[3])/2);
+        const percent = 100*width/Math.min(size.width, size.height*r);
+        v.edit.crop = imageGeometry.fit(size.width, size.height, r, percent, (b[0]+b[2])/2, (b[1]+b[3])/2);
       }
       controls(); schedule(photo, v);
     });
     for (const id of ["crop-x", "crop-y", "crop-width", "crop-height"]) get(id).addEventListener("change", () => {
-      const photo = currentPhoto(), v = currentVersion(), entry = photo.entry;
+      const photo = currentPhoto(), v = currentVersion(), entry = dims(photo, v);
       let x = Math.round(Number(get("crop-x").value)), y = Math.round(Number(get("crop-y").value));
       let w = Math.round(Number(get("crop-width").value)), h = Math.round(Number(get("crop-height").value));
       if (["crop-x", "crop-y", "crop-width", "crop-height"].some(key => !String(get(key).value).trim()) || ![x,y,w,h].every(Number.isFinite) || w < 1 || h < 1) {
@@ -486,14 +522,52 @@ if (typeof document !== "undefined") {
       const r = ratio();
       if (r) { if (id === "crop-height") w = Math.round(h*r); else h = Math.round(w/r); }
       w = Math.min(entry.width, w); h = Math.min(entry.height, h);
-      if (r) { w = Math.min(w, Math.round(h*r)); h = r === 1 ? w : Math.max(1, Math.round(w/r)); }
+      if (r) {
+        w = Math.min(w, Math.round(h*r)); h = r === 1 ? w : Math.max(1, Math.round(w/r));
+        // Rounding must never push the box past the photo's edge.
+        if (h > entry.height) { h = entry.height; w = Math.max(1, Math.min(w, Math.round(h*r))); }
+      }
       x = Math.max(0, Math.min(entry.width-w, x)); y = Math.max(0, Math.min(entry.height-h, y));
       v.edit.crop = [x,y,x+w,y+h]; cropFields(); draw(); schedule(photo,v);
     });
     get("reset").addEventListener("click", () => {
       const photo = currentPhoto(), v = currentVersion();
-      v.edit = {crop: [0,0,photo.entry.width,photo.entry.height], shape:"rectangle",brightness:100,contrast:100,saturation:100,warmth:0};
+      v.edit = {crop: [0,0,photo.entry.width,photo.entry.height], shape:"rectangle",brightness:100,contrast:100,saturation:100,warmth:0,rotate:0,flip:false};
       v.ratio = "free"; v.cropError = ""; controls(); schedule(photo,v);
+    });
+    // The crop box follows the photo when it is turned or mirrored, so the framing is kept.
+    function transform(kind) {
+      const photo = currentPhoto(), v = currentVersion();
+      if (!v?.edited || v.saved || model.saving || model.closing) return;
+      finishDrag();
+      const {width: w, height: h} = dims(photo, v), [l, t, r, b] = v.edit.crop;
+      if (kind === "flip") {
+        v.edit.crop = [w - r, t, w - l, b];
+        v.edit.flip = !v.edit.flip;
+        v.edit.rotate = (360 - v.edit.rotate) % 360;
+      } else {
+        v.edit.crop = kind === "right" ? [h - b, l, h - t, r] : [t, w - r, b, w - l];
+        v.edit.rotate = (v.edit.rotate + (kind === "right" ? 90 : 270)) % 360;
+        if (!["free", "source"].includes(v.ratio)) {
+          const inverse = 1 / Number(v.ratio);
+          const match = RATIOS.find(value => Math.abs(Number(value) - inverse) < 1e-6);
+          if (match) v.ratio = match;
+        }
+      }
+      v.cropError = "";
+      controls(); schedule(photo, v);
+    }
+    get("rotate-left").addEventListener("click", () => transform("left"));
+    get("rotate-right").addEventListener("click", () => transform("right"));
+    get("flip").addEventListener("click", () => transform("flip"));
+    get("canvas").addEventListener("keydown", event => {
+      const step = {ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1]}[event.key];
+      const photo = currentPhoto(), v = currentVersion();
+      if (!step || !v?.edited || v.saved || v.cropError || model.saving || model.closing) return;
+      event.preventDefault();
+      const size = dims(photo, v), unit = Math.max(1, Math.round(Math.max(size.width, size.height) / 200)) * (event.shiftKey ? 10 : 1);
+      v.edit.crop = imageGeometry.move(v.edit.crop, step[0] * unit, step[1] * unit, size.width, size.height);
+      cropFields(); draw(); schedule(photo, v);
     });
     let drag = null;
     function finishDrag() {
@@ -518,7 +592,7 @@ if (typeof document !== "undefined") {
     });
     get("canvas").addEventListener("pointermove", event => {
       if (!drag || model.saving) return;
-      const p = point(event), {entry} = drag.photo, box = drag.box;
+      const p = point(event), entry = dims(drag.photo, drag.v), box = drag.box;
       if (drag.corner < 0) drag.v.edit.crop = imageGeometry.move(box,p[0]-drag.point[0],p[1]-drag.point[1],entry.width,entry.height);
       else {
         const left = drag.corner % 2 === 0, top = drag.corner < 2;

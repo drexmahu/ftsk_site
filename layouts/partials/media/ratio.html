@@ -1,0 +1,21 @@
+{{- /*
+  Parses an aspect ratio written as "3:2", "16:9" or a decimal ("1.5") into a
+  width/height number. Returns 0 when the value is empty or invalid, so callers
+  can fall back to a measured or default ratio. Clamped to 0.2-5 so one odd
+  value cannot produce a hairline or a mile-wide card.
+*/ -}}
+{{- $ratio := 0.0 -}}
+{{- with . -}}
+  {{- $text := printf "%v" . | strings.TrimSpace -}}
+  {{- if findRE `^[0-9]+(\.[0-9]+)?:[0-9]+(\.[0-9]+)?$` $text -}}
+    {{- $parts := split $text ":" -}}
+    {{- $height := float (index $parts 1) -}}
+    {{- if gt $height 0.0 -}}{{- $ratio = div (float (index $parts 0)) $height -}}{{- end -}}
+  {{- else if findRE `^[0-9]+(\.[0-9]+)?$` $text -}}
+    {{- $ratio = float $text -}}
+  {{- end -}}
+{{- end -}}
+{{- if and (gt $ratio 0.0) (or (lt $ratio 0.2) (gt $ratio 5.0)) -}}
+  {{- if lt $ratio 0.2 }}{{ $ratio = 0.2 }}{{ else }}{{ $ratio = 5.0 }}{{ end -}}
+{{- end -}}
+{{- return $ratio -}}

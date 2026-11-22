@@ -9,7 +9,7 @@
     mediaTarget: null, pickerFiles: [], pageMedia: [], mediaReview: null, assetDelete: null,
     pdfImport: null, pdfApplied: false, screen: "library", section: "", assetRead: 0, pickerRead: 0, mediaRead: 0,
     navigationResolve: null, newSlugTouched: false, routeEditing: "", searchOrigin: false,
-    photoScope: "", photoWorkspaces: new Map(), missingOriginals: []
+    photoScope: "", photoWorkspaces: new Map(), missingOriginals: [], stamps: {}
   };
   const rootAPI = "/api/workbench/content/";
   const feedback = (message, error = false, kind = "") => {
@@ -28,7 +28,7 @@
   const clone = value => JSON.parse(JSON.stringify(value));
   const normalized = value => value.replaceAll("\r\n", "\n");
   const get = (object, path) => path.split(".").reduce((value, key) => value?.[key], object);
-  const currentMeta = () => ({ ...studio.page.metadata, ...studio.changes });
+  const currentMeta = () => ({ ...studio.page?.metadata, ...studio.changes });
   const suggestedFolder = path => path.replace(/(?:\/index)?\.md$/, "").replace(/\/_index$/, "") || "gallery";
   const activePath = () => $("#post-path").value.trim();
   function pageAssetFolder(page) {
@@ -203,6 +203,9 @@
       tab = "write"; target = $("#post-body");
       const headerLines = sourceText.slice(0, bodyStart).split("\n").length - 1;
       range = find(target.value, query, Math.max(1, sourceRange.line - headerLines));
+    } else if (studio.page.media && !studio.page.error && sourceRange) {
+      const hit = window.workbenchMediaEditor.locate(mediaHost, query);
+      if (hit) { tab = "gallery"; target = hit; range = find(hit.value, query); }
     } else if (studio.page.guided && !studio.page.error && sourceRange) {
       const lines = sourceText.split("\n"), matchLine = lines[sourceRange.line - 1];
       const rootField = matchLine.trimStart().startsWith("#") ? "" :
@@ -826,6 +829,8 @@
     $("#course-note").hidden = !course;
     renderRepeaters();
     updateSocialNote();
+    updateMediaNavigation();
+    if (studio.page?.media && !studio.page.error) window.workbenchMediaEditor.render(mediaHost);
   }
 
   function updateCourseNavigation() {
@@ -834,6 +839,41 @@
     $(`[data-editor-tab="course"]`).disabled = !course;
     document.querySelectorAll("[data-add-faq]").forEach(button => { button.hidden = !course; button.disabled = !course; });
   }
+
+  // Galleries replace the trip/course tabs on media pages.
+  function updateMediaNavigation() {
+    const media = Boolean(studio.page?.media) && !studio.page.error;
+    const gallery = $(`[data-editor-tab="gallery"]`);
+    gallery.hidden = !media; gallery.disabled = !media;
+    for (const tab of ["metadata", "contacts"]) $(`[data-editor-tab="${tab}"]`).hidden = media;
+    $(`[data-editor-tab="write"]`).textContent = media ? "Introduction" : "Story";
+    $(`[data-editor-tab="seo"]`).hidden = false;
+  }
+
+  // Full-screen viewing of art photography needs more than the 1600 px article default.
+  const galleryImageSettings = { width: 2560, height: 2560, quality: 85 };
+  const mediaHost = {
+    meta: () => currentMeta(),
+    path: () => activePath(),
+    change: (path, value) => change(path, value),
+    pick: (title, current, assign) => run(async () => { await openMediaPicker("images", title, current, assign); }),
+    notify: (message, kind) => feedback(message, kind === "error", kind === "error" ? "" : kind),
+    // Cache-busting stamp for files this session replaced in place.
+    stamp: url => studio.stamps[url] ? `${url}?v=${studio.stamps[url]}` : url,
+    // Opens an existing local photo in the shared editor; `assign` receives the chosen output's URL.
+    edit: (title, url, assign) => run(async () => {
+      const outcome = await editPageImages({ url, field: title, gallery: true });
+      if (outcome.primary) assign(outcome.primary);
+      if (outcome.results.length) renderForms();
+    }),
+    upload: async files => {
+      for (const file of files) {
+        if (!file.size || file.size > 30 * 1024 * 1024) throw new Error(`${file.name}: choose a non-empty image up to 30 MiB.`);
+      }
+      const outcome = await editPageImages({ files, gallery: true });
+      return outcome.results.flatMap(result => result.files.map(image => image.url));
+    },
+  };
 
   function updateSocialNote() {
     if (!studio.page) return;
@@ -979,12 +1019,14 @@
     studio.contentTab = "write";
     $("#asset-folder").value = $("#post-image-folder").value;
     studio.selection = [0, 0];
-    $("#body-warning").textContent = page.guided ? "The title, author and participant cards come from frontmatter; do not repeat them in the story." :
+    $("#body-warning").textContent = page.media ? "This text appears as the introduction above the galleries. Leave it empty if the galleries speak for themselves; build the galleries in the Galleries tab." :
+      page.guided ? "The title, author and participant cards come from frontmatter; do not repeat them in the story." :
       "This is a source-mode page. Component-driven pages may render content_blocks rather than the Markdown body; edit the complete YAML in Full source.";
     for (const tab of ["metadata", "course", "seo"]) {
-      $(`[data-editor-tab="${tab}"]`).disabled = !page.guided || Boolean(page.error);
+      $(`[data-editor-tab="${tab}"]`).disabled = !(page.guided || (page.media && tab === "seo")) || Boolean(page.error);
     }
     updateCourseNavigation();
+    updateMediaNavigation();
     $(`[data-editor-tab="contacts"]`).disabled = Boolean(page.error);
     $("#page-people-editing").hidden = !page.guided || Boolean(page.error);
     $(`[data-editor-tab="write"]`).disabled = Boolean(page.error);
@@ -993,7 +1035,8 @@
     assetBrowser.reset();
     for (const browser of Object.values(pageFileBrowsers)) browser.reset();
     setBusy(false);
-    switchPanel(page.guided && !page.error ? "write" : "source");
+    studio.contentTab = page.media && !page.error ? "gallery" : "write";
+    switchPanel(page.media && !page.error ? "gallery" : page.guided && !page.error ? "write" : "source");
     feedback(page.error || (page.warnings || []).join("\n"), Boolean(page.error), "warning");
     markDirty();
     renderLibrary();
@@ -1020,7 +1063,9 @@
       const composed = await api(rootAPI + "compose", { method: "POST", payload: {
         source: bodySource(), changes: studio.changes
       } });
-      studio.page = { ...studio.page, ...composed, path: activePath(), guided: ["turak", "tanfolyamok"].includes(activePath().split("/")[0]) && !activePath().endsWith("_index.md"), error: "" };
+      const path = activePath();
+      studio.page = { ...studio.page, ...composed, path, guided: ["turak", "tanfolyamok"].includes(path.split("/")[0]) && !path.endsWith("_index.md"),
+        media: path.startsWith("media/") && path.includes("/") && !path.endsWith("_index.md"), error: "" };
       studio.changes = {};
       $("#post-body").value = composed.body;
       $("#post-source").value = composed.source;
@@ -1031,8 +1076,9 @@
 
   function switchPanel(tab) {
     if (tab === "course" && !activePath().startsWith("tanfolyamok/")) tab = "write";
+    if (tab === "gallery" && !studio.page?.media) tab = "write";
     studio.tab = tab;
-    const content = ["write", "metadata", "contacts", "course", "seo"].includes(tab);
+    const content = ["gallery", "write", "metadata", "contacts", "course", "seo"].includes(tab);
     if (content) studio.contentTab = tab;
     $("#editor-content-navigation").hidden = false;
     $("#content-photo-note").hidden = tab === "media" || (!studio.selected.size && !studio.missingOriginals.length);
@@ -1044,7 +1090,8 @@
       "page-media": "Files & usage", media: "Add images & PDFs", "pdf-import": "Read a PDF",
       placement: "File & URL placement", source: "Full source",
       preview: "Whole-page preview", syntax: "Syntax help",
-      write: "Story", metadata: "Page details & cover", contacts: "People & contacts", course: "Course & FAQ", seo: "Sharing & search"
+      write: studio.page?.media ? "Introduction" : "Story", metadata: "Page details & cover", contacts: "People & contacts", course: "Course & FAQ", seo: "Sharing & search",
+      gallery: "Galleries"
     }[tab] || "Edit page";
     const back = $(`[data-editor-tab="${studio.contentTab}"]`);
     $("#editor-return-content").disabled = Boolean(back?.disabled);
@@ -1196,7 +1243,7 @@
     if (studio.busy) return;
     if (!studio.catalog) await refreshCatalog();
     const choices = studio.catalog.templates.filter(template => studio.section ?
-      template.section === studio.section || (!template.section && !["turak", "tanfolyamok"].includes(studio.section)) : true);
+      template.section === studio.section || (!template.section && !["turak", "tanfolyamok", "media"].includes(studio.section)) : true);
     $("#new-page-template").replaceChildren(...choices.map(template => { const option = node("option", template.name); option.value = template.id; return option; }));
     $("#new-page-title").value = ""; $("#new-page-slug").value = ""; studio.newSlugTouched = false;
     $("#new-page-error").hidden = true;
@@ -1757,10 +1804,11 @@
       throw error;
     } finally { setBusy(false); }
   }
-  async function editPageImages({files, url, field} = {}) {
+  async function editPageImages({files, url, field, gallery = false} = {}) {
     const path = activePath(), folder = updateOwnedMediaFolders();
     const settings = {name: files?.length === 1 ? $("#content-image-name").value.trim() : ""};
-    for (const key of ["width", "height", "quality"]) {
+    if (gallery) Object.assign(settings, galleryImageSettings);
+    else for (const key of ["width", "height", "quality"]) {
       const input = $(`#content-image-${key}`);
       if (!input.reportValidity()) throw new Error(`Check image ${key}.`);
       settings[key] = Number(input.value);
@@ -1769,7 +1817,8 @@
       context: {kind: "page", path}, title: field ? `Prepare ${field}` : "Prepare page photos",
       validate() { if (activePath() !== path) throw new Error("The open page changed. Reopen the image editor for that page."); }});
     for (const result of outcome.results) for (const image of result.files) {
-      if (!field) studio.selected.set(image.url, {...studio.selected.get(image.url), ...image,
+      if (result.replaced) studio.stamps[image.url] = Date.now();
+      if (!field && !gallery) studio.selected.set(image.url, {...studio.selected.get(image.url), ...image,
         name: decodeURIComponent(image.url.split("/").pop()), alt: studio.selected.get(image.url)?.alt || "",
         caption: studio.selected.get(image.url)?.caption || ""});
     }

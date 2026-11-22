@@ -1,0 +1,14 @@
+{{- /*
+  Extracts the 11-character YouTube video id from a watch, short, embed, shorts
+  or live URL, or from a bare id. Returns an empty string for anything else
+  (direct video files and unknown hosts), which the caller treats as "not YouTube".
+*/ -}}
+{{- $id := "" -}}
+{{- $text := printf "%v" . | strings.TrimSpace -}}
+{{- $found := findRESubmatch `(?i)(?:youtu\.be/|youtube(?:-nocookie)?\.com/(?:watch\?(?:[^#\s]*&)?v=|embed/|shorts/|live/|v/))([A-Za-z0-9_-]{11})` $text 1 -}}
+{{- if $found -}}
+  {{- $id = index (index $found 0) 1 -}}
+{{- else if findRE `^[A-Za-z0-9_-]{11}$` $text -}}
+  {{- $id = $text -}}
+{{- end -}}
+{{- return $id -}}

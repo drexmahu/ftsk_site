@@ -21,6 +21,7 @@
       {{- if not $summary }}{{ $summary = (.Params.description | default "") }}{{ end -}}
     {{- else -}}
       {{- $summary = (.Summary | plainify | truncate 160) -}}
+      {{- if not (strings.TrimSpace $summary) }}{{ $summary = (.Params.description | default "") | plainify | truncate 160 }}{{ end -}}
     {{- end -}}
     {{- $items = $items | append (dict
           "title" (partial "page-title.html" .)

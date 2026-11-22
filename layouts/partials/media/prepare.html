@@ -1,0 +1,122 @@
+{{- /*
+  Validates and resolves a media page (layouts/media/single.html) into render-ready
+  data. Returns a dict:
+    .sections - one dict per media_sections entry (settings + prepared items)
+    .items    - flat list of every item for the viewer's JSON payload
+    .settings - page-level settings
+  Mistakes in the front matter stop the build with a message that names the file
+  and entry, like the content-block sections do, instead of silently dropping photos.
+
+  Section keys: id, title, subtitle, layout (reel|grid|rows|showcase), height,
+  height_mobile (px, reel and rows), columns, columns_mobile (grid), ratio (card
+  shape in grid/showcase, e.g. "3:2"), gap (px), caption (none|hover|below).
+  Item keys: type (photo|video), src or video, poster, alt, title, credit, text,
+  ratio (only needed when the real photo size cannot be measured, or for portrait
+  videos).
+*/ -}}
+{{- $page := . -}}
+{{- $file := $page.File.Path -}}
+{{- $settings := $page.Params.media_page | default dict -}}
+{{- if not (reflect.IsMap $settings) -}}{{- errorf "%s: media_page must be a mapping" $file -}}{{- end -}}
+{{- $width := $settings.width | default "contained" -}}
+{{- if not (in (slice "contained" "wide" "full") $width) -}}{{- errorf "%s: media_page.width must be contained, wide or full (received %q)" $file $width -}}{{- end -}}
+{{- $rawSections := $page.Params.media_sections | default slice -}}
+{{- if not (reflect.IsSlice $rawSections) -}}{{- errorf "%s: media_sections must be a list" $file -}}{{- end -}}
+
+{{- $sections := slice -}}
+{{- $flat := slice -}}
+{{- $seen := slice -}}
+{{- range $si, $raw := $rawSections -}}
+  {{- if not (reflect.IsMap $raw) -}}{{- errorf "%s: media_sections[%d] must be a mapping" $file $si -}}{{- end -}}
+  {{- $items := $raw.items | default slice -}}
+  {{- if not (reflect.IsSlice $items) -}}{{- errorf "%s: media_sections[%d].items must be a list" $file $si -}}{{- end -}}
+  {{- $title := printf "%v" ($raw.title | default "") -}}
+  {{- $id := $raw.id | default ($title | urlize) | default (printf "section-%d" (add $si 1)) -}}
+  {{- if in $seen $id }}{{ $id = printf "%s-%d" $id (add $si 1) }}{{ end -}}
+  {{- $seen = $seen | append $id -}}
+
+  {{- $layout := $raw.layout | default "reel" -}}
+  {{- if not (in (slice "reel" "grid" "rows" "showcase") $layout) -}}{{- errorf "%s: media_sections[%d].layout must be reel, grid, rows or showcase (received %q)" $file $si $layout -}}{{- end -}}
+  {{- $videoCount := len (where $items "type" "video") -}}
+  {{- $mostlyVideo := gt (mul $videoCount 2) (len $items) -}}
+  {{- $height := partial "article-size.html" (dict "name" "height" "value" $raw.height "default" (cond $mostlyVideo 300 360) "min" 120 "max" 900) -}}
+  {{- $heightMobile := partial "article-size.html" (dict "name" "height_mobile" "value" $raw.height_mobile "default" (cond (lt $height 260.0) $height 240) "min" 100 "max" 700) -}}
+  {{- $columns := partial "article-size.html" (dict "name" "columns" "value" $raw.columns "default" 3 "min" 1 "max" 6) -}}
+  {{- $columnsMobile := partial "article-size.html" (dict "name" "columns_mobile" "value" $raw.columns_mobile "default" (cond $mostlyVideo 1 2) "min" 1 "max" 3) -}}
+  {{- $gap := partial "article-size.html" (dict "name" "gap" "value" $raw.gap "default" 14 "min" 0 "max" 48) -}}
+  {{- $caption := $raw.caption | default (cond $mostlyVideo "below" "hover") -}}
+  {{- if not (in (slice "none" "hover" "below") $caption) -}}{{- errorf "%s: media_sections[%d].caption must be none, hover or below (received %q)" $file $si $caption -}}{{- end -}}
+  {{- $cardRatio := partial "media/ratio.html" $raw.ratio -}}
+  {{- if not $cardRatio }}{{ $cardRatio = cond $mostlyVideo 1.7778 1.5 }}{{ end -}}
+
+  {{- $prepared := slice -}}
+  {{- range $ii, $item := $items -}}
+    {{- if not (reflect.IsMap $item) -}}{{- errorf "%s: media_sections[%d].items[%d] must be a mapping" $file $si $ii -}}{{- end -}}
+    {{- $type := $item.type | default "photo" -}}
+    {{- if not (in (slice "photo" "video") $type) -}}{{- errorf "%s: media_sections[%d].items[%d].type must be photo or video (received %q)" $file $si $ii $type -}}{{- end -}}
+    {{- $itemTitle := printf "%v" ($item.title | default "") -}}
+    {{- $credit := printf "%v" ($item.credit | default "") -}}
+    {{- $text := printf "%v" ($item.text | default "") | strings.TrimSpace -}}
+    {{- $label := $settings.credit_label | default (cond (eq $type "video") "Videó" "Fotó") -}}
+    {{- $entry := dict "id" (printf "%s-%d" $id (add $ii 1)) "type" $type "title" $itemTitle "credit" $credit "label" $label
+          "text" ($text | markdownify) "section" $id "sectionTitle" $title -}}
+    {{- $itemRatio := partial "media/ratio.html" $item.ratio -}}
+
+    {{- if eq $type "photo" -}}
+      {{- $src := $item.src | default "" -}}
+      {{- if not $src }}{{ errorf "%s: media_sections[%d].items[%d] needs a photo src" $file $si $ii }}{{ end -}}
+      {{- $url := partial "url.html" $src -}}
+      {{- $thumb := $url -}}
+      {{- $pixelWidth := 0 -}}
+      {{- $pixelHeight := 0 -}}
+      {{- $img := "" -}}
+      {{- if and (strings.HasPrefix $src "/images/") (not (strings.Contains $src "..")) -}}
+        {{- $img = resources.Get (strings.TrimPrefix "/" $src) -}}
+      {{- end -}}
+      {{- with $img -}}
+        {{- $pixelWidth = .Width -}}
+        {{- $pixelHeight = .Height -}}
+        {{- $itemRatio = div (float .Width) (float .Height) -}}
+      {{- end -}}
+      {{- if not $itemRatio }}{{ $itemRatio = 1.5 }}{{ end -}}
+      {{- with $img -}}
+        {{- $target := 1000 -}}
+        {{- if in (slice "reel" "rows") $layout }}{{ $target = int (math.Ceil (mul (float $height) $itemRatio 2)) }}{{ end -}}
+        {{- $target = math.Min (math.Max $target 480) 2400 | int -}}
+        {{- if and (in (slice "jpeg" "png" "webp") .MediaType.SubType) (gt .Width $target) -}}
+          {{- $thumb = (.Resize (printf "%dx q82" $target)).RelPermalink -}}
+        {{- end -}}
+      {{- end -}}
+      {{- $entry = merge $entry (dict "src" $url "thumb" $thumb "ratio" $itemRatio "w" $pixelWidth "h" $pixelHeight "alt" ($item.alt | default $itemTitle)) -}}
+    {{- else -}}
+      {{- $source := printf "%v" ($item.video | default $item.src | default "") | strings.TrimSpace -}}
+      {{- if not $source }}{{ errorf "%s: media_sections[%d].items[%d] needs a video (YouTube link or video file)" $file $si $ii }}{{ end -}}
+      {{- $youtube := partial "media/youtube.html" $source -}}
+      {{- if not $itemRatio }}{{ $itemRatio = 1.7778 }}{{ end -}}
+      {{- $poster := "" -}}
+      {{- with $item.poster }}{{ $poster = partial "url.html" . }}{{ end -}}
+      {{- $entry = merge $entry (dict "ratio" $itemRatio "alt" ($item.alt | default $itemTitle)) -}}
+      {{- if $youtube -}}
+        {{- if not $poster }}{{ $poster = printf "https://i.ytimg.com/vi/%s/hqdefault.jpg" $youtube }}{{ end -}}
+        {{- $entry = merge $entry (dict "provider" "youtube" "youtube" $youtube
+              "embed" (printf "https://www.youtube-nocookie.com/embed/%s" $youtube)
+              "watch" (printf "https://www.youtube.com/watch?v=%s" $youtube) "thumb" $poster "poster" $poster) -}}
+      {{- else -}}
+        {{- if not (or (strings.HasPrefix $source "/") (strings.HasPrefix $source "https://") (strings.HasPrefix $source "http://")) -}}
+          {{- errorf "%s: media_sections[%d].items[%d].video must be a YouTube link or a video file path/URL (received %q)" $file $si $ii $source -}}
+        {{- end -}}
+        {{- $mime := dict ".mp4" "video/mp4" ".m4v" "video/mp4" ".webm" "video/webm" ".ogv" "video/ogg" ".mov" "video/quicktime" -}}
+        {{- $file_url := partial "url.html" $source -}}
+        {{- $entry = merge $entry (dict "provider" "file" "src" $file_url "watch" $file_url "thumb" $poster "poster" $poster
+              "mime" (index $mime (lower (path.Ext (index (split $source "?") 0))) | default "video/mp4")) -}}
+      {{- end -}}
+    {{- end -}}
+    {{- $prepared = $prepared | append $entry -}}
+    {{- $flat = $flat | append $entry -}}
+  {{- end -}}
+
+  {{- $sections = $sections | append (dict "id" $id "title" $title "subtitle" ($raw.subtitle | default "") "layout" $layout
+        "height" $height "heightMobile" $heightMobile "columns" (int $columns) "columnsMobile" (int $columnsMobile)
+        "gap" $gap "caption" $caption "ratio" $cardRatio "items" $prepared) -}}
+{{- end -}}
+{{- return (dict "sections" $sections "items" $flat "settings" (dict "width" $width)) -}}

@@ -30,6 +30,13 @@ items:
     text: Tanfolyamok
     enable_dropdown: false
     dropdown:
+  # Média: the dropdown lists every page in content/media/ automatically, ordered by
+  # its weight. Use hide_from_menu: true in a page's front matter to leave one out.
+  - link: /media/
+    text: Média
+    enable_dropdown: true
+    dropdown_section: media
+    dropdown:
   - link: /linkek/
     text: Linkek
     enable_dropdown: false

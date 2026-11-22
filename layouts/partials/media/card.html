@@ -1,0 +1,42 @@
+{{- /*
+  One thumbnail in a reel, grid or justified row. Receives:
+    .item    - prepared item (see media/prepare.html)
+    .caption - none | hover | below
+    .eager   - true for the first few thumbnails (everything else loads lazily)
+  Always a real link: without JavaScript a photo opens its file and a video opens
+  on YouTube / as the file; media.js upgrades the click to the full viewer.
+*/ -}}
+{{- $item := .item -}}
+{{- $isVideo := eq $item.type "video" -}}
+{{- $name := $item.title | default $item.alt -}}
+<li class="ftsk-media-item" style="--ratio: {{ printf "%.4f" $item.ratio }}">
+  <a class="ftsk-media-card" href="{{ $item.watch | default $item.src }}" data-media-id="{{ $item.id }}"
+     {{- if $isVideo }} aria-label="{{ $name }} – videó lejátszása"{{ else if $item.title }} aria-label="{{ $item.title }} – nagyobb nézet"{{ end }}
+     {{- if $isVideo }}{{ if eq $item.provider "youtube" }} target="_blank" rel="noopener"{{ end }}{{ end }}>
+    <span class="ftsk-media-frame">
+      {{- if $item.thumb }}
+      <img src="{{ $item.thumb }}" alt="{{ if $isVideo }}{{ else }}{{ $item.alt }}{{ end }}" decoding="async"
+           {{- if .eager }} fetchpriority="auto"{{ else }} loading="lazy"{{ end }}
+           {{- if and $item.w $item.h }} width="{{ $item.w }}" height="{{ $item.h }}"{{ end }}
+           {{- if eq $item.provider "youtube" }} referrerpolicy="no-referrer"{{ end }}>
+      {{- else }}
+      <span class="ftsk-media-blank" aria-hidden="true"></span>
+      {{- end }}
+      {{- if $isVideo }}
+      <span class="ftsk-media-play" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" focusable="false"><path d="M8 5.2v13.6a1 1 0 0 0 1.5.86l11-6.8a1 1 0 0 0 0-1.72l-11-6.8A1 1 0 0 0 8 5.2z" fill="currentColor"/></svg></span>
+      {{- end }}
+      {{- if and (eq .caption "hover") (or $item.title $item.credit) }}
+      <span class="ftsk-media-overlay">
+        {{- with $item.title }}<strong>{{ . }}</strong>{{ end }}
+        {{- with $item.credit }}<small>{{ $item.label }}: {{ . }}</small>{{ end }}
+      </span>
+      {{- end }}
+    </span>
+    {{- if and (eq .caption "below") (or $item.title $item.credit) }}
+    <span class="ftsk-media-caption">
+      {{- with $item.title }}<strong>{{ . }}</strong>{{ end }}
+      {{- with $item.credit }}<small>{{ $item.label }}: {{ . }}</small>{{ end }}
+    </span>
+    {{- end }}
+  </a>
+</li>

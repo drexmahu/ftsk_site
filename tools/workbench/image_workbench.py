@@ -7,7 +7,7 @@ import tempfile
 from pathlib import Path
 from urllib.parse import quote
 
-from PIL import Image, ImageChops, ImageDraw, ImageEnhance
+from PIL import Image, ImageChops, ImageDraw, ImageEnhance, ImageOps
 
 from tools.workbench.content_workbench import ContentError, ConflictError, revision
 from tools.workbench.people_registry import member_image_folder, person_index
@@ -22,9 +22,17 @@ def output_stem(default, name):
     return stem
 
 
-def render_image(source, box, shape, brightness, contrast, saturation, warmth, width, height, quality):
+def render_image(source, box, shape, brightness, contrast, saturation, warmth, width, height, quality,
+                 rotate=0, flip=False):
     with Image.open(source) as original:
-        image = original.convert("RGBA").crop(box)
+        image = original.convert("RGBA")
+    # Flip first, then rotate clockwise: the crop box is expressed in this transformed image.
+    if flip:
+        image = ImageOps.mirror(image)
+    if rotate:
+        image = image.transpose({90: Image.Transpose.ROTATE_270, 180: Image.Transpose.ROTATE_180,
+                                 270: Image.Transpose.ROTATE_90}[rotate])
+    image = image.crop(box)
     alpha = image.getchannel("A")
     rgb = image.convert("RGB")
     rgb = ImageEnhance.Brightness(rgb).enhance(brightness / 100)
@@ -93,8 +101,14 @@ class ImageService:
         entry = self.app.stage(path.name, raw)
         entry.update(source_url=url, source_revision=revision(raw),
                      source_folder=path.parent.relative_to(self.app.root / "static/images").as_posix(),
-                     source_webp=path.suffix.lower() == ".webp")
+                     source_webp=path.suffix.lower() == ".webp",
+                     references=self.app.content.references(url)[:30])
         return dict(entry)
+
+    @staticmethod
+    def replaces_anywhere(context):
+        """Media pages assemble photos borrowed from other pages, so they may replace a borrowed WebP."""
+        return context.get("kind") == "page" and str(context.get("path", "")).startswith("media/")
 
     def discard(self, token):
         record = self.previews.pop(token, None)
@@ -143,11 +157,16 @@ class ImageService:
         edit = payload.get("edit", {})
         if not isinstance(edit, dict):
             raise ContentError("Image adjustments must be an object.")
-        box = edit.get("crop", [0, 0, entry["width"], entry["height"]])
+        rotate, flip = edit.get("rotate", 0), edit.get("flip", False)
+        if rotate not in (0, 90, 180, 270) or isinstance(rotate, bool) or not isinstance(flip, bool):
+            raise ContentError("Rotate in quarter turns (0, 90, 180 or 270) and flip with true or false.")
+        # Crop coordinates belong to the flipped and rotated image.
+        full_width, full_height = (entry["height"], entry["width"]) if rotate in (90, 270) else (entry["width"], entry["height"])
+        box = edit.get("crop", [0, 0, full_width, full_height])
         if not isinstance(box, list) or len(box) != 4:
             raise ContentError("Choose a crop inside the source image.")
-        left, top, right, bottom = [self.integer(value, "Crop coordinate", 0, max(entry["width"], entry["height"])) for value in box]
-        if not (0 <= left < right <= entry["width"] and 0 <= top < bottom <= entry["height"]):
+        left, top, right, bottom = [self.integer(value, "Crop coordinate", 0, max(full_width, full_height)) for value in box]
+        if not (0 <= left < right <= full_width and 0 <= top < bottom <= full_height):
             raise ContentError("Crop must be inside the EXIF-corrected source image.")
         shape = edit.get("shape", "rectangle")
         if shape not in ("rectangle", "circle", "ellipse"):
@@ -161,8 +180,9 @@ class ImageService:
         if mode not in ("copy", "overwrite"):
             raise ContentError("Choose a new copy or replacement.")
         stem = output_stem(entry["stem"], payload.get("name"))
+        anywhere = self.replaces_anywhere(context)
         can_overwrite = bool(entry.get("source_webp") and
-                             self.app.root / "static/images" / entry["source_folder"] == target)
+                             (anywhere or self.app.root / "static/images" / entry["source_folder"] == target))
         overwrite_reason = ("" if can_overwrite else
                             "This image belongs to another folder. Save a copy in this destination." if entry.get("source_webp") else
                             "Only existing WebP files can be replaced. This source is saved as a new WebP copy.")
@@ -170,7 +190,8 @@ class ImageService:
         if mode == "overwrite":
             url = entry.get("source_url", "")
             destination = self.app.content.asset_path(url) if url else None
-            if not destination or destination.suffix.lower() != ".webp" or destination.parent != target:
+            if (not destination or destination.suffix.lower() != ".webp" or
+                    (destination.parent != target and not anywhere)):
                 raise ContentError("Only a WebP in this destination's own folder can be replaced. Save a copy of borrowed images instead.")
             if any(record is not previous and record["destination"] == destination and
                    record["result"]["mode"] == "overwrite" for record in self.previews.values()):
@@ -189,7 +210,7 @@ class ImageService:
         branch = self.app.git.text("symbolic-ref", "--short", "HEAD")
         raw, size = render_image(self.app.scratch / entry["id"] / (entry["stem"] + ".png"),
                                  (left, top, right, bottom), shape, brightness, contrast, saturation,
-                                 warmth, width, height, quality)
+                                 warmth, width, height, quality, rotate, flip)
         token = secrets.token_hex(16)
         file = self.app.scratch / entry["id"] / ("prepared-" + token + ".webp")
         file.write_bytes(raw)
@@ -221,19 +242,20 @@ class ImageService:
         entry = self.app.upload(record["id"])
         _, target = self.folder(record["context"], entry)
         destination = self.guard(self.app.root, record["destination"].relative_to(self.app.root).as_posix())
-        if destination.parent != target:
-            raise ConflictError("The image destination changed. Reopen the editor.")
         overwrite = record["result"]["mode"] == "overwrite"
+        if destination.parent != target and not (overwrite and self.replaces_anywhere(record["context"])):
+            raise ConflictError("The image destination changed. Reopen the editor.")
         if overwrite and payload.get("confirm_overwrite") is not True:
             raise ConflictError("Review and explicitly approve replacing the existing WebP.")
         raw = record["file"].read_bytes()
-        target.mkdir(parents=True, exist_ok=True)
+        if not overwrite:
+            target.mkdir(parents=True, exist_ok=True)
         if overwrite:
             if revision(destination.read_bytes()) != record["expected"]:
                 raise ConflictError("The existing WebP changed after preview. Reopen it; nothing was replaced.")
             temporary = None
             try:
-                with tempfile.NamedTemporaryFile(dir=target, prefix=".image-", suffix=".tmp", delete=False) as stream:
+                with tempfile.NamedTemporaryFile(dir=destination.parent, prefix=".image-", suffix=".tmp", delete=False) as stream:
                     temporary = Path(stream.name)
                     stream.write(raw)
                 self.guard(self.app.root, destination.relative_to(self.app.root).as_posix())
@@ -256,7 +278,7 @@ class ImageService:
                     destination.unlink()
                 raise
         result = {"files": [{key: record["result"][key] for key in ("url", "width", "height", "bytes")}],
-                  "log": "Saved the exact reviewed WebP preview."}
+                  "log": "Saved the exact reviewed WebP preview.", "replaced": overwrite}
         record.update(saved_result=result, saved_revision=revision(raw))
         self.saved[token] = record
         self.discard(token)

@@ -363,9 +363,14 @@ assets are used: the existing Pillow backend prepares all actual WebP outputs.
 An unedited output means the original pixels converted/resized to WebP, not a
 camera-file copy. Each source supports independently named versions with pixel
 crops, free/preset ratios, rectangle/circle/ellipse shapes, brightness, contrast,
-saturation, warmth and per-version maximum dimensions/quality. Circular and
+saturation, warmth and per-version maximum dimensions/quality, plus quarter-turn
+rotation and a left-right flip (the crop box follows the photo and a fixed ratio
+turns with it). Circular and
 elliptical masks preserve alpha, with smooth edges. EXIF orientation is corrected
-before coordinates are exposed. Limits remain 30 MiB / 25 MP per source, 100
+before coordinates are exposed, and an embedded ICC profile (Display P3, Adobe RGB,
+CMYK…) is converted to sRGB while staging, so wide-gamut phone and camera photos
+keep their colours; untagged images are assumed to be sRGB. Outputs carry no
+EXIF/GPS metadata. Limits remain 30 MiB / 25 MP per source, 100
 queued sources, 64–6000 maximum dimensions and quality 1–100; the editor limits
 each source to 20 versions and each batch to 200 selected outputs; the backend
 allows 200 live prepared previews. Omitting an unedited output releases its
@@ -386,6 +391,12 @@ includes the preview URL, nonce `token`, dimensions, byte count and authoritativ
 parameters. New-copy paths use exclusive creation. Replacement requires an
 existing staged WebP in the permitted folder, explicit `confirm_overwrite`,
 matching source revision and branch, and same-directory atomic replacement.
+The permitted folder is the destination's own folder, except on pages under
+`media/`, which assemble photos borrowed from other pages and may replace such a
+WebP in place. `images/open` returns the files that reference the image, and the
+output review lists the other users of a file that is about to be replaced; a
+saved result reports `replaced`. The gallery editor shows replaced files with a
+cache-busting stamp.
 Retrying a lost save response returns the verified saved result without creating
 duplicates. Roster/branch changes, stale previews and newly occupied output paths
 fail explicitly. Preview generation sequencing rejects old requests.
@@ -967,6 +978,55 @@ node tests/js/test_people_workbench.js
 ```
 
 The environment installer's smoke verification includes these tests.
+
+## Media pages (photo reels and video galleries)
+
+`content/media/` holds the **Média** pages (Fotók, Videók, …). The navbar entry
+in `data/nav.yaml` uses `dropdown_section: media`, so every page in that section
+appears in the dropdown automatically, ordered by `weight`; `hide_from_menu: true`
+removes one. `layouts/media/single.html` renders a page and
+`layouts/media/list.html` the `/media/` overview.
+
+Pages are driven by front matter. `layouts/partials/media/prepare.html` validates
+it (a mistake stops the build with the file and entry named) and produces
+thumbnails with Hugo image processing:
+
+```yaml
+description: "Header subtitle and overview text"
+weight: 10
+media_page: {width: wide, credit_label: "Fotó"}   # contained | wide | full
+media_sections:
+  - id: gortani                 # stable link name: /media/fotok/#gortani-3
+    title: "Centered title"
+    subtitle: "Smaller line"
+    layout: reel                # reel | rows | grid | showcase
+    height: 360                 # reel/rows, px (120–900); height_mobile 100–700
+    columns: 3                  # grid (1–6); columns_mobile 1–3
+    ratio: "3:2"                # grid card shape
+    gap: 14                     # px (0–48)
+    caption: hover              # none | hover | below
+    items:
+      - {type: photo, src: /images/..., title: "", credit: "", alt: "", text: "3–4 sentences, Markdown"}
+      - {type: video, video: "https://youtu.be/ID or /videos/clip.mp4", poster: /images/..., ratio: "16:9"}
+```
+
+Behaviour lives in `static/js/media.js` (loaded only for the media section). Every
+card is a real link, so the page works without JavaScript; the viewer adds
+keyboard, swipe, deep-link (`#section-n`) and Back-button support. YouTube plays
+through `youtube-nocookie.com` only after a click. Direct video files belong in
+`static/videos/`; they are not processed by the workbench.
+
+The workbench validates the same schema in `tools/workbench/media_pages.py`
+(errors block saving, editorial gaps such as a missing credit are warnings) and
+edits it in the **Galleries** tab (`tools/workbench/web/media-editor.js`). The
+tab uses the shared image editor for uploads, drag-and-drop or Alt+arrow
+reordering, per-section look and size settings, and the isolated Hugo preview. The
+workbench's own content security policy forbids remote images, so YouTube videos
+show a placeholder in the editor. Add another media type by adding a section page
+under `content/media/`; no code change is needed.
+
+Tests: `tests/python/test_content_workbench.py` (`MediaPageTests`) and
+`tests/js/test_site_media.js`.
 
 ## Social sharing preview
 

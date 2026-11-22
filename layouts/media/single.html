@@ -1,0 +1,35 @@
+{{ define "main" }}
+{{- $data := partial "media/prepare.html" . -}}
+{{ partial "sections/global/page-hero.html" (dict "title" .Title "description" .Params.description) }}
+
+{{- with .Content }}
+<section class="ftsk-media-intro">
+  <div class="container">
+    <div class="ftsk-media-intro-text ftsk-prose">{{ . }}</div>
+  </div>
+</section>
+{{- end }}
+
+<div class="ftsk-media ftsk-media--{{ $data.settings.width }}">
+  {{- $rendered := 0 }}
+  {{- range $data.sections }}
+    {{- if .items }}
+      {{- $rendered = add $rendered 1 }}
+      {{ partial "media/section.html" . }}
+    {{- end }}
+  {{- end }}
+  {{- if not $rendered }}
+  <section class="ftsk-media-empty">
+    <div class="container">
+      <p class="ftsk-media-empty-title">Hamarosan érkeznek az első tartalmak.</p>
+      <p>Ezen az oldalon hamarosan új anyagokat találsz.</p>
+    </div>
+  </section>
+  {{- end }}
+</div>
+
+{{- if $rendered }}
+{{ partial "media/viewer.html" . }}
+<script type="application/json" id="ftsk-media-data">{{ $data.items | jsonify | safeJS }}</script>
+{{- end }}
+{{ end }}

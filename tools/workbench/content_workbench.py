@@ -18,10 +18,20 @@ from urllib.parse import quote, unquote, urlsplit
 import yaml
 from yaml.nodes import MappingNode, SequenceNode
 
+from tools.workbench import media_pages
+
 LOGGER = logging.getLogger("site_workbench.content")
 MAX_SOURCE = 2 * 1024 * 1024
 GUIDED = {"turak", "tanfolyamok"}
+MEDIA_TEMPLATES = {
+    "media-photos": ('---\ntitle: "Új fotógaléria"\ndescription: ""\nweight: 50\ndraft: true\nmedia_page:\n  width: wide\n'
+                     'media_sections:\n  - id: elso-sorozat\n    title: "Első sorozat"\n    subtitle: ""\n    layout: reel\n    items: []\n---\n'),
+    "media-videos": ('---\ntitle: "Új videótár"\ndescription: ""\nweight: 60\ndraft: true\nmedia_page:\n  width: contained\n'
+                     'media_sections:\n  - id: elso-sorozat\n    title: "Első sorozat"\n    subtitle: ""\n    layout: grid\n'
+                     '    columns: 3\n    caption: below\n    items: []\n---\n'),
+}
 FIELDS = {
+    "description", "weight", "hide_from_menu", "menu_title", "media_page", "media_sections",
     "title", "type", "person", "document_label", "subtitle", "document_author", "date", "publishDate", "expiryDate", "draft", "author", "participants",
     "author_id", "participant_ids",
     "categories", "article_image_width", "thumbImg", "featuredImg", "seo", "current",
@@ -302,7 +312,8 @@ class ContentService:
         raw = file.read_bytes()
         source = raw.decode("utf-8")
         result = {"path": relative, "source": source, "revision": revision(raw),
-                  "guided": self.guided(relative), "bytes": len(raw), "title": Path(relative).stem}
+                  "guided": self.guided(relative), "media": self.is_media(relative),
+                  "bytes": len(raw), "title": Path(relative).stem}
         try:
             frontmatter, body, newline = split_source(source)
             result.update(frontmatter=frontmatter, body=body, newline=newline,
@@ -329,6 +340,16 @@ class ContentService:
     def guided(relative: str) -> bool:
         return relative.split("/")[0] in GUIDED and Path(relative).name != "_index.md"
 
+    @staticmethod
+    def is_media(relative: str) -> bool:
+        return relative.split("/")[0] == "media" and "/" in relative and Path(relative).name != "_index.md"
+
+    def video_exists(self, url: str) -> bool:
+        try:
+            return self.guard(self.root / "static", unquote(urlsplit(url).path.lstrip("/"))).is_file()
+        except ContentError:
+            return False
+
     def pages(self) -> list[dict]:
         result = []
         for file in sorted((self.root / "content").rglob("*.md")):
@@ -341,7 +362,7 @@ class ContentService:
                 image = ""
             result.append({"path": relative, "title": page["title"],
                            "date": meta.get("date", ""), "draft": meta.get("draft", False),
-                           "current": meta.get("current", False), "guided": page["guided"],
+                           "current": meta.get("current", False), "guided": page["guided"], "media": page["media"],
                            "error": page["error"], "revision": page["revision"],
                            "section": relative.split("/")[0] if "/" in relative else "pages",
                            "image": image, "archive": meta.get("archive", Path(relative).stem.startswith("legacy-"))})
@@ -354,7 +375,7 @@ class ContentService:
         people = member_catalog["people"]
         members = [person["name"] + (f' ({person["nickname"]})' if person.get("nickname") else "")
                    for person in people]
-        folders = {"gallery", "turak", "tanfolyamok"}
+        folders = {"gallery", "turak", "tanfolyamok", "media"}
         base = self.root / "static" / "images"
         if base.exists():
             for folder in base.rglob("*"):
@@ -368,6 +389,8 @@ class ContentService:
                     {"id": "pdf", "name": "Archived PDF report", "section": "turak"},
                     {"id": "course", "name": "Current course announcement", "section": "tanfolyamok"},
                     {"id": "course-report", "name": "Archived course report", "section": "tanfolyamok"},
+                    {"id": "media-photos", "name": "Photo gallery (scrolling reels)", "section": "media"},
+                    {"id": "media-videos", "name": "Video gallery", "section": "media"},
                     {"id": "page", "name": "Other Markdown page (source mode)", "section": ""},
                 ]}
 
@@ -439,22 +462,26 @@ class ContentService:
 
     def template(self, kind: str, relative: str) -> dict:
         self.path(relative)
-        if kind not in ("trip", "pdf", "course", "course-report", "page"):
+        if kind not in ("trip", "pdf", "course", "course-report", "page", *MEDIA_TEMPLATES):
             raise ContentError("Unknown content template.")
+        if kind in MEDIA_TEMPLATES and relative.split("/")[0] != "media":
+            raise ContentError("Media templates belong under media/.")
         if kind in ("trip", "pdf") and relative.split("/")[0] != "turak":
             raise ContentError("Trip templates belong under turak/.")
         if kind.startswith("course") and relative.split("/")[0] != "tanfolyamok":
             raise ContentError("Course templates belong under tanfolyamok/.")
-        blocks = re.findall(r"```markdown\r?\n(.*?)```", (self.root / "docs" / "BLOGPOST_TEMPLATES.md").read_text(encoding="utf-8"), re.S)
         index = {"trip": 0, "pdf": 1, "course": 2, "course-report": 3}.get(kind)
-        if index is None:
+        blocks = re.findall(r"```markdown\r?\n(.*?)```", (self.root / "docs" / "BLOGPOST_TEMPLATES.md").read_text(encoding="utf-8"), re.S) if index is not None else []
+        if kind in MEDIA_TEMPLATES:
+            source = MEDIA_TEMPLATES[kind]
+        elif index is None:
             source = '---\ntitle: "New page"\ndraft: true\nseo:\n  page_description: ""\n  no_index: false\n---\n\nWrite your page here.\n'
         else:
             source = blocks[index]
         frontmatter, body, newline = split_source(source)
         return {"path": relative, "source": source, "frontmatter": frontmatter, "body": body,
                 "newline": newline, "metadata": parse_frontmatter(frontmatter), "revision": "",
-                "guided": self.guided(relative), "error": ""}
+                "guided": self.guided(relative), "media": self.is_media(relative), "error": ""}
 
     def validate(self, relative: str, source: str, changes: dict | None = None,
                  *, preview_mode: bool = False) -> dict:
@@ -581,9 +608,17 @@ class ContentService:
                         raise ContentError("Milestone estimated must be true or false.")
                 if key == "flyer_images":
                     self.asset_path(item["image_path"])
+        if self.is_media(relative) or "media_sections" in meta or "media_page" in meta:
+            def photo_exists(url):
+                if self.asset_path(url).suffix.lower() == ".pdf":
+                    raise ContentError("Photos must be image files, not PDFs.")
+            try:
+                warnings.extend(media_pages.validate_sections(meta, asset_exists=photo_exists, video_exists=self.video_exists))
+            except media_pages.MediaError as exc:
+                raise ContentError(str(exc)) from exc
         if "KITÖLTENDŐ" in source or "2000-01-01" in str(meta.get("date", "")):
             warnings.append("Template placeholders remain. Replace or remove them before publishing.")
-        if not seo.get("page_description"):
+        if not seo.get("page_description") and not (self.is_media(relative) and meta.get("description")):
             warnings.append("SEO description is empty; the site-wide description will be used.")
         if self.guided(relative):
             if not (meta.get("featuredImg") or {}).get("image_path"):
@@ -597,7 +632,7 @@ class ContentService:
         if not meta.get("draft", False):
             warnings.append("This page is not a draft. Saving changes affects the next production build.")
         return {"path": relative, "source": source, "frontmatter": frontmatter, "body": body, "newline": newline,
-                "metadata": meta, "guided": self.guided(relative), "warnings": warnings}
+                "metadata": meta, "guided": self.guided(relative), "media": self.is_media(relative), "warnings": warnings}
 
     @staticmethod
     def date(value, label):

@@ -1054,8 +1054,19 @@ A portrék külön négyzetes arckivágója és a teljes kép/bélyegkép párja
   szerkesztett változatok, vagy mindkettő is menthető.
 - Szabad vagy rögzített arányú téglalap/négyzet, kör és ellipszis választható.
   A kör/ellipszis tényleges átlátszó sarkú WebP. A kijelölés húzható,
-  sarkaival átméretezhető; a pontos forráspixel-koordináták is megadhatók.
+  sarkaival átméretezhető; a pontos forráspixel-koordináták is megadhatók, a
+  nyíl-billentyűk (Shift-tel tízszeres lépésben) a vászonra fókuszálva mozgatják.
+  A **Rotate left / Rotate right / Flip** gombok negyedfordulatot és tükrözést
+  adnak; a kivágás a képpel együtt fordul, a rögzített arány is (3:2 → 2:3).
   Fényerő, kontraszt, színtelítettség és meleg/hideg tónus állítható.
+- A beágyazott színprofil (Display P3, Adobe RGB, CMYK) sRGB-re alakul, így a
+  telefonok és fényképezők széles színterű képei is hűek maradnak. A kimeneti
+  WebP nem tartalmaz EXIF/GPS adatot.
+- Meglévő WebP megnyitásakor a **Save mode** a jobb oldali sáv tetején áll:
+  *Save as a new copy* vagy *Replace the original file*. Felülírás előtt a
+  kimeneti áttekintés felsorolja a többi fájlt, amely a képet használja, és
+  külön jóváhagyás kell. Médiaoldalakról bármely meglévő WebP felülírható;
+  cikkekben és CV-kben csak az oldal saját mappájának fájlja.
 - A maximális szélesség/magasság és minőség változatonként állítható.
   Nincs nyújtás vagy felnagyítás. Az **Exact WebP output preview** már
   a ténylegesen kódolt fájl, pontos mérettel, fájlnévvel és bájtmérettel.
@@ -1414,3 +1425,50 @@ A meglévő `legacy-` fájlnevek és URL-ek változatlanul maradhatnak.
 - Ha egy régi cikk nem PDF-re, hanem valamilyen más régi oldalra (pl. `.htm`)
   hivatkozik, azt nem kell letölteni/beágyazni - elég az **Archive / legacy**
   jelölőnégyzetet bekapcsolni.
+
+## Média oldalak: fotósorok és videók
+
+A **Média** menü (Fotók, Videók, …) a `content/media/` mappa oldalaiból épül.
+Új oldalt a Workbench **Media** kategóriájában a **New draft** gombbal kezdj
+(*Photo gallery* vagy *Video gallery*), a tartalmat a **Galleries** fülön
+szerkeszd. Az **Introduction** fül szövege a galériák fölött jelenik meg (nem
+kötelező).
+
+- **Szakaszok.** Az oldal szakaszokból áll: középre igazított cím, kisebb
+  alcím, alatta a képek. Az elrendezés: *Reel* (oldalra görgethető sor, minden
+  kép megtartja a saját arányát), *Rows* (a szélességet kitöltő sorok), *Grid*
+  (egyforma kártyák) vagy *Showcase* (egy nagy lejátszó és lejátszási lista,
+  videókhoz). Több szakasz is lehet egy oldalon; a ↑ ↓ gombokkal rendezhetők.
+- **Méretek.** A **Look & sizes** részben állítható a sormagasság, az oszlopok
+  száma, a kártyák aránya, a köz és a felirat (nincs / ráhúzáskor / alatta). Az
+  üres mező az alapértéket állítja vissza.
+- **Fotók.** *Upload photos…* a közös képszerkesztőn át tölt fel (több kép
+  egyszerre, vagy húzd a sorra), a *Choose from library…* meglévő képet vesz át.
+  A galéria képei alapból legfeljebb 2560 px-esek, 85-ös minőséggel (a nagy
+  nézethez). A sorrend húzással vagy **Alt + ←/→** billentyűvel módosítható; a
+  képet másik szakaszba is át lehet tenni.
+- **Fotó szerkesztése.** Az **Edit photo…** gomb (a kép adatainál, a videó- és
+  oldalborítónál **Edit…**) megnyitja a képszerkesztőt: vágás, forgatás (⟲ ⟳),
+  tükrözés, fényerő, kontraszt, szín és melegség. Mentéskor választhatsz:
+  *Save as a new copy* (az eredeti érintetlen marad, az elem az új másolatra
+  vált), vagy *Replace the original file* – ez felülírja az eredeti fájlt, így
+  mindenhol az új változat látszik, ahol a kép szerepel. Felülírás előtt a
+  képszerkesztő felsorolja a többi fájlt, amely a képet használja, és külön
+  jóváhagyást kér. Felülírni csak meglévő WebP-t lehet; JPG/PNG forrásból új
+  WebP másolat készül.
+- **Videók.** *Add video…*: illessz be YouTube-linket (watch, youtu.be, shorts,
+  embed) vagy saját fájl útvonalát (`/videos/bemutato.mp4`, a fájl a
+  `static/videos/` mappába kerül). Függőleges videóhoz válaszd a 9:16 arányt.
+  Saját borítókép (*Cover image*) ajánlott; a YouTube csak a lejátszás
+  gombra kattintás után töltődik be.
+- **Szöveg minden elem alatt.** Cím, fotós/készítő neve, 3–4 mondatos leírás
+  (Markdown használható) és alternatív szöveg. A figyelmeztető jelzés (!) azt
+  mutatja, mi hiányzik; ez nem akadályozza a mentést.
+- **Megosztható hivatkozás.** Egy kép megnyitása a címsorba írja a
+  `#szakasz-sorszám` részt, így közvetlenül hivatkozható. A szakasz *Link name*
+  értéke ezt rögzíti; átírása a régi megosztott hivatkozásokat megszünteti.
+- **Előnézet.** A **Preview** a valódi oldalt építi fel, a mentetlen
+  módosításokkal együtt.
+
+Új médiatípusú oldal (pl. `Archív fotók`) ugyanígy készül: új draft a Media
+kategóriában, a menü automatikusan felveszi.

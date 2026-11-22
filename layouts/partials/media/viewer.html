@@ -1,0 +1,26 @@
+{{- /*
+  Full-screen viewer shell, filled in by static/js/media.js. Starts hidden; photos
+  and videos open here with their text underneath. Items come from the JSON payload.
+*/ -}}
+<div class="ftsk-viewer" id="ftsk-viewer" role="dialog" aria-modal="true" aria-label="Média megtekintő" hidden>
+  <div class="ftsk-viewer-bar">
+    <p class="ftsk-viewer-context"><span class="ftsk-viewer-count" data-viewer-count aria-live="polite"></span><span class="ftsk-viewer-section" data-viewer-section></span></p>
+    <button type="button" class="ftsk-viewer-close" data-viewer-close aria-label="Bezárás">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+  <div class="ftsk-viewer-main">
+    <button type="button" class="ftsk-viewer-nav ftsk-viewer-nav--prev" data-viewer-prev aria-label="Előző">
+      <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true" focusable="false"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="ftsk-viewer-stage" data-viewer-stage></div>
+    <button type="button" class="ftsk-viewer-nav ftsk-viewer-nav--next" data-viewer-next aria-label="Következő">
+      <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+  <div class="ftsk-viewer-caption" data-viewer-caption>
+    <h3 class="ftsk-viewer-title" data-viewer-title></h3>
+    <p class="ftsk-viewer-credit" data-viewer-credit></p>
+    <div class="ftsk-viewer-text" data-viewer-text></div>
+  </div>
+</div>

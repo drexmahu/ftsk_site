@@ -1,0 +1,37 @@
+{{ define "main" }}
+{{- $pages := where .Pages "Params.hide_from_menu" "ne" true -}}
+{{ partial "sections/global/page-hero.html" (dict "title" .Title "description" .Params.description) }}
+
+<section class="ftsk-media-overview">
+  <div class="container">
+    <ul class="ftsk-media-overview-grid" role="list">
+      {{- range $pages.ByWeight }}
+      {{- $data := partial "media/prepare.html" . }}
+      {{- $cover := "" }}
+      {{- with .Params.thumbImg.image_path }}{{ $cover = partial "url.html" . }}{{ end }}
+      {{- $photos := 0 }}{{ $videos := 0 }}
+      {{- range $data.items }}
+        {{- if not $cover }}{{ if .thumb }}{{ $cover = .thumb }}{{ end }}{{ end }}
+        {{- if eq .type "video" }}{{ $videos = add $videos 1 }}{{ else }}{{ $photos = add $photos 1 }}{{ end }}
+      {{- end }}
+      <li>
+        <a class="ftsk-media-overview-card" href="{{ .RelPermalink }}">
+          <span class="ftsk-media-overview-cover">
+            {{- if $cover }}<img src="{{ $cover }}" alt="" loading="lazy" decoding="async"{{ if strings.HasPrefix $cover "https://i.ytimg.com/" }} referrerpolicy="no-referrer"{{ end }}>
+            {{- else }}<span class="ftsk-media-overview-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" width="26" height="26" focusable="false"><path d="M8 5.2v13.6a1 1 0 0 0 1.5.86l11-6.8a1 1 0 0 0 0-1.72l-11-6.8A1 1 0 0 0 8 5.2z" fill="currentColor"/></svg></span>{{ end }}
+          </span>
+          <span class="ftsk-media-overview-body">
+            <strong>{{ .Title }}</strong>
+            {{- with .Params.description }}<span class="ftsk-media-overview-desc">{{ . | markdownify | plainify | truncate 140 }}</span>{{ end }}
+            <small>
+              {{- if $photos }}{{ $photos }} fotó{{ end }}{{ if and $photos $videos }} · {{ end }}{{ if $videos }}{{ $videos }} videó{{ end }}
+              {{- if and (not $photos) (not $videos) }}Hamarosan{{ end }}
+            </small>
+          </span>
+        </a>
+      </li>
+      {{- end }}
+    </ul>
+  </div>
+</section>
+{{ end }}
