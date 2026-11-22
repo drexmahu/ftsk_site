@@ -33,6 +33,8 @@ Roboto fonts and license notices are committed under
 additional build dependency. Libraries load only when the compact author-row
 PDF control is clicked. Conversion uses the rendered Markdown/shortcodes, not
 a separate Markdown parser or raster screenshots.
+The npm packages are development-only vendoring and PDF test tools; public
+pages use the committed local assets, not npm packages or external CDNs.
 
 After deliberately updating the exact pins in [`package.json`](../package.json),
 run `npm install --ignore-scripts` and `npm run vendor:pdf`, then commit the
@@ -174,6 +176,9 @@ requires setup's `.venv` and its packages. Its launcher keeps startup errors
 visible and points to the installer instead of silently closing.
 Installer regressions run without installing software:
 `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\powershell\test_setup_dev_env.ps1`.
+The disposable fixtures exercise the setup and supervised Workbench batch
+launchers, including argument forwarding, checkout paths with spaces and
+success/failure exit codes.
 Add `-Online` to also download, checksum-verify and run the pinned Hugo in a
 disposable temporary folder; it is cleaned afterward and never added to PATH.
 The Workbench replaces the separate image-converter GUIs and hero-server

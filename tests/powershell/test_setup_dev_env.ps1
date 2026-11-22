@@ -138,12 +138,12 @@ assert sys.argv[1:] == ["--port", "8897", "--no-browser"], "Arguments were not f
 print("WORKBENCH-LAUNCHER-VERIFIED")
 sys.exit(EXIT_CODE)
 '@
-        Set-Content -LiteralPath (Join-Path $moduleRoot '__main__.py') -Value $content.Replace('EXIT_CODE', [string]$code) -Encoding UTF8
+        Set-Content -LiteralPath (Join-Path $moduleRoot 'launcher.py') -Value $content.Replace('EXIT_CODE', [string]$code) -Encoding UTF8
         Push-Location $env:TEMP
         try {
             $output = (& $env:ComSpec /d /c ('set "PYTHONDONTWRITEBYTECODE=1" & call "' + (Join-Path $launcherRoot 'site_editor.bat') + '" --port 8897 --no-browser <nul')) -join "`n"
             Assert-Equal $LASTEXITCODE $code 'Workbench launcher preserves application exit status'
-            if ($output -notmatch 'WORKBENCH-LAUNCHER-VERIFIED') { throw 'Workbench launcher did not execute the module' }
+            if ($output -notmatch 'WORKBENCH-LAUNCHER-VERIFIED') { throw 'Workbench launcher did not execute the supervisor entry point' }
             if ($code -eq 7 -and $output -notmatch 'Workbench could not start') { throw 'Workbench launcher must explain failures' }
         } finally { Pop-Location }
     }

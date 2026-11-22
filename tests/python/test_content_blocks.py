@@ -131,7 +131,9 @@ class ContentBlocksTests(unittest.TestCase):
     def test_no_external_site_renderer_dependencies_remain(self):
         package = json.loads(ROOT.joinpath("package.json").read_text(encoding="utf-8"))
         self.assertFalse(package.get("dependencies"))
-        self.assertLessEqual(set(package.get("devDependencies", {})), {"esbuild", "monaco-editor"})
+        self.assertLessEqual(set(package.get("devDependencies", {})), {
+            "esbuild", "monaco-editor", "pdfmake", "html-to-pdfmake",
+        })
         self.assertFalse(ROOT.joinpath("go.mod").exists())
         config = ROOT.joinpath("config.toml").read_text(encoding="utf-8")
         self.assertNotIn("[[module.imports]]", config)
